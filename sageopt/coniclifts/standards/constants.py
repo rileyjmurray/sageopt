@@ -1,0 +1,5 @@
+maximize = 'max'
+minimize = 'min'
+solved = 'solved'
+inaccurate = 'inaccurate'
+failed = 'solver failure'

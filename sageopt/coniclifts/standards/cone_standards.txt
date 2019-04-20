@@ -1,0 +1,8 @@
+coniclifts uses the same exponential cone format as ECOS.
+    K_exp = { (x,y,z) : y >= z * exp(x / z), z >= 0 }
+The constraint that (u, v, w) \in K_exp_dual can be represented by (-w, v, -u) \in K_exp.
+    (See Santiago Akle Serrano's thesis, Section 8.3, page 71.)
+
+
+coniclifts uses the same second order cone format as ECOS and mosek.
+    SOC(n) = { (t, x) \in R^{n+1} : \| x \| \leq t }
