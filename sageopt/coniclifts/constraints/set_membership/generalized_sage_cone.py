@@ -134,15 +134,16 @@ class PrimalGenSageCone(SetMembership):
         start_row = 0
         A_vals, A_rows, A_cols = [], [], []
         sv_ids = np.array([v.id for v in self.lambda_vars[i].scalar_variables()])
-        cur_K = [Cone(co.type, co.len) for co in self.K]
+        cur_K = [Cone(co.type, co.len) for co in self.K if co.type != '0']
         for co in cur_K:
-            stop_row = start_row + co.len
             if co.type in self_dual_cones:
+                stop_row = start_row + co.len
                 A_rows.append(np.arange(start_row, stop_row))
                 A_vals += [1] * co.len
                 A_cols.append(sv_ids[start_row:stop_row])
                 start_row = stop_row
             elif co.type == 'e':
+                stop_row = start_row + co.len
                 A_rows.append(np.arange(start_row, stop_row))
                 A_cols.append(sv_ids[[start_row + 2, start_row + 1, start_row]])
                 A_vals += [-1, np.exp(1), -1]

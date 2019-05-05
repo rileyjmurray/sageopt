@@ -39,6 +39,7 @@ def compile_constrained_system(constraints, variables=None):
         else:
             raise RuntimeError('Unknown argument')
     A, b, K, sep_K = conify_constraints(elementwise_constrs, setmem_constrs)
+    check_dimensions(A, b, K)
     variables = update_variables_from_sep_cones(variables, sep_K)
     var_gens = np.array([v.generation for v in variables])
     if not np.all(var_gens == var_gens[0]):
@@ -48,6 +49,7 @@ def compile_constrained_system(constraints, variables=None):
         msg4 = '\nSuch re-use of Variable or Constraint objects is not supported.\n'
         raise RuntimeError(msg1 + msg2 + msg3 + msg4)
     A, sep_K, var_name_to_locs = finalize_system(A, sep_K, variables)
+    check_dimensions(A, b, K)
     return A, b, K, sep_K, var_name_to_locs
 
 
@@ -225,3 +227,13 @@ def update_variables_from_sep_cones(variables, sep_K):
     else:
         return variables
 
+
+def check_dimensions(A, b, K):
+    total_K_len = sum([co.len for co in K])
+    if total_K_len != A.shape[0]:
+        msg = 'K specifies a ' + str(total_K_len) + ' dimensional space, but A has ' + str(A.shape[0]) + ' rows.'
+        raise RuntimeError(msg)
+    if total_K_len != b.size:
+        msg = 'K specifies a ' + str(total_K_len) + ' dimensional space, but b is of length ' + str(b.size) + '.'
+        raise RuntimeError(msg)
+    pass

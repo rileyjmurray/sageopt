@@ -453,7 +453,7 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
     # Find the best solution among the ones remaining
     f = prob.associated_data['f']
     obj_vals = f(mus)
-    good_sols = np.nonzero(obj_vals - np.min(obj_vals) < diff_tol)[0]
+    good_sols = np.nonzero(obj_vals - np.min(obj_vals) <= diff_tol)[0]
     good_mus = mus[:, good_sols]
     if not exp_format:
         good_mus = np.exp(good_mus)
