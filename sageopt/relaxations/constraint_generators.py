@@ -16,6 +16,8 @@
 import numpy as np
 from itertools import combinations_with_replacement
 from sageopt.symbolic.signomials import Signomial
+from sageopt import coniclifts as cl
+from sageopt.relaxations import symbolic_correspondences as sym_corr
 import warnings
 
 
@@ -91,3 +93,73 @@ def valid_gp_representable_poly_eqs(eqs):
         if is_even and np.count_nonzero(g.c != 0) == 2 and np.count_nonzero(g.c > 0) == 1:
             gp_rep_polys.append(g)
     return gp_rep_polys
+
+
+def unconstrained_cut(v, alpha, ell=1, AbK=None, solver='MOSEK'):
+    # v is supposed to belong to convco{ exp(alpha @ x) : x in Rn }, but instead
+    # it only belongs to some outer-approximation. We need to find a separating hyperplane
+    # (in terms of a signomial coefficient vector) that rules out v.
+    #
+    # Use this function to improve a bound in any problem (constrained or unconstrained)
+    # where the gap between SAGE and nonnegativity is viewed as the likely source of error.
+    #
+    # When using this function with a constrained problem, "v" and "alpha" should be associated
+    # with the constraint "Lagrangian is SAGE".
+    from sageopt.relaxations.sage_sigs import primal_sage_cone
+    from sageopt.coniclifts.operators.norms import vector2norm
+    c_x = cl.Variable(shape=(alpha.shape[0],))
+    s_x = Signomial(alpha, c_x)
+    modulator = Signomial(alpha, np.ones(shape=(alpha.shape[0],))) ** ell
+    modded_s_x = s_x * modulator
+    constraints = [primal_sage_cone(modded_s_x, name='sig_is_nonneg', AbK=AbK),
+                   vector2norm(c_x) <= np.linalg.norm(v)]
+    objective_expr = c_x @ v
+    prob = cl.Problem(cl.MIN, objective_expr, constraints)
+    prob.solve(solver=solver, verbose=False)
+    cl.clear_variable_indices()
+    if prob.status == 'solved' and prob.value < 0:
+        c_val = c_x.value()
+        cut_sig = Signomial(alpha, c_val)
+        return cut_sig
+    else:
+        return None
+
+
+def constrained_cut(v, alpha, gts, eqs, ell=1, solver='MOSEK'):
+    #
+    # Would be nice to infer a valid inequality that strengthens the Lagrange dual
+    # (not just the SAGE relaxation of the Lagrange dual). Right now this function
+    # only strengthens a given SAGE relaxation, and makes it at-most-as-strong-as
+    # the Lagrange dual.
+    #
+    #
+    from sageopt.relaxations.sage_sigs import primal_sage_cone
+    from sageopt.coniclifts.operators.norms import vector2norm
+    c_x0 = cl.Variable(shape=(alpha.shape[0],))
+    s_x0 = Signomial(alpha, c_x0)
+    modulator = Signomial(alpha, np.ones(shape=(alpha.shape[0],))) ** ell
+    modded_s_x0 = s_x0 * modulator
+    constraints = [primal_sage_cone(modded_s_x0, name='sig_is_nonneg', AbK=None)]
+    c_x = c_x0
+    if len(gts) > 0:
+        lambda_vars = cl.Variable(shape=(len(gts),))
+        constraints.append(lambda_vars >= 0)
+        G = np.hstack([sym_corr.relative_coeff_vector(g, alpha).reshape((-1, 1)) for g in gts])
+        c_g = G @ lambda_vars
+        c_x = c_x + c_g
+    if len(eqs) > 0:
+        mu_vars = cl.Variable(shape=(len(eqs),))
+        H = np.hstack([sym_corr.relative_coeff_vector(h, alpha).reshape((-1, 1)) for h in eqs])
+        c_h = H @ mu_vars
+        c_x = c_x + c_h
+    constraints.append(vector2norm(c_x) <= np.linalg.norm(v))
+    objective_expr = c_x @ v
+    prob = cl.Problem(cl.MIN, objective_expr, constraints)
+    prob.solve(solver=solver, verbose=False)
+    cl.clear_variable_indices()
+    if prob.status == 'solved' and prob.value < 0:
+        c_val = c_x.value()
+        cut_sig = Signomial(alpha, c_val)
+        return cut_sig
+    else:
+        return None

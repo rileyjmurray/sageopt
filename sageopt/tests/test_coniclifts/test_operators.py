@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 from sageopt.coniclifts.base import Variable
 from sageopt.coniclifts.operators.relent import relent
+from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.compilers import compile_constrained_system
 from sageopt.coniclifts.cones import Cone
 
@@ -16,21 +17,38 @@ class TestOperators(unittest.TestCase):
                3 <= x,
                x <= 5]
         A, b, K, _, _ = compile_constrained_system(con)
-        A_expect = np.array([[0., 0., 0., 0., -1., -1.],
-                             [1., 0., 0., 0., 0., 0.],
-                             [0., 1., 0., 0., 0., 0.],
-                             [-1., 0., 0., 0., 0., 0.],
-                             [0., -1., 0., 0., 0., 0.],
-                             [0., 0., 0., 0., -1., 0.],
-                             [0., 0., 2.72, 0., 0., 0.],
-                             [2., 0., 0., 0., 0., 0.],
-                             [0., 0., 0., 0., 0., -1.],
-                             [0., 0., 0., 2.72, 0., 0.],
-                             [0., 2., 0., 0., 0., 0.]])
+        A_expect = np.array([[0., 0., 0., 0., -1., -1.],  # linear inequality on epigraph for relent constr
+                             [1., 0., 0., 0., 0., 0.],    # bound constraints on x
+                             [0., 1., 0., 0., 0., 0.],    #
+                             [-1., 0., 0., 0., 0., 0.],   # more bound constraints on x
+                             [0., -1., 0., 0., 0., 0.],   #
+                             [0., 0., 0., 0., -1., 0.],   # first exponential cone
+                             [0., 0., 2.72, 0., 0., 0.],  #
+                             [2., 0., 0., 0., 0., 0.],    #
+                             [0., 0., 0., 0., 0., -1.],   # second exponential cone
+                             [0., 0., 0., 2.72, 0., 0.],  #
+                             [0., 2., 0., 0., 0., 0.]])   #
         A = np.round(A.toarray(), decimals=2)
         assert np.all(A == A_expect)
         assert np.all(b == np.array([10., -3., -3., 5., 5., 0., 0., 0., 0., 0., 0.]))
         assert K == [Cone('+', 1), Cone('+', 2), Cone('+', 2), Cone('e', 3), Cone('e', 3)]
+
+    def test_vector2norm(self):
+        x = Variable(shape=(3,), name='x')
+        nrm = vector2norm(x)
+        con = [nrm <= 1]
+        A_expect = np.array([[0, 0, 0, -1],   # linear inequality constraint in terms of epigraph variable
+                             [0, 0, 0,  1],   # epigraph component in second order cone constraint
+                             [1, 0, 0,  0],   # start of main block in second order cone constraint
+                             [0, 1, 0,  0],
+                             [0, 0, 1,  0]])  # end of main block in second order cone constraint
+        b_expect = np.zeros(shape=(5,))
+        b_expect[0] = 1
+        A, b, K, _, _ = compile_constrained_system(con)
+        A = np.round(A.toarray(), decimals=1)
+        assert np.all(A == A_expect)
+        assert np.all(b == np.array([1, 0, 0, 0, 0]))
+        assert K == [Cone('+', 1), Cone('S', 4)]
 
 
 if __name__ == '__main__':

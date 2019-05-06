@@ -98,6 +98,12 @@ class TestBase(unittest.TestCase):
         assert all(v.is_proper() for v in vars2)
         assert [v.name for v in vars2] == ['y', 'z']
 
+    def test_matmul_1(self):
+        x = Variable(shape=(4,))
+        c = np.array([1, 2, 3, 4])
+        y = c @ x
+        assert y.shape == tuple()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -439,16 +439,19 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
         gts = prob.associated_data['gts']
         eqs = prob.associated_data['eqs']
     f = prob.associated_data['f']
-    # Search for feasible solutions from the dual AGE cone, and a simple least-squares approach.
-    v = con.v.value()
-    if hasattr(con, 'alpha'):
-        alpha = con.alpha
-        mu_ls = np.linalg.lstsq(alpha, np.log(v), rcond=None)[0].reshape((-1, 1))
-    else:
-        # we're working with a conditional SAGE cone
+    # Search for feasible solutions. Use dual AGE cones, and a simple least-squares approach.
+    if not hasattr(con, 'alpha'):
         alpha = con.lifted_alpha[:, :f.n]
-        mu_ls = np.linalg.lstsq(alpha, np.log(v), rcond=None)[0].reshape((-1, 1))
-        # ^ that should really be a constrained least-squares problem.
+    else:
+        alpha = con.alpha
+    v = con.v.value()
+    dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
+    dummy_modulated_lagrangian.alpha = alpha  # ensure that rows weren't permuted.
+    lagrangian = prob.associated_data['lagrangian']
+    modulator = prob.associated_data['modulator']
+    M = sym_corr.moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
+    v_reduced = M @ v
+    mu_ls = np.linalg.lstsq(lagrangian.alpha, np.log(v_reduced), rcond=None)[0].reshape((-1, 1))
     mus = [mu_ls] if is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol, exp_format=True) else []
     for i, mu_i in con.mu_vars.items():
         val = mu_i.value()

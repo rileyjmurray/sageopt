@@ -432,7 +432,11 @@ class Expression(np.ndarray):
                 raise RuntimeError('Can only multiply by constant Expressions.')
             else:
                 _, _, other = other.factor()
-        other_times_A = np.tensordot(other, A, axes=1)
+        if other.ndim == 2:
+            other_times_A = np.tensordot(other, A, axes=1)
+        else:
+            other_times_A = np.tensordot(other.reshape((1, -1)), A, axes=1)
+            other_times_A = np.squeeze(other_times_A, axis=0)
         other_times_A_x = Expression.disjoint_dot(other_times_A, x)
         res = other_times_A_x
         other_times_B = np.tensordot(other, B, axes=1)

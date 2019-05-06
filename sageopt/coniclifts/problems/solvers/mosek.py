@@ -96,7 +96,8 @@ class Mosek(Solver):
                              [mosek.boundkey.fr] * n, np.zeros(n), np.zeros(n))
         for co in sep_K:
             if co.type == 'S':
-                task.appendcone(mosek.conetype.quad, 0.0, co.len)
+                indices = co.annotations['col mapping']
+                task.appendcone(mosek.conetype.quad, 0.0, indices)
             elif co.type == 'e':
                 co_cols = co.annotations['col mapping']
                 indices = [co_cols[1], co_cols[2], co_cols[0]]

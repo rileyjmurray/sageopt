@@ -1,6 +1,14 @@
 import numpy as np
-from sageopt.coniclifts.base import NonlinearScalarAtom, Variable
+from sageopt.coniclifts.base import NonlinearScalarAtom, Expression, ScalarExpression, Variable
 from sageopt.coniclifts.cones import Cone
+
+
+def vector2norm(x):
+    if not isinstance(x, Expression):
+        x = Expression(x)
+    x = x.ravel()
+    d = {Vector2Norm(x): 1}
+    return ScalarExpression(d, 0).as_expr()
 
 
 class Vector2Norm(NonlinearScalarAtom):
@@ -44,7 +52,8 @@ class Vector2Norm(NonlinearScalarAtom):
                 A_vals.append(coeff)
             b[i] = arg[-1][1]
         K = [Cone('S', m)]
-        return A_rows, A_cols, A_vals, b, K, self.aux_var
+        A_rows = np.array(A_rows)
+        return A_vals, A_rows, A_cols, b, K, self.aux_var
 
     def value(self):
         raise NotImplementedError()
