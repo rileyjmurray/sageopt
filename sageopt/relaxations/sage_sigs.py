@@ -438,9 +438,18 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
     if 'gts' in prob.associated_data:
         gts = prob.associated_data['gts']
         eqs = prob.associated_data['eqs']
-    # Prepare the candidate solutions (one for each dual AGE cone used for the Lagrangian)
+    f = prob.associated_data['f']
+    # Search for feasible solutions from the dual AGE cone, and a simple least-squares approach.
     v = con.v.value()
-    mus = []
+    if hasattr(con, 'alpha'):
+        alpha = con.alpha
+        mu_ls = np.linalg.lstsq(alpha, np.log(v), rcond=None)[0].reshape((-1, 1))
+    else:
+        # we're working with a conditional SAGE cone
+        alpha = con.lifted_alpha[:, :f.n]
+        mu_ls = np.linalg.lstsq(alpha, np.log(v), rcond=None)[0].reshape((-1, 1))
+        # ^ that should really be a constrained least-squares problem.
+    mus = [mu_ls] if is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol, exp_format=True) else []
     for i, mu_i in con.mu_vars.items():
         val = mu_i.value()
         val = -val / v[i]
@@ -450,8 +459,7 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
             # no matter the value for "exp_format" passed to this function.
             mus.append(val)
     mus = np.hstack(mus)
-    # Find the best solution among the ones remaining
-    f = prob.associated_data['f']
+    # Find the best solution(s) among the ones remaining
     obj_vals = f(mus)
     good_sols = np.nonzero(obj_vals - np.min(obj_vals) <= diff_tol)[0]
     good_mus = mus[:, good_sols]
