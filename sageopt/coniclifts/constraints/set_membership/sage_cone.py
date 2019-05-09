@@ -255,7 +255,7 @@ class DualSageCone(SetMembership):
         # Linear inequalities
         #
         mat = self.alpha[selector, :] - self.alpha[i, :]
-        A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(mat, self.mu_vars[i], z)
+        A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(-mat, self.mu_vars[i], z)
         num_rows = mat.shape[0]
         b = np.zeros(num_rows)
         K = [Cone('+', num_rows)]

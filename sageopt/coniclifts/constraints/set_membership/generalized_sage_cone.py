@@ -301,7 +301,7 @@ class DualGenSageCone(SetMembership):
             #
             matrix = self.lifted_alpha[selector, :] - self.lifted_alpha[i, :]
             vecvar = self.lifted_mu_vars[i]
-            A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(matrix, vecvar, z)
+            A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(-matrix, vecvar, z)
             num_rows = matrix.shape[0]
             b = np.zeros(num_rows)
             K = [Cone('+', num_rows)]
@@ -310,7 +310,7 @@ class DualGenSageCone(SetMembership):
         #
         # the additional constraints, for the generalized AGE dual cone
         #
-        mat = -self.A
+        mat = self.A
         vecvar = self.lifted_mu_vars[i]
         vec = self.b
         singlevar = self.v[i]

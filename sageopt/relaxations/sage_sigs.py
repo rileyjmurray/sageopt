@@ -434,24 +434,6 @@ def hierarchy_e_k(sigs, k):
 
 
 def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_format=True):
-    """
-    One dangerous thing about this function, is that it assumes the dual solution is *actually feasible*.
-    This assumption allows us to skip the check for membership in X = {x : A @ x + b in K},
-    at least for solutions recovered from dual AGE cones. It does not allow us to skip this step
-    for least-squares solutions, although this is something we do anyway.
-
-    So, one way to move forward is to solve a feasibility problem for everything that passes "gts, eqs".
-    Or rather- we'd solve the projection problem. Yeah, the projection problem makes more sense, especially
-    since the description of X may need auxilliary variables, which we don't get from "mus", as I've
-    implemented things...
-
-    :param prob:
-    :param diff_tol:
-    :param ineq_tol:
-    :param eq_tol:
-    :param exp_format:
-    :return:
-    """
     con = prob.user_cons[0]
     if not con.name == 'Lagrangian SAGE dual constraint':
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
@@ -486,7 +468,7 @@ def _dual_age_cone_solution_recovery(con, v, gts, eqs, ineq_tol, eq_tol):
     mus = []
     for i, mu_i in con.mu_vars.items():
         val = mu_i.value()
-        val = -val / v[i]
+        val = val / v[i]
         val = val.reshape((-1, 1))  # make "val" an unambiguous column vector
         if is_feasible(val, gts, eqs, ineq_tol, eq_tol, exp_format=True):
             mus.append(val)
