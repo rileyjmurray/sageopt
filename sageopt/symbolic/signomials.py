@@ -141,6 +141,8 @@ class Signomial(object):
             c.append(v)
         self.alpha = np.array(alpha)
         self.c = np.array(c)
+        if self.c.dtype is object:
+            self.c = cl.Expression(self.c)
 
     def __add__(self, other):
         if not isinstance(other, Signomial):

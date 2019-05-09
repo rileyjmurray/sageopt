@@ -11,6 +11,8 @@ class Problem(object):
 
     _SOLVERS_ = {'ECOS': ECOS(), 'MOSEK': Mosek()}
 
+    _SOLVER_ORDER_ = ['MOSEK', 'ECOS']
+
     def __init__(self, objective_sense, objective_expression, constraints):
         """
         :param objective_sense: either coniclifts.minimize or coniclifts.maximize.
@@ -47,11 +49,18 @@ class Problem(object):
                                 'verbose': True}
         pass
 
-    def solve(self, solver, **kwargs):
+    def solve(self, solver=None, **kwargs):
         """
         :param solver: a string. 'MOSEK' or 'ECOS'.
         :return:
         """
+        if solver is None:
+            for svr in Problem._SOLVER_ORDER_:
+                if Problem._SOLVERS_[svr].is_installed():
+                    solver = svr
+                    break
+        if solver is None:
+            raise RuntimeError('No acceptable solver is installed.')
         options = self.default_options.copy()
         options.update(kwargs)
         solver_object = Problem._SOLVERS_[solver]

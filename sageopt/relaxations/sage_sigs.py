@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import numpy as np
+import warnings
 from sageopt import coniclifts as cl
 from sageopt.symbolic.signomials import Signomial, is_feasible
 from sageopt.relaxations import constraint_generators as con_gen
@@ -55,10 +56,11 @@ def sage_dual(f, ell=0, AbK=None):
     """
     f.remove_terms_with_zero_as_coefficient()
     # Signomial definitions (for the objective).
-    f_mod = Signomial(f.alpha_c)
     t_mul = Signomial(f.alpha, np.ones(f.m)) ** ell
-    lagrangian = (f_mod - cl.Variable(name='gamma')) * t_mul
-    f_mod = f_mod * t_mul
+    lagrangian = f - cl.Variable(name='gamma')
+    metadata = {'f': f, 'lagrangian': lagrangian, 'modulator': t_mul}
+    lagrangian = lagrangian * t_mul
+    f_mod = f * t_mul
     # C_SAGE^STAR (v must belong to the set defined by these constraints).
     v = cl.Variable(shape=(lagrangian.m, 1), name='v')
     con = relative_dual_sage_cone(lagrangian, v, name='Lagrangian SAGE dual constraint', AbK=AbK)
@@ -72,7 +74,7 @@ def sage_dual(f, ell=0, AbK=None):
     obj = obj_vec.T @ v
     # Create coniclifts Problem
     prob = cl.Problem(cl.MIN, obj, constraints)
-    prob.associated_data = {'lagrangian': lagrangian, 'f': f}
+    prob.associated_data = metadata
     cl.clear_variable_indices()
     return prob
 
@@ -277,8 +279,11 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
+        # ^ That's different than what I describe in the paper.
+        # Really should just be alpha_E_1 = lagrangian.alpha
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
+        # ^ Some terms might be cancelling here? Possible that this function
         f = f * modulator
     else:
         modulator = Signomial({(0,) * f.n: 1})
@@ -429,6 +434,24 @@ def hierarchy_e_k(sigs, k):
 
 
 def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_format=True):
+    """
+    One dangerous thing about this function, is that it assumes the dual solution is *actually feasible*.
+    This assumption allows us to skip the check for membership in X = {x : A @ x + b in K},
+    at least for solutions recovered from dual AGE cones. It does not allow us to skip this step
+    for least-squares solutions, although this is something we do anyway.
+
+    So, one way to move forward is to solve a feasibility problem for everything that passes "gts, eqs".
+    Or rather- we'd solve the projection problem. Yeah, the projection problem makes more sense, especially
+    since the description of X may need auxilliary variables, which we don't get from "mus", as I've
+    implemented things...
+
+    :param prob:
+    :param diff_tol:
+    :param ineq_tol:
+    :param eq_tol:
+    :param exp_format:
+    :return:
+    """
     con = prob.user_cons[0]
     if not con.name == 'Lagrangian SAGE dual constraint':
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
@@ -439,28 +462,15 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
         gts = prob.associated_data['gts']
         eqs = prob.associated_data['eqs']
     f = prob.associated_data['f']
-    # Search for feasible solutions. Use dual AGE cones, and a simple least-squares approach.
-    if not hasattr(con, 'alpha'):
-        alpha = con.lifted_alpha[:, :f.n]
-    else:
-        alpha = con.alpha
+    # Search for feasible solutions
     v = con.v.value()
-    dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
-    dummy_modulated_lagrangian.alpha = alpha  # ensure that rows weren't permuted.
-    lagrangian = prob.associated_data['lagrangian']
-    modulator = prob.associated_data['modulator']
-    M = sym_corr.moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
-    v_reduced = M @ v
-    mu_ls = np.linalg.lstsq(lagrangian.alpha, np.log(v_reduced), rcond=None)[0].reshape((-1, 1))
-    mus = [mu_ls] if is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol, exp_format=True) else []
-    for i, mu_i in con.mu_vars.items():
-        val = mu_i.value()
-        val = -val / v[i]
-        val = val.reshape((-1, 1))  # make "val" an unambiguous column vector
-        if is_feasible(val, gts, eqs, ineq_tol, eq_tol, exp_format=True):
-            # ^ Always use "exp_format=True" in the above function call,
-            # no matter the value for "exp_format" passed to this function.
-            mus.append(val)
+    mus0 = _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol)
+    mus1 = _dual_age_cone_solution_recovery(con, v, gts, eqs, ineq_tol, eq_tol)
+    mus = mus0 + mus1
+    if isinstance(con, cl.DualGenSageCone):
+        A, b, K = con.A, con.b, con.K
+        A = np.asarray(A)
+        mus = [mu for mu in mus if _satisfies_AbK_constraints(A, b, K, mu, ineq_tol)]
     mus = np.hstack(mus)
     # Find the best solution(s) among the ones remaining
     obj_vals = f(mus)
@@ -470,3 +480,67 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
         good_mus = np.exp(good_mus)
     gaps = f(good_mus) - prob.value
     return good_mus, gaps
+
+
+def _dual_age_cone_solution_recovery(con, v, gts, eqs, ineq_tol, eq_tol):
+    mus = []
+    for i, mu_i in con.mu_vars.items():
+        val = mu_i.value()
+        val = -val / v[i]
+        val = val.reshape((-1, 1))  # make "val" an unambiguous column vector
+        if is_feasible(val, gts, eqs, ineq_tol, eq_tol, exp_format=True):
+            mus.append(val)
+    return mus
+
+
+def _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
+    if not hasattr(con, 'alpha'):
+        alpha = con.lifted_alpha[:, :con.n]
+    else:
+        alpha = con.alpha
+    dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
+    dummy_modulated_lagrangian.alpha = alpha  # ensure that rows weren't permuted.
+    lagrangian = prob.associated_data['lagrangian']
+    modulator = prob.associated_data['modulator']
+    M = sym_corr.moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
+    v_reduced = M @ v
+    if isinstance(con, cl.DualGenSageCone):
+        A, b, K = con.A, con.b, con.K
+        A = np.asarray(A)
+        # Now solve min{ || np.log(v_reduced) - alpha @ x || : A @ x + b in K }
+        x = cl.Variable(shape=(A.shape[1],))
+        t = cl.Variable(shape=(1,))
+        cons = [cl.vector2norm(np.log(v_reduced) - lagrangian.alpha @ x[:con.n]) <= t, cl.ProductCone(A, x, b, K)]
+        prob = cl.Problem(cl.MIN, t, cons)
+        cl.clear_variable_indices()
+        res = prob.solve(verbose=False)
+        if res[0] == cl.SOLVED:
+            mu_ls = x.value()[:con.n].reshape((-1, 1))
+        else:
+            warnings.warn('Constrained least-squares solution recovery failed, and has been skipped.')
+            return []
+    else:
+        try:
+            mu_ls = np.linalg.lstsq(lagrangian.alpha, np.log(v_reduced), rcond=None)[0].reshape((-1, 1))
+        except np.linalg.linalg.LinAlgError:
+            warnings.warn('Ordinary least-squares solution recovery failed, and has been skipped.')
+            return []
+    if is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol, exp_format=True):
+        mus = [mu_ls]
+    else:
+        mus = []
+    return mus
+
+
+def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
+    x = cl.Variable(shape=(A.shape[1],))
+    t = cl.Variable(shape=(1,))
+    mu_flat = mu.ravel()
+    cons = [cl.vector2norm(mu_flat - x[:mu.size]) <= t, cl.ProductCone(A, x, b, K)]
+    prob = cl.Problem(cl.MIN, t, cons)
+    cl.clear_variable_indices()
+    res = prob.solve(verbose=False)
+    if res[0] == cl.SOLVED and res[1] <= ineq_tol + 1e-6:
+        return True
+    else:
+        return False

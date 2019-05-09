@@ -88,12 +88,14 @@ def moment_reduction_array(s_h, h, L):
         constructor = Signomial
     else:
         raise RuntimeError('Unknown argument.')
-    m1 = s_h.alpha.shape[0]
-    m0 = L.alpha.shape[0]
-    C = np.zeros(shape=(m1, m0))
-    for i, row in enumerate(s_h.alpha):
-        temp_func = constructor({tuple(row): 1}) * h
-        # ^ that's the i^th coordinate of the nonlinear map x \\mapsto F(x),
-        # where F(x) is as described in this function's docstring.
-        C[i, :] = relative_coeff_vector(temp_func, L.alpha)
+    equivalent_L = s_h * h
+    relevant_rows = {tuple(row.tolist()) for row in equivalent_L.alpha}
+    C_rows = []
+    for row in s_h.alpha:
+        temp_func = constructor({tuple(row.tolist()): 1}) * h
+        temp_func_is_relevant = np.all([tuple(r.tolist()) in relevant_rows for r in temp_func.alpha])
+        if not temp_func_is_relevant:
+            continue
+        C_rows.append(relative_coeff_vector(temp_func, L.alpha))
+    C = np.vstack(C_rows)
     return C

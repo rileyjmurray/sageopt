@@ -50,7 +50,7 @@ class Vector2Norm(NonlinearScalarAtom):
             for var, coeff in arg[:-1]:
                 A_cols.append(var.id)
                 A_vals.append(coeff)
-            b[i] = arg[-1][1]
+            b[i+1] = arg[-1][1]
         K = [Cone('S', m)]
         A_rows = np.array(A_rows)
         return A_vals, A_rows, A_cols, b, K, self.aux_var
