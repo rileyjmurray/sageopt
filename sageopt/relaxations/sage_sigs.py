@@ -540,7 +540,7 @@ def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
     prob = cl.Problem(cl.MIN, t, cons)
     cl.clear_variable_indices()
     res = prob.solve(verbose=False)
-    if res[0] == cl.SOLVED and res[1] <= ineq_tol + 1e-6:
+    if res[0] == cl.SOLVED and res[1] <= ineq_tol + 1e-8:
         return True
     else:
         return False
