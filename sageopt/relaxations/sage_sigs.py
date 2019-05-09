@@ -279,8 +279,6 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
-        # ^ That's different than what I describe in the paper.
-        # Really should just be alpha_E_1 = lagrangian.alpha
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
         # ^ Some terms might be cancelling here? Possible that this function
