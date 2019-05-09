@@ -490,7 +490,8 @@ def _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
         # Now solve min{ || np.log(v_reduced) - alpha @ x || : A @ x + b in K }
         x = cl.Variable(shape=(A.shape[1],))
         t = cl.Variable(shape=(1,))
-        cons = [cl.vector2norm(np.log(v_reduced) - lagrangian.alpha @ x[:con.n]) <= t, cl.ProductCone(A, x, b, K)]
+        cons = [cl.vector2norm(np.log(v_reduced) - lagrangian.alpha @ x[:con.n]) <= t,
+                cl.PrimalProductCone(A @ x + b, K)]
         prob = cl.Problem(cl.MIN, t, cons)
         cl.clear_variable_indices()
         res = prob.solve(verbose=False)
@@ -513,10 +514,12 @@ def _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
 
 
 def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
+    if np.any(np.isnan(mu)):
+        return False
     x = cl.Variable(shape=(A.shape[1],))
     t = cl.Variable(shape=(1,))
     mu_flat = mu.ravel()
-    cons = [cl.vector2norm(mu_flat - x[:mu.size]) <= t, cl.ProductCone(A, x, b, K)]
+    cons = [cl.vector2norm(mu_flat - x[:mu.size]) <= t, cl.PrimalProductCone(A @ x + b, K)]
     prob = cl.Problem(cl.MIN, t, cons)
     cl.clear_variable_indices()
     res = prob.solve(verbose=False)

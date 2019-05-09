@@ -1,4 +1,5 @@
 from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
+from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone, DualProductCone
 from sageopt.coniclifts.base import Variable, Expression
 from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.operators import affine as aff
@@ -121,45 +122,9 @@ class PrimalGenSageCone(SetMembership):
         return A_vals, A_rows, A_cols, b, K, []
 
     def _lambda_var_domain_constraints(self, i):
-        """
-        Loop over co \in K
-            if co.type == 'e', then need to work with dual exponential cone.
-                NOTE: (u, w, v) in K_exp_dual can be passed to a solver as (v , e * w ,-u) in K_exp.
-            if co.type == '0', then no constraints are needed.
-            if co.type == '+', 'S', or 'P', then work with those cones as normal.
-
-        :return:
-        """
-        self_dual_cones = {'+', 'S', 'P'}
-        start_row = 0
-        A_vals, A_rows, A_cols = [], [], []
-        sv_ids = np.array([v.id for v in self.lambda_vars[i].scalar_variables()])
-        cur_K = [Cone(co.type, co.len) for co in self.K if co.type != '0']
-        for co in cur_K:
-            if co.type in self_dual_cones:
-                stop_row = start_row + co.len
-                A_rows.append(np.arange(start_row, stop_row))
-                A_vals += [1] * co.len
-                A_cols.append(sv_ids[start_row:stop_row])
-                start_row = stop_row
-            elif co.type == 'e':
-                stop_row = start_row + co.len
-                A_rows.append(np.arange(start_row, stop_row))
-                A_cols.append(sv_ids[[start_row + 2, start_row + 1, start_row]])
-                A_vals += [-1, np.exp(1), -1]
-                start_row = stop_row
-            elif co.type != '0':
-                warnings.warn('Encountered unexpected cone of type "' + co.type + '" in PrimalGenSageCone.')
-        if len(A_rows) > 0:
-            A_rows = np.hstack(A_rows)
-            A_cols = np.hstack(A_cols).tolist()
-            b = np.zeros(A_rows.size)
-        else:
-            # This is possible if all cones were zero cones.
-            A_rows = np.zeros(shape=(0,), dtype=int)
-            A_cols = []
-            b = np.zeros(shape=(0,))
-            cur_K = []
+        con = DualProductCone(self.lambda_vars[i], self.K)
+        conic_data = con.conic_form()
+        A_vals, A_rows, A_cols, b, cur_K, [] = conic_data[0]
         return A_vals, A_rows, A_cols, b, cur_K, []
 
     def _age_vectors_sum_to_c(self):
