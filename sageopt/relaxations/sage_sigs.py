@@ -449,7 +449,7 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
     # Search for feasible solutions
     v = con.v.value()
     mus0 = _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol)
-    mus1 = _dual_age_cone_solution_recovery(con, v, gts, eqs, ineq_tol, eq_tol)
+    mus1 = _dual_age_cone_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol)
     mus = mus0 + mus1
     if isinstance(con, cl.DualGenSageCone):
         A, b, K = con.A, con.b, con.K
@@ -468,7 +468,7 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
     return good_mus, gaps
 
 
-def _dual_age_cone_solution_recovery(con, v, gts, eqs, ineq_tol, eq_tol):
+def _dual_age_cone_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
     mus = []
     for i, mu_i in con.mu_vars.items():
         val = mu_i.value()

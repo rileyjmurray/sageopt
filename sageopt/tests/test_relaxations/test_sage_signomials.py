@@ -19,6 +19,7 @@ import numpy as np
 from sageopt import coniclifts as cl
 from sageopt.relaxations import sage_sigs
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
+from scipy.optimize import fmin_cobyla
 
 
 def primal_dual_vals(f, ell):
@@ -385,7 +386,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       (1) Verify similar primal / dual objectives.
         #
-        #       (2) Recover a strictly feasible solution, within 0.2 % of optimality.
+        #       (2) Recover a strictly feasible solution, within 0.7 % of optimality.
         #
         # Notes
         #
@@ -409,7 +410,7 @@ class TestSAGERelaxations(unittest.TestCase):
             assert abs(vals[0] - vals[1]) < 1e-4
             assert abs(vals[0] - (-83.3235)) < 1e-4
             _, gaps = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-            assert np.min(gaps) / abs(dual.value) < 0.002
+            assert np.min(gaps) / abs(dual.value) < 0.007
         else:
             msg = '\n MOSEK is not installed, and ECOS takes a *** very *** long time to solve this problem. \n'
             msg += 'Skipping a generalized SAGE test with (p, q, ell) = (0, 1, 1).\n\n'
@@ -454,7 +455,9 @@ class TestSAGERelaxations(unittest.TestCase):
             res, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
             assert abs(res[0] - res[1]) < 1e-4
             solns, _ = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-            assert f(solns[:, 0]) < -3.9999
+            res = fmin_cobyla(f, solns[:, 0], [g - 1e-14 for g in gts], rhoend=1e-7)
+            assert f(res) < -3.9999
+            assert np.all([g(res) >= 0 for g in gts])
         else:
             msg = '\n MOSEK is not installed, and ECOS cannot solve this problem. \n'
             msg += 'Skipping a generalized SAGE test with (p, q, ell) = (0, 1, 2).\n\n'
