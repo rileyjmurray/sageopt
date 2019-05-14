@@ -39,7 +39,7 @@ def relative_dual_sage_cone(primal_sig, dual_var, name, AbK):
     return con
 
 
-def sage_dual(f, ell=0, AbK=None):
+def sage_dual(f, ell=0, AbK=None, modulator_support=None):
     """
     :param f: a Signomial object.
     :param ell: a nonnegative integer
@@ -56,7 +56,9 @@ def sage_dual(f, ell=0, AbK=None):
     """
     f.remove_terms_with_zero_as_coefficient()
     # Signomial definitions (for the objective).
-    t_mul = Signomial(f.alpha, np.ones(f.m)) ** ell
+    if modulator_support is None:
+        modulator_support = f.alpha
+    t_mul = Signomial(modulator_support, np.ones(modulator_support.shape[0])) ** ell
     lagrangian = f - cl.Variable(name='gamma')
     metadata = {'f': f, 'lagrangian': lagrangian, 'modulator': t_mul}
     lagrangian = lagrangian * t_mul
@@ -79,7 +81,7 @@ def sage_dual(f, ell=0, AbK=None):
     return prob
 
 
-def sage_primal(f, ell=0, AbK=None, additional_cons=None):
+def sage_primal(f, ell=0, AbK=None, additional_cons=None, modulator_support=None):
     """
     :param f: a Signomial object.
     :param ell: a nonnegative integer
@@ -109,7 +111,9 @@ def sage_primal(f, ell=0, AbK=None, additional_cons=None):
         efficiently represent X.
     """
     f.remove_terms_with_zero_as_coefficient()
-    t = Signomial(f.alpha, np.ones(f.m))
+    if modulator_support is None:
+        modulator_support = f.alpha
+    t = Signomial(modulator_support, np.ones(modulator_support.shape[0]))
     gamma = cl.Variable(name='gamma')
     s_mod = (f - gamma) * (t ** ell)
     s_mod.remove_terms_with_zero_as_coefficient()
@@ -451,6 +455,8 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
         A, b, K = con.A, con.b, con.K
         A = np.asarray(A)
         mus = [mu for mu in mus if _satisfies_AbK_constraints(A, b, K, mu, ineq_tol)]
+    if len(mus) == 0:
+        return None
     mus = np.hstack(mus)
     # Find the best solution(s) among the ones remaining
     obj_vals = f(mus)
@@ -474,6 +480,8 @@ def _dual_age_cone_solution_recovery(con, v, gts, eqs, ineq_tol, eq_tol):
 
 
 def _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
+    if np.any(np.isnan(v)):
+        return []
     if not hasattr(con, 'alpha'):
         alpha = con.lifted_alpha[:, :con.n]
     else:
