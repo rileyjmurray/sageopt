@@ -74,6 +74,7 @@ class PrimalSageCone(SetMembership):
         return cone_data
 
     def _age_lin_eq_cone_data(self, i):
+        # TODO: use the precompiled operator
         idx_set = self.ech.expcovers[i]
         matrix = (self.alpha[idx_set, :] - self.alpha[i, :]).T
         A_rows = np.tile(np.arange(matrix.shape[0]), reps=matrix.shape[1])
@@ -85,6 +86,7 @@ class PrimalSageCone(SetMembership):
         return A_vals, A_rows, A_cols, b, K, []
 
     def _age_vectors_sum_to_c(self):
+        # TODO: move the main part of this function into a precompiled atom.
         nonconst_locs = np.ones(self.m, dtype=bool)
         nonconst_locs[self.ech.N_I] = False
         aux_c_vars = list(self.age_vectors.values())
@@ -181,7 +183,7 @@ class PrimalSageCone(SetMembership):
         item = Expression(item)
         con = PrimalSageCone(item, self.alpha, name='check_mem')
         prob = Problem(CL_MAX, Expression([0]), [con])
-        status, value = prob.solve(solver='ECOS', verbose=False)
+        status, value = prob.solve(verbose=False)
         from sageopt.coniclifts import clear_variable_indices
         clear_variable_indices()
         if status == CL_SOLVED:
@@ -200,10 +202,7 @@ class DualSageCone(SetMembership):
         :param v: a Coniclifts Expression of length s.m.
         """
         if c is None:
-            self.c = Variable(shape=(alpha.shape[0],), name='dummy').view(Expression)
-            # ^ Creating a Variable like this may slow down compilation quite a bit.
-            # Might be better to override the behavior of ExpCoverHelper construction
-            # to handle the case when c is None.
+            self.c = None
         else:
             self.c = Expression(c)
         self.alpha = alpha
@@ -274,14 +273,14 @@ class DualSageCone(SetMembership):
             expr2 = v[selector].ravel()
             lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1, 1))
             mat = self.alpha[selector, :] - self.alpha[i, :]
-            vec = self.mu_vars[i].value().reshape((-1,1))
+            vec = self.mu_vars[i].value().reshape((-1, 1))
             residual = mat @ vec - lowerbounds
             residual[residual >= 0] = 0
             curr_viol = np.linalg.norm(residual, ord=norm_ord)
             if curr_viol > 0 and not rough:
                 temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
                 prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
-                status, value = prob.solve(solver='ECOS', verbose=False)
+                status, value = prob.solve(verbose=False)
                 clear_variable_indices()
                 if status == CL_SOLVED and abs(value) < 1e-7:
                     curr_viol = 0
@@ -298,11 +297,11 @@ class DualSageCone(SetMembership):
             len_sel = np.count_nonzero(selector)
             expr1 = np.tile(item[i], len_sel)
             expr2 = item[selector]
-            lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1,1))
+            lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1, 1))
             mat = self.alpha[selector, :] - self.alpha[i, :]
             temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
             prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
-            status, value = prob.solve(solver='ECOS', verbose=False)
+            status, value = prob.solve(verbose=False)
             clear_variable_indices()
             if status != CL_SOLVED or abs(value) > 1e-7:
                 return False
@@ -312,23 +311,28 @@ class DualSageCone(SetMembership):
 class ExpCoverHelper(object):
 
     def __init__(self, alpha, c, expcovers=None):
-        if not isinstance(c, Expression):
+        if c is not None and not isinstance(c, Expression):
             raise RuntimeError()
         self.alpha = alpha
         self.m = alpha.shape[0]
         self.c = c
-        self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
-        # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
-        # this AGE cone might not be used in the final solution to the associated
-        # optimization problem.
-        self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
-        # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
-        # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
-        # be used in any solution to the associated optimization problem, and we can be
-        # certain that c^{(i)}_i == c_i.
-        self.P_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset > 0)]
-        # ^ indices of positive sign.
-        # Together, union(self.P_I, self.U_I) comprise all indices "i" where c[i] is not identically zero.
+        if self.c is not None:
+            self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
+            # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
+            # this AGE cone might not be used in the final solution to the associated
+            # optimization problem.
+            self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
+            # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
+            # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
+            # be used in any solution to the associated optimization problem, and we can be
+            # certain that c^{(i)}_i == c_i.
+            self.P_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset > 0)]
+            # ^ indices of positive sign.
+            # Together, union(self.P_I, self.U_I) comprise all indices "i" where c[i] is not identically zero.
+        else:
+            self.U_I = [i for i in range(self.m)]
+            self.N_I = []
+            self.P_I = []
         if isinstance(expcovers, dict):
             self._verify_exp_covers(expcovers)
         elif expcovers is None:

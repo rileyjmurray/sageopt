@@ -189,13 +189,6 @@ class DualGenSageCone(SetMembership):
         Aggregates constraints on "v" so that "v" can be viewed as a dual variable
         to a constraint of the form "c \in C_{SAGE}(alpha, A, b, K)".
         """
-        if c is None:
-            self.c = Variable(shape=(alpha.shape[0],), name='dummy').view(Expression)
-            # ^ Creating a Variable like this may slow down compilation quite a bit.
-            # Might be better to override the behavior of ExpCoverHelper construction
-            # to handle the case when c is None.
-        else:
-            self.c = Expression(c)
         if issparse(A):
             A = A.toarray()
         self.A = A
@@ -212,6 +205,10 @@ class DualGenSageCone(SetMembership):
         self.name = name
         self._variables = self.v.variables()
         if self.m > 2:
+            if c is None:
+                self.c = None
+            else:
+                self.c = Expression(c)
             self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
             self.lifted_mu_vars = dict()
             self.mu_vars = dict()
@@ -290,7 +287,7 @@ class DualGenSageCone(SetMembership):
 class ExpCoverHelper(object):
 
     def __init__(self, alpha, c, A, b, K, expcovers=None):
-        if not isinstance(c, Expression):
+        if c is not None and not isinstance(c, Expression):
             raise RuntimeError()
         self.alpha = alpha
         self.A = A
@@ -298,18 +295,23 @@ class ExpCoverHelper(object):
         self.K = K
         self.m = alpha.shape[0]
         self.c = c
-        self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
-        # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
-        # this AGE cone might not be used in the final solution to the associated
-        # optimization problem.
-        self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
-        # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
-        # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
-        # be used in any solution to the associated optimization problem, and we can be
-        # certain that c^{(i)}_i == c_i.
-        self.P_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset > 0)]
-        # ^ indices of positive sign.
-        # Together, union(self.P_I, self.U_I) comprise all indices "i" where c[i] is not identically zero.
+        if self.c is not None:
+            self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
+            # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
+            # this AGE cone might not be used in the final solution to the associated
+            # optimization problem.
+            self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
+            # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
+            # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
+            # be used in any solution to the associated optimization problem, and we can be
+            # certain that c^{(i)}_i == c_i.
+            self.P_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset > 0)]
+            # ^ indices of positive sign.
+            # Together, union(self.P_I, self.U_I) comprise all indices "i" where c[i] is not identically zero.
+        else:
+            self.U_I = [i for i in range(self.m)]
+            self.N_I = []
+            self.P_I = []
         if isinstance(expcovers, dict):
             self._verify_exp_covers(expcovers)
         elif expcovers is None:
