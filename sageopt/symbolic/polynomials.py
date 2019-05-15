@@ -142,15 +142,22 @@ class Polynomial(Signomial):
             raise ValueError('The point must be in R^' + str(self.n) +
                              ', but the provided point is in R^' + str(x.shape[0]))
         if x.dtype == 'object':
-            ns = np.array([xi.n for xi in x if isinstance(xi, Polynomial)])
-            if np.any(ns != ns[0]):
+            ns = np.array([xi.n for xi in x.flat if isinstance(xi, Polynomial)])
+            if ns.size == 0:
+                x = x.astype(np.float)
+            elif np.any(ns != ns[0]):
                 raise RuntimeError('The input vector cannot contain Polynomials over different variables.')
-        temp1 = np.power(x, self.alpha)
-        temp2 = np.prod(temp1, axis=1)
-        val = np.dot(self.c, temp2)
-        if isinstance(val, Polynomial):
-            val.remove_terms_with_zero_as_coefficient()
-        return val
+        if x.ndim == 1:
+            temp1 = np.power(x, self.alpha)
+            temp2 = np.prod(temp1, axis=1)
+            val = np.dot(self.c, temp2)
+            return val
+        elif x.ndim == 2:
+            vals = [self.__call__(xi) for xi in x.T]
+            val = np.array(vals)
+            return val
+        else:
+            raise ValueError('Can only evaluate on x with dimension <= 2.')
 
     def __hash__(self):
         return hash(frozenset(self.alpha_c.items()))

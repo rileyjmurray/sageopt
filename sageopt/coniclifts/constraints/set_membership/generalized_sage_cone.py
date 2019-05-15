@@ -135,6 +135,7 @@ class PrimalGenSageCone(SetMembership):
         aux_c_vars = aux_c_vars[nonconst_locs, :]
         main_c_var = self.c[nonconst_locs]
         # add constraint that the columns of all_cs sum to self.c[need_constr]
+        # TODO: make "sums of vectors equaling another vector" a precompiled atom.
         A_rows, A_cols, A_vals = [], [], []
         num_cons = np.count_nonzero(nonconst_locs)
         b = np.zeros(num_cons,)

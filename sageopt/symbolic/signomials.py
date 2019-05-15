@@ -242,14 +242,14 @@ class Signomial(object):
         if not x.shape[0] == self.n:
             raise ValueError('The point must be in R^' + str(self.n) +
                              ', but the provided point is in R^' + str(x.shape[0]))
-        if exp_format:
-            exponents = np.dot(self.alpha.astype(np.float128), x.astype(np.float128))
-            linear_vars = np.exp(exponents).astype(np.float128)
-            val = np.dot(self.c, linear_vars)
-        else:
-            temp1 = np.power(x, self.alpha)
-            temp2 = np.prod(temp1, axis=1)
-            val = np.dot(self.c, temp2)
+        if x.ndim > 2:
+            raise ValueError('Signomials cannot be called on ndarrays with more than 2 dimensions.')
+        x = x.astype(np.float128)
+        if not exp_format:
+            x = np.log(x)
+        exponents = np.dot(self.alpha.astype(np.float128), x)
+        linear_vars = np.exp(exponents).astype(np.float128)
+        val = np.dot(self.c, linear_vars)
         return val
 
     def __hash__(self):
@@ -304,7 +304,7 @@ class Signomial(object):
 
     def jac_val(self, x):
         if self.grad is None:
-            g = np.empty(shape=(self.n,))
+            g = np.empty(shape=(self.n,), dtype=object)
             for i in range(self.n):
                 g[i] = self.partial(i)
             self.grad = g
@@ -317,7 +317,7 @@ class Signomial(object):
         if self.grad is None:
             self.jac_val(np.zeros(self.n))  # ignore return value
         if self.hess is None:
-            H = np.empty(shape=(self.n, self.n))
+            H = np.empty(shape=(self.n, self.n), dtype=object)
             for i in range(self.n):
                 ith_partial = self.partial(i)
                 for j in range(i+1):
