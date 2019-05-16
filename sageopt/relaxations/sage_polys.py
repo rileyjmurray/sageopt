@@ -333,14 +333,14 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     return L, ineq_dual_polys, eq_dual_polys, gamma
 
 
-def generalized_sage_poly_data(f, gts, eqs):
+def conditional_sage_poly_data(f, gts, eqs):
     # GP-representable inequality constraints (recast as "Signomial >= 0")
     gp_gts = con_gen.valid_gp_representable_poly_inequalities(gts)
     gp_gts_sigreps = [Signomial(g.alpha, g.c) for g in gp_gts]
     # GP-representable equality constraints (recast as "Signomial == 0")
     gp_eqs = con_gen.valid_gp_representable_poly_eqs(eqs)
     gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]
-    # Fall back on generalized SAGE data implementation for signomials
+    # Fall back on conditional SAGE data implementation for signomials
     dummy_f = Signomial({(0,) * f.n: 1})
     logAbK = sage_sigs.conditional_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps)
     return logAbK
