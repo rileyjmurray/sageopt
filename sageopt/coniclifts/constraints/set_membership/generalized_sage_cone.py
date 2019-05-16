@@ -82,26 +82,22 @@ class PrimalGenSageCone(SetMembership):
             self.age_vectors[i] = ci_expr
         pass
 
-    def _rel_ent_constrs(self):
-        cone_data = []
-        for i in self.ech.U_I:
-            idx_set = self.ech.expcovers[i]
-            if np.any(idx_set):
-                x = self.nu_vars[i]
-                y = np.exp(1) * self.age_vectors[i][idx_set]
-                # ^ # This line consumes a disproportionately large amount of runtime
-                z = -self.age_vectors[i][i] + self.lambda_vars[i] @ self.b
-                name = self.name + '_' + str(i)
-                A_vals, A_rows, A_cols, b, K, aux_vars = sum_relent(x, y, z, name)
-                if len(aux_vars) > 0:
-                    self._variables.append(aux_vars)
-                cone_data.append((A_vals, A_rows, A_cols, b, K, []))
-            else:
-                con = self.lambda_vars[i] @ self.b <= self.age_vectors[i][i]
-                con.epigraph_checked = True
-                A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-                cone_data.append((A_vals, A_rows, A_cols, b, K, []))
-        return cone_data
+    def _age_rel_ent_cone_data(self, i):
+        idx_set = self.ech.expcovers[i]
+        if np.any(idx_set):
+            x = self.nu_vars[i]
+            y = np.exp(1) * self.age_vectors[i][idx_set]
+            # ^ # This line consumes a disproportionately large amount of runtime
+            z = -self.age_vectors[i][i] + self.lambda_vars[i] @ self.b
+            name = self.name + '_' + str(i)
+            A_vals, A_rows, A_cols, b, K, aux_vars = sum_relent(x, y, z, name)
+            if len(aux_vars) > 0:
+                self._variables.append(aux_vars)
+        else:
+            con = self.lambda_vars[i] @ self.b <= self.age_vectors[i][i]
+            con.epigraph_checked = True
+            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
+        return A_vals, A_rows, A_cols, b, K, []
 
     def _age_lin_eq_cone_data(self, i):
         idx_set = self.ech.expcovers[i]
@@ -121,11 +117,11 @@ class PrimalGenSageCone(SetMembership):
         K = [Cone('0', num_rows)]
         return A_vals, A_rows, A_cols, b, K, []
 
-    def _lambda_var_domain_constraints(self, i):
+    def _age_lambda_var_domain_constraints(self, i):
         con = DualProductCone(self.lambda_vars[i], self.K)
         conic_data = con.conic_form()
-        A_vals, A_rows, A_cols, b, cur_K, [] = conic_data[0]
-        return A_vals, A_rows, A_cols, b, cur_K, []
+        A_vals, A_rows, A_cols, b, cur_K, sep_K = conic_data[0]
+        return A_vals, A_rows, A_cols, b, cur_K, sep_K
 
     def _age_vectors_sum_to_c(self):
         nonconst_locs = np.ones(self.m, dtype=bool)
@@ -163,14 +159,12 @@ class PrimalGenSageCone(SetMembership):
         if self.m > 2:
             # Lift c_vars and nu_vars into Expressions of length self.m
             self._build_aligned_age_vectors()
-            # Record all relative entropy constraints
-            cone_data = self._rel_ent_constrs()
-            # AGE cone Linear equations
+            cone_data = []
+            # age cones
             for i in self.ech.U_I:
+                cone_data.append(self._age_rel_ent_cone_data(i))
                 cone_data.append(self._age_lin_eq_cone_data(i))
-            # lambda_vars must belong to K_dual
-            for i in self.ech.U_I:
-                cone_data.append(self._lambda_var_domain_constraints(i))
+                cone_data.append(self._age_lambda_var_domain_constraints(i))
             # Vectors sum to s.c
             cone_data.append(self._age_vectors_sum_to_c())
             return cone_data

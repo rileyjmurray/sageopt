@@ -85,3 +85,27 @@ def mat_times_vecvar_plus_vec_times_singlevar(mat, vecvar, vec, singlevar):
     return A_vals, A_rows, A_cols
 
 
+def columns_sum_to_vec(mat, vec):
+    A_rows, A_cols, A_vals = [], [], []
+    m = mat.shape[0]
+    if m != vec.size:
+        raise RuntimeError('Incompatible dimensions.')
+    b = np.zeros(m,)
+    for i in range(m):
+        # update cols and data to reflect addition of elements in ith row of mat
+        svs = mat[i, :].scalar_variables()
+        A_cols += [sv.id for sv in svs]
+        A_vals += [1] * len(svs)
+        # update cols and data to reflect addition of elements from ith element of vec
+        #   ith element of vec is a ScalarExpression!
+        id2co = [(a.id, co) for a, co in vec[i].atoms_to_coeffs.items()]
+        A_cols += [aid for aid, _ in id2co]
+        A_vals += [-co for _, co in id2co]  # we are subtracting, after all.
+        # update rows with appropriate number of "i"s.
+        A_rows += [i] * (len(svs) + len(id2co))
+        # update b
+        b[i] -= vec[i].offset
+    A_rows = np.array(A_rows)
+    return A_vals, A_rows, A_cols, b
+
+

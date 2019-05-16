@@ -52,26 +52,23 @@ class PrimalSageCone(SetMembership):
             self.age_vectors[i] = ci_expr
         pass
 
-    def _rel_ent_constrs(self):
-        cone_data = []
-        for i in self.ech.U_I:
-            idx_set = self.ech.expcovers[i]
-            if np.any(idx_set):
-                x = self.nu_vars[i]
-                y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
-                z = -self.age_vectors[i][i]
-                name = self.name + '_' + str(i)
-                A_vals, A_rows, A_cols, b, K, aux_vars = sum_relent(x, y, z, name)
-            else:
-                # just constrain -age_vectors[i][i] <= 0.
-                A_vals, A_rows, A_cols = [1], np.array([0]), [self.age_vectors[i][i].scalar_variables()[0].id]
-                b = np.array([0])
-                K = [Cone('+', 1)]
-                aux_vars = []
-            cone_data.append((A_vals, A_rows, A_cols, b, K, []))
-            if len(aux_vars) > 0:
-                self._variables.append(aux_vars)
-        return cone_data
+    def _age_rel_ent_cone_data(self, i):
+        idx_set = self.ech.expcovers[i]
+        if np.any(idx_set):
+            x = self.nu_vars[i]
+            y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
+            z = -self.age_vectors[i][i]
+            name = self.name + '_' + str(i)
+            A_vals, A_rows, A_cols, b, K, aux_vars = sum_relent(x, y, z, name)
+        else:
+            # just constrain -age_vectors[i][i] <= 0.
+            A_vals, A_rows, A_cols = [1], np.array([0]), [self.age_vectors[i][i].scalar_variables()[0].id]
+            b = np.array([0])
+            K = [Cone('+', 1)]
+            aux_vars = []
+        if len(aux_vars) > 0:
+            self._variables.append(aux_vars)
+        return A_vals, A_rows, A_cols, b, K, []
 
     def _age_lin_eq_cone_data(self, i):
         # TODO: use the precompiled operator
@@ -86,32 +83,14 @@ class PrimalSageCone(SetMembership):
         return A_vals, A_rows, A_cols, b, K, []
 
     def _age_vectors_sum_to_c(self):
-        # TODO: move the main part of this function into a precompiled atom.
         nonconst_locs = np.ones(self.m, dtype=bool)
         nonconst_locs[self.ech.N_I] = False
         aux_c_vars = list(self.age_vectors.values())
         aux_c_vars = aff.vstack(aux_c_vars).T
         aux_c_vars = aux_c_vars[nonconst_locs, :]
         main_c_var = self.c[nonconst_locs]
-        # add constraint that the columns of all_cs sum to self.c[need_constr]
-        A_rows, A_cols, A_vals = [], [], []
-        num_cons = np.count_nonzero(nonconst_locs)
-        b = np.zeros(num_cons,)
-        K = [Cone('0', num_cons)]
-        for i in range(num_cons):
-            # update cols and data to reflect addition of elements in ith row of aux_c_vars
-            svs = aux_c_vars[i, :].scalar_variables()
-            A_cols += [sv.id for sv in svs]
-            A_vals += [1] * len(svs)
-            # update cols and data to reflect addition of elements from ith element of main_c_var
-            #   ith element of main_c_var is a ScalarExpression!
-            id2co = [(a.id, co) for a, co in main_c_var[i].atoms_to_coeffs.items()]
-            A_cols += [aid for aid, _ in id2co]
-            A_vals += [-co for _, co in id2co]  # we are subtracting, after all.
-            # update rows with appropriate number of "i"s.
-            A_rows += [i] * (len(svs) + len(id2co))
-            # update b
-            b[i] -= main_c_var[i].offset
+        A_vals, A_rows, A_cols, b = compiled_aff.columns_sum_to_vec(mat=aux_c_vars, vec=main_c_var)
+        K = [Cone('0', b.size)]
         return A_vals, np.array(A_rows), A_cols, b, K, []
 
     def variables(self):
@@ -122,19 +101,21 @@ class PrimalSageCone(SetMembership):
             # Lift c_vars and nu_vars into Expressions of length self.m
             self._build_aligned_age_vectors()
             # Record all relative entropy constraints
-            cone_data = self._rel_ent_constrs()
-            # AGE cone Linear equations
+            cone_data = []
+            # age cones
             for i in self.ech.U_I:
+                cone_data.append(self._age_rel_ent_cone_data(i))
                 if np.any(self.ech.expcovers[i]):
                     cone_data.append(self._age_lin_eq_cone_data(i))
             # Vectors sum to s.c
             cone_data.append(self._age_vectors_sum_to_c())
+            return cone_data
         else:
             con = self.c >= 0
             con.epigraph_checked = True
             A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
             cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
-        return cone_data
+            return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):
         c = self.c.value()
