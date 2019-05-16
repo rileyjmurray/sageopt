@@ -197,6 +197,13 @@ class DualSageCone(SetMembership):
         self._initialize_primary_variables()
         pass
 
+    def _initialize_primary_variables(self):
+        if self.m > 2:
+            for i in self.ech.U_I:
+                self.mu_vars[i] = Variable(shape=(self.n,), name=('mu[' + str(i) + ']_{' + self.name + '}'))
+                self._variables.append(self.mu_vars[i])
+        pass
+
     def variables(self):
         return self._variables
 
@@ -211,13 +218,6 @@ class DualSageCone(SetMembership):
                 curr_age = self._dual_age_cone_data(i)
                 cone_data += curr_age
         return cone_data
-
-    def _initialize_primary_variables(self):
-        if self.m > 2:
-            for i in self.ech.U_I:
-                self.mu_vars[i] = Variable(shape=(self.n,), name=('mu[' + str(i) + ']_{' + self.name + '}'))
-                self._variables.append(self.mu_vars[i])
-        pass
 
     def _dual_age_cone_data(self, i):
         cone_data = []
@@ -249,16 +249,16 @@ class DualSageCone(SetMembership):
         len_sel = np.count_nonzero(selector)
         expr1 = np.tile(v[i], len_sel).ravel()
         expr2 = v[selector].ravel()
-        lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1, 1))
+        lowerbounds = special_functions.rel_entr(expr1, expr2)
         mat = -(self.alpha[selector, :] - self.alpha[i, :])
-        vec = self.mu_vars[i].value().reshape((-1, 1))
+        vec = self.mu_vars[i].value()
         # compute rough violation for this dual AGE cone
         residual = mat @ vec - lowerbounds
         residual[residual >= 0] = 0
         curr_viol = np.linalg.norm(residual, ord=norm_ord)
         # as applicable, solve an optimization problem to compute the violation.
         if curr_viol > 0 and not rough:
-            temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
+            temp_var = Variable(shape=(mat.shape[1],), name='temp_var')
             prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
             status, value = prob.solve(verbose=False)
             clear_variable_indices()

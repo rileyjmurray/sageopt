@@ -1,7 +1,9 @@
 import numpy as np
 from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
 from sageopt.coniclifts.cones import Cone
-from sageopt.coniclifts.base import Expression, ScalarVariable
+from sageopt.coniclifts.base import Expression, ScalarVariable, Variable
+from sageopt.coniclifts.operators.norms import vector2norm
+from sageopt.coniclifts.problems.problem import Problem
 
 
 class PrimalProductCone(SetMembership):
@@ -42,6 +44,22 @@ class PrimalProductCone(SetMembership):
                 A_cols += [atom_id for (atom_id, _) in col_idx_to_coeff]
                 A_vals += [c for (_, c) in col_idx_to_coeff]
         return [(A_vals, np.array(A_rows), A_cols, b, self.K, [])]
+
+    @staticmethod
+    def project(item, K):
+        from sageopt.coniclifts import MIN as CL_MIN, clear_variable_indices
+        item = Expression(item).ravel()
+        x = Variable(shape=(item.size,))
+        t = Variable(shape=(1,))
+        cons = [vector2norm(item - x) <= t, PrimalProductCone(x, K)]
+        prob = Problem(CL_MIN, t, cons)
+        prob.solve(verbose=False)
+        clear_variable_indices()
+        return prob.value
+
+    def __contains__(self, item, tol=1e-7):
+        residual = PrimalProductCone.project(item, self.K)
+        return residual < tol
 
 
 class DualProductCone(SetMembership):
@@ -106,3 +124,19 @@ class DualProductCone(SetMembership):
             return [(A_vals, np.array(A_rows), A_cols, b, cur_K, [])]
         else:
             return [([], np.zeros(shape=(0,), dtype=int), [], np.zeros(shape=(0,)), [], [])]
+
+    @staticmethod
+    def project(item, K):
+        from sageopt.coniclifts import MIN as CL_MIN, clear_variable_indices
+        item = Expression(item).ravel()
+        x = Variable(shape=(item.size,))
+        t = Variable(shape=(1,))
+        cons = [vector2norm(item - x) <= t, DualProductCone(x, K)]
+        prob = Problem(CL_MIN, t, cons)
+        prob.solve(verbose=False)
+        clear_variable_indices()
+        return prob.value
+
+    def __contains__(self, item, tol=1e-7):
+        residual = DualProductCone.project(item, self.K)
+        return residual < tol

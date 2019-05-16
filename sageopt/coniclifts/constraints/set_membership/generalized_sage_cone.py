@@ -5,9 +5,11 @@ from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.operators import affine as aff
 from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementwise_relent
 from sageopt.coniclifts.operators.precompiled import affine as compiled_aff
+from sageopt.coniclifts.problems.problem import Problem
 import numpy as np
 import warnings
 from scipy.sparse import issparse
+import scipy.special as special_functions
 
 _ALLOWED_CONES_ = {'+', 'S', 'P', 'e', '0'}
 
@@ -123,6 +125,28 @@ class PrimalGenSageCone(SetMembership):
         A_vals, A_rows, A_cols, b, cur_K, sep_K = conic_data[0]
         return A_vals, A_rows, A_cols, b, cur_K, sep_K
 
+    def _age_violation(self, i, norm_ord, c_i, lambda_i):
+        # This is "rough" only.
+        lambda_viol = DualProductCone.project(lambda_i, self.K)
+        if np.any(self.ech.expcovers[i]):
+            idx_set = self.ech.expcovers[i]
+            x_i = self.nu_vars[i].value()
+            x_i[x_i < 0] = 0
+            y_i = np.exp(1) * c_i[idx_set]
+            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i]  + self.b @ lambda_i # <= 0
+            relent_viol = abs(max(relent_res, 0))
+            eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - self.A.T @ lambda_i  # == 0
+            eq_res = eq_res.reshape((-1,))
+            eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
+            total_viol = relent_viol + eq_viol + lambda_viol
+            return total_viol
+        else:
+            c_i = float(self.c_vars[i].value())
+            residual = c_i - self.b @ lambda_i  # >= 0
+            relent_viol = abs(min(0, residual))
+            total_viol = relent_viol + lambda_viol
+            return total_viol
+
     def _age_vectors_sum_to_c(self):
         nonconst_locs = np.ones(self.m, dtype=bool)
         nonconst_locs[self.ech.N_I] = False
@@ -175,6 +199,43 @@ class PrimalGenSageCone(SetMembership):
             cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
             return cone_data
 
+    def violation(self, norm_ord=np.inf, rough=False):
+        c = self.c.value()
+        if self.m > 2:
+            if not rough and c in self:
+                return 0
+            # compute violation for "AGE vectors sum to c"
+            #   Although, we can use the fact that the SAGE cone contains R^m_++.
+            #   and so only compute violation for "AGE vectors sum to <= c"
+            age_vectors = {i: v.value() for i, v in self.age_vectors.items()}
+            lambda_vectors = {i: v.value() for i, v in self.lambda_vars.items()}
+            sum_age_vectors = sum(age_vectors.values())
+            residual = c - sum_age_vectors  # want >= 0
+            residual[residual < 0] = 0
+            sum_to_c_viol = np.linalg.norm(residual, ord=norm_ord)
+            # compute violations for each AGE cone
+            age_viols = np.zeros(shape=(len(self.ech.U_I,)))
+            for idx, i in enumerate(self.ech.U_I):
+                age_viols[idx] = self._age_violation(i, norm_ord, age_vectors[i], lambda_vectors[i])
+            # add the max "AGE violation" to the violation for "AGE vectors sum to c".
+            total_viol = sum_to_c_viol + np.max(age_viols)
+            return total_viol
+        else:
+            residual = c.reshape((-1,))  # >= 0
+            residual[residual >= 0] = 0
+            return np.linalg.norm(c, ord=norm_ord)
+        pass
+
+    def __contains__(self, item):
+        from sageopt.coniclifts import clear_variable_indices, MIN as CL_MIN, SOLVED as CL_SOLVED
+        item = Expression(item).ravel()
+        name = self.name + ' check membership'
+        con = [PrimalGenSageCone(item, self.lifted_alpha, self.A, self.b, self.K, name, self.ech)]
+        prob = Problem(CL_MIN, Expression([0]), con)
+        prob.solve(verbose=False)
+        clear_variable_indices()
+        return prob.status == CL_SOLVED and abs(prob.value) < 1e-7
+
 
 class DualGenSageCone(SetMembership):
 
@@ -211,27 +272,6 @@ class DualGenSageCone(SetMembership):
             warnings.warn('A generalized SAGE dual cone in 2 dimensions is being replaced by R^2_+.')
         pass
 
-    def variables(self):
-        return self._variables
-
-    def conic_form(self):
-        if self.m > 2:
-            nontrivial_I = list(set(self.ech.U_I + self.ech.P_I))
-            con = self.v[nontrivial_I] >= 0
-            con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
-            for i in self.ech.U_I:
-                curr_age = self._c_age_i_star(i)
-                cone_data += curr_age
-            return cone_data
-        else:
-            con = self.v >= 0
-            con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
-            return cone_data
-
     def _initialize_primary_variables(self):
         for i in self.ech.U_I:
             var_name = 'mu[' + str(i) + ']_{' + self.name + '}'
@@ -240,7 +280,7 @@ class DualGenSageCone(SetMembership):
             self.mu_vars[i] = self.lifted_mu_vars[i][:self.n]
         pass
 
-    def _c_age_i_star(self, i):
+    def _dual_age_cone_data(self, i):
         cone_data = []
         selector = self.ech.expcovers[i]
         len_sel = np.count_nonzero(selector)
@@ -276,6 +316,67 @@ class DualGenSageCone(SetMembership):
         cur_K = [Cone(co.type, co.len) for co in self.K]
         cone_data.append((A_vals, A_rows, A_cols, b, cur_K, []))
         return cone_data
+
+    def _dual_age_cone_violation(self, i, norm_ord, rough, v):
+        from sageopt.coniclifts import clear_variable_indices, MIN as CL_MIN, SOLVED as CL_SOLVED
+        selector = self.ech.expcovers[i]
+        len_sel = np.count_nonzero(selector)
+        if len_sel > 0:
+            expr1 = np.tile(v[i], len_sel).ravel()
+            expr2 = v[selector].ravel()
+            lowerbounds = special_functions.rel_entr(expr1, expr2)
+            mat = -(self.lifted_alpha[selector, :] - self.lifted_alpha[i, :])
+            mu_i = self.lifted_mu_vars[i].value()
+            # compute rough violation for this dual AGE cone
+            residual = mat @ mu_i - lowerbounds
+            residual[residual >= 0] = 0
+            relent_viol = np.linalg.norm(residual, ord=norm_ord)
+            AbK_val = self.A @ mu_i + v[i] * self.b
+            AbK_viol = PrimalProductCone.project(AbK_val, self.K)
+            curr_viol = relent_viol + AbK_viol
+            # as applicable, solve an optimization problem to compute the violation.
+            if curr_viol > 0 and not rough:
+                temp_var = Variable(shape=(mat.shape[1],), name='temp_var')
+                cons = [mat @ temp_var >= lowerbounds,
+                        PrimalProductCone(self.A @ temp_var + v[i] * self.b, self.K)]
+                prob = Problem(CL_MIN, Expression([0]), cons)
+                status, value = prob.solve(verbose=False)
+                clear_variable_indices()
+                if status == CL_SOLVED and abs(value) < 1e-7:
+                    curr_viol = 0
+            return curr_viol
+        else:
+            return 0
+
+    def variables(self):
+        return self._variables
+
+    def conic_form(self):
+        if self.m > 2:
+            nontrivial_I = list(set(self.ech.U_I + self.ech.P_I))
+            con = self.v[nontrivial_I] >= 0
+            con.epigraph_checked = True
+            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
+            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
+            for i in self.ech.U_I:
+                curr_age = self._dual_age_cone_data(i)
+                cone_data += curr_age
+            return cone_data
+        else:
+            con = self.v >= 0
+            con.epigraph_checked = True
+            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
+            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
+            return cone_data
+
+    def violation(self, norm_ord=np.inf, rough=False):
+        v = self.v.value()
+        viols = []
+        for i in self.ech.U_I:
+            curr_viol = self._dual_age_cone_violation(i, norm_ord, rough, v)
+            viols.append(curr_viol)
+        viol = max(viols)
+        return viol
 
 
 class ExpCoverHelper(object):
