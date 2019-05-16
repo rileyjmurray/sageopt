@@ -342,7 +342,7 @@ def generalized_sage_poly_data(f, gts, eqs):
     gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]
     # Fall back on generalized SAGE data implementation for signomials
     dummy_f = Signomial({(0,) * f.n: 1})
-    logAbK = sage_sigs.generalized_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps)
+    logAbK = sage_sigs.conditional_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps)
     return logAbK
 
 

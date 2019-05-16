@@ -26,7 +26,7 @@ def primal_sage_cone(sig, name, AbK):
         con = cl.PrimalSageCone(sig.c, sig.alpha, name)
     else:
         A, b, K = AbK
-        con = cl.PrimalGenSageCone(sig.c, sig.alpha, A, b, K, name)
+        con = cl.PrimalCondSageCone(sig.c, sig.alpha, A, b, K, name)
     return con
 
 
@@ -35,7 +35,7 @@ def relative_dual_sage_cone(primal_sig, dual_var, name, AbK):
         con = cl.DualSageCone(dual_var, primal_sig.alpha, name, primal_sig.c)
     else:
         A, b, K = AbK
-        con = cl.DualGenSageCone(dual_var, primal_sig.alpha, A, b, K, name, primal_sig.c)
+        con = cl.DualCondSageCone(dual_var, primal_sig.alpha, A, b, K, name, primal_sig.c)
     return con
 
 
@@ -383,7 +383,7 @@ def make_lagrangian(f, gts, eqs, p, q):
     return L, ineq_dual_sigs, eq_dual_sigs, gamma
 
 
-def generalized_sage_data(f, gts, eqs):
+def conditional_sage_data(f, gts, eqs):
     # noinspection SpellCheckingInspection
     """
     :param f: objective signomial
@@ -451,7 +451,7 @@ def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_
     mus0 = _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol)
     mus1 = _dual_age_cone_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol)
     mus = mus0 + mus1
-    if isinstance(con, cl.DualGenSageCone):
+    if isinstance(con, cl.DualCondSageCone):
         A, b, K = con.A, con.b, con.K
         A = np.asarray(A)
         mus = [mu for mu in mus if _satisfies_AbK_constraints(A, b, K, mu, ineq_tol)]
@@ -492,7 +492,7 @@ def _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
     modulator = prob.associated_data['modulator']
     M = sym_corr.moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
     v_reduced = M @ v
-    if isinstance(con, cl.DualGenSageCone):
+    if isinstance(con, cl.DualCondSageCone):
         A, b, K = con.A, con.b, con.K
         A = np.asarray(A)
         # Now solve min{ || np.log(v_reduced) - alpha @ x || : A @ x + b in K }

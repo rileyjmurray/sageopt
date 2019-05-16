@@ -24,7 +24,7 @@ def check_cones(K):
         return newK
 
 
-class PrimalGenSageCone(SetMembership):
+class PrimalCondSageCone(SetMembership):
 
     def __init__(self, c, alpha, A, b, K, name, expcovers=None):
         self.name = name
@@ -230,14 +230,14 @@ class PrimalGenSageCone(SetMembership):
         from sageopt.coniclifts import clear_variable_indices, MIN as CL_MIN, SOLVED as CL_SOLVED
         item = Expression(item).ravel()
         name = self.name + ' check membership'
-        con = [PrimalGenSageCone(item, self.lifted_alpha, self.A, self.b, self.K, name, self.ech)]
+        con = [PrimalCondSageCone(item, self.lifted_alpha, self.A, self.b, self.K, name, self.ech)]
         prob = Problem(CL_MIN, Expression([0]), con)
         prob.solve(verbose=False)
         clear_variable_indices()
         return prob.status == CL_SOLVED and abs(prob.value) < 1e-7
 
 
-class DualGenSageCone(SetMembership):
+class DualCondSageCone(SetMembership):
 
     def __init__(self, v, alpha, A, b, K, name, c=None, expcovers=None):
         """

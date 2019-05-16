@@ -306,7 +306,7 @@ class TestSAGERelaxations(unittest.TestCase):
         res01, _ = constrained_primal_dual_vals(f, gts, [], p=0, q=1, ell=0, AbK=None)
         assert abs(res01[0] - res01[1]) < 1e-5
 
-    def test_generalized_constrained_sage_1(self):
+    def test_conditional_constrained_sage_1(self):
         # Background
         #
         #       This is Problem 1 from a 2014 paper by Xue-Ping Hou, Pei-Ping Shen, and Yong-Qiang Chen.
@@ -332,7 +332,7 @@ class TestSAGERelaxations(unittest.TestCase):
                 15 - y[2], y[2] - 8,
                 1 - y[3], y[3] - 0.01]
         eqs = []
-        AbK = sage_sigs.generalized_sage_data(f, gts, eqs)
+        AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
         p, q, ell = 0, 1, 0
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK)
         assert abs(vals[0] - vals[1]) < 1e-5
@@ -340,7 +340,7 @@ class TestSAGERelaxations(unittest.TestCase):
         _, gaps = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
         assert np.min(gaps) < 1e-8
 
-    def test_generalized_constrained_sage_2(self):
+    def test_conditional_constrained_sage_2(self):
         # Background
         #
         #       This is Problem 4 from a 2005 paper by Yanjun Wang and Zhian Liang.
@@ -362,7 +362,7 @@ class TestSAGERelaxations(unittest.TestCase):
                    5 - y[0],   y[0] - 0.1,
                    450 - y[1], y[1] - 380]
             eqs = []
-            AbK = sage_sigs.generalized_sage_data(f, gts, eqs)
+            AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
             p, q, ell = 0, 2, 0
             vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
             assert abs(vals[0] - vals[1]) < 1e-1
@@ -374,7 +374,7 @@ class TestSAGERelaxations(unittest.TestCase):
             msg += 'Skipping a generalized SAGE test with (p, q, ell) = (0, 2, 0).\n\n'
             warnings.warn(msg)
 
-    def test_generalized_constrained_sage_3(self):
+    def test_conditional_constrained_sage_3(self):
         # Background
         #
         #       This is a modification of Problem 10 from the 1978 paper by M. Rijckaert and X. Martens.
@@ -404,7 +404,7 @@ class TestSAGERelaxations(unittest.TestCase):
                    1e2 - x[0], 1e2 - x[1], 1e2 - x[2],
                    x[0] - 1, x[1] - 1, x[2] - 1]
             eqs = []
-            AbK = sage_sigs.generalized_sage_data(f, gts, eqs)
+            AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
             p, q, ell = 0, 1, 1
             vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
             assert abs(vals[0] - vals[1]) < 1e-4
@@ -413,10 +413,10 @@ class TestSAGERelaxations(unittest.TestCase):
             assert np.min(gaps) / abs(dual.value) < 0.007
         else:
             msg = '\n MOSEK is not installed, and ECOS takes a *** very *** long time to solve this problem. \n'
-            msg += 'Skipping a generalized SAGE test with (p, q, ell) = (0, 1, 1).\n\n'
+            msg += 'Skipping a conditional SAGE test with (p, q, ell) = (0, 1, 1).\n\n'
             warnings.warn(msg)
 
-    def test_generalized_constrained_sage_4(self):
+    def test_conditional_constrained_sage_4(self):
         # Background
         #
         #       This is a signomial formulation of a nonnegative polynomial optimization problem.
@@ -450,7 +450,7 @@ class TestSAGERelaxations(unittest.TestCase):
             g5 = 3 - x[2]
             gts = [g1, g2, g3, g4, g5]
             eqs = []
-            AbK = sage_sigs.generalized_sage_data(f, gts, eqs)
+            AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
             p, q, ell = 0, 1, 2
             res, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
             assert abs(res[0] - res[1]) < 1e-4
@@ -460,7 +460,7 @@ class TestSAGERelaxations(unittest.TestCase):
             assert np.all([g(res) >= 0 for g in gts])
         else:
             msg = '\n MOSEK is not installed, and ECOS cannot solve this problem. \n'
-            msg += 'Skipping a generalized SAGE test with (p, q, ell) = (0, 1, 2).\n\n'
+            msg += 'Skipping a conditional SAGE test with (p, q, ell) = (0, 1, 2).\n\n'
             warnings.warn(msg)
 
 

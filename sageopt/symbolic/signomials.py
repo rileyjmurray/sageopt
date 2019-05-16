@@ -97,7 +97,8 @@ class Signomial(object):
             # noinspection PyArgumentList
             self.alpha_c = defaultdict(int, alpha_maybe_c)
         else:
-            alpha = alpha_maybe_c.tolist()
+            alpha = np.round(alpha_maybe_c, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
+            alpha = alpha.tolist()
             if len(alpha) != c.size:
                 raise RuntimeError('alpha and c specify different numbers of terms')
             self.alpha_c = defaultdict(int)
