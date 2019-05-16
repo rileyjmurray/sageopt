@@ -487,7 +487,6 @@ def _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
     else:
         alpha = con.alpha
     dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
-    dummy_modulated_lagrangian.alpha = alpha  # ensure that rows weren't permuted.
     lagrangian = prob.associated_data['lagrangian']
     modulator = prob.associated_data['modulator']
     M = sym_corr.moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)

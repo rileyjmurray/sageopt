@@ -9,17 +9,16 @@ __EXPONENT_VECTOR_TOLERANCE__ = 10**-(__EXPONENT_VECTOR_DECIMAL_POINTS__ + 1)
 
 def relative_coeff_vector(s, reference_alpha):
     c = np.zeros(reference_alpha.shape[0])
-    corr = row_correspondence(s.alpha, reference_alpha)
-    c[corr] = s.c
+    common, corr = row_correspondence(s.alpha, reference_alpha)
+    c[corr] = s.c[common]
     return c
 
 
 def row_correspondence(alpha1, alpha2):
     """
-    This function assumes that the rows of alpha1 are a subset of the rows of alpha2.
-    It returns a list "alpha1_to_alpha2" such that
+    It returns lists "common" and "alpha1_to_alpha2" such that
 
-        alpha1 == alpha2[alpha1_to_alpha2, :].
+        alpha1[common, :] == alpha2[alpha1_to_alpha2, :].
 
     This is useful because it allows us to speak of the "i-th" exponent in a meaningful
     way when dealing with Signomials, without having to adopt a canonical ordering for
@@ -29,14 +28,17 @@ def row_correspondence(alpha1, alpha2):
     :param alpha2: a numpy n-d array.
     :return: a list "alpha1_to_alpha2" such that alpha1 == alpha2[alpha1_to_alpha2, :].
     """
+    common = []
     alpha1_to_alpha2 = []
-    for row in alpha1:
+    for i, row in enumerate(alpha1):
         # noinspection PyTypeChecker
         shifted = alpha2 - row
         locs = np.where(np.all(np.abs(shifted) < __EXPONENT_VECTOR_TOLERANCE__, axis=1))
-        loc = locs[0][0]
-        alpha1_to_alpha2.append(loc)
-    return alpha1_to_alpha2
+        if len(locs[0]) > 0:
+            common.append(i)
+            loc = locs[0][0]
+            alpha1_to_alpha2.append(loc)
+    return common, alpha1_to_alpha2
 
 
 def moment_reduction_array(s_h, h, L):
@@ -56,13 +58,14 @@ def moment_reduction_array(s_h, h, L):
         has been incorporated into a Lagrangian "L", with an associated Lagrange muliplier "s_h".
 
         Let w(x) = s_h(x) * h(x), and let F be the nonlinear map (consisting entrywise of signomials,
-        or polynomials) satisfying w(x) = s_h.c.T @ F(x).
+        or polynomials) satisfying w(x) = s_h.c @ F(x). Such a map certainly exists, although its
+        entries may include complicated functions with multiple terms (i.e. not just monomials).
 
         Let G be either G(x) = x^L.alpha (if L is a Polynomial) or G(x) = exp(L.alpha @ x)
-        (if L is a Signomial), so that L(x) = L.c.T @ G(x).
+        (if L is a Signomial), so that L(x) = L.c @ G(x).
 
         Since w.alpha is a subset of L.alpha, there exists a matrix C so that F(x) == C @ G(x),
-        and in turn so that w(x) == s_h.c.T @ (C @ G(x)).
+        and in turn so that w(x) == s_h.c @ (C @ G(x)).
 
         This function returns that matrix C, for use in constructing dual SAGE relaxations.
 
@@ -88,14 +91,18 @@ def moment_reduction_array(s_h, h, L):
         constructor = Signomial
     else:
         raise RuntimeError('Unknown argument.')
-    equivalent_L = s_h * h
-    relevant_rows = {tuple(row.tolist()) for row in equivalent_L.alpha}
+    minimal_L = s_h * h
+    for row in minimal_L.alpha_c:
+        if row not in L.alpha_c:
+            msg0 = 'The product s_h * h contains an exponent vector \n'
+            msg1 = '\t ' + str(row) + '\n'
+            msg2 = 'that is not present among the exponent vectors of "L".'
+            raise RuntimeError(msg0 + msg1 + msg2)
     C_rows = []
-    for row in s_h.alpha:
-        temp_func = constructor({tuple(row.tolist()): 1}) * h
-        temp_func_is_relevant = np.all([tuple(r.tolist()) in relevant_rows for r in temp_func.alpha])
-        if not temp_func_is_relevant:
-            continue
-        C_rows.append(relative_coeff_vector(temp_func, L.alpha))
+    for alpha_i in s_h.alpha_c:
+        temp_func = constructor({alpha_i: 1}) * h
+        c_row = relative_coeff_vector(temp_func, L.alpha)
+        C_rows.append(c_row)
     C = np.vstack(C_rows)
+    # Might it be useful to return the matrix of "alpha_i" so that the meaning of C can be understood?
     return C
