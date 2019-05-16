@@ -82,6 +82,23 @@ class PrimalSageCone(SetMembership):
         K = [Cone('0', matrix.shape[0])]
         return A_vals, A_rows, A_cols, b, K, []
 
+    def _age_violation(self, i, norm_ord, c_i):
+        if np.any(self.ech.expcovers[i]):
+            idx_set = self.ech.expcovers[i]
+            x_i = self.nu_vars[i].value()
+            x_i[x_i < 0] = 0
+            y_i = np.exp(1) * c_i[idx_set]
+            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i]  # <= 0
+            relent_viol = abs(max(relent_res, 0))
+            eq_res = (self.alpha[idx_set, :] - self.alpha[i, :]).T @ x_i  # == 0
+            eq_res = eq_res.reshape((-1,))
+            eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
+            total_viol = relent_viol + eq_viol
+            return total_viol
+        else:
+            c_i = float(self.c_vars[i].value())  # >= 0
+            return abs(min(0, c_i))
+
     def _age_vectors_sum_to_c(self):
         nonconst_locs = np.ones(self.m, dtype=bool)
         nonconst_locs[self.ech.N_I] = False
@@ -125,14 +142,15 @@ class PrimalSageCone(SetMembership):
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
             #   and so only compute violation for "AGE vectors sum to <= c"
-            sum_age_vectors = sum(v.value() for v in self.age_vectors.values())
+            age_vectors = {i: v.value() for i, v in self.age_vectors.items()}
+            sum_age_vectors = sum(age_vectors.values())
             residual = c - sum_age_vectors  # want >= 0
             residual[residual < 0] = 0
             sum_to_c_viol = np.linalg.norm(residual, ord=norm_ord)
             # compute violations for each AGE cone
             age_viols = np.zeros(shape=(len(self.ech.U_I,)))
             for idx, i in enumerate(self.ech.U_I):
-                age_viols[idx] = self._age_violation(i, norm_ord)
+                age_viols[idx] = self._age_violation(i, norm_ord, age_vectors[i])
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
             total_viol = sum_to_c_viol + np.max(age_viols)
             return total_viol
@@ -141,24 +159,6 @@ class PrimalSageCone(SetMembership):
             residual[residual >= 0] = 0
             return np.linalg.norm(c, ord=norm_ord)
         pass
-
-    def _age_violation(self, i, norm_ord):
-        if np.any(self.ech.expcovers[i]):
-            c_i = self.age_vectors[i].value()
-            idx_set = self.ech.expcovers[i]
-            x_i = self.nu_vars[i].value()
-            x_i[x_i < 0] = 0
-            y_i = np.exp(1) * c_i[idx_set]
-            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i]  # <= 0
-            relent_viol = abs(max(relent_res, 0))
-            eq_res = (self.alpha[idx_set, :] - self.alpha[i, :]).T @ x_i  # == 0
-            eq_res = eq_res.reshape((-1,))
-            eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
-            total_viol = relent_viol + eq_viol
-            return total_viol
-        else:
-            c_i = float(self.c_vars[i].value())  # >= 0
-            return abs(min(0, c_i))
 
     def __contains__(self, item):
         item = Expression(item)
@@ -208,7 +208,7 @@ class DualSageCone(SetMembership):
         cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
         if self.m > 2:
             for i in self.ech.U_I:
-                curr_age = self._c_age_i_star(i)
+                curr_age = self._dual_age_cone_data(i)
                 cone_data += curr_age
         return cone_data
 
@@ -219,7 +219,7 @@ class DualSageCone(SetMembership):
                 self._variables.append(self.mu_vars[i])
         pass
 
-    def _c_age_i_star(self, i):
+    def _dual_age_cone_data(self, i):
         cone_data = []
         selector = self.ech.expcovers[i]
         len_sel = np.count_nonzero(selector)
@@ -243,28 +243,34 @@ class DualSageCone(SetMembership):
         cone_data.append((A_vals, A_rows, A_cols, b, K, []))
         return cone_data
 
-    def violation(self, norm_ord=np.inf, rough=False):
+    def _dual_age_cone_violation(self, i, norm_ord, rough, v):
         from sageopt.coniclifts import clear_variable_indices
+        selector = self.ech.expcovers[i]
+        len_sel = np.count_nonzero(selector)
+        expr1 = np.tile(v[i], len_sel).ravel()
+        expr2 = v[selector].ravel()
+        lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1, 1))
+        mat = -(self.alpha[selector, :] - self.alpha[i, :])
+        vec = self.mu_vars[i].value().reshape((-1, 1))
+        # compute rough violation for this dual AGE cone
+        residual = mat @ vec - lowerbounds
+        residual[residual >= 0] = 0
+        curr_viol = np.linalg.norm(residual, ord=norm_ord)
+        # as applicable, solve an optimization problem to compute the violation.
+        if curr_viol > 0 and not rough:
+            temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
+            prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
+            status, value = prob.solve(verbose=False)
+            clear_variable_indices()
+            if status == CL_SOLVED and abs(value) < 1e-7:
+                curr_viol = 0
+        return curr_viol
+
+    def violation(self, norm_ord=np.inf, rough=False):
         v = self.v.value()
         viols = []
         for i in self.ech.U_I:
-            selector = self.ech.expcovers[i]
-            len_sel = np.count_nonzero(selector)
-            expr1 = np.tile(v[i], len_sel).ravel()
-            expr2 = v[selector].ravel()
-            lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1, 1))
-            mat = self.alpha[selector, :] - self.alpha[i, :]
-            vec = self.mu_vars[i].value().reshape((-1, 1))
-            residual = mat @ vec - lowerbounds
-            residual[residual >= 0] = 0
-            curr_viol = np.linalg.norm(residual, ord=norm_ord)
-            if curr_viol > 0 and not rough:
-                temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
-                prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
-                status, value = prob.solve(verbose=False)
-                clear_variable_indices()
-                if status == CL_SOLVED and abs(value) < 1e-7:
-                    curr_viol = 0
+            curr_viol = self._dual_age_cone_violation(i, norm_ord, rough, v)
             viols.append(curr_viol)
         viol = max(viols)
         return viol
@@ -279,7 +285,7 @@ class DualSageCone(SetMembership):
             expr1 = np.tile(item[i], len_sel)
             expr2 = item[selector]
             lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1, 1))
-            mat = self.alpha[selector, :] - self.alpha[i, :]
+            mat = -(self.alpha[selector, :] - self.alpha[i, :])
             temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
             prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
             status, value = prob.solve(verbose=False)
