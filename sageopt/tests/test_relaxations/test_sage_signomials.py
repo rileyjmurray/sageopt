@@ -416,53 +416,6 @@ class TestSAGERelaxations(unittest.TestCase):
             msg += 'Skipping a conditional SAGE test with (p, q, ell) = (0, 1, 1).\n\n'
             warnings.warn(msg)
 
-    def test_conditional_constrained_sage_4(self):
-        # Background
-        #
-        #       This is a signomial formulation of a nonnegative polynomial optimization problem.
-        #
-        #       The problem can be found on page 16 of the gloptipoly3 manual
-        #                   http://homepages.laas.fr/henrion/papers/gloptipoly3.pdf
-        #       among other places. The optimal objective is -4.
-        #
-        # Tests - (p, q, ell) = (0, 1, 2)
-        #
-        #       (1) Check for similar primal / dual objectives.
-        #
-        #       (2) Recover a strictly feasible solution, with objective < -3.9999.
-        #
-        if cl.Mosek.is_installed():
-            x = standard_sig_monomials(3)
-            f = -2 * x[0] + x[1] - x[2]
-            g1 = Signomial({(0, 0, 0): 24,
-                            (1, 0, 0): -20,
-                            (0, 1, 0): 9,
-                            (0, 0, 1): -13,
-                            (2, 0, 0): 4,
-                            (1, 1, 0): -4,
-                            (1, 0, 1): 4,
-                            (0, 2, 0): 2,
-                            (0, 1, 1): -2,
-                            (0, 0, 2): 2})
-            g2 = 4 - x[0] - x[1] - x[2]
-            g3 = 6 - 3 * x[1] - x[2]
-            g4 = 2 - x[0]
-            g5 = 3 - x[2]
-            gts = [g1, g2, g3, g4, g5]
-            eqs = []
-            AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
-            p, q, ell = 0, 1, 2
-            res, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
-            assert abs(res[0] - res[1]) < 1e-4
-            solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-            res = fmin_cobyla(f, solns[:, 0], [g - 1e-14 for g in gts], rhoend=1e-7)
-            assert f(res) < -3.9999
-            assert np.all([g(res) >= 0 for g in gts])
-        else:
-            msg = '\n MOSEK is not installed, and ECOS cannot solve this problem. \n'
-            msg += 'Skipping a conditional SAGE test with (p, q, ell) = (0, 1, 2).\n\n'
-            warnings.warn(msg)
-
 
 if __name__ == '__main__':
     unittest.main()
