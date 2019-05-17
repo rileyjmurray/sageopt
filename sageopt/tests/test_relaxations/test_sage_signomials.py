@@ -74,8 +74,8 @@ class TestSAGERelaxations(unittest.TestCase):
         assert abs(pd0[0] - expected[0]) < 1e-4 and abs(pd0[1] - expected[0]) < 1e-4
         pd1, dual = primal_dual_vals(s, 1)
         assert abs(pd1[0] - expected[1]) < 1e-4 and abs(pd1[1] - expected[1]) < 1e-4
-        optsols, gaps = sage_sigs.dual_solution_recovery(dual)
-        assert np.min(gaps) < 1e-6
+        optsols = sage_sigs.dual_solution_recovery(dual)
+        assert (s(optsols[:, 0]) - dual.value) < 1e-6
 
     def test_unconstrained_sage_2(self):
         # Background
@@ -104,8 +104,8 @@ class TestSAGERelaxations(unittest.TestCase):
         assert pd0[0] == expected[0] and pd0[1] == expected[0]
         pd1, dual = primal_dual_vals(s, 1)
         assert abs(pd1[0] - expected[1]) < 1e-5 and abs(pd1[1] - expected[1]) < 1e-5
-        _, gaps = sage_sigs.dual_solution_recovery(dual)
-        assert np.min(gaps) < 1e-6
+        solns = sage_sigs.dual_solution_recovery(dual)
+        assert s(solns[:, 0]) < 1e-6 + dual.value
 
     def test_unconstrained_sage_3(self):
         # Background
@@ -159,8 +159,8 @@ class TestSAGERelaxations(unittest.TestCase):
             assert abs(pds[ell][1] == expected[ell]) < 1e-5
         dual = sage_sigs.sage_dual(s, ell=3)
         dual.solve(solver='ECOS', verbose=False)
-        optsols, gaps = sage_sigs.dual_solution_recovery(dual)
-        assert np.min(gaps) < 1e-6
+        optsols = sage_sigs.dual_solution_recovery(dual)
+        assert s(optsols[:, 0]) < 1e-6 + dual.value
 
     def test_unconstrained_sage_5(self):
         # Background
@@ -270,8 +270,8 @@ class TestSAGERelaxations(unittest.TestCase):
         expected = -0.6147
         actual, dual = constrained_primal_dual_vals(f, gs, [], p=0, q=1, ell=0, AbK=None)
         assert abs(actual[0] - expected) < 1e-4 and abs(actual[1] - expected) < 1e-4
-        sols, gaps = sage_sigs.dual_solution_recovery(dual, ineq_tol=1e-7)
-        assert np.min(np.abs(gaps)) / abs(dual.value) < 1e-4
+        solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=1e-7)
+        assert (f(solns[:, 0]) - dual.value) / abs(dual.value) < 1e-4
 
     def test_constrained_sage_2(self):
         # Background
@@ -337,8 +337,8 @@ class TestSAGERelaxations(unittest.TestCase):
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK)
         assert abs(vals[0] - vals[1]) < 1e-5
         assert abs(vals[0] - 0.765082) < 1e-4
-        _, gaps = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-        assert np.min(gaps) < 1e-8
+        solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
+        assert f(solns[:, 0]) < 1e-8 + dual.value
 
     def test_conditional_constrained_sage_2(self):
         # Background
@@ -367,8 +367,8 @@ class TestSAGERelaxations(unittest.TestCase):
             vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
             assert abs(vals[0] - vals[1]) < 1e-1
             assert abs(vals[0] - 11.95) / vals[0] < 1e-2
-            _, gaps = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-            assert np.min(gaps) / dual.value < 1e-2
+            solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
+            assert (f(solns[:, 0]) - dual.value) / dual.value < 1e-2
         else:
             msg = '\n MOSEK is not installed, and ECOS cannot solve this problem. \n'
             msg += 'Skipping a generalized SAGE test with (p, q, ell) = (0, 2, 0).\n\n'
@@ -409,8 +409,8 @@ class TestSAGERelaxations(unittest.TestCase):
             vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
             assert abs(vals[0] - vals[1]) < 1e-4
             assert abs(vals[0] - (-83.3235)) < 1e-4
-            _, gaps = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-            assert np.min(gaps) / abs(dual.value) < 0.007
+            solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
+            assert (f(solns[:, 0]) - dual.value) / abs(dual.value) < 0.007
         else:
             msg = '\n MOSEK is not installed, and ECOS takes a *** very *** long time to solve this problem. \n'
             msg += 'Skipping a conditional SAGE test with (p, q, ell) = (0, 1, 1).\n\n'
@@ -454,7 +454,7 @@ class TestSAGERelaxations(unittest.TestCase):
             p, q, ell = 0, 1, 2
             res, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
             assert abs(res[0] - res[1]) < 1e-4
-            solns, _ = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
+            solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
             res = fmin_cobyla(f, solns[:, 0], [g - 1e-14 for g in gts], rhoend=1e-7)
             assert f(res) < -3.9999
             assert np.all([g(res) >= 0 for g in gts])

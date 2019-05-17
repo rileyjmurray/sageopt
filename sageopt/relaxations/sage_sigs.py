@@ -19,6 +19,7 @@ from sageopt import coniclifts as cl
 from sageopt.symbolic.signomials import Signomial, is_feasible
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
+from sageopt.relaxations.sig_solution_recovery import dual_solution_recovery
 
 
 def primal_sage_cone(sig, name, AbK):
@@ -433,104 +434,3 @@ def hierarchy_e_k(sigs, k):
     s = Signomial(dict([(a, 1.0) for a in alpha_tups]))
     s = s ** k
     return s.alpha
-
-
-def dual_solution_recovery(prob, diff_tol=1e-6, ineq_tol=1e-8, eq_tol=1e-6, exp_format=True):
-    con = prob.user_cons[0]
-    if not con.name == 'Lagrangian SAGE dual constraint':
-        raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
-    # Recover any constraints present in "prob"
-    gts = []
-    eqs = []
-    if 'gts' in prob.associated_data:
-        gts = prob.associated_data['gts']
-        eqs = prob.associated_data['eqs']
-    f = prob.associated_data['f']
-    # Search for feasible solutions
-    v = con.v.value()
-    mus0 = _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol)
-    mus1 = _dual_age_cone_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol)
-    mus = mus0 + mus1
-    if isinstance(con, cl.DualCondSageCone):
-        A, b, K = con.A, con.b, con.K
-        A = np.asarray(A)
-        mus = [mu for mu in mus if _satisfies_AbK_constraints(A, b, K, mu, ineq_tol)]
-    if len(mus) == 0:
-        return None
-    mus = np.hstack(mus)
-    # Find the best solution(s) among the ones remaining
-    obj_vals = f(mus)
-    good_sols = np.nonzero(obj_vals - np.min(obj_vals) <= diff_tol)[0]
-    good_mus = mus[:, good_sols]
-    if not exp_format:
-        good_mus = np.exp(good_mus)
-    gaps = f(good_mus) - prob.value
-    return good_mus, gaps
-
-
-def _dual_age_cone_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
-    mus = []
-    for i, mu_i in con.mu_vars.items():
-        val = mu_i.value()
-        val = val / v[i]
-        val = val.reshape((-1, 1))  # make "val" an unambiguous column vector
-        if is_feasible(val, gts, eqs, ineq_tol, eq_tol, exp_format=True):
-            mus.append(val)
-    return mus
-
-
-def _least_squares_solution_recovery(prob, con, v, gts, eqs, ineq_tol, eq_tol):
-    if np.any(np.isnan(v)):
-        return []
-    if not hasattr(con, 'alpha'):
-        alpha = con.lifted_alpha[:, :con.n]
-    else:
-        alpha = con.alpha
-    dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
-    lagrangian = prob.associated_data['lagrangian']
-    modulator = prob.associated_data['modulator']
-    M = sym_corr.moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
-    v_reduced = M @ v
-    if isinstance(con, cl.DualCondSageCone):
-        A, b, K = con.A, con.b, con.K
-        A = np.asarray(A)
-        # Now solve min{ || np.log(v_reduced) - alpha @ x || : A @ x + b in K }
-        x = cl.Variable(shape=(A.shape[1],))
-        t = cl.Variable(shape=(1,))
-        cons = [cl.vector2norm(np.log(v_reduced) - lagrangian.alpha @ x[:con.n]) <= t,
-                cl.PrimalProductCone(A @ x + b, K)]
-        prob = cl.Problem(cl.MIN, t, cons)
-        cl.clear_variable_indices()
-        res = prob.solve(verbose=False)
-        if res[0] == cl.SOLVED:
-            mu_ls = x.value()[:con.n].reshape((-1, 1))
-        else:
-            warnings.warn('Constrained least-squares solution recovery failed, and has been skipped.')
-            return []
-    else:
-        try:
-            mu_ls = np.linalg.lstsq(lagrangian.alpha, np.log(v_reduced), rcond=None)[0].reshape((-1, 1))
-        except np.linalg.linalg.LinAlgError:
-            warnings.warn('Ordinary least-squares solution recovery failed, and has been skipped.')
-            return []
-    if is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol, exp_format=True):
-        mus = [mu_ls]
-    else:
-        mus = []
-    return mus
-
-
-def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
-    if np.any(np.isnan(mu)):
-        return False
-    x = cl.Variable(shape=(A.shape[1],))
-    t = cl.Variable(shape=(1,))
-    mu_flat = mu.ravel()
-    cons = [cl.vector2norm(mu_flat - x[:mu.size]) <= t, cl.PrimalProductCone(A @ x + b, K)]
-    prob = cl.Problem(cl.MIN, t, cons)
-    cl.clear_variable_indices()
-    res = prob.solve(verbose=False)
-    if res[0] == cl.SOLVED and res[1] <= ineq_tol + 1e-8:
-        return True
-    else:
-        return False
