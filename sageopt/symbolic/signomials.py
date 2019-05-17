@@ -39,14 +39,6 @@ def standard_sig_monomials(n):
     return x
 
 
-def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8, exp_format=True):
-    if any([g(x, exp_format) < -ineq_tol for g in greater_than_zero]):
-        return False
-    if any([abs(g(x, exp_format)) > eq_tol for g in equal_zero]):
-        return False
-    return True
-
-
 class Signomial(object):
 
     def __init__(self, alpha_maybe_c, c=None):

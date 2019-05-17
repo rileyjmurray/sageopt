@@ -16,7 +16,7 @@
 import numpy as np
 import warnings
 from sageopt import coniclifts as cl
-from sageopt.symbolic.signomials import Signomial, is_feasible
+from sageopt.symbolic.signomials import Signomial
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
 from sageopt.relaxations.sig_solution_recovery import dual_solution_recovery

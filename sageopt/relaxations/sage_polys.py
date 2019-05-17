@@ -15,7 +15,7 @@
 """
 import numpy as np
 from sageopt import coniclifts as cl
-from sageopt.symbolic.polynomials import Polynomial, mod2linsolve, mod2rref
+from sageopt.symbolic.polynomials import Polynomial
 from sageopt.symbolic.signomials import Signomial
 from sageopt.relaxations import sage_sigs
 from sageopt.relaxations import constraint_generators as con_gen
@@ -228,7 +228,7 @@ def constrained_sage_poly_dual(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
     :return: The dual SAGE-(p, q, ell) relaxation for the given polynomial optimization problem.
     """
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
-    metadata = {'lagrangian': lagrangian}
+    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
         modulator = Polynomial(2 * alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
@@ -240,6 +240,7 @@ def constrained_sage_poly_dual(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
     # In primal form, the Lagrangian is constrained to be a SAGE polynomial.
     # Introduce a dual variable "v" for this constraint.
     v = cl.Variable(shape=(lagrangian.m, 1), name='v')
+    metadata['v_poly'] = v
     constraints = relative_dual_sage_poly_cone(lagrangian, v, 'Lagrangian', log_AbK)
     for s_g, g in ineq_lag_mults:
         # These generalized Lagrange multipliers "s_g" are SAGE polynomials.
@@ -353,28 +354,3 @@ def hierarchy_e_k(polys, k):
     s = s ** k
     return s.alpha
 
-
-def viable_sign_pattern(alpha, moments):
-    """
-    :param alpha: an m-by-n array of integers.
-    :param moments: a vector of length m.
-
-    :return: a length-n vector with entries from {-1, +1}. +1 means "nonnegative",
-    "-1" means "negative".
-
-    Different sign patterns can be obtained by applying simultaneous permutations to
-    the rows of alpha, and the entries of moments.
-    """
-    mneg = moments < 0
-    alpha = np.mod(alpha[mneg, :], 2).astype(int)
-    b = np.ones(shape=(np.count_nonzero(mneg),), dtype=int)
-    x = mod2linsolve(alpha, b)
-    if x is None:
-        _, lin_indep_row_idxs = mod2rref(alpha.T)
-        alpha = alpha[lin_indep_row_idxs, :]
-        b = b[lin_indep_row_idxs]
-        x = mod2linsolve(alpha, b)
-    y = x.copy()
-    y[x == 1] = -1  # these coordinates should be negative
-    y[x == 0] = 1  # these coordinates should be nonnegative
-    return y

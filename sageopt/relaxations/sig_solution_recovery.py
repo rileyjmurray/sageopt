@@ -1,9 +1,16 @@
 import sageopt.coniclifts as cl
-from sageopt.symbolic.signomials import Signomial, is_feasible, standard_sig_monomials
+from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 from sageopt.relaxations.symbolic_correspondences import moment_reduction_array
 import numpy as np
-import warnings
 from scipy.optimize import fmin_cobyla
+
+
+def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8, exp_format=True):
+    if any([g(x, exp_format) < -ineq_tol for g in greater_than_zero]):
+        return False
+    if any([abs(g(x, exp_format)) > eq_tol for g in equal_zero]):
+        return False
+    return True
 
 
 def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6):
@@ -100,7 +107,7 @@ def _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol):
     # check each candidate solution for feasibility (up to desired tolerances)
     # and return the result
     mus = []
-    if isinstance(con, cl.DualCondSageCone) and ineq_tol < 1e-5:
+    if isinstance(con, cl.DualCondSageCone) and min(ineq_tol, eq_tol) < 1e-5:
         # check for feasibility with respect to functional constraints, and solve an
         # optimization problem to check feasiblity with respect to conic constraints
         A, b, K = con.A, con.b, con.K
