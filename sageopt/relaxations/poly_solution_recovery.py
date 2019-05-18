@@ -17,14 +17,19 @@ def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8):
 
 def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False):
     # implemented only for constrained_sage_poly_dual (not yet implemented for sage_poly_dual).
+    gts, eqs = [], []
+    if 'gts' in prob.associated_data:
+        gts = prob.associated_data['gts']
+        eqs = prob.associated_data['eqs']
     con = prob.user_cons[0]
     if isinstance(con, cl.DualCondSageCone):
         alpha = con.lifted_alpha[:, :con.n]
     else:
         alpha = con.alpha
+    f = prob.associated_data['f']
     dummy_modulated_lagrangian = Polynomial(alpha, np.ones(shape=(alpha.shape[0],)))  # coefficients dont matter
     modulator = prob.associated_data['modulator']
-    lagrangian = prob.associated_data['lagrangian']
+    lagrangian = _make_dummy_lagrangian(f, gts, eqs)
     v = prob.associated_data['v_poly'].value()  # possible that v_sig and v are the same
     if np.any(np.isnan(v)):
         return []
@@ -33,10 +38,6 @@ def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hue
     alpha_reduced = lagrangian.alpha
     mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol)
     signs = all_consistent_sign_patterns(alpha_reduced, v_reduced, hueristic)
-    gts, eqs = [], []
-    if 'gts' in prob.associated_data:
-        gts = prob.associated_data['gts']
-        eqs = prob.associated_data['eqs']
     # Now we need to build the candidate solutions, and check them for feasibility.
     # Checking functional constraints is very cheap- this just requires evaluating
     # Signomial and Polynomial objects. Checking constraints from the conditional SAGE
@@ -72,12 +73,12 @@ def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hue
                     feasible_solutions.append(x)
     else:
         feasible_solutions = solutions
-    f = prob.associated_data['f']
     feasible_solutions.sort(key=lambda xi: f(xi))
     return feasible_solutions
 
 
 def variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol):
+    # This is essentially "Algorithm 3" in the conditional SAGE paper.
     v_sig = con.v.value()
     M_sig = np.eye(v_sig.size)
     mags0 = _dual_age_cone_magnitude_recovery(con, v_sig, M_sig)
@@ -169,8 +170,7 @@ def all_consistent_sign_patterns(alpha, moments, hueristic=False):
             y0[x0 == 1] = -1
             return [y0]
     elif alpha1 is None:
-        y0 = np.ones(n, )
-        y0[x0 == 1] = -1
+        y0 = np.ones(n,)
         return [y0]
     else:
         arref, p = mod2rref(alpha1)
@@ -351,3 +351,14 @@ def mod2linsolve(A, b):
             x[pc] = (b1[row] - np.dot(A1[row, (pc+1):], x[(pc+1):])) % 2
             row -= 1
         return x
+
+
+def _make_dummy_lagrangian(f, gts, eqs):
+    dummy_gamma = cl.Variable(shape=())
+    dummy_slacks = cl.Variable(shape=(len(gts),))
+    dummy_multipliers = cl.Variable(shape=(len(eqs)))
+    ineq_term = sum([gts[i] * dummy_slacks[i] for i in range(len(gts))])
+    eq_term = sum([eqs[i] * dummy_multipliers[i] for i in range(len(eqs))])
+    dummy_L = f - dummy_gamma - ineq_term - eq_term
+    cl.clear_variable_indices()
+    return dummy_L

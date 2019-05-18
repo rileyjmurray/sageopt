@@ -32,10 +32,11 @@ def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6):
     else:
         alpha = con.alpha
     dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
-    lagrangian = prob.associated_data['lagrangian']
+    lagrangian = _make_dummy_lagrangian(f, gts, eqs)
+    alpha_reduced = lagrangian.alpha
     modulator = prob.associated_data['modulator']
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
-    mus0 = _least_squares_solution_recovery(lagrangian, con, v, M, gts, eqs, ineq_tol, eq_tol)
+    mus0 = _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol)
     mus1 = _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol)
     mus = mus0 + mus1
     if len(mus) == 0:
@@ -47,15 +48,14 @@ def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6):
         return mus
 
 
-def _least_squares_solution_recovery(lagrangian, con, v, M, gts, eqs, ineq_tol, eq_tol):
+def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol):
     v_reduced = M @ v
     log_v_reduced = np.log(v_reduced)
-    alpha = lagrangian.alpha
     if isinstance(con, cl.DualCondSageCone):
-        mu_ls = _constrained_least_squares(con, alpha, log_v_reduced)
+        mu_ls = _constrained_least_squares(con, alpha_reduced, log_v_reduced)
     else:
         try:
-            mu_ls = np.linalg.lstsq(alpha, log_v_reduced, rcond=None)[0].reshape((-1, 1))
+            mu_ls = np.linalg.lstsq(alpha_reduced, log_v_reduced, rcond=None)[0].reshape((-1, 1))
         except np.linalg.linalg.LinAlgError:
             mu_ls = None
     if mu_ls is not None and is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol, exp_format=True):
@@ -139,3 +139,14 @@ def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
         return True
     else:
         return False
+
+
+def _make_dummy_lagrangian(f, gts, eqs):
+    dummy_gamma = cl.Variable(shape=())
+    dummy_slacks = cl.Variable(shape=(len(gts),))
+    dummy_multipliers = cl.Variable(shape=(len(eqs)))
+    ineq_term = sum([gts[i] * dummy_slacks[i] for i in range(len(gts))])
+    eq_term = sum([eqs[i] * dummy_multipliers[i] for i in range(len(eqs))])
+    dummy_L = f - dummy_gamma - ineq_term - eq_term
+    cl.clear_variable_indices()
+    return dummy_L

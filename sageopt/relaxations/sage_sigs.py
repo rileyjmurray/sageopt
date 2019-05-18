@@ -281,7 +281,7 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
         efficiently represent X.
     """
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_lagrangian(f, gts, eqs, p=p, q=q)
-    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs}
+    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'level': (p, q, ell)}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
