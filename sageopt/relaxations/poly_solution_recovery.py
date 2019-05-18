@@ -25,7 +25,9 @@ def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hue
     dummy_modulated_lagrangian = Polynomial(alpha, np.ones(shape=(alpha.shape[0],)))  # coefficients dont matter
     modulator = prob.associated_data['modulator']
     lagrangian = prob.associated_data['lagrangian']
-    v = prob.associated_data['v'].value()  # possible that v_sig and v are the same
+    v = prob.associated_data['v_poly'].value()  # possible that v_sig and v are the same
+    if np.any(np.isnan(v)):
+        return []
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
     v_reduced = M @ v
     alpha_reduced = lagrangian.alpha
@@ -201,7 +203,7 @@ def linear_system_negatives(alpha, moments):
     # j, without loss of generality.
     if len(U) == 0:
         return np.zeros(n,), None, None, None
-    W = [j for j in range(m) if np.any(alpha[U, j] > 0)]
+    W = [j for j in range(n) if np.any(alpha[U, j] > 0)]
     # If, out of the remaining rows in the linear system, the variable at coordinate "j"
     # only participates in even monomials, then we remove these columns from the matrix
     # "alpha". Removing these columns has a very modest speed improvement here (when
@@ -209,7 +211,8 @@ def linear_system_negatives(alpha, moments):
     # when enumerating all vectors in the mod-2 nullspace of the smaller matrix.
     if len(W) == 0:
         return np.zeros(n,), None, None, None
-    alpha = alpha[U, W]
+    alpha = alpha[U, :]
+    alpha = alpha[:, W]
     b = ((moments < 0)[U]).astype(int)
     x_W = mod2linsolve(alpha, b)
     if x_W is None:
@@ -231,6 +234,7 @@ def _lin_indep_subset_negatives(alpha, b):
 def greedy_weighted_cut_negatives(alpha, v):
     m, n = alpha.shape
     y = np.ones(n,)
+    v = v.ravel()
     coordinates_remaining = set(range(n))
     merit_of_switch = np.zeros(n,)
     for iter_num in range(n):
@@ -240,7 +244,8 @@ def greedy_weighted_cut_negatives(alpha, v):
             after = np.dot(v, np.prod(np.power(y, alpha), axis=1))
             y[i] = 1
             merit_of_switch[i] = after - before
-        best_candidate = np.argmax(merit_of_switch)[0]
+        best_candidate = np.argmax(merit_of_switch)
+        best_candidate = best_candidate[(0,) * best_candidate.ndim]
         if merit_of_switch[best_candidate] > 0:
             # if "merit" is positive, then the vector y^alpha
             # points "more" along the direction of "v" than it
@@ -280,21 +285,19 @@ def mod2rref(A, forward_only=False):
         else:
             # swap rows "h" and "i_max"
             pivot_columns.append(k)
-            row_h = A[h, :]
-            row_imax = A[i_max, :]
+            row_h = A[h, :].copy()
+            row_imax = A[i_max, :].copy()
             A[h, :] = row_imax
             A[i_max, :] = row_h
-            for i in np.arange(h+1, m):
-                f = A[i, k] / A[h, k]
-                A[i, k] = 0
-                for j in np.arange(k+1, n):
-                    A[i, j] = (A[i, j] - A[h, j] * f) % 2
+            for i in range(h+1, m):
+                if A[i, k] > 0:
+                    A[i, :] = np.mod(A[i, :] - A[h, :], 2)
             h += 1
             k += 1
     # Back substitution
     if not forward_only:
         for pr, pc in enumerate(pivot_columns):
-            for row in np.arange(pr-1, -1, step=-1):
+            for row in range(pr-1, -1, -1):
                 if A[row, pc] > 0:
                     # ^ That isn't necessarily valid when a matrix is wide, and contains
                     # a pivot column far down the list of columns.

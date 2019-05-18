@@ -3,7 +3,7 @@ from collections import defaultdict
 import numpy as np
 import scipy.sparse as sp
 
-__REAL_TYPES__ = (int, float, np.int_, np.float_)
+__REAL_TYPES__ = (int, float, np.int_, np.float_, np.float128)
 
 
 def zero_func():
