@@ -44,7 +44,6 @@ def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6):
     else:
         # sort the solutions according to objective quality
         mus.sort(key=lambda mu: f(mu))
-        mus = np.hstack(mus)
         return mus
 
 
@@ -55,7 +54,7 @@ def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_to
         mu_ls = _constrained_least_squares(con, alpha_reduced, log_v_reduced)
     else:
         try:
-            mu_ls = np.linalg.lstsq(alpha_reduced, log_v_reduced, rcond=None)[0].reshape((-1, 1))
+            mu_ls = np.linalg.lstsq(alpha_reduced, log_v_reduced, rcond=None)[0]
         except np.linalg.linalg.LinAlgError:
             mu_ls = None
     if mu_ls is not None and is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol, exp_format=True):
@@ -75,7 +74,7 @@ def _constrained_least_squares(con, alpha, log_v):
     cl.clear_variable_indices()
     res = prob.solve(verbose=False)
     if res[0] == cl.SOLVED:
-        mu_ls = x.value()[:con.n].reshape((-1, 1))
+        mu_ls = x.value()[:con.n]
         return mu_ls
     else:
         return None
@@ -115,23 +114,25 @@ def _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol):
         for xi in all_xs.T:
             if is_feasible(xi, gts, eqs, ineq_tol, eq_tol, exp_format=True):
                 if _satisfies_AbK_constraints(A, b, K, xi, ineq_tol):
-                    mus.append(xi.reshape((-1, 1)))
+                    mus.append(xi)
         return mus
     else:
         # only check feasibility with respect to functional constraints
         for xi in all_xs.T:
             if is_feasible(xi, gts, eqs, ineq_tol, eq_tol, exp_format=True):
-                mus.append(xi.reshape((-1, 1)))
+                mus.append(xi)
         return mus
 
 
 def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
+    # This function cannot be trusted when some component mu[i] == -np.inf.
     if np.any(np.isnan(mu)):
         return False
     x = cl.Variable(shape=(A.shape[1],))
     t = cl.Variable(shape=(1,))
     mu_flat = mu.ravel()
-    cons = [cl.vector2norm(mu_flat - x[:mu.size]) <= t, cl.PrimalProductCone(A @ x + b, K)]
+    where_finite = np.where(mu > -np.inf)[0]
+    cons = [cl.vector2norm(mu_flat[where_finite] - x[where_finite]) <= t, cl.PrimalProductCone(A @ x + b, K)]
     prob = cl.Problem(cl.MIN, t, cons)
     cl.clear_variable_indices()
     res = prob.solve(verbose=False)

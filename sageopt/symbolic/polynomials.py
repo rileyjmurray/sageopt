@@ -182,7 +182,7 @@ class Polynomial(Signomial):
         if i < 0 or i >= self.n:
             raise RuntimeError('This polynomial does not have an input at index ' + str(i) + '.')
         d = defaultdict(int)
-        for j in self.m:
+        for j in range(self.m):
             if self.alpha[j, i] > 0:
                 vec = self.alpha[j, :].copy()
                 c = self.c[j] * vec[i]

@@ -20,6 +20,7 @@ from sageopt.symbolic.signomials import Signomial
 from sageopt.relaxations import sage_sigs
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
+from sageopt.relaxations.poly_solution_recovery import dual_solution_recovery
 
 
 def primal_sage_poly_cone(poly, name, log_AbK):

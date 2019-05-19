@@ -320,7 +320,7 @@ def mod2nullspace_basis(arref, p):
 def mod2nullspace(arref, p):
     N = mod2nullspace_basis(arref, p)
     N = [vec for vec in N.T]
-    nullspace = set()
+    nullspace = {(0,) * arref.shape[1]}
     powerset_iterator = itertools.chain.from_iterable(itertools.combinations(N, r) for r in range(1, len(N)+1))
     for vecs in powerset_iterator:
         vec = np.mod(np.sum(vecs, axis=0), 2).astype(int)
