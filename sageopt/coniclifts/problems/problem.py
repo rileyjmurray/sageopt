@@ -100,6 +100,8 @@ class Problem(object):
                 self.value = parsed_result[2]
             else:
                 self.value = -parsed_result[2]
+        else:
+            self.value = np.NaN
 
         self.timings[solver]['total'] = time.time() - t0
         return self.status, self.value
