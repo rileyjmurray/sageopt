@@ -326,4 +326,9 @@ class Signomial(object):
                 H[j, i] = val
         return H
 
+    def as_polynomial(self):
+        from sageopt.symbolic.polynomials import Polynomial
+        f = Polynomial(self.alpha, self.c)
+        return f
+
 

@@ -18,11 +18,11 @@ def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8):
 def local_refinement(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000, from_sigs=False):
     if from_sigs:
         x0 = np.exp(x0)
-        gts = [Polynomial(g.alpha, g.c) for g in gts]
+        gts = [g.as_polynomial() for g in gts]
         x = standard_poly_monomials(x0.size)
         gts += [x[i] for i in range(x0.size)]
-        eqs = [Polynomial(g.alpha, g.c) for g in gts]
-        f = Polynomial(f.alpha, f.c)
+        eqs = [g.as_polynomial() for g in eqs]
+        f = f.as_polynomial()
     res = fmin_cobyla(f, x0, gts + eqs + [-g for g in eqs],
                       rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun)
     return res
