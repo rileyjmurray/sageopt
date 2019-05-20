@@ -15,7 +15,20 @@ def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8):
     return True
 
 
-def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False):
+def local_refinement(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000, from_sigs=False):
+    if from_sigs:
+        x0 = np.exp(x0)
+        gts = [Polynomial(g.alpha, g.c) for g in gts]
+        x = standard_poly_monomials(x0.size)
+        gts += [x[i] for i in range(x0.size)]
+        eqs = [Polynomial(g.alpha, g.c) for g in gts]
+        f = Polynomial(f.alpha, f.c)
+    res = fmin_cobyla(f, x0, gts + eqs + [-g for g in eqs],
+                      rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun)
+    return res
+
+
+def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False, all_signs=True):
     # implemented only for constrained_sage_poly_dual (not yet implemented for sage_poly_dual).
     gts, eqs = [], []
     if 'gts' in prob.associated_data:
@@ -37,7 +50,7 @@ def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hue
     v_reduced = M @ v
     alpha_reduced = lagrangian.alpha
     mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol)
-    signs = all_consistent_sign_patterns(alpha_reduced, v_reduced, hueristic)
+    signs = variable_sign_patterns(alpha_reduced, v_reduced, hueristic, all_signs)
     # Now we need to build the candidate solutions, and check them for feasibility.
     # Checking functional constraints is very cheap- this just requires evaluating
     # Signomial and Polynomial objects. Checking constraints from the conditional SAGE
@@ -126,7 +139,7 @@ def _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, ze
     else:
         n = con.n
     if n > con.n:
-        padding = np.zeros(shape=(alpha_reduced.m, n - con.n))
+        padding = np.zeros(shape=(alpha_reduced.shape[0], n - con.n))
         alpha_reduced = np.hstack((alpha_reduced, padding))
     y = cl.Variable(shape=(n,), name='abs moment mag recovery')
     are_nonzero = v_abs > np.sqrt(zero_tol)
@@ -152,7 +165,7 @@ def _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, ze
         return None
 
 
-def all_consistent_sign_patterns(alpha, moments, hueristic=False):
+def variable_sign_patterns(alpha, moments, hueristic=False, all_signs=True):
     # This is essentially "Algorithm 4" in the conditional SAGE paper.
     #
     # ignore signs of variables which only participate in even monomials.
@@ -173,8 +186,11 @@ def all_consistent_sign_patterns(alpha, moments, hueristic=False):
         y0 = np.ones(n,)
         return [y0]
     else:
-        arref, p = mod2rref(alpha1)
-        N0 = mod2nullspace(arref, p)
+        if all_signs:
+            arref, p = mod2rref(alpha1)
+            N0 = mod2nullspace(arref, p)
+        else:
+            N0 = [np.zeros(alpha1.shape[1],)]
         signs = []
         for vec0 in N0:
             vec = np.zeros(n,)
