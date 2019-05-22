@@ -3,6 +3,7 @@ import numpy as np
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations import sage_polys as sage
 from sageopt import coniclifts as cl
+import warnings
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, log_AbK=None, solver='ECOS'):
@@ -196,27 +197,30 @@ class TestSagePolynomials(unittest.TestCase):
         # Tests
         #
         #       (1) Find a SAGE polynomial "f1" (over the same exponents as p) so that
-        #           when a = 0.5, the product f1 * p is a SAGE polynomial.
+        #           when a = 0.3, the product f1 * p is a SAGE polynomial.
         #
         #       (2) Find a SAGE polynomial "f2" (over the same exponents as p**2) so that
-        #           when a = 0.3, the product f2 * p is a SAGE polynomial.
+        #           when a = 0.15, the product f2 * p is a SAGE polynomial.
         #
         # Notes
         #
-        #       The choices for "a" in the tests above are not the tightest values possible.
-        #       They are chosen so that the problem is "well conditioned enough" for the solver ECOS.
-        #       If using MOSEK, we could have set a = 0.29 in Test 1, and a = 0.15 in Test 2.
+        #       In a previous version of sageopt, ECOS could also be run on these tests, but
+        #       we needed larger values of "a" to avoid solver failures. Now, ECOS cannot
+        #       solve a level 2 relaxation for any interesting value of "a". It is not known at
+        #       what point sageopt's problem compilation started generating problems that ECOS
+        #       could not solve.
         #
         x = standard_poly_monomials(3)
         p = (np.sum(x)) ** 2 + 0.5 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        if cl.Mosek.is_installed():
-            solver = 'MOSEK'
-        else:
-            solver = 'ECOS'
-        res1 = sage.sage_poly_multiplier_search(p, level=1).solve(solver=solver, verbose=False)
+        if not cl.Mosek.is_installed():
+            msg1 = 'MOSEK is not installed, and ECOS returns solver-failures for the cases covered by this test.\n'
+            msg2 = 'Skipping the Polynomial test_multiplier_search.'
+            warnings.warn(msg1 + msg2)
+            return
+        res1 = sage.sage_poly_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
         assert abs(res1[1]) < 1e-8
         p -= 0.20 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res2 = sage.sage_poly_multiplier_search(p, level=2).solve(solver=solver, verbose=False)
+        res2 = sage.sage_poly_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
         assert abs(res2[1]) < 1e-8
 
 
