@@ -114,7 +114,8 @@ def prep_sep_dis_diag_cone_cons(A, b, K, dont_sep=None):
         new_co = Cone(co.type, co.len, {'col mapping': col_mapping})
         sep_K0.append(new_co)
     # Build the final selector
-    all_selectors = np.hstack((sel.reshape(-1, 1) for sel in type_selectors.values()))
+    all_selectors = [sel.reshape(-1, 1) for sel in type_selectors.values()]
+    all_selectors = np.hstack(all_selectors)
     row_selector = np.any(all_selectors, axis=1)
     return row_selector, K0, sep_K0, scalings, translates
 
