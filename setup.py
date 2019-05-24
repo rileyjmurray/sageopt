@@ -17,5 +17,6 @@ setuptools.setup(
         'Topic :: Scientific/Engineering :: Mathematics'
     ],
     install_requires=["ecos >= 2",
-                      "numpy >= 1.14"]
+                      "numpy >= 1.14",
+                      "scipy >= 1.1"]
 )

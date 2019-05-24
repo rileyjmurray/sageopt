@@ -3,7 +3,30 @@
 When substantial effort is undertaken to change sageopt, or add new features, the plans and
 rationales for those changes should be listed here.
 
-## 1. Populate the design_notes folder.
+
+## Add tests for constraint violations (coniclifts)
+
+This is a high-priority task. SAGEOPT cannot be placed on pypi until this is done.
+
+The ability to compute constraint violations was added pretty late in the coniclifts development process.
+This is an important feature, and one that needs to be tested. Some constraints only require
+very basic tests (e.g. violations of elementwise inequality constraints), while others have much
+more complicated behavior. The primal and dual conditional sage cones are yet to be tested.
+
+
+## Setup continuous-integration testing.
+
+This is a high-priority task. It should be the first thing we do after sageopt is posted to pypi.
+
+We will test on the most current version of Python, as well as two versions back. For the
+time being, that means Python 3.5, 3.6, and 3.7. We will use TravisCI, and only run tests on
+Linux machines. The lack of tests on OSX and Windows machines should not matter, since coniclifts
+is written in almost pure python.
+
+
+## Populate the design_notes folder.
+
+This is a high-priority task. It can be done incrementally.
 
 Files in the design_notes folder should explain the overall architecture of sageopt and its
 various submodules (e.g. coniclifts). These files should serve as both a guide to those who
@@ -12,7 +35,10 @@ who are already deeply familiar with certain aspects of sageopt. These documents
 track of "lessons learned" throughout the life of the sageopt project (e.g. "We used to do X,
 which was nice for Y reasons, but created problems for Z, so now we do W.")
 
-## 2. Create a flexible backend, that can use either coniclifts, or cvxpy.
+
+## Create a flexible backend, that can use either coniclifts, or cvxpy.
+
+This is a high-priority task. It will require large, coordinated changes to sageopt.
 
 An earlier version of sageopt (called "sigpy") used cvxpy as its backend for constructing SAGE
 relaxations. We moved to a custom backend for a few reasons:
@@ -44,3 +70,23 @@ a mess of code that is hard to read and hard to maintain. In addition, although 
 closely matches the cvxpy API in many ways, there are some imporant differences (for example,
 accessing the value of a Variable ``x`` with ``x.value`` versus ``x.value()``). These differences
 will have to be resolved.
+
+
+## Add support for more solvers (coniclifts)
+
+This is a medium-priority task. It can be done with virtually no changes to existing files. 
+
+Once we have a cvxpy backend, we will have access to essentially all exponential-cone solvers
+that might be useful for SAGE relaxations. Until then, we need to add more solver interfaces
+to coniclifts. It should be easy to add support for both SCS and SuperSCS. 
+
+
+## Add support for SDPs in MOSEK's coniclifts interface.
+
+This is a very low-priority task.
+
+Coniclifts currently allows users to create linear matrix inequality constraints, but
+existing solver interfaces do not allow these constraints. (So right now, a user can construct
+an SDP, but cannot solve an SDP.)
+
+
