@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='sageopt',
-    version='0.1',
+    version='0.2.0',
     author='Riley John Murray',
     author_email='rmurray@caltech.edu',
     description='Signomial and polynomial optimization via SAGE relaxations',
