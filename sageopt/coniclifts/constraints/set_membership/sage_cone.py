@@ -162,6 +162,8 @@ class PrimalSageCone(SetMembership):
 
     def __contains__(self, item):
         item = Expression(item)
+        if item.is_constant() and np.all(item.value() >= 0):
+            return True
         con = PrimalSageCone(item, self.alpha, name='check_mem')
         prob = Problem(CL_MAX, Expression([0]), [con])
         status, value = prob.solve(verbose=False)

@@ -57,3 +57,15 @@ class TestConstraints(unittest.TestCase):
         assert abs(viol_one_norm - 4) < 1e-15
         viol_inf_norm = constraint.violation(norm_ord=np.inf)
         assert abs(viol_inf_norm - 1) < 1e-15
+
+    def test_ordinary_sage_primal_1(self):
+        n, m = 2, 5
+        np.random.seed(0)
+        alpha = np.random.randn(m, n)
+        c = Variable(shape=(m,), name='test_c')
+        constraint = sage_cone.PrimalSageCone(c, alpha, name='test')
+        c0 = np.ones(shape=(m,))
+        c.set_scalar_variables(c0)
+        viol_default = constraint.violation()
+        assert viol_default == 0
+
