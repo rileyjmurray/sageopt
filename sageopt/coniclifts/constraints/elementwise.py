@@ -90,21 +90,17 @@ class ElementwiseConstraint(Constraint):
                 A_vals += [-c for (_, c) in col_idx_to_coeff]
         return A_vals, np.array(A_rows), A_cols, b, K, []
 
-    def violation(self, norm=None):
-        if norm is None:
-            def norm(x):
-                if x.size == 1:
-                    return np.abs(float(x))
-                else:
-                    return np.linalg.norm(x, ord=2)
+    def violation(self, norm_ord=None):
         expr = (self.lhs - self.rhs).as_expr()
         expr_val = expr.value()
         if self.initial_operator == '<=':
-            residual = np.max(0, expr_val)
+            ignore = expr_val <= 0
+            expr_val[ignore] = 0
         elif self.initial_operator == '>=':
-            residual = np.min(0, expr_val)
+            ignore = expr_val >= 0
+            expr_val[ignore] = 0
         else:
-            residual = np.abs(expr_val)
-        residual = residual.ravel()
-        viol = norm(residual)
+            expr_val = np.abs(expr_val)
+        residual = expr_val.ravel()
+        viol = np.linalg.norm(residual, ord=norm_ord)
         return viol
