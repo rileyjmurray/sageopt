@@ -1,0 +1,11 @@
+language: python
+python:
+  - "3.6"
+  - "3.7"
+# command to install dependencies
+install:
+  - pip install scipy>=1.1 numpy>=1.14 ecos>=2 nose
+  - python setup.py install
+# command to run tests
+script:
+  - nosetests sageopt/tests
