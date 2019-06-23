@@ -60,8 +60,7 @@ described the first efficient way to use these SONC certificates in optimization
  and polynomials. The formal name for these  generalizations are "conditional SAGE signomials" and "conditional SAGE
   polynomials". This concept is introduced in a 2019 paper by Murray, Chandrasekaran, and Wierman, titled "Signomial 
   and Polynomial Optimization via Relative Entropy and Partial 
- Dualization." Because the generalization follows so transparently from the original idea of SAGE certificates (and 
- because "conditional SAGE signomials / conditional SAGE polynomials" is a mouthful!) we say simply say "SAGE 
+ Dualization." Because the generalization follows so transparently from the original idea of SAGE certificates, we say simply say "SAGE
  certificates" in reference to the most general idea.
 
 
