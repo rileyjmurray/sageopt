@@ -9,7 +9,7 @@ setuptools.setup(
     description='Signomial and polynomial optimization via SAGE relaxations',
     packages=setuptools.find_packages(),
     classifiers=[
-        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.5',
         'Natural Language :: English',
         'License :: OSI Approved :: Apache Software License',
         'Development Status :: 4 - Beta',
@@ -17,6 +17,7 @@ setuptools.setup(
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Mathematics'
     ],
+    python_requires='>=3.5',
     install_requires=["ecos >= 2",
                       "numpy >= 1.14",
                       "scipy >= 1.1"]
