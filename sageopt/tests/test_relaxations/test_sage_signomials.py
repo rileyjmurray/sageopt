@@ -340,6 +340,7 @@ class TestSAGERelaxations(unittest.TestCase):
         solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
         assert f(solns[0]) < 1e-8 + dual.value
 
+    @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS takes too long for this problem.')
     def test_conditional_constrained_sage_2(self):
         # Background
         #
@@ -354,26 +355,22 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       (3) Recover a strictly feasible solution, within 1 percent of optimality.
         #
-        if cl.Mosek.is_installed():
-            n = 2
-            y = standard_sig_monomials(n)
-            f = 3.7 * y[0] ** 0.85 + 1.985 * y[0] + 700.3 * y[1] ** -0.75
-            gts = [1 - 0.7673 * y[1] ** 0.05 + 0.05 * y[0],
-                   5 - y[0],   y[0] - 0.1,
-                   450 - y[1], y[1] - 380]
-            eqs = []
-            AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
-            p, q, ell = 0, 2, 0
-            vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
-            assert abs(vals[0] - vals[1]) < 1e-1
-            assert abs(vals[0] - 11.95) / vals[0] < 1e-2
-            solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-            assert (f(solns[0]) - dual.value) / dual.value < 1e-2
-        else:
-            msg = '\n MOSEK is not installed, and ECOS cannot solve this problem. \n'
-            msg += 'Skipping a generalized SAGE test with (p, q, ell) = (0, 2, 0).\n\n'
-            warnings.warn(msg)
+        n = 2
+        y = standard_sig_monomials(n)
+        f = 3.7 * y[0] ** 0.85 + 1.985 * y[0] + 700.3 * y[1] ** -0.75
+        gts = [1 - 0.7673 * y[1] ** 0.05 + 0.05 * y[0],
+               5 - y[0],   y[0] - 0.1,
+               450 - y[1], y[1] - 380]
+        eqs = []
+        AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
+        p, q, ell = 0, 2, 0
+        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
+        assert abs(vals[0] - vals[1]) < 1e-1
+        assert abs(vals[0] - 11.95) / vals[0] < 1e-2
+        solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
+        assert (f(solns[0]) - dual.value) / dual.value < 1e-2
 
+    @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS takes too long for this problem.')
     def test_conditional_constrained_sage_3(self):
         # Background
         #
@@ -394,27 +391,22 @@ class TestSAGERelaxations(unittest.TestCase):
         #       If the (0,0,2) SAGE bound of -83.253 is to be believed, then the recovered solution
         #       actually has a relative optimality gap of only 0.003 percent.
         #
-        if cl.Mosek.is_installed():
-            n = 3
-            x = standard_sig_monomials(n)
-            f = 0.5 * x[0] * (x[1] ** -1) - x[0] - 5.0 * (x[1] ** -1)
-            g = 1 - 0.01 * x[1] * (x[2] ** -1) - 0.01 * x[0] - 0.0005 * x[0] * x[2]
-            g = 100.0 * g
-            gts = [g, g * (x[1] ** -2),
-                   1e2 - x[0], 1e2 - x[1], 1e2 - x[2],
-                   x[0] - 1, x[1] - 1, x[2] - 1]
-            eqs = []
-            AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
-            p, q, ell = 0, 1, 1
-            vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
-            assert abs(vals[0] - vals[1]) < 1e-4
-            assert abs(vals[0] - (-83.3235)) < 1e-4
-            solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
-            assert (f(solns[0]) - dual.value) / abs(dual.value) < 0.007
-        else:
-            msg = '\n MOSEK is not installed, and ECOS takes a *** very *** long time to solve this problem. \n'
-            msg += 'Skipping a conditional SAGE test with (p, q, ell) = (0, 1, 1).\n\n'
-            warnings.warn(msg)
+        n = 3
+        x = standard_sig_monomials(n)
+        f = 0.5 * x[0] * (x[1] ** -1) - x[0] - 5.0 * (x[1] ** -1)
+        g = 1 - 0.01 * x[1] * (x[2] ** -1) - 0.01 * x[0] - 0.0005 * x[0] * x[2]
+        g = 100.0 * g
+        gts = [g, g * (x[1] ** -2),
+               1e2 - x[0], 1e2 - x[1], 1e2 - x[2],
+               x[0] - 1, x[1] - 1, x[2] - 1]
+        eqs = []
+        AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
+        p, q, ell = 0, 1, 1
+        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
+        assert abs(vals[0] - vals[1]) < 1e-4
+        assert abs(vals[0] - (-83.3235)) < 1e-4
+        solns = sage_sigs.dual_solution_recovery(dual, ineq_tol=0)
+        assert (f(solns[0]) - dual.value) / abs(dual.value) < 0.007
 
 
 if __name__ == '__main__':

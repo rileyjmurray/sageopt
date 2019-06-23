@@ -18,7 +18,6 @@ import numpy as np
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations import sage_polys as sage
 from sageopt import coniclifts as cl
-import warnings
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, log_AbK=None, solver='ECOS'):
@@ -201,6 +200,7 @@ class TestSagePolynomials(unittest.TestCase):
     #   Test multiplier search
     #
 
+    @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS fails on this problem.')
     def test_multiplier_search(self):
         # Background
         #
@@ -227,11 +227,6 @@ class TestSagePolynomials(unittest.TestCase):
         #
         x = standard_poly_monomials(3)
         p = (np.sum(x)) ** 2 + 0.5 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        if not cl.Mosek.is_installed():
-            msg1 = 'MOSEK is not installed, and ECOS returns solver-failures for the cases covered by this test.\n'
-            msg2 = 'Skipping the Polynomial test_multiplier_search.'
-            warnings.warn(msg1 + msg2)
-            return
         res1 = sage.sage_poly_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
         assert abs(res1[1]) < 1e-8
         p -= 0.20 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
