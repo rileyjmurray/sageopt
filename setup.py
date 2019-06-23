@@ -11,7 +11,7 @@ setuptools.setup(
     classifiers=[
         'Programming Language :: Python :: 3 :: Only',
         'Natural Language :: English',
-        'License :: Apache Software License',
+        'License :: OSI Approved :: Apache Software License',
         'Development Status :: 4 - Beta',
         'Operating System :: OS Independent',
         'Intended Audience :: Science/Research',
