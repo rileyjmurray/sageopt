@@ -4,6 +4,7 @@ setuptools.setup(
     name='sageopt',
     version='0.2.0',
     author='Riley John Murray',
+    url='https://github.com/rileyjmurray/sageopt',
     author_email='rmurray@caltech.edu',
     description='Signomial and polynomial optimization via SAGE relaxations',
     packages=setuptools.find_packages(),

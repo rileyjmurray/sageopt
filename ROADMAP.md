@@ -6,7 +6,7 @@ rationales for those changes should be listed here.
 
 ## Add tests for constraint violations (coniclifts)
 
-This is a high-priority task. SAGEOPT cannot be placed on pypi until this is done.
+This is a high-priority task.
 
 The ability to compute constraint violations was added pretty late in the coniclifts development process.
 This is an important feature, and one that needs to be tested. Some constraints only require
