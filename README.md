@@ -1,5 +1,7 @@
 # Sageopt is for signomial and polynomial optimization
 
+[![Build Status](https://travis-ci.org/rileyjmurray/sageopt.svg?branch=master)](https://travis-ci.org/rileyjmurray/sageopt)
+
 Sageopt provides functionality for constructing, solving, and analyzing convex relaxations for
 signomial and polynomial optimization problems. It also provides functionality for recovering feasible
 solutions from these convex relaxations. This means that sageopt can be used as a standalone tool to find provably
@@ -27,8 +29,9 @@ are in academia (that includes undergraduates!) you can request a free
 
 ## To install
 
-You should be able to install the latest release of sageopt with ``pip install sageopt``. If you use Anaconda for
-Python development, please (1) activate your anaconda environment, (2) run ``conda install pip``, and (3) run 
+Run ``pip install sageopt``.
+
+If you use Anaconda for Python development, please (1) activate your anaconda environment, (2) run ``conda install pip``, and (3) run
 ``pip install sageopt``. It is important that pip be installed inside your conda environment, or sageopt
 might not be detected by Anaconda Navigator (among other environment management tools).
 
