@@ -1,6 +1,7 @@
 # Sageopt is for signomial and polynomial optimization
 
 [![Build Status](https://travis-ci.org/rileyjmurray/sageopt.svg?branch=master)](https://travis-ci.org/rileyjmurray/sageopt)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/sageopt.svg)
 
 Sageopt provides functionality for constructing, solving, and analyzing convex relaxations for
 signomial and polynomial optimization problems. It also provides functionality for recovering feasible
