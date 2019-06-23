@@ -12,7 +12,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3 :: Only',
         'Natural Language :: English',
         'License :: Apache Software License',
-        'Development Status :: 4 - Production/Stable',
+        'Development Status :: 4 - Beta',
         'Operating System :: OS Independent',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Mathematics'
