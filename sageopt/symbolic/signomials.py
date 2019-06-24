@@ -217,7 +217,7 @@ class Signomial(object):
         # noinspection PyTypeChecker
         return self.__mul__(-1)
 
-    def __call__(self, x, exp_format=True):
+    def __call__(self, x):
         """
         Evaluates the mathematical function specified by the current Signomial object.
 
@@ -230,16 +230,15 @@ class Signomial(object):
 
         This function's behavior is undefined when x is not a scalar and has len(x.shape) > 2.
         """
-        if np.isscalar(x) or (isinstance(x, np.ndarray) and x.size == 1):
+        if np.isscalar(x) or (isinstance(x, np.ndarray) and x.size == 1 and x.ndim == 0):
             x = np.array([np.asscalar(np.array(x))])  # coerce into a 1d array of shape (1,).
         if not x.shape[0] == self.n:
-            raise ValueError('The point must be in R^' + str(self.n) +
-                             ', but the provided point is in R^' + str(x.shape[0]))
+            msg = 'Domain is R^' + str(self.n) + 'but x is in R^' + str(x.shape[0])
+            raise ValueError(msg)
         if x.ndim > 2:
-            raise ValueError('Signomials cannot be called on ndarrays with more than 2 dimensions.')
+            msg = 'Signomials cannot be called on ndarrays with more than 2 dimensions.'
+            raise ValueError(msg)
         x = x.astype(np.float128)
-        if not exp_format:
-            x = np.log(x)
         exponents = np.dot(self.alpha.astype(np.float128), x)
         linear_vars = np.exp(exponents).astype(np.float128)
         val = np.dot(self.c, linear_vars)

@@ -54,7 +54,9 @@ def relative_dual_sage_poly_cone(primal_poly, dual_var, name_base, log_AbK):
     return constrs
 
 
-def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, log_AbK=None):
+def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
+    if X is None:
+        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     if poly_ell == 0:
         sr, cons = f.sig_rep
         if len(cons) > 0:
@@ -62,7 +64,10 @@ def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, log_AbK=None):
             msg += 'The most likely cause is that a mistake has been made in setting up '
             msg += 'the data for this function.\n Raising a RuntimeError.\n'
             raise RuntimeError(msg)
-        prob = sage_sigs.sage_dual(sr, sigrep_ell, AbK=log_AbK)
+        log_X = {'AbK':  X['log_AbK'],
+                 'gts': [g.as_signomial() for g in X['gts']],
+                 'eqs': [g.as_signomial() for g in X['eqs']]}
+        prob = sage_sigs.sage_dual(sr, sigrep_ell, X=log_X)
         cl.clear_variable_indices()
         return prob
     elif sigrep_ell == 0:
@@ -71,7 +76,7 @@ def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, log_AbK=None):
         lagrangian = (f - gamma) * modulator
         v = cl.Variable(shape=(lagrangian.m, 1), name='v')
         con_base_name = v.name + ' domain'
-        constraints = relative_dual_sage_poly_cone(lagrangian, v, con_base_name, log_AbK)
+        constraints = relative_dual_sage_poly_cone(lagrangian, v, con_base_name, log_AbK=X['log_AbK'])
         a = sym_corr.relative_coeff_vector(modulator, lagrangian.alpha)
         constraints.append(a.T @ v == 1)
         f_mod = Polynomial(f.alpha_c) * modulator
@@ -84,7 +89,9 @@ def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, log_AbK=None):
         raise NotImplementedError()
 
 
-def sage_poly_primal(f, poly_ell=0, sigrep_ell=0, log_AbK=None):
+def sage_poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
+    if X is None:
+        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     if poly_ell == 0:
         sr, cons = f.sig_rep
         if len(cons) > 0:
@@ -92,7 +99,10 @@ def sage_poly_primal(f, poly_ell=0, sigrep_ell=0, log_AbK=None):
             msg += 'The most likely cause is that a mistake has been made in setting up '
             msg += 'the data for this function.\n Raising a RuntimeError.\n'
             raise RuntimeError(msg)
-        prob = sage_sigs.sage_primal(sr, sigrep_ell, AbK=log_AbK, additional_cons=cons)
+        log_X = {'AbK':  X['log_AbK'],
+                 'gts': [g.as_signomial() for g in X['gts']],
+                 'eqs': [g.as_signomial() for g in X['eqs']]}
+        prob = sage_sigs.sage_primal(sr, sigrep_ell, X=log_X, additional_cons=cons)
         cl.clear_variable_indices()
         return prob
     else:
@@ -104,25 +114,30 @@ def sage_poly_primal(f, poly_ell=0, sigrep_ell=0, log_AbK=None):
             sig_modulator = Signomial(sr.alpha, np.ones(shape=(sr.m,))) ** sigrep_ell
             sig_under_test = sr * sig_modulator
             con_name = 'Lagrangian modulated sigrep sage'
-            con = sage_sigs.primal_sage_cone(sig_under_test, con_name, AbK=log_AbK)
+            con = sage_sigs.primal_sage_cone(sig_under_test, con_name, AbK=X['log_AbK'])
             constraints = [con] + cons
         else:
             con_name = 'Lagrangian sage poly'
-            constraints = primal_sage_poly_cone(lagrangian, con_name, log_AbK=log_AbK)
+            constraints = primal_sage_poly_cone(lagrangian, con_name, log_AbK=X['log_AbK'])
         obj = gamma
         prob = cl.Problem(cl.MAX, obj, constraints)
         cl.clear_variable_indices()
         return prob
 
 
-def sage_poly_feasibility(f, log_AbK=None):
+def sage_poly_feasibility(f, X=None):
+    if X is None:
+        X = {'log_AbK': None, 'gts': [], 'eqs': []}
+    log_X = {'AbK': X['log_AbK'],
+             'gts': [g.as_signomial() for g in X['gts']],
+             'eqs': [g.as_signomial() for g in X['eqs']]}
     sr, cons = f.sig_rep
-    prob = sage_sigs.sage_feasibility(sr, AbK=log_AbK, additional_cons=cons)
+    prob = sage_sigs.sage_feasibility(sr, X=log_X, additional_cons=cons)
     cl.clear_variable_indices()
     return prob
 
 
-def sage_poly_multiplier_search(f, level=1, log_AbK=None):
+def sage_poly_multiplier_search(f, level=1, X=None):
     """
     Suppose we have a nonnegative polynomial f that is not SAGE. Do we have an alternative
     to proving that f is nonnegative other than moving up the usual SAGE hierarchy?
@@ -135,22 +150,24 @@ def sage_poly_multiplier_search(f, level=1, log_AbK=None):
 
     :param f: a Polynomial object
     :param level: a nonnegative integer
-    :param log_AbK:
+    :param X:
 
     :return: a coniclifts maximization Problem that is feasible iff f * mult is SAGE for some SAGE multiplier
     Polynomial "mult".
     """
+    if X is None:
+        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     constraints = []
     # Make the multiplier polynomial (and require that it be SAGE)
     mult_alpha = hierarchy_e_k([f], k=level)
     c_tilde = cl.Variable(shape=(mult_alpha.shape[0],), name='c_tilde')
     mult = Polynomial(mult_alpha, c_tilde)
-    temp_cons = primal_sage_poly_cone(mult, name=(c_tilde.name + ' domain'), log_AbK=log_AbK)
+    temp_cons = primal_sage_poly_cone(mult, name=(c_tilde.name + ' domain'), log_AbK=X['log_AbK'])
     constraints += temp_cons
     constraints.append(cl.sum(c_tilde) >= 1)
     # Make "f_mod := f * mult", and require that it be SAGE.
     f_mod = mult * f
-    temp_cons = primal_sage_poly_cone(f_mod, name='f_mod sage poly', log_AbK=log_AbK)
+    temp_cons = primal_sage_poly_cone(f_mod, name='f_mod sage poly', log_AbK=X['log_AbK'])
     constraints += temp_cons
     # noinspection PyTypeChecker
     prob = cl.Problem(cl.MAX, 0, constraints)
@@ -158,7 +175,7 @@ def sage_poly_multiplier_search(f, level=1, log_AbK=None):
     return prob
 
 
-def constrained_sage_poly_primal(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
+def constrained_sage_poly_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the primal SAGE-(p, q, ell) relaxation for the polynomial optimization problem
 
@@ -178,10 +195,12 @@ def constrained_sage_poly_primal(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
     :param ell: a nonnegative integer.
         Controls the complexity of any modulator applied to the Lagrangian. ell=0 means that
         the Lagrangian must be SAGE. ell=1 means "tilde_L := modulator * Lagrangian" must be SAGE.
-    :param log_AbK: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
 
     :return: The primal form SAGE-(p, q, ell) relaxation for the given polynomial optimization problem.
     """
+    if X is None:
+        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     lagrangian, ineq_lag_mults, _, gamma = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian}
     if ell > 0:
@@ -191,11 +210,11 @@ def constrained_sage_poly_primal(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
         metadata['modulator'] = modulator
     # The Lagrangian (after possible multiplication, as above) must be a SAGE polynomial.
     con_name = 'Lagrangian sage poly'
-    constrs = primal_sage_poly_cone(lagrangian, con_name, log_AbK=log_AbK)
+    constrs = primal_sage_poly_cone(lagrangian, con_name, log_AbK=X['log_AbK'])
     #  Lagrange multipliers (for inequality constraints) must be SAGE polynomials.
     for s_h, _ in ineq_lag_mults:
         con_name = str(s_h) + ' domain'
-        cons = primal_sage_poly_cone(s_h, con_name, log_AbK=log_AbK)
+        cons = primal_sage_poly_cone(s_h, con_name, log_AbK=X['log_AbK'])
         constrs += cons
     # Construct the coniclifts problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
@@ -204,7 +223,7 @@ def constrained_sage_poly_primal(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
     return prob
 
 
-def constrained_sage_poly_dual(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
+def constrained_sage_poly_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the dual SAGE-(p, q, ell) relaxation for the polynomial optimization problem
 
@@ -224,12 +243,14 @@ def constrained_sage_poly_dual(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
     :param ell: a nonnegative integer.
         Controls the complexity of any modulator applied to the Lagrangian. ell=0 means that
         the Lagrangian must be SAGE. ell=1 means "tilde_L := modulator * Lagrangian" must be SAGE.
-    :param log_AbK: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
 
     :return: The dual SAGE-(p, q, ell) relaxation for the given polynomial optimization problem.
     """
+    if X is None:
+        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
-    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs}
+    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'X': eqs}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
         modulator = Polynomial(2 * alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
@@ -242,13 +263,13 @@ def constrained_sage_poly_dual(f, gts, eqs, p=0, q=1, ell=0, log_AbK=None):
     # Introduce a dual variable "v" for this constraint.
     v = cl.Variable(shape=(lagrangian.m, 1), name='v')
     metadata['v_poly'] = v
-    constraints = relative_dual_sage_poly_cone(lagrangian, v, 'Lagrangian', log_AbK)
+    constraints = relative_dual_sage_poly_cone(lagrangian, v, 'Lagrangian', log_AbK=X['log_AbK'])
     for s_g, g in ineq_lag_mults:
         # These generalized Lagrange multipliers "s_g" are SAGE polynomials.
         # For each such multiplier, introduce an appropriate dual variable "v_g", along
         # with constraints over that dual variable.
         v_g = cl.Variable(name='v_' + str(g), shape=(s_g.m, 1))
-        constraints += relative_dual_sage_poly_cone(s_g, v_g, name_base=(v_g.name + ' domain'), log_AbK=log_AbK)
+        constraints += relative_dual_sage_poly_cone(s_g, v_g, name_base=(v_g.name + ' domain'), log_AbK=X['log_AbK'])
         g = g * modulator
         c_g = sym_corr.moment_reduction_array(s_g, g, lagrangian)
         con = c_g @ v == v_g
@@ -344,8 +365,9 @@ def conditional_sage_poly_data(f, gts, eqs):
     gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]
     # Fall back on conditional SAGE data implementation for signomials
     dummy_f = Signomial({(0,) * f.n: 1})
-    logAbK = sage_sigs.conditional_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps)
-    return logAbK
+    logX = sage_sigs.conditional_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps)
+    X = {'log_AbK': logX['AbK'], 'gts': gp_gts, 'eqs': gp_eqs}
+    return X
 
 
 def hierarchy_e_k(polys, k):

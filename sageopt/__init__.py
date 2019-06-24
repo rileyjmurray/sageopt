@@ -31,4 +31,4 @@ from sageopt.relaxations.sage_polys import constrained_sage_poly_primal, constra
 from sageopt.relaxations.poly_solution_recovery import dual_solution_recovery as dual_poly_solution_recovery
 from sageopt.relaxations.poly_solution_recovery import local_refinement as local_poly_refinement
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'

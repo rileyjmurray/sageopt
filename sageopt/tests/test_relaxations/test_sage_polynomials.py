@@ -20,18 +20,18 @@ from sageopt.relaxations import sage_polys as sage
 from sageopt import coniclifts as cl
 
 
-def primal_dual_unconstrained(p, poly_ell, sigrep_ell, log_AbK=None, solver='ECOS'):
-    prim = sage.sage_poly_primal(p, poly_ell, sigrep_ell, log_AbK)
+def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
+    prim = sage.sage_poly_primal(p, poly_ell, sigrep_ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage.sage_poly_dual(p, poly_ell, sigrep_ell, log_AbK)
+    dual = sage.sage_poly_dual(p, poly_ell, sigrep_ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
 
-def primal_dual_constrained(f, gt, eq, p, q, ell, log_AbK=None, solver='ECOS'):
-    prim = sage.constrained_sage_poly_primal(f, gt, eq, p, q, ell, log_AbK)
+def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
+    prim = sage.constrained_sage_poly_primal(f, gt, eq, p, q, ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage.constrained_sage_poly_dual(f, gt, eq, p, q, ell, log_AbK)
+    dual = sage.constrained_sage_poly_dual(f, gt, eq, p, q, ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
@@ -190,9 +190,9 @@ class TestSagePolynomials(unittest.TestCase):
         gts = lower_gs + upper_gs
         claimed_min = -30.25
         claimed_max = 40
-        res_min = primal_dual_constrained(f, gts, [], 0, 1, 0, log_AbK=None)
+        res_min = primal_dual_constrained(f, gts, [], 0, 1, 0, X=None)
         assert abs(res_min[0] - claimed_min) < 1e-5 and abs(res_min[1] - claimed_min) < 1e-5
-        res_max = primal_dual_constrained(-f, gts, [], 0, 2, 0, log_AbK=None)
+        res_max = primal_dual_constrained(-f, gts, [], 0, 2, 0, X=None)
         res_max = [-res_max[0], -res_max[1]]
         assert abs(res_max[0] - claimed_max) < 1e-5 and abs(res_max[1] - claimed_max) < 1e-5
 
@@ -233,6 +233,7 @@ class TestSagePolynomials(unittest.TestCase):
         res2 = sage.sage_poly_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
         assert abs(res2[1]) < 1e-8
 
+#TODO: Add tests for conditional SAGE polynomials.
 
 if __name__ == '__main__':
     unittest.main()

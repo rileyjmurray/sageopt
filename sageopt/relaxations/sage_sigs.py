@@ -14,12 +14,10 @@
    limitations under the License.
 """
 import numpy as np
-import warnings
 from sageopt import coniclifts as cl
 from sageopt.symbolic.signomials import Signomial
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
-from sageopt.relaxations.sig_solution_recovery import dual_solution_recovery
 
 
 def primal_sage_cone(sig, name, AbK):
@@ -40,33 +38,35 @@ def relative_dual_sage_cone(primal_sig, dual_var, name, AbK):
     return con
 
 
-def sage_dual(f, ell=0, AbK=None, modulator_support=None):
+def sage_dual(f, ell=0, X=None, modulator_support=None):
     """
     :param f: a Signomial object.
     :param ell: a nonnegative integer
-    :param AbK: None, or tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or tuple of the form (A, b, K) defining a set omega = { x : A @ x + b in K}.
 
-    :return: a coniclifts Problem providing the dual formulation for f_{SAGE(X)}^{(ell)}, where
-    X = R^n by default, but X = {x : A @ x + b in K} if AbK is not None.
+    :return: a coniclifts Problem providing the dual formulation for f_{SAGE(omega)}^{(ell)}, where
+    omega = R^n by default, but omega = {x : A @ x + b in K} if AbK is not None.
 
     Notes:
         If f.n is not equal to A.shape[1], then we assume f.n < A.shape[1], and furthermore
         that the first "f.n" columns of A correspond (in order!) to the variables over which
         "f" is defined. Any remaining columns correspond to auxiliary variables needed to
-        efficiently represent X.
+        efficiently represent omega.
     """
+    if X is None:
+        X = {'AbK': None, 'gts': [], 'eqs': []}
     f.remove_terms_with_zero_as_coefficient()
     # Signomial definitions (for the objective).
     if modulator_support is None:
         modulator_support = f.alpha
     t_mul = Signomial(modulator_support, np.ones(modulator_support.shape[0])) ** ell
     lagrangian = f - cl.Variable(name='gamma')
-    metadata = {'f': f, 'lagrangian': lagrangian, 'modulator': t_mul}
+    metadata = {'f': f, 'lagrangian': lagrangian, 'modulator': t_mul, 'X': X}
     lagrangian = lagrangian * t_mul
     f_mod = f * t_mul
     # C_SAGE^STAR (v must belong to the set defined by these constraints).
     v = cl.Variable(shape=(lagrangian.m, 1), name='v')
-    con = relative_dual_sage_cone(lagrangian, v, name='Lagrangian SAGE dual constraint', AbK=AbK)
+    con = relative_dual_sage_cone(lagrangian, v, name='Lagrangian SAGE dual constraint', AbK=X['AbK'])
     constraints = [con]
     # Equality constraint (for the Lagrangian to be bounded).
     a = sym_corr.relative_coeff_vector(t_mul, lagrangian.alpha)
@@ -82,11 +82,11 @@ def sage_dual(f, ell=0, AbK=None, modulator_support=None):
     return prob
 
 
-def sage_primal(f, ell=0, AbK=None, additional_cons=None, modulator_support=None):
+def sage_primal(f, ell=0, X=None, additional_cons=None, modulator_support=None):
     """
     :param f: a Signomial object.
     :param ell: a nonnegative integer
-    :param AbK: None, or tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
     :param additional_cons: a list of coniclifts Constraint objects over the variables in f.c
     (unless you are working with SAGE polynomials, there likely won't be any of these).
 
@@ -111,6 +111,8 @@ def sage_primal(f, ell=0, AbK=None, additional_cons=None, modulator_support=None
         "f" is defined. Any remaining columns correspond to auxiliary variables needed to
         efficiently represent X.
     """
+    if X is None:
+        X = {'AbK': None, 'gts': [], 'eqs': []}
     f.remove_terms_with_zero_as_coefficient()
     if modulator_support is None:
         modulator_support = f.alpha
@@ -118,7 +120,7 @@ def sage_primal(f, ell=0, AbK=None, additional_cons=None, modulator_support=None
     gamma = cl.Variable(name='gamma')
     s_mod = (f - gamma) * (t ** ell)
     s_mod.remove_terms_with_zero_as_coefficient()
-    con = primal_sage_cone(s_mod, name=str(s_mod), AbK=AbK)
+    con = primal_sage_cone(s_mod, name=str(s_mod), AbK=X['AbK'])
     constraints = [con]
     obj = gamma.as_expr()
     if additional_cons is not None:
@@ -128,10 +130,10 @@ def sage_primal(f, ell=0, AbK=None, additional_cons=None, modulator_support=None
     return prob
 
 
-def sage_feasibility(f, AbK=None, additional_cons=None):
+def sage_feasibility(f, X=None, additional_cons=None):
     """
     :param f: a Signomial object
-    :param AbK: None, or tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
     :param additional_cons: a list of coniclifts Constraint objects over the variables in f.c
     (unless you are working with SAGE polynomials, there likely won't be any of these).
 
@@ -144,8 +146,10 @@ def sage_feasibility(f, AbK=None, additional_cons=None):
         "f" is defined. Any remaining columns correspond to auxiliary variables needed to
         efficiently represent X.
     """
+    if X is None:
+        X = {'AbK': None, 'gts': [], 'eqs': []}
     f.remove_terms_with_zero_as_coefficient()
-    con = primal_sage_cone(f, name=str(f), AbK=AbK)
+    con = primal_sage_cone(f, name=str(f), AbK=X['AbK'])
     constraints = [con]
     if additional_cons is not None:
         constraints += additional_cons
@@ -154,11 +158,11 @@ def sage_feasibility(f, AbK=None, additional_cons=None):
     return prob
 
 
-def sage_multiplier_search(f, level=1, AbK=None):
+def sage_multiplier_search(f, level=1, X=None):
     """
     :param f: a Signomial object
     :param level: a nonnegative integer; controls the complexity of the search space for SAGE multipliers.
-    :param AbK: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
 
     :return: a coniclifts Problem that is feasible iff f * mult is X-SAGE for some X-SAGE multiplier
     signomial "mult". X = R^(f.n) by default, but X = {x : A @ x + b in K} if AbK is not None.
@@ -179,6 +183,8 @@ def sage_multiplier_search(f, level=1, AbK=None):
         "f" is defined. Any remaining columns correspond to auxiliary variables needed to
         efficiently represent X.
     """
+    if X is None:
+        X = {'AbK': None, 'gts': [], 'eqs': []}
     f.remove_terms_with_zero_as_coefficient()
     constraints = []
     mult_alpha = hierarchy_e_k([f], k=level)
@@ -186,8 +192,8 @@ def sage_multiplier_search(f, level=1, AbK=None):
     mult = Signomial(mult_alpha, c_tilde)
     constraints.append(cl.sum(c_tilde) >= 1)
     sig_under_test = mult * f
-    con1 = primal_sage_cone(mult, name=str(mult), AbK=AbK)
-    con2 = primal_sage_cone(sig_under_test, name=str(sig_under_test), AbK=AbK)
+    con1 = primal_sage_cone(mult, name=str(mult), AbK=X['AbK'])
+    con2 = primal_sage_cone(sig_under_test, name=str(sig_under_test), AbK=X['AbK'])
     constraints.append(con1)
     constraints.append(con2)
     prob = cl.Problem(cl.MAX, cl.Expression([0]), constraints)
@@ -195,7 +201,7 @@ def sage_multiplier_search(f, level=1, AbK=None):
     return prob
 
 
-def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
+def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the SAGE-(p, q, ell) primal problem for the signomial program
 
@@ -215,7 +221,7 @@ def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
     :param ell: a nonnegative integer.
         Controls the complexity of any modulator applied to the Lagrangian. ell=0 means that
         the Lagrangian must be SAGE. ell=1 means "tilde_L := modulator * Lagrangian" must be SAGE.
-    :param AbK: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
 
     :return: The primal form SAGE-(p, q, ell) relaxation for the given signomial program.
 
@@ -225,8 +231,10 @@ def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
         "f" is defined. Any remaining columns correspond to auxiliary variables needed to
         efficiently represent X.
     """
+    if X is None:
+        X = {'AbK': None, 'gts': [], 'eqs': []}
     lagrangian, ineq_lag_mults, _, gamma = make_lagrangian(f, gts, eqs, p=p, q=q)
-    metadata = {'lagrangian': lagrangian}
+    metadata = {'lagrangian': lagrangian, 'X': X}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
@@ -235,12 +243,12 @@ def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
         modulator = Signomial({(0,) * f.n: 1})
     metadata['modulator'] = modulator
     # The Lagrangian (after possible multiplication, as above) must be a SAGE signomial.
-    con = primal_sage_cone(lagrangian, name='Lagrangian is SAGE', AbK=AbK)
+    con = primal_sage_cone(lagrangian, name='Lagrangian is SAGE', AbK=X['AbK'])
     constrs = [con]
     #  Lagrange multipliers (for inequality constraints) must be SAGE signomials.
     for i, (s_h, _) in enumerate(ineq_lag_mults):
         con_name = 'SAGE multiplier for signomial inequality # ' + str(i)
-        con = primal_sage_cone(s_h, name=con_name, AbK=AbK)
+        con = primal_sage_cone(s_h, name=con_name, AbK=X['AbK'])
         constrs.append(con)
     # Construct the coniclifts Problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
@@ -249,7 +257,7 @@ def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
     return prob
 
 
-def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
+def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the SAGE-(p, q, ell) dual problem for the signomial program
 
@@ -270,7 +278,7 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
     :param ell: a nonnegative integer.
         Controls the complexity of any modulator applied to the Lagrangian in the primal problem.
         ell=0 means that the Lagrangian is unchanged / not modulated.
-    :param AbK: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
+    :param X: None, or a tuple of the form (A, b, K) defining a set X = { x : A @ x + b in K}.
 
     :return: The dual form SAGE-(p, q, ell) relaxation for the given signomial program.
 
@@ -280,8 +288,10 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
         "f" is defined. Any remaining columns correspond to auxiliary variables needed to
         efficiently represent X.
     """
+    if X is None:
+        X = {'AbK': None, 'gts': [], 'eqs': []}
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_lagrangian(f, gts, eqs, p=p, q=q)
-    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'level': (p, q, ell)}
+    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'level': (p, q, ell), 'X': X}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
@@ -294,7 +304,7 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
     # In primal form, the Lagrangian is constrained to be a SAGE signomial.
     # Introduce a dual variable "v" for this constraint.
     v = cl.Variable(shape=(lagrangian.m, 1), name='v')
-    con = relative_dual_sage_cone(lagrangian, v, name='Lagrangian SAGE dual constraint', AbK=AbK)
+    con = relative_dual_sage_cone(lagrangian, v, name='Lagrangian SAGE dual constraint', AbK=X['AbK'])
     constraints = [con]
     for i, (s_h, h) in enumerate(ineq_lag_mults):
         # These generalized Lagrange multipliers "s_h" are SAGE signomials.
@@ -302,7 +312,7 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, AbK=None):
         # with constraints over that dual variable.
         v_h = cl.Variable(name='v_' + str(h), shape=(s_h.m, 1))
         con_name = 'SAGE dual for signomial inequality # ' + str(i)
-        con = relative_dual_sage_cone(s_h, v_h, name=con_name, AbK=AbK)
+        con = relative_dual_sage_cone(s_h, v_h, name=con_name, AbK=X['AbK'])
         constraints.append(con)
         h = h * modulator
         c_h = sym_corr.moment_reduction_array(s_h, h, lagrangian)
@@ -395,7 +405,7 @@ def conditional_sage_data(f, gts, eqs):
     entries are (a sparse matrix, a 1darray, a list of coniclifts Cone objects).
     """
     x = cl.Variable(shape=(f.n,), name='x')
-    cons = []
+    coniclift_cons = []
     conv_gt = con_gen.valid_posynomial_inequalities(gts)
     for g in conv_gt:
         nonconst_selector = np.ones(shape=(g.m,), dtype=bool)
@@ -405,11 +415,11 @@ def conditional_sage_data(f, gts, eqs):
             alpha = g.alpha[nonconst_selector, :]
             c = -g.c[nonconst_selector]
             expr = cl.weighted_sum_exp(c, alpha @ x)
-            cons.append(expr <= cst)
+            coniclift_cons.append(expr <= cst)
         elif g.m == 2:
             expr = g.alpha[nonconst_selector, :] @ x
             cst = np.log(g.c[~nonconst_selector] / abs(g.c[nonconst_selector]))
-            cons.append(expr <= cst)
+            coniclift_cons.append(expr <= cst)
         else:
             raise RuntimeError('Trivial (or infeasible) signomial constraint.')
     conv_eqs = con_gen.valid_monomial_equations(eqs)
@@ -418,14 +428,16 @@ def conditional_sage_data(f, gts, eqs):
         cst_loc = g.constant_location()
         non_cst_loc = 1 if cst_loc == 0 else 1
         rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
-        cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
-    if len(cons) > 0:
-        A, b, K, sep_K, var_name_to_locs = cl.compile_constrained_system(cons)
+        coniclift_cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
+    if len(coniclift_cons) > 0:
+        A, b, K, sep_K, var_name_to_locs = cl.compile_constrained_system(coniclift_cons)
         cl.clear_variable_indices()
         AbK = (A, b, K)
+        X = {'AbK': AbK, 'gts': conv_gt, 'eqs': conv_eqs}
+        return X
     else:
-        AbK = None
-    return AbK
+        X = {'AbK': None, 'gts': [], 'eqs': []}
+        return X
 
 
 def hierarchy_e_k(sigs, k):
