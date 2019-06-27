@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Added important functions to sageopt's ``__init__.py`` file.
  For example, you can now call ``sageopt.standard_sig_monomials(n)`` and
- ``sageopt.constrained_sage_primal(....)`` without following a chain of
+ ``sageopt.sig_constrained_primal(....)`` without following a chain of
  subpackages.
  - Removed the ability to call signomials in geometric format.
- - Removed the local_refinement implementation for polynomials; replaced
+ - Removed the local_refine implementation for polynomials; replaced
    it by a generic implementation which works for polynomials and signomials
- - Added a function "refine_polys_from_sigs", which performs local refinement
+ - Added a function "local_refine_polys_from_sigs", which performs local refinement
    as though given signomial problem data actually defined polynomials. This
    is to help people who only use signomials as a modeling tool for polynomial
    optimization problems where decision variables must be nonnegative.
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The desire to have minimal support for the 0.2.0 API stems from the fact that
   I have a massive collection of experiment / simulation code that I'd rather
   not rewrite, and that I may have to run again before the paper is published.
+  - Changed function names throughout.
 
 
 

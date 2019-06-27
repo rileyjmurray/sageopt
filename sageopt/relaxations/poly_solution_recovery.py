@@ -16,13 +16,13 @@
 import sageopt.coniclifts as cl
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations.symbolic_correspondences import moment_reduction_array
-from sageopt.relaxations.sig_solution_recovery import is_feasible, local_refinement
+from sageopt.relaxations.sig_solution_recovery import is_feasible, local_refine
 import numpy as np
 from scipy.optimize import fmin_cobyla
 import itertools
 
 
-def refine_polys_from_sigs(f, gts, eqs, x0, rhobeg=1.0, rhoend=1e-7, maxfun=10000):
+def local_refine_polys_from_sigs(f, gts, eqs, x0, rhobeg=1.0, rhoend=1e-7, maxfun=10000):
     """
     When faced with a polynomial optimization problem over nonnegative variables, one should
     formulate the problem in terms of signomials. This reformulation is without loss of generality
@@ -74,8 +74,8 @@ def refine_polys_from_sigs(f, gts, eqs, x0, rhobeg=1.0, rhoend=1e-7, maxfun=1000
     return res
 
 
-def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False, all_signs=True):
-    # implemented only for constrained_sage_poly_dual (not yet implemented for sage_poly_dual).
+def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False, all_signs=True):
+    # implemented only for poly_constrained_dual (not yet implemented for sage_poly_dual).
     f = prob.associated_data['f']
     lag_gts = prob.associated_data['gts']
     lag_eqs = prob.associated_data['eqs']

@@ -28,13 +28,13 @@ def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8):
     return True
 
 
-def local_refinement(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000):
+def local_refine(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000):
     res = fmin_cobyla(f, x0, gts + eqs + [-g for g in eqs],
                       rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun)
     return res
 
 
-def dual_solution_recovery(prob, ineq_tol=1e-8, eq_tol=1e-6):
+def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6):
     con = prob.user_cons[0]
     if not con.name == 'Lagrangian SAGE dual constraint':
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')

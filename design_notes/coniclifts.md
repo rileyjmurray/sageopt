@@ -1,4 +1,4 @@
-clifts
+coniclifts
 
 For any convex set ``X`` in R^n, there exists a matrix ``A``, a vector ``b``, a cone ``K``, and a projector ``P`` so that ``X = { P * z : A * z + b \in K }``. The projection operator can be taken to be something that grabs the first ``n`` coordinates of ``z``. The purpose of this package is allow the user to define ``X`` in a convenient way (such as how one would define an optimization model in cvxpy), then generate the data ``A,b,K`` defining the conic lift of ``X``.
 
@@ -13,5 +13,6 @@ The current form of coniclifts has significantly expanded. It now features "Prob
 
 * Coniclifts does not propogate dual variables through the rewriting system.
 * Coniclifts is not well-suited to setting up and solving auxilliary optimization problems as part of constructing a larger, master optimization problem.
+* Coniclifts does not have functionality to infer the sign from a symbolic expression, even when constraints over variables appearing in that expression imply a definite overall sign.
 
 This second feature is actually quite important for dimension reduction and preprocessing in SAGE relaxations.

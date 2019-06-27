@@ -20,7 +20,6 @@ from sageopt.symbolic.signomials import Signomial
 from sageopt.relaxations import sage_sigs
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
-from sageopt.relaxations.poly_solution_recovery import dual_solution_recovery
 
 
 def primal_sage_poly_cone(poly, name, log_AbK):
@@ -54,7 +53,7 @@ def relative_dual_sage_poly_cone(primal_poly, dual_var, name_base, log_AbK):
     return constrs
 
 
-def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
+def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
     if X is None:
         X = {'log_AbK': None, 'gts': [], 'eqs': []}
     if poly_ell == 0:
@@ -67,7 +66,7 @@ def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
         log_X = {'AbK':  X['log_AbK'],
                  'gts': [g.as_signomial() for g in X['gts']],
                  'eqs': [g.as_signomial() for g in X['eqs']]}
-        prob = sage_sigs.sage_dual(sr, sigrep_ell, X=log_X)
+        prob = sage_sigs.sig_dual(sr, sigrep_ell, X=log_X)
         cl.clear_variable_indices()
         return prob
     elif sigrep_ell == 0:
@@ -89,7 +88,7 @@ def sage_poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
         raise NotImplementedError()
 
 
-def sage_poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
+def poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
     if X is None:
         X = {'log_AbK': None, 'gts': [], 'eqs': []}
     if poly_ell == 0:
@@ -102,7 +101,7 @@ def sage_poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
         log_X = {'AbK':  X['log_AbK'],
                  'gts': [g.as_signomial() for g in X['gts']],
                  'eqs': [g.as_signomial() for g in X['eqs']]}
-        prob = sage_sigs.sage_primal(sr, sigrep_ell, X=log_X, additional_cons=cons)
+        prob = sage_sigs.sig_primal(sr, sigrep_ell, X=log_X, additional_cons=cons)
         cl.clear_variable_indices()
         return prob
     else:
@@ -125,7 +124,7 @@ def sage_poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
         return prob
 
 
-def sage_poly_feasibility(f, X=None):
+def sage_feasibility(f, X=None):
     if X is None:
         X = {'log_AbK': None, 'gts': [], 'eqs': []}
     log_X = {'AbK': X['log_AbK'],
@@ -137,7 +136,7 @@ def sage_poly_feasibility(f, X=None):
     return prob
 
 
-def sage_poly_multiplier_search(f, level=1, X=None):
+def sage_multiplier_search(f, level=1, X=None):
     """
     Suppose we have a nonnegative polynomial f that is not SAGE. Do we have an alternative
     to proving that f is nonnegative other than moving up the usual SAGE hierarchy?
@@ -175,7 +174,7 @@ def sage_poly_multiplier_search(f, level=1, X=None):
     return prob
 
 
-def constrained_sage_poly_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
+def poly_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the primal SAGE-(p, q, ell) relaxation for the polynomial optimization problem
 
@@ -223,7 +222,7 @@ def constrained_sage_poly_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     return prob
 
 
-def constrained_sage_poly_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
+def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the dual SAGE-(p, q, ell) relaxation for the polynomial optimization problem
 
@@ -356,7 +355,7 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     return L, ineq_dual_polys, eq_dual_polys, gamma
 
 
-def conditional_sage_poly_data(f, gts, eqs):
+def conditional_sage_data(f, gts, eqs):
     # GP-representable inequality constraints (recast as "Signomial >= 0")
     gp_gts = con_gen.valid_gp_representable_poly_inequalities(gts)
     gp_gts_sigreps = [Signomial(g.alpha, g.c) for g in gp_gts]

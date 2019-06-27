@@ -21,17 +21,17 @@ from sageopt import coniclifts as cl
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
-    prim = sage.sage_poly_primal(p, poly_ell, sigrep_ell, X)
+    prim = sage.poly_primal(p, poly_ell, sigrep_ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage.sage_poly_dual(p, poly_ell, sigrep_ell, X)
+    dual = sage.poly_dual(p, poly_ell, sigrep_ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
 
 def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
-    prim = sage.constrained_sage_poly_primal(f, gt, eq, p, q, ell, X)
+    prim = sage.poly_constrained_primal(f, gt, eq, p, q, ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage.constrained_sage_poly_dual(f, gt, eq, p, q, ell, X)
+    dual = sage.poly_constrained_dual(f, gt, eq, p, q, ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
@@ -227,10 +227,10 @@ class TestSagePolynomials(unittest.TestCase):
         #
         x = standard_poly_monomials(3)
         p = (np.sum(x)) ** 2 + 0.5 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res1 = sage.sage_poly_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
+        res1 = sage.sage_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
         assert abs(res1[1]) < 1e-8
         p -= 0.20 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res2 = sage.sage_poly_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
+        res2 = sage.sage_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
         assert abs(res2[1]) < 1e-8
 
 #TODO: Add tests for conditional SAGE polynomials.

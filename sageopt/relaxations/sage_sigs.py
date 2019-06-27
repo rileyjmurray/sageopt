@@ -38,7 +38,7 @@ def relative_dual_sage_cone(primal_sig, dual_var, name, AbK):
     return con
 
 
-def sage_dual(f, ell=0, X=None, modulator_support=None):
+def sig_dual(f, ell=0, X=None, modulator_support=None):
     """
     :param f: a Signomial object.
     :param ell: a nonnegative integer
@@ -82,7 +82,7 @@ def sage_dual(f, ell=0, X=None, modulator_support=None):
     return prob
 
 
-def sage_primal(f, ell=0, X=None, additional_cons=None, modulator_support=None):
+def sig_primal(f, ell=0, X=None, additional_cons=None, modulator_support=None):
     """
     :param f: a Signomial object.
     :param ell: a nonnegative integer
@@ -93,7 +93,7 @@ def sage_primal(f, ell=0, X=None, additional_cons=None, modulator_support=None):
     :return: a coniclifts Problem providing the primal formulation for f_{SAGE(X)}^{(ell)}, where
     X = R^(f.n) by default, but X = {x : A @ x + b in K} if AbK is not None.
 
-    Unlike the sage_dual, this formulation can be stated in full generality without too much trouble.
+    Unlike the sig_dual, this formulation can be stated in full generality without too much trouble.
     We define a multiplier signomial "t" (with the canonical choice t = Signomial(f.alpha, np.ones(f.m))),
     then return problem data representing
 
@@ -201,7 +201,7 @@ def sage_multiplier_search(f, level=1, X=None):
     return prob
 
 
-def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
+def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the SAGE-(p, q, ell) primal problem for the signomial program
 
@@ -257,7 +257,7 @@ def constrained_sage_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     return prob
 
 
-def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
+def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the SAGE-(p, q, ell) dual problem for the signomial program
 
@@ -296,7 +296,6 @@ def constrained_sage_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
-        # ^ Some terms might be cancelling here? Possible that this function
         f = f * modulator
     else:
         modulator = Signomial({(0,) * f.n: 1})
