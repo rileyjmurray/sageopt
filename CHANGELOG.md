@@ -29,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   I have a massive collection of experiment / simulation code that I'd rather
   not rewrite, and that I may have to run again before the paper is published.
   - Changed function names throughout.
+  - Added a ``as_signomial`` function to Polynomial objects. There isn't a specific
+    use-case for this in sageopt's codebase, but it makes the Polynomial API closer
+    to the Signomial API, and that's desirable in its own right.
+  - Added a ``log_domain_converter`` to ``sage_polys.py``. The purpose of this new function
+    is to allow arguments to be passed in log-domain, but evaluated as though they
+    were in the original function's domain. This mimics the functionality of a user
+    calling ``f_sig = f.as_signomial()`` and subsequently evaluating ``f_sig(x)``,
+    however ``log_domain_converter`` does not require inputs to be Polynomial objects.
 
 
 

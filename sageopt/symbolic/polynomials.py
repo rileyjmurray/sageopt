@@ -238,3 +238,7 @@ class Polynomial(Signomial):
         alpha = np.array([[0] * n])
         c = np.array([scalar])
         return Polynomial(alpha, c)
+
+    def as_signomial(self):
+        f = Signomial(self.alpha, self.c)
+        return f

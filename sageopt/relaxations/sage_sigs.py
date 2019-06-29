@@ -389,9 +389,10 @@ def conditional_sage_data(f, gts, eqs):
     Notes:
 
         This function essentially defines the requirements for "X" which may be passed to
-        conditional SAGE relaxations defined in this python module. If a user wants to define
-        their own set "X" without calling this function, that is perfectly valid. A possible
-        use-case here is when the set X has a simple convex description, but not a simple
+        conditional SAGE relaxations defined in this python module.
+
+        If a user wants to define their own "X" without calling this function, that is doable.
+        A possible use-case here is when X has a simple convex description, but not a simple
         description in terms of signomial inequality and equality constraints.
 
         Suppose for example that we want X to represent the ell-2 unit ball in R^{f.n}.
@@ -408,17 +409,14 @@ def conditional_sage_data(f, gts, eqs):
             X = {'AbK': (A, b, K), 'gts': my_gts, 'eqs': my_eqs}
 
         The message of this example is that X['gts'] and X['eqs'] don't actually need to be
-        lists of Signomials. They  just need to be callable functions which define membership
+        lists of Signomials. They just need to be callable functions which define membership
         in X['AbK]. To really hit this home, functions in X['gts'] don't even need to be
         continuous! For example, if you wanted to test membership in the ell-2 ball without
         allowing even the smallest constraint violation, you could use the function
 
             my_gts = [lambda dummy_x: 1 if 1 >= np.linalg.norm(dummy_x, ord=2) else -np.inf]
 
-        and every important feature of sageopt's SAGE signomial relaxations would work as
-        expected (from generating a relaxation, to solving that relaxation, and recovering a
-        solution from a dual relaxation).
-
+        and every important feature of sageopt's signomial relaxations would work as expected.
     """
     x = cl.Variable(shape=(f.n,), name='x')
     coniclift_cons = []
