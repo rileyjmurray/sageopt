@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>API Documentation &#8212; sageopt 0.3.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Signomial and Polynomial objects." href="sageopt.symbolic.html" />
+    <link rel="prev" title="Sageopt is for signomial and polynomial optimization" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="api-documentation">
+<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>Sageopt version 0.3 is divided into three subpackages:</dt><dd><ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sageopt.symbolic</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sageopt.relaxations</span></code>, and</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sageopt.coniclifts</span></code>.</p></li>
+</ol>
+</dd>
+</dl>
+<p>Most users will first want to read documentation for <code class="docutils literal notranslate"><span class="pre">sageopt.symbolic</span></code>, because this tells you how to construct
+and use <code class="docutils literal notranslate"><span class="pre">Signomial</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial</span></code> objects which you need to define your optimization problems.</p>
+<p>Once you know how to instantiate <code class="docutils literal notranslate"><span class="pre">Signomial</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial</span></code> objects, you will want to use the <code class="docutils literal notranslate"><span class="pre">sageopt.relaxations</span></code> subpackage to manage building and solving a SAGE relaxation for your optimization problem.</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">relaxations</span></code> subpackage does not contain some functionality which you need, then it should be possible to
+implement that functionality using <code class="docutils literal notranslate"><span class="pre">sageopt.coniclifts</span></code> as a basic, high-level modeling interface.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sageopt.symbolic.html">Symbolic</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.symbolic.html#signomials">Signomials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.symbolic.html#polynomials">Polynomials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sageopt.relaxations.html">Relaxations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sageopt.coniclifts.html">Coniclifts</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sageopt</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.symbolic.html">Symbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.relaxations.html">Relaxations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.coniclifts.html">Coniclifts</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Sageopt is for signomial and polynomial optimization</a></li>
+      <li>Next: <a href="sageopt.symbolic.html" title="next chapter">Signomial and Polynomial objects.</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api_reference/sageopt.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

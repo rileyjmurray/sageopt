@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sageopt is for signomial and polynomial optimization &#8212; sageopt 0.3.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Documentation" href="api_reference/sageopt.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="sageopt-is-for-signomial-and-polynomial-optimization">
+<h1>Sageopt is for signomial and polynomial optimization<a class="headerlink" href="#sageopt-is-for-signomial-and-polynomial-optimization" title="Permalink to this headline">¶</a></h1>
+<a class="reference external image-reference" href="https://travis-ci.org/rileyjmurray/sageopt"><img alt="https://travis-ci.org/rileyjmurray/sageopt.svg?branch=master" src="https://travis-ci.org/rileyjmurray/sageopt.svg?branch=master" /></a>
+<img alt="https://img.shields.io/pypi/wheel/sageopt.svg" src="https://img.shields.io/pypi/wheel/sageopt.svg" /><p>Sageopt provides functionality for constructing, solving, and analyzing convex relaxations for
+signomial and polynomial optimization problems. It also provides functionality for recovering feasible
+solutions from these convex relaxations. This means that sageopt can be used as a standalone tool to find provably
+optimal solutions to hard optimization problems, or as part of a broader effort to find locally-optimal
+solutions to especially difficult problems (with bounds on possible optimality gaps).</p>
+<p>These underlying convex relaxations are built upon the idea of “SAGE certificates” for signomial and
+polynomial nonnegativity. Refer to the paper “Signomial and Polynomial Optimization by Relative Entropy
+and Partial Dualization” for a mathematical description of the functionality implemented by this python package.</p>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Sageopt requires Python version 3.5 or higher. There is no way around this: we make heavy use of the <code class="docutils literal notranslate"><span class="pre">&#64;</span></code>
+operator for matrix multiplication, and this operator was only introduced in Python 3.5.
+We also require the following packages
+1. SciPy, version &gt;= 1.1.
+2. Numpy, version &gt;= 1.14.
+3. ECOS, version &gt;= 2.0.</p>
+<p>It is highly recommended that you also install <a class="reference external" href="https://www.mosek.com/">MOSEK</a> (version &gt;= 9).
+MOSEK is a commerical optimization solver, and currently the only solver that is able to handle
+the more intersting convex relaxations needed for optimization with SAGE certificates. If you
+are in academia you can request a free <a class="reference external" href="https://www.mosek.com/products/academic-licenses/">academic license</a> for
+MOSEK.</p>
+</div>
+<div class="section" id="to-install">
+<h2>To install<a class="headerlink" href="#to-install" title="Permalink to this headline">¶</a></h2>
+<p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sageopt</span></code>.</p>
+<p>If you use Anaconda for Python development, please (1) activate your anaconda environment, (2) run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">pip</span></code>, and (3) run
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sageopt</span></code>. It is important that pip be installed inside your conda environment, or sageopt
+might not be detected by Anaconda Navigator (among other environment management tools).</p>
+<p>To install sageopt from source, do the following:</p>
+<ol class="arabic simple" start="0">
+<li><p>Download this repository. If needed, change your directory so that you are in the same directory as
+sageopt’s <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p></li>
+<li><p>Activate the Python virtual environment of your choice.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code> to install sageopt to your current Python environment.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">&quot;import</span> <span class="pre">sageopt;</span> <span class="pre">print(sageopt.__version__)&quot;</span></code> to verify that sageopt installed correctly.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nose</span></code>  (or <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">nose</span></code>) in preparation for running unittests.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">nosetests</span> <span class="pre">sageopt/tests</span></code>.</p></li>
+</ol>
+</div>
+<div class="section" id="mathematical-background">
+<h2>Mathematical background<a class="headerlink" href="#mathematical-background" title="Permalink to this headline">¶</a></h2>
+<p>SAGE certificates were originally developed for signomials (<a class="reference external" href="https://arxiv.org/abs/1409.7640">Chandrasekaran and Shah, 2016</a>). Around the same time that SAGE certificates were first developed, there were similar
+developments for polynomials, under the name “SONC certificates.” Work by Murray, Chandrasekaran, and Wierman (<a class="reference external" href="https://arxiv.org/abs/1810.01614">MCW
+2018</a>) described the first efficient way to use these SONC certificates in
+optimization; they referred to their efficient proof system as the method of “SAGE polynomials.”</p>
+<p>The appendix of the 2018 paper by MCW describes a python package called
+“sigpy”, which implements SAGE relaxations for both signomial and polynomial optimization problems. Sageopt
+supercedes sigpy by implementing a significant generalization of the original SAGE certificates for both signomials
+and polynomials. The formal name for these  generalizations are “conditional SAGE signomials” and “conditional SAGE
+polynomials”. This concept is introduced in a 2019 paper by Murray, Chandrasekaran, and Wierman, titled “Signomial
+and Polynomial Optimization via Relative Entropy and Partial Dualization.” Because the generalization follows so
+transparently from the original idea of SAGE certificates, we say simply say “SAGE certificates” in reference to the
+most general idea.</p>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">sageopt</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api_reference/sageopt.html">API Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="api_reference/sageopt.html" title="next chapter">API Documentation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -42,8 +42,33 @@ def standard_poly_monomials(n):
 
 
 class Polynomial(Signomial):
+    """
+    The dimension of the space over which this Polynomial is defined. The number of columns in ``alpha``,
+    and the length of tuples appearing in the dictionary ``alpha_c``.
+
+    The number of terms needed to express this Polynomial in the standard monomial basis.
+        The number of rows in  ``alpha``.  The length of the dictionary ``alpha_c``.
+
+    A NumPy ndarray of shape ``(m, n)``. Entry ``alpha[i,j]`` is the power of an implicit variable ``x[j]``
+        appearing in the i-th monomial for this Polynomial. The i-th monomial, in turn, has coefficient ``c[i]``.
+
+    A NumPy ndarray of shape ``(m,)``. The scalar ``c[i]`` is this Polynomial's coefficient on the basis function
+        ``lambda x: np.prod(np.power(alpha[i, :], x))``. It is possible to have ``c.dtype == object``, to allow for
+        coniclifts Variables.
+
+    A Python defaultdict with ``len(alpha_c) == m``. The default value for this dictionary is zero. The keys of
+        ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float). These tuples correspond
+        to rows in ``alpha``.
+    """
 
     def __init__(self, alpha_maybe_c, c=None):
+        """
+
+        Parameters
+        ----------
+        alpha_maybe_c
+        c
+        """
         Signomial.__init__(self, alpha_maybe_c, c)
         if not np.all(self.alpha % 1 == 0):
             raise RuntimeError('Exponents must belong the the integer lattice.')
@@ -51,6 +76,7 @@ class Polynomial(Signomial):
             raise RuntimeError('Exponents must be nonnegative.')
         self._sig_rep = None
         self._sig_rep_constrs = []
+        pass
 
     def __mul__(self, other):
         if not isinstance(other, Polynomial):
@@ -63,7 +89,7 @@ class Polynomial(Signomial):
         if self_var_coeffs and other_var_coeffs:
             raise RuntimeError('Cannot multiply two polynomials that contain non-numeric coefficients.')
         temp = Signomial.__mul__(self, other)
-        temp = Polynomial(temp.alpha, temp.c)
+        temp = temp.as_polynomial()
         return temp
 
     def __truediv__(self, other):
@@ -76,14 +102,14 @@ class Polynomial(Signomial):
         if isinstance(other, Signomial) and not isinstance(other, Polynomial):
             raise RuntimeError('Cannot add signomials to polynomials.')
         temp = Signomial.__add__(self, other)
-        temp = Polynomial(temp.alpha, temp.c)
+        temp = temp.as_polynomial()
         return temp
 
     def __sub__(self, other):
         if isinstance(other, Signomial) and not isinstance(other, Polynomial):
             raise RuntimeError('Cannot subtract a signomial from a polynomial (or vice versa).')
         temp = Signomial.__sub__(self, other)
-        temp = Polynomial(temp.alpha, temp.c)
+        temp = temp.as_polynomial()
         return temp
 
     def __rmul__(self, other):
@@ -110,10 +136,9 @@ class Polynomial(Signomial):
             raise RuntimeError('Cannot exponentiate polynomials with symbolic coefficients.')
         temp = Signomial(self.alpha, self.c)
         temp = temp ** power
-        temp = Polynomial(temp.alpha, temp.c)
+        temp = temp.as_polynomial()
         return temp
 
-    # noinspection PyMethodOverriding
     def __call__(self, x):
         """
         Numeric example:
@@ -169,16 +194,32 @@ class Polynomial(Signomial):
             return False
         for k in self.alpha_c:
             v = self.alpha_c[k]
-            other_v = other.alpha_c[k]
+            other_v = other.query_coeff(np.array(k))
             if not cl.Expression.are_equivalent(other_v, v, rtol=1e-8):
                 return False
         return True
 
     def even_locations(self):
+        """
+        Return the largest ndarray ``evens``, so that ``np.all(alpha[evens,:] % 2 == 0)``.
+        """
         evens = np.where(~(self.alpha % 2).any(axis=1))[0]
         return evens
 
     def partial(self, i):
+        """
+        Compute the symbolic partial derivative of this polynomial, at coordinate ``i``.
+
+        Parameters
+        ----------
+        i : int
+            ``i`` must be an integer from 0 to ``self.n - 1``.
+
+        Returns
+        -------
+        p : Polynomial
+            The function obtained by differentiating this polynomial with respect to its i-th argument.
+        """
         if i < 0 or i >= self.n:
             raise RuntimeError('This polynomial does not have an input at index ' + str(i) + '.')
         d = defaultdict(int)
@@ -205,10 +246,10 @@ class Polynomial(Signomial):
     def sig_rep(self):
         # It is important that self._sig_rep.alpha == self.alpha.
         if self._sig_rep is None:
-            self.compute_sig_rep()
+            self._compute_sig_rep()
         return self._sig_rep, self._sig_rep_constrs
 
-    def compute_sig_rep(self):
+    def _compute_sig_rep(self):
         self._sig_rep = None
         self._sig_rep_constrs = []
         sigrep_c = np.zeros(shape=(self.m,), dtype=object)
@@ -235,10 +276,30 @@ class Polynomial(Signomial):
 
     @staticmethod
     def promote_scalar_to_polynomial(scalar, n):
+        """
+        Parameters
+        ----------
+        scalar : float
+            Construct a polynomial that takes this value for all inputs.
+        n : int
+            The dimension of the space over which the resulting Polynomial is to be defined.
+
+        Returns
+        -------
+        p : Polynomial
+            For all vectors ``x`` in R^n, we have ``p(x) == scalar``.
+        """
         alpha = np.array([[0] * n])
         c = np.array([scalar])
-        return Polynomial(alpha, c)
+        p = Polynomial(alpha, c)
+        return p
 
     def as_signomial(self):
+        """
+        Returns
+        -------
+        f : Signomial
+            For every elementwise positive vector ``x``, we have ``self(x) == f(np.log(x))``.
+        """
         f = Signomial(self.alpha, self.c)
         return f
