@@ -72,7 +72,7 @@ transparently from the original idea of SAGE certificates, we say simply say "SA
 most general idea.
 
 .. toctree::
-   :hidden:
+   :maxdepth: 2
 
    API Documentation <api_reference/sageopt>
 
