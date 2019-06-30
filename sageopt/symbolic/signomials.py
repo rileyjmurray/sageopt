@@ -36,8 +36,8 @@ def standard_sig_monomials(n):
         An array  of length ``n``, with ``y[i]`` as a Signomial with one term,
         corresponding to the (``i+1``)-th standard basis vector in ``n`` dimensional real space.
 
-    Examples
-    --------
+    Example
+    -------
     This function is useful for constructing signomials in an algebraic form. ::
 
         y = standard_sig_monomials(3)
@@ -67,42 +67,42 @@ class Signomial(object):
     Parameters
     ----------
 
-        alpha_maybe_c : dict or NumPy ndarray
+    alpha_maybe_c : dict or NumPy ndarray
 
-             If ``alpha_maybe_c`` is a dict, then it must be a dictionary from tuples-of-numbers to
-             scalars. The keys will be converted to rows of a matrix which we call ``alpha``, and
-             the values will be assembled into a vector which we call ``c``.
+         If ``alpha_maybe_c`` is a dict, then it must be a dictionary from tuples-of-numbers to
+         scalars. The keys will be converted to rows of a matrix which we call ``alpha``, and
+         the values will be assembled into a vector which we call ``c``.
 
-             If ``alpha_maybe_c`` is a NumPy ndarray, then the argument ``c`` must also be an ndarray,
-             and ``c.size`` must equal ``alpha_maybe_c.shape[0]``.
+         If ``alpha_maybe_c`` is a NumPy ndarray, then the argument ``c`` must also be an ndarray,
+         and ``c.size`` must equal ``alpha_maybe_c.shape[0]``.
 
-        c : None or NumPy ndarray
+    c : None or NumPy ndarray
 
-            This value is only used when ``alpha_maybe_c`` is a NumPy ndarray. If that is the case, then
-            this Signomial will represent the function ``lambda x: c @ np.exp(alpha_maybe_c @ x)``.
+        This value is only used when ``alpha_maybe_c`` is a NumPy ndarray. If that is the case, then
+        this Signomial will represent the function ``lambda x: c @ np.exp(alpha_maybe_c @ x)``.
 
     Examples
     --------
 
-        There are two ways to call the Signomial constructor.
+    There are two ways to call the Signomial constructor.
 
-        The first way is to specify a dictionary from tuples to scalars. The tuples are interpreted as linear
-        functionals appearing in the exponential terms, and the scalars are the corresponding coefficients.::
+    The first way is to specify a dictionary from tuples to scalars. The tuples are interpreted as linear
+    functionals appearing in the exponential terms, and the scalars are the corresponding coefficients.::
 
-            alpha_and_c = {(1,): 2}
-            f = Signomial(alpha_and_c)
-            print(f(1))  # equal to 2 * np.exp(1).
-            print(f(0))  # equal to 2.
+        alpha_and_c = {(1,): 2}
+        f = Signomial(alpha_and_c)
+        print(f(1))  # equal to 2 * np.exp(1).
+        print(f(0))  # equal to 2.
 
-        The second way is to specify two arguments. In this case the first argument is a NumPy array
-        where the rows represent linear functionals, and the second argument is a vector of corresponding
-        coefficients.::
+    The second way is to specify two arguments. In this case the first argument is a NumPy array
+    where the rows represent linear functionals, and the second argument is a vector of corresponding
+    coefficients.::
 
-            alpha = np.array([[1, 0], [0, 1], [1, 1]])
-            c = np.array([1, 2, 3])
-            f = Signomial(alpha, c)
-            x = np.random.randn(2)
-            print(f(x) - c @ np.exp(alpha @ x))  # zero, up to rounding errors.
+        alpha = np.array([[1, 0], [0, 1], [1, 1]])
+        c = np.array([1, 2, 3])
+        f = Signomial(alpha, c)
+        x = np.random.randn(2)
+        print(f(x) - c @ np.exp(alpha @ x))  # zero, up to rounding errors.
 
     Attributes
     ----------
@@ -188,27 +188,15 @@ class Signomial(object):
         self._update_alpha_c_arrays()
         pass
 
-    @property
-    def grad(self):
-        """
-        A numpy ndarray of shape ``(n,)`` whose entries are Signomials. For a numpy ndarray ``x``, ``grad[i](x)``
-        is the partial derivative of this Signomial with respect to coordinate ``i``, evaluated at ``x``.
-        This array is constructed only when necessary, and is cached upon construction.
-        """
+    def _cache_grad(self):
         if self._grad is None:
             g = np.empty(shape=(self.n,), dtype=object)
             for i in range(self.n):
                 g[i] = self.partial(i)
             self._grad = g
-        return self._grad
+        pass
 
-    @property
-    def hess(self):
-        """
-        A numpy ndarray of shape ``(n, n)``, whose entries are Signomials. For a numpy ndarray ``x``,
-        ``hess[i,j](x)`` is the (i,j)-th partial derivative of this Signomial, evaluated at ``x``.
-        This array is constructed only when necessary, and is cached upon construction.
-        """
+    def _cache_hess(self):
         if self._hess is None:
             H = np.empty(shape=(self.n, self.n), dtype=object)
             for i in range(self.n):
@@ -218,6 +206,27 @@ class Signomial(object):
                     H[i, j] = curr_partial
                     H[j, i] = curr_partial
             self._hess = H
+        pass
+
+    @property
+    def grad(self):
+        """
+        A numpy ndarray of shape ``(n,)`` whose entries are Signomials. For a numpy ndarray ``x``, ``grad[i](x)``
+        is the partial derivative of this Signomial with respect to coordinate ``i``, evaluated at ``x``.
+        This array is constructed only when necessary, and is cached upon construction.
+        """
+        self._cache_grad()
+        return self._grad
+
+
+    @property
+    def hess(self):
+        """
+        A numpy ndarray of shape ``(n, n)``, whose entries are Signomials. For a numpy ndarray ``x``,
+        ``hess[i,j](x)`` is the (i,j)-th partial derivative of this Signomial, evaluated at ``x``.
+        This array is constructed only when necessary, and is cached upon construction.
+        """
+        self._cache_hess()
         return self._hess
 
     def query_coeff(self, a):
@@ -427,7 +436,7 @@ class Signomial(object):
 
     def hess_val(self, x):
         """
-        Return the Hessian of this Signomial (as a NumPy ndarray) at the point specified by ``x``.
+        Return the Hessian of this Signomial (as a NumPy ndarray) at the point ``x``.
         """
         if self._hess is None:
             _ = self.hess  # ignore the return value

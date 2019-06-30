@@ -11,7 +11,6 @@ Signomials
 
 .. autoclass:: sageopt.symbolic.signomials.Signomial
     :members:
-    :undoc-members:
 
 .. automethod:: sageopt.symbolic.signomials.standard_sig_monomials
 
