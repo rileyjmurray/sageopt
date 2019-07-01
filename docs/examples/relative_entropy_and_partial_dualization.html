@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Examples from MCW19 &#8212; sageopt 0.3.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Documentation" href="../api_reference/sageopt.html" />
+    <link rel="prev" title="Sageopt is for signomial and polynomial optimization" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="toctree-wrapper compound">
+</div>
+<div class="section" id="examples-from-mcw19">
+<h1>Examples from MCW19<a class="headerlink" href="#examples-from-mcw19" title="Permalink to this headline">¶</a></h1>
+<p>The examples shown here appear in the 2019 article by Murray, Chandrasekaran, and Wierman, titled <em>Signomial and
+Polynomial Optimization via Relative Entropy and Partial Dualization</em>. That paper introduced conditional SAGE
+certificates.</p>
+<p>This page is under construction!</p>
+<div class="section" id="example-1-signomial">
+<h2>Example 1 (signomial)<a class="headerlink" href="#example-1-signomial" title="Permalink to this headline">¶</a></h2>
+<p>We want to solve a constraint signomial program in three variables.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+ \min_{x \in \mathbb{R}^3} &amp;~ f(x) \doteq 0.5 \exp(x_1 - x_2) -\exp x_1  - 5 \exp(-x_2)  \\
+                        \text{s.t.} &amp;~ g_1(x) \doteq 100 -  \exp(x_2 - x_3) -\exp x_2 - 0.05 \exp(x_1 + x_3) \geq 0\\
+                                    &amp;~ g_{2:4}(x) \doteq \exp(x) - (70,\,1,\, 0.5) \geq (0, 0, 0)  \\
+                                    &amp;~ g_{5:7}(x) \doteq (150,\,30,\,21) - \exp(x) \geq (0, 0, 0)
+\end{align*}\end{split}\]</div>
+<p>It’s often easier to specify a signomial program by defining symbols <code class="docutils literal notranslate"><span class="pre">y</span></code>,
+which are related to variables <code class="docutils literal notranslate"><span class="pre">x</span></code> by <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">=</span> <span class="pre">exp(x)</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sageopt</span> <span class="k">import</span> <span class="n">conditional_sage_data</span><span class="p">,</span> <span class="n">sig_dual</span>
+<span class="kn">from</span> <span class="nn">sageopt</span> <span class="k">import</span> <span class="n">standard_sig_monomials</span><span class="p">,</span> <span class="n">sig_solrec</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">standard_sig_monomials</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span> <span class="o">-</span>  <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+       <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">70</span><span class="p">,</span>
+       <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+       <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span>
+       <span class="mi">150</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+       <span class="mi">30</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+       <span class="mi">21</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+<span class="n">eqs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">conditional_sage_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We will use <code class="docutils literal notranslate"><span class="pre">sig_dual</span></code> for this problem. The dual formulation is used because we want to recover a solution,
+rather than just produce a bound on the optimization problem. We begin by solving a level <code class="docutils literal notranslate"><span class="pre">ell=0</span></code> relaxation.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dual</span> <span class="o">=</span> <span class="n">sig_dual</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">solutions</span> <span class="o">=</span> <span class="n">sig_solrec</span><span class="p">(</span><span class="n">dual</span><span class="p">)</span>
+<span class="n">best_soln</span> <span class="o">=</span> <span class="n">solutions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">best_soln</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now let’s see if this solution is any good!</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The recovered solution has objective value ...&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">best_soln</span><span class="p">)))</span>  <span class="c1"># about -147.66666</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The recovered solution has constraint violation ...&quot;</span><span class="p">)</span>
+<span class="n">constraint_levels</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">g</span><span class="p">(</span><span class="n">best_soln</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gts</span><span class="p">])</span>  <span class="c1"># zero!</span>
+<span class="n">violation</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">constraint_levels</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="n">constraint_levels</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">violation</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The level 0 SAGE bound is ... &#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>  <span class="c1"># about -147.857</span>
+</pre></div>
+</div>
+<p>We can certify that the solution is actually much closer to optimality than the SAGE bound would suggest. We can
+easily construct and solve a level <code class="docutils literal notranslate"><span class="pre">ell=3</span></code> SAGE relaxation to produce a stronger lower bound on this minimization
+problem.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dual</span> <span class="o">=</span> <span class="n">sig_dual</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The level 3 SAGE bound is ... &#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>  <span class="c1"># about  -147.6666</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2-signomial">
+<h2>Example 2 (signomial)<a class="headerlink" href="#example-2-signomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-3-polynomial">
+<h2>Example 3 (polynomial)<a class="headerlink" href="#example-3-polynomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-4-polynomial">
+<h2>Example 4 (polynomial)<a class="headerlink" href="#example-4-polynomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-5-signomial">
+<h2>Example 5 (signomial)<a class="headerlink" href="#example-5-signomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-6-signomial">
+<h2>Example 6 (signomial)<a class="headerlink" href="#example-6-signomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-7-signomial">
+<h2>Example 7 (signomial)<a class="headerlink" href="#example-7-signomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-8-signomial">
+<h2>Example 8 (signomial)<a class="headerlink" href="#example-8-signomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-9-signomial">
+<h2>Example 9 (signomial)<a class="headerlink" href="#example-9-signomial" title="Permalink to this headline">¶</a></h2>
+<p>under construction!</p>
+</div>
+<div class="section" id="example-10-polynomial">
+<h2>Example 10 (polynomial)<a class="headerlink" href="#example-10-polynomial" title="Permalink to this headline">¶</a></h2>
+<p>Under construction!</p>
+</div>
+<div class="section" id="example-11-polynomial">
+<h2>Example 11 (polynomial)<a class="headerlink" href="#example-11-polynomial" title="Permalink to this headline">¶</a></h2>
+<p>Under construction!</p>
+</div>
+<div class="section" id="example-12-polynomial">
+<h2>Example 12 (polynomial)<a class="headerlink" href="#example-12-polynomial" title="Permalink to this headline">¶</a></h2>
+<p>Under construction!</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sageopt</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples from MCW19</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#example-1-signomial">Example 1 (signomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2-signomial">Example 2 (signomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-3-polynomial">Example 3 (polynomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-4-polynomial">Example 4 (polynomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-5-signomial">Example 5 (signomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-6-signomial">Example 6 (signomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-7-signomial">Example 7 (signomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-8-signomial">Example 8 (signomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-9-signomial">Example 9 (signomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-10-polynomial">Example 10 (polynomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-11-polynomial">Example 11 (polynomial)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-12-polynomial">Example 12 (polynomial)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api_reference/sageopt.html">API Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Sageopt is for signomial and polynomial optimization</a></li>
+      <li>Next: <a href="../api_reference/sageopt.html" title="next chapter">API Documentation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/examples/relative_entropy_and_partial_dualization.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

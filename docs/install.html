@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Installation &#8212; sageopt 0.3.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples from MCW19" href="examples/relative_entropy_and_partial_dualization.html" />
+    <link rel="prev" title="Sageopt is for signomial and polynomial optimization" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Sageopt requires Python version 3.5 or higher. There is no way around this: we make heavy use of the <code class="docutils literal notranslate"><span class="pre">&#64;</span></code>
+operator for matrix multiplication, and this operator was only introduced in Python 3.5.
+We also require the following packages:</p>
+<ol class="arabic simple">
+<li><p>SciPy, version &gt;= 1.1.</p></li>
+<li><p>Numpy, version &gt;= 1.14.</p></li>
+<li><p>ECOS, version &gt;= 2.0.</p></li>
+</ol>
+<p>It is highly recommended that you also install <a class="reference external" href="https://www.mosek.com/">MOSEK</a> (version &gt;= 9).
+MOSEK is a commerical optimization solver, and currently the only solver that is able to handle
+the more intersting convex relaxations needed for optimization with SAGE certificates. If you
+are in academia you can request a free <a class="reference external" href="https://www.mosek.com/products/academic-licenses/">academic license</a> for
+MOSEK.</p>
+<div class="section" id="pip-users">
+<h2>Pip users<a class="headerlink" href="#pip-users" title="Permalink to this headline">¶</a></h2>
+<p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sageopt</span></code>.</p>
+</div>
+<div class="section" id="conda-users">
+<h2>Conda users<a class="headerlink" href="#conda-users" title="Permalink to this headline">¶</a></h2>
+<p>If you use Anaconda for Python development, do the following:</p>
+<ol class="arabic simple">
+<li><p>activate your anaconda environment,</p></li>
+<li><p>run <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">pip</span></code>,</p></li>
+<li><p>run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sageopt</span></code>.</p></li>
+</ol>
+<p>It is important that pip be installed inside your conda environment, or sageopt
+might not be detected by Anaconda Navigator (among other environment management tools).</p>
+</div>
+<div class="section" id="installation-from-source">
+<h2>Installation from source<a class="headerlink" href="#installation-from-source" title="Permalink to this headline">¶</a></h2>
+<p>Do the following:</p>
+<ol class="arabic simple" start="0">
+<li><p>Download this repository. If needed, change your directory so that you are in the same directory as
+sageopt’s <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p></li>
+<li><p>Activate the Python virtual environment of your choice.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code> to install sageopt to your current Python environment.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">&quot;import</span> <span class="pre">sageopt;</span> <span class="pre">print(sageopt.__version__)&quot;</span></code> to verify that sageopt installed correctly.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nose</span></code>  (or <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">nose</span></code>) in preparation for running unittests.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">nosetests</span> <span class="pre">sageopt/tests</span></code>.</p></li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sageopt</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pip-users">Pip users</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conda-users">Conda users</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-from-source">Installation from source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/relative_entropy_and_partial_dualization.html">Examples from MCW19</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference/sageopt.html">Web Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Sageopt is for signomial and polynomial optimization</a></li>
+      <li>Next: <a href="examples/relative_entropy_and_partial_dualization.html" title="next chapter">Examples from MCW19</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/install.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
