@@ -16,7 +16,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="API Documentation" href="../api_reference/sageopt.html" />
-    <link rel="prev" title="Sageopt is for signomial and polynomial optimization" href="../index.html" />
+    <link rel="prev" title="Installation" href="../install.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -105,7 +105,33 @@ problem.</p>
 </div>
 <div class="section" id="example-3-polynomial">
 <h2>Example 3 (polynomial)<a class="headerlink" href="#example-3-polynomial" title="Permalink to this headline">¶</a></h2>
-<p>under construction!</p>
+<p>In this example, we minimize</p>
+<div class="math notranslate nohighlight">
+\[f(x) = -64 \sum_{i=1}^7 \prod_{j \neq i} x_j\]</div>
+<p>over <span class="math notranslate nohighlight">\(x \in [-1/2, 1/2]^7\)</span>. We also want to recover optimal solutions.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sageopt</span> <span class="k">import</span> <span class="n">standard_poly_monomials</span><span class="p">,</span> <span class="n">conditional_sage_data</span>
+<span class="kn">from</span> <span class="nn">sageopt</span> <span class="k">import</span> <span class="n">poly_solrec</span><span class="p">,</span> <span class="n">poly_constrained_dual</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">n</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">standard_poly_monomials</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">sel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">sel</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">f</span> <span class="o">-=</span> <span class="mi">64</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.25</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>  <span class="c1"># -0.5 &lt;= x[i] &lt;= 0.5 for all i.</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">conditional_sage_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">dual</span> <span class="o">=</span> <span class="n">poly_constrained_dual</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="o">=</span><span class="p">[],</span> <span class="n">eqs</span><span class="o">=</span><span class="p">[],</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s1">&#39;MOSEK&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">solns</span> <span class="o">=</span> <span class="n">poly_solrec</span><span class="p">(</span><span class="n">dual</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">sol</span> <span class="ow">in</span> <span class="n">solns</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also try this example with ECOS. When using ECOS, you might want to use local solver refinement, as accessed
+in <code class="docutils literal notranslate"><span class="pre">sageopt.local_refinement</span></code>.</p>
 </div>
 <div class="section" id="example-4-polynomial">
 <h2>Example 4 (polynomial)<a class="headerlink" href="#example-4-polynomial" title="Permalink to this headline">¶</a></h2>
@@ -163,6 +189,7 @@ problem.</p>
 
 <h3>Navigation</h3>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Examples from MCW19</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#example-1-signomial">Example 1 (signomial)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example-2-signomial">Example 2 (signomial)</a></li>
@@ -178,14 +205,14 @@ problem.</p>
 <li class="toctree-l2"><a class="reference internal" href="#example-12-polynomial">Example 12 (polynomial)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../api_reference/sageopt.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_reference/sageopt.html">Web Documentation</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="../index.html" title="previous chapter">Sageopt is for signomial and polynomial optimization</a></li>
+      <li>Previous: <a href="../install.html" title="previous chapter">Installation</a></li>
       <li>Next: <a href="../api_reference/sageopt.html" title="next chapter">API Documentation</a></li>
   </ul></li>
 </ul>

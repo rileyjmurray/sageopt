@@ -38,22 +38,22 @@ def sage_feasibility(f, X=None):
 
 
 def sage_multiplier_search(f, level=1, X=None):
-    if isinstance(f, Signomial):
-        prob = _sig_sage_mult_search(f, level, X)
-        return prob
-    elif isinstance(f, Polynomial):
+    if isinstance(f, Polynomial):
         prob = _poly_sage_mult_search(f, level, X)
+        return prob
+    elif isinstance(f, Signomial):
+        prob = _sig_sage_mult_search(f, level, X)
         return prob
     else:
         raise ValueError('"f" must be a Signomial or Polynomial.')
 
 
 def conditional_sage_data(f, gts, eqs):
-    if isinstance(f, Signomial):
-        X = _sig_cond_sage_data(f, gts, eqs)
-        return X
-    elif isinstance(f, Polynomial):
+    if isinstance(f, Polynomial):
         X = _poly_cond_sage_data(f, gts, eqs)
+        return X
+    elif isinstance(f, Signomial):
+        X = _sig_cond_sage_data(f, gts, eqs)
         return X
     else:
         raise ValueError('"f" must be a Signomial or Polynomial.')

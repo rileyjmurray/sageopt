@@ -253,7 +253,7 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     if X is None:
         X = {'log_AbK': None, 'gts': [], 'eqs': []}
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
-    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'X': eqs}
+    metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'X': X}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
         modulator = Polynomial(2 * alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
