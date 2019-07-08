@@ -161,22 +161,21 @@ def _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, ze
         alpha_reduced = np.hstack((alpha_reduced, padding))
     y = cl.Variable(shape=(n,), name='abs moment mag recovery')
     are_nonzero = v_abs > np.sqrt(zero_tol)
-    constraints = [alpha_reduced[are_nonzero, :] @ y <= np.log(v_abs[are_nonzero] + zero_tol),
-                   np.log(v_abs[are_nonzero] - zero_tol) <= alpha_reduced[are_nonzero, :] @ y]
+    t = cl.Variable(shape=(1,), name='t')
     if np.any(~are_nonzero):
-        t = cl.Variable(shape=(1,), name='t')
-        constraints.append(np.log(zero_tol) <= t)
-        constraints.append(alpha_reduced[~are_nonzero, :] @ y <= t)
-        objective = t
+        constraints = [alpha_reduced[are_nonzero, :] @ y <= np.log(v_abs[are_nonzero] + zero_tol),
+                       np.log(v_abs[are_nonzero] - zero_tol) <= alpha_reduced[are_nonzero, :] @ y,
+                       np.log(zero_tol) <= t,
+                       alpha_reduced[~are_nonzero, :] @ y <= t]
     else:
-        objective = cl.Expression([0])
+        constraints = [cl.vector2norm(alpha_reduced @ y - np.log(v_abs)) <= t]
     if isinstance(con, cl.DualCondSageCone):
         A, b, K = np.asarray(con.A), con.b, con.K
         constraints.append(cl.PrimalProductCone(A @ y + b, K))
-    prob = cl.Problem(cl.MIN, objective, constraints)
+    prob = cl.Problem(cl.MIN, t, constraints)
     prob.solve(verbose=False)
     cl.clear_variable_indices()
-    if prob.status == cl.SOLVED and prob.value < 0:
+    if prob.status == cl.SOLVED and prob.value < np.inf:
         mag = np.exp(y.value().astype(np.float128))
         return mag
     else:

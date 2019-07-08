@@ -404,7 +404,7 @@ def conditional_sage_data(f, gts, eqs):
     """
     # GP-representable inequality constraints (recast as "Signomial >= 0")
     gp_gts = con_gen.valid_gp_representable_poly_inequalities(gts)
-    gp_gts_sigreps = [Signomial(g.alpha, g.c) for g in gp_gts]
+    gp_gts_sigreps = [Signomial(g.alpha_c) for g in gp_gts]
     # GP-representable equality constraints (recast as "Signomial == 0")
     gp_eqs = con_gen.valid_gp_representable_poly_eqs(eqs)
     gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]

@@ -31,4 +31,4 @@ from sageopt.relaxations import poly_primal, poly_dual
 from sageopt.relaxations import poly_constrained_primal, poly_constrained_dual
 from sageopt.relaxations import poly_solrec
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'

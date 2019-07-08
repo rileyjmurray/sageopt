@@ -16,24 +16,25 @@
 import unittest
 import numpy as np
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
-from sageopt.relaxations import sage_polys as sage
+from sageopt.relaxations import sage_polys
+from sageopt.relaxations import poly_solution_recovery
 from sageopt import coniclifts as cl
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
-    prim = sage.poly_primal(p, poly_ell, sigrep_ell, X)
+    prim = sage_polys.poly_primal(p, poly_ell, sigrep_ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage.poly_dual(p, poly_ell, sigrep_ell, X)
+    dual = sage_polys.poly_dual(p, poly_ell, sigrep_ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
 
 def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
-    prim = sage.poly_constrained_primal(f, gt, eq, p, q, ell, X)
+    prim = sage_polys.poly_constrained_primal(f, gt, eq, p, q, ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage.poly_constrained_dual(f, gt, eq, p, q, ell, X)
+    dual = sage_polys.poly_constrained_dual(f, gt, eq, p, q, ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
-    return [res1[1], res2[1]]
+    return [res1[1], res2[1]], dual
 
 
 class TestSagePolynomials(unittest.TestCase):
@@ -169,7 +170,7 @@ class TestSagePolynomials(unittest.TestCase):
     #   Test constrained relaxations
     #
 
-    def test_constrained_1(self):
+    def test_ordinary_constrained_1(self):
         # Background
         #
         #       This polynomial is "wrig_5" from a 2008 paper by Ray and Nataraj.
@@ -190,11 +191,19 @@ class TestSagePolynomials(unittest.TestCase):
         gts = lower_gs + upper_gs
         claimed_min = -30.25
         claimed_max = 40
-        res_min = primal_dual_constrained(f, gts, [], 0, 1, 0, X=None)
+        res_min, _ = primal_dual_constrained(f, gts, [], 0, 1, 0, None)
         assert abs(res_min[0] - claimed_min) < 1e-5 and abs(res_min[1] - claimed_min) < 1e-5
-        res_max = primal_dual_constrained(-f, gts, [], 0, 2, 0, X=None)
+        res_max, _ = primal_dual_constrained(-f, gts, [], 0, 2, 0, None)
         res_max = [-res_max[0], -res_max[1]]
         assert abs(res_max[0] - claimed_max) < 1e-5 and abs(res_max[1] - claimed_max) < 1e-5
+
+    def test_ordinary_constrained_2(self):
+        x = standard_poly_monomials(1)[0]
+        f = -x**2
+        gts = [1 - x, x - (-1)]
+        eqs = []
+        res, _ = primal_dual_constrained(f, gts, eqs, 0, 2, 0, None)
+        assert abs(res[0] - (-1)) < 1e-6 and  abs(res[1] - (-1)) < 1e-6
 
     #
     #   Test multiplier search
@@ -227,13 +236,48 @@ class TestSagePolynomials(unittest.TestCase):
         #
         x = standard_poly_monomials(3)
         p = (np.sum(x)) ** 2 + 0.5 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res1 = sage.sage_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
+        res1 = sage_polys.sage_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
         assert abs(res1[1]) < 1e-8
         p -= 0.20 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res2 = sage.sage_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
+        res2 = sage_polys.sage_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
         assert abs(res2[1]) < 1e-8
 
-#TODO: Add tests for conditional SAGE polynomials.
+    #
+    #   Test conditional SAGE relaxations
+    #
+
+    def test_conditional_sage_1(self):
+        x = standard_poly_monomials(1)[0]
+        f = -x**2
+        gts = [1 - x**2]
+        eqs = []
+        X = sage_polys.conditional_sage_data(f, gts, eqs)
+        res = primal_dual_unconstrained(f, 0, 0, X)
+        assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
+        res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
+        assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
+        solns = poly_solution_recovery.poly_solrec(dual)
+        gap = abs(f(solns[0]) - (-1))
+        assert gap < 1e-6
+
+    def test_conditional_sage_2(self):
+        n = 5
+        x = standard_poly_monomials(n)
+        f = 0
+        for i in range(n):
+            sel = np.ones(n, dtype=bool)
+            sel[i] = False
+            f -= 16 * np.prod(x[sel])
+        gts = [0.25 - x[i] ** 2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
+        X = sage_polys.conditional_sage_data(f, gts, [])
+        res = primal_dual_unconstrained(f, 0, 0, X)
+        assert abs(res[0] - (-5)) < 1e-6 and abs(res[1] - (-5)) < 1e-6
+        res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
+        assert abs(res[0] - (-5)) < 1e-6 and abs(res[1] - (-5)) < 1e-6
+        solns = poly_solution_recovery.poly_solrec(dual)
+        gap = abs(f(solns[0]) - (-5))
+        assert gap < 1e-6
+
 
 if __name__ == '__main__':
     unittest.main()

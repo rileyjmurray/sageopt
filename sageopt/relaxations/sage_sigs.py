@@ -404,8 +404,8 @@ def conditional_sage_data(f, gts, eqs):
     Parameters
     ----------
     f : Signomial
-        The objective in a desired optimization problem. This parameter is only used to determine the dimension of
-        the set defined by constraints in ``gts`` and ``eqs``.
+        The objective in a desired optimization problem. This parameter is only used to determine
+        the dimension of the set defined by constraints in ``gts`` and ``eqs``.
     gts : list of Signomials
         For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
     eqs : list of Signomial
@@ -496,6 +496,7 @@ def conditional_sage_data(f, gts, eqs):
         X = {'AbK': AbK, 'gts': conv_gt, 'eqs': conv_eqs}
         return X
     else:
+        cl.clear_variable_indices()
         X = {'AbK': None, 'gts': [], 'eqs': []}
         return X
 

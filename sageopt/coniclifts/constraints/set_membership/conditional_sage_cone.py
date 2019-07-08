@@ -58,15 +58,13 @@ class PrimalCondSageCone(SetMembership):
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
         self._variables = self.c.variables()
         self.K = check_cones(K)
-        if self.m > 2:
+        if self.m > 1:
             self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
             self.nu_vars = dict()
             self.c_vars = dict()
             self.age_vectors = dict()
             self.lambda_vars = dict()
             self._initialize_primary_variables()
-        elif self.m == 2:
-            warnings.warn('A generalized SAGE cone in 2 dimensions is being replaced by R^2_+.')
         pass
 
     def _initialize_primary_variables(self):
@@ -195,7 +193,7 @@ class PrimalCondSageCone(SetMembership):
         return self._variables
 
     def conic_form(self):
-        if self.m > 2:
+        if self.m > 1:
             # Lift c_vars and nu_vars into Expressions of length self.m
             self._build_aligned_age_vectors()
             cone_data = []
@@ -216,7 +214,7 @@ class PrimalCondSageCone(SetMembership):
 
     def violation(self, norm_ord=np.inf, rough=False):
         c = self.c.value()
-        if self.m > 2:
+        if self.m > 1:
             if not rough and c in self:
                 return 0
             # compute violation for "AGE vectors sum to c"
@@ -274,7 +272,7 @@ class DualCondSageCone(SetMembership):
         self.v = v
         self.name = name
         self._variables = self.v.variables()
-        if self.m > 2:
+        if self.m > 1:
             if c is None:
                 self.c = None
             else:
@@ -283,8 +281,6 @@ class DualCondSageCone(SetMembership):
             self.lifted_mu_vars = dict()
             self.mu_vars = dict()
             self._initialize_primary_variables()
-        elif self.m == 2:
-            warnings.warn('A generalized SAGE dual cone in 2 dimensions is being replaced by R^2_+.')
         pass
 
     def _initialize_primary_variables(self):
@@ -367,7 +363,7 @@ class DualCondSageCone(SetMembership):
         return self._variables
 
     def conic_form(self):
-        if self.m > 2:
+        if self.m > 1:
             nontrivial_I = list(set(self.ech.U_I + self.ech.P_I))
             con = self.v[nontrivial_I] >= 0
             con.epigraph_checked = True
