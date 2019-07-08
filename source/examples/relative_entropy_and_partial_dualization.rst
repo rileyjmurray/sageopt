@@ -74,7 +74,7 @@ problem. ::
 Example 2 (signomial)
 ---------------------
 
-We want to solve
+We want to solve the following equality-constrained signomial program.
 
 .. math::
 
