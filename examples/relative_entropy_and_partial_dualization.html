@@ -101,7 +101,7 @@ problem.</p>
 </div>
 <div class="section" id="example-2-signomial">
 <h2>Example 2 (signomial)<a class="headerlink" href="#example-2-signomial" title="Permalink to this headline">¶</a></h2>
-<p>We want to solve</p>
+<p>We want to solve the following equality-constrained signomial program.</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align*}
  \min_{\substack{A \in \mathbb{R}^3_{++} \\ P \in \mathbb{R}_{++} }}
@@ -112,12 +112,39 @@ problem.</p>
             &amp;~ 10^4 \geq 10^4 A_1 \geq 10^{-4} \qquad  10^4 \geq 10^4 A_2 \geq 7.0711 \\
             &amp;~ 10^4 \geq 10^4 A_3 \geq 10^{-4} \qquad 10^4 \geq 10^4 P_{~} \geq 10^{-4}
 \end{align*}\end{split}\]</div>
-<p>The equality constraint in this problem creates an unncessary challenge in solution recovery. Since we usually want to recover optimal solutions, we reformulate the problem after substituting <span class="math notranslate nohighlight">\(P \leftarrow 70.7107 A_3 / (A_1 + A_3)\)</span>, and clearing the denominator <span class="math notranslate nohighlight">\((A_1 + A_3)\)</span> from constraints which involved <span class="math notranslate nohighlight">\(P\)</span>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sageopt</span> <span class="k">import</span> <span class="n">standard_sig_monomials</span><span class="p">,</span> <span class="n">sig_solrec</span>
-<span class="kn">from</span> <span class="nn">sageopt</span> <span class="k">import</span> <span class="n">conditional_sage_data</span><span class="p">,</span> <span class="n">sig_constrained_dual</span><span class="p">,</span> <span class="n">sig_constrained_primal</span>
-
-<span class="c1"># Problem data</span>
-<span class="n">n</span> <span class="o">=</span> <span class="mi">3</span>
+<p>It is straightforward to compute a tight bound on the problem’s optimal objective, however solution recovery is
+difficult. Thus we show this problem in two forms: once with the equality constraint, and once where the inequality
+constraint is used to <em>define</em> a value of <span class="math notranslate nohighlight">\(P\)</span> (which we can then substitute into the rest of the formulation).
+First we show the case with the equality constraint.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">standard_sig_monomials</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">P</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="n">main_gts</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">1e4</span> <span class="o">+</span> <span class="mf">1e-2</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.0711</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="mf">1e4</span>  <span class="o">+</span> <span class="mf">8.54e-3</span> <span class="o">*</span> <span class="n">P</span><span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">6.0385e-1</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="p">]</span>
+<span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.0711</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">P</span><span class="p">,</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">P</span> <span class="o">-</span> <span class="mf">1e-4</span>
+<span class="p">]</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="n">main_gts</span> <span class="o">+</span> <span class="n">bounds</span>
+<span class="n">eqs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">70.7107</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">P</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">P</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">conditional_sage_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">prim</span> <span class="o">=</span> <span class="n">sig_constrained_primal</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">main_gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+<span class="n">dual</span> <span class="o">=</span> <span class="n">sig_constrained_dual</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">main_gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+<span class="n">prim</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">prim</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The equality constraint in this problem creates an unnecessary challenge in solution recovery. Since we usually want
+to recover optimal solutions, we reformulate the problem after substituting <span class="math notranslate nohighlight">\(P \leftarrow 70.7107 A_3 / (A_1 + A_3)\)</span>, and clearing the denominator <span class="math notranslate nohighlight">\((A_1 + A_3)\)</span> from constraints which involved <span class="math notranslate nohighlight">\(P\)</span>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">A</span> <span class="o">=</span> <span class="n">standard_sig_monomials</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 <span class="n">f</span> <span class="o">=</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
 <span class="n">main_gts</span> <span class="o">=</span> <span class="p">[</span>
@@ -132,17 +159,11 @@ problem.</p>
     <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">69.7107</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">(</span><span class="mf">1e8</span> <span class="o">*</span> <span class="mf">70.7107</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 <span class="p">]</span>
 <span class="n">gts</span> <span class="o">=</span> <span class="n">main_gts</span> <span class="o">+</span> <span class="n">bounds</span>
-<span class="c1"># setup SAGE relaxations</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">conditional_sage_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="p">[])</span>
-<span class="n">prim</span> <span class="o">=</span> <span class="n">sig_constrained_primal</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">main_gts</span><span class="p">,</span> <span class="p">[],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
 <span class="n">dual</span> <span class="o">=</span> <span class="n">sig_constrained_dual</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">main_gts</span><span class="p">,</span> <span class="p">[],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
-<span class="c1"># Solve SAGE relaxations, and print the resulting objective values.</span>
-<span class="n">prim</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
 <span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">prim</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-<span class="c1"># Solution recovery</span>
 <span class="n">solns</span> <span class="o">=</span> <span class="n">sig_solrec</span><span class="p">(</span><span class="n">dual</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">solns</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
 </pre></div>
