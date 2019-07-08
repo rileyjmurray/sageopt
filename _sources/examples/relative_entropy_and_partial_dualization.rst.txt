@@ -74,7 +74,55 @@ problem. ::
 Example 2 (signomial)
 ---------------------
 
-under construction!
+We want to solve
+
+.. math::
+
+   \begin{align*}
+    \min_{\substack{A \in \mathbb{R}^3_{++} \\ P \in \mathbb{R}_{++} }} 
+               &~ 10^4 (A_1 + A_2 + A_3)  \\
+   \text{s.t.} &~ 10^4 + 0.01 A_1^{-1}A_3^{} - 7.0711 A_1^{-1} \geq 0 \\
+               &~ 10^4 + 0.00854 A_1^{-1}P - 0.60385(A_1^{-1} + A_2^{-1}) \geq 0  \\
+               &~ 70.7107 A_1^{-1} - A_1^{-1}P - A_{3}^{-1}P = 0 \\
+               &~ 10^4 \geq 10^4 A_1 \geq 10^{-4} \qquad  10^4 \geq 10^4 A_2 \geq 7.0711 \\
+               &~ 10^4 \geq 10^4 A_3 \geq 10^{-4} \qquad 10^4 \geq 10^4 P_{~} \geq 10^{-4} 
+   \end{align*}
+
+The equality constraint in this problem creates an unncessary challenge in solution recovery. Since we usually want to recover optimal solutions, we reformulate the problem after substituting :math:`P \leftarrow 70.7107 A_3 / (A_1 + A_3)`, and clearing the denominator :math:`(A_1 + A_3)` from constraints which involved :math:`P`. ::
+
+   from sageopt import standard_sig_monomials, sig_solrec
+   from sageopt import conditional_sage_data, sig_constrained_dual, sig_constrained_primal
+
+   # Problem data
+   n = 3
+   A = standard_sig_monomials(n)
+   f = 1e4 * sum(A)
+   main_gts = [
+       1e4 + 1e-2 * A[2] / A[0] - 7.0711 / A[0],
+       1e4 * (A[2] + A[0]) + 8.54e-3 * (70.7012 * A[2] * (A[0] + A[2])) / A[0]
+           - 6.0385e-1 * (A[0] + A[2]) * (1.0 / A[0] + 1.0 / A[1])
+   ]
+   bounds = [
+       1e4 - 1e4 * A[0], 1e4 * A[0] - 1e-4,
+       1e4 - 1e4 * A[1], 1e4 * A[1] - 7.0711,
+       1e4 - 1e4 * A[2], 1e4 * A[2] - 1e-4,
+       A[0] - 69.7107 * A[2], (1e8 * 70.7107 - 1) - A[0] / A[2]
+   ]
+   gts = main_gts + bounds
+   # setup SAGE relaxations
+   X = conditional_sage_data(f, gts, [])
+   prim = sig_constrained_primal(f, main_gts, [], 0, 1, 0, X)
+   dual = sig_constrained_dual(f, main_gts, [], 0, 1, 0, X)
+   # Solve SAGE relaxations, and print the resulting objective values.
+   prim.solve()
+   dual.solve()
+   print('\n')
+   print(prim.value)
+   print(dual.value)
+   # Solution recovery
+   solns = sig_solrec(dual)
+   print(f(solns[0]))
+
 
 Example 3 (polynomial)
 ----------------------
@@ -114,7 +162,50 @@ in ``sageopt.local_refinement``.
 Example 4 (polynomial)
 ----------------------
 
-under construction!
+We want to solve a degree six polynomial optimization problem in six variables.
+
+.. math::
+   \begin{align*}
+    \min_{x \in \mathbb{R}^6} &~ f(x) \doteq x_1^6 - x_2^6 + x_3^6 - x_4^6 + x_5^6 - x_6^6 + x_1 - x_2 \\
+                           \text{s.t.} &~ g_1(x) \doteq 2 x_{1}^{6}+3 x_{2}^{2}+2 x_{1} x_{2}+2 x_{3}^{6}+3 x_{4}^{2}+2 x_{3} x_{4}+2 x_{5}^{6}+3 x_{6}^{2}+2 x_{5} x_{6}  \geq 0  \\
+                                       &~ g_2(x) \doteq 2 x_{1}^{2}+5 x_{2}^{2}+3 x_{1} x_{2}+2 x_{3}^{2}+5 x_{4}^{2}+3 x_{3} x_{4}+2 x_{5}^{2}+5 x_{6}^{2}+3 x_{5} x_{6}  \geq 0 \\
+                                       &~ g_3(x) \doteq 3 x_{1}^{2}+2 x_{2}^{2}-4 x_{1} x_{2}+3 x_{3}^{2}+2 x_{4}^{2}-4 x_{3} x_{4}+3 x_{5}^{2}+2 x_{6}^{2}-4 x_{5} x_{6} \geq 0  \\
+                                       &~ g_4(x) \doteq x_{1}^{2}+6 x_{2}^{2}-4 x_{1} x_{2}+x_{3}^{2}+6 x_{4}^{2}-4 x_{3} x_{4}+x_{5}^{2}+6 x_{6}^{2}-4 x_{5} x_{6} \geq 0 \\
+                                       &~ g_5(x) \doteq x_{1}^{2}+4 x_{2}^{6}-3 x_{1} x_{2}+x_{3}^{2}+4 x_{4}^{6}-3 x_{3} x_{4}+x_{5}^{2}+4 x_{6}^{6}-3 x_{5} x_{6} \geq 0 \\
+                                       &~ g_{6:10}(x) \doteq 1 - g_{1:5}(x) \geq  (0, 0, 0, 0, 0) \\
+                                       &~ g_{11:16}(x) = x \geq (0, 0, 0, 0, 0, 0)
+   \end{align*}
+
+
+The ``sageopt`` approach to this problem is to write it first as a signomial program, and then perform solution recovery with consideration to the underlying polynomial structure. The solution recovery starts with ``sig_solrec`` as normal, but then we refine the solution with a special function ``local_refine_polys_from_sigs``. ::
+
+   from sageopt import standard_sig_monomials, local_refine_polys_from_sigs
+   from sageopt import sig_constrained_dual, sig_solrec
+
+   x = standard_sig_monomials(6)
+   f = x[0]**6 - x[1]**6 + x[2]**6 - x[3]**6 + x[4]**6 - x[5]**6 + x[0] - x[1]
+
+   expr1 = 2*x[0]**6 + 3*x[1]**2 + 2*x[0]*x[1] + 2*x[2]**6 + 3*x[3]**2 + 2*x[2]*x[3] + 2*x[4]**6 + 3*x[5]**2 + 2*x[4]*x[5]
+   expr2 = 2*x[0]**2 + 5*x[1]**2 + 3*x[0]*x[1] + 2*x[2]**2 + 5*x[3]**2 + 3*x[2]*x[3] + 2*x[4]**2 + 5*x[5]**2 + 3*x[4]*x[5]
+   expr3 = 3*x[0]**2 + 2*x[1]**2 - 4*x[0]*x[1] + 3*x[2]**2 + 2*x[3]**2 - 4*x[2]*x[3] + 3*x[4]**2 + 2*x[5]**2 - 4*x[4]*x[5]
+
+   expr4 = x[0]**2 + 6*x[1]**2 - 4*x[0]*x[1] + x[2]**2 + 6*x[3]**2 - 4*x[2]*x[3] + x[4]**2 + 6*x[5]**2 - 4*x[4]*x[5]
+   expr5 = x[0]**2 + 6*x[1]**2 - 4*x[0]*x[1] + x[2]**2 + 6*x[3]**2 - 4*x[2]*x[3] + x[4]**2 + 6*x[5]**2 - 4*x[4]*x[5]
+
+   gts = [expr3, expr4, expr5, 1 - expr1, 1 - expr2, 1 - expr3, 1 - expr4, 1 - expr5]
+   eqs = []
+
+   dual = sig_constrained_dual(f, gts, eqs, 1, 1, 0)
+   dual.solve(verbose=False, solver='MOSEK')  # ECOS fails
+   x0 = sig_solrec(dual)[0]
+   x_star = local_refine_polys_from_sigs(f, gts, eqs, x0)
+
+   print()
+   print(dual.value)
+   f_poly = f.as_polynomial()
+   print(f_poly(x_star))
+   print(x_star)
+
 
 Example 5 (signomial)
 ---------------------
