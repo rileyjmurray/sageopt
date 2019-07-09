@@ -4,9 +4,9 @@
 Examples from MCW19
 ===================
 
-The examples shown here appear in the 2019 article by Murray, Chandrasekaran, and Wierman, titled *Signomial and
-Polynomial Optimization via Relative Entropy and Partial Dualization*. That paper introduced conditional SAGE
-certificates.
+The examples shown here appear in `the 2019 article <https://arxiv.org/abs/1907.00814>`_ by Murray, Chandrasekaran,
+and Wierman, titled *Signomial and Polynomial Optimization via Relative Entropy and Partial Dualization*. That paper
+introduced conditional SAGE certificates.
 
 This page is under construction!
 
@@ -227,46 +227,3 @@ The ``sageopt`` approach to this problem is to write it first as a signomial pro
    f_poly = f.as_polynomial()
    print(f_poly(x_star))
    print(x_star)
-
-
-Example 5 (signomial)
----------------------
-
-under construction!
-
-Example 6 (signomial)
----------------------
-
-under construction!
-
-Example 7 (signomial)
----------------------
-
-under construction!
-
-Example 8 (signomial)
----------------------
-
-under construction!
-
-Example 9 (signomial)
----------------------
-
-under construction!
-
-Example 10 (polynomial)
------------------------
-
-Under construction!
-
-Example 11 (polynomial)
------------------------
-
-Under construction!
-
-Example 12 (polynomial)
------------------------
-
-Under construction!
-
-
