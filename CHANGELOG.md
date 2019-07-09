@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+# [Unreleased]
+
+
+# [0.3.1] - 2019-07-09
 ## Added
  - Documentation to helper functions defined in ``sageopt.relaxations`` init file.
  - Some unittests for conditional sage polynomials.
@@ -15,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  is equal to R^2_+). The behavior is now corrected, so that 2-dimensional conditional
  SAGE cones compile to mathematically correct forms.
  - Solution recovery for SAGE polynomial relaxations. The MCW2019 paper didnt use
- constraint least-squares, because there was a separate need to handle when some
+ constrained least-squares, because there was a separate need to handle when some
  entries of the moment vector were zero. The new implementation now solves a
  constrained least-squares problem when all entries of the moment vector are nonzero.
 
