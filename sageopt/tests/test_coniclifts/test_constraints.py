@@ -19,6 +19,8 @@ from sageopt.coniclifts.base import Variable
 from sageopt.coniclifts.operators.relent import relent
 from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.constraints.set_membership import sage_cone, conditional_sage_cone, product_cone, psd_cone
+from sageopt.coniclifts.problems.problem import Problem
+from sageopt.coniclifts import MIN as CL_MIN, clear_variable_indices, compile_constrained_system
 
 
 class TestConstraints(unittest.TestCase):
@@ -83,4 +85,43 @@ class TestConstraints(unittest.TestCase):
         c.set_scalar_variables(c0)
         viol_default = constraint.violation()
         assert viol_default == 0
+
+    def test_ordinary_sage_primal_2(self):
+        n, m = 2, 6
+        np.random.seed(0)
+        alpha = 10 * np.random.randn(m, n)
+        c0 = np.array([1,2,3,4, -0.5, -0.1])
+        c = Variable(shape=(m,), name='projected_c0')
+        t = Variable(shape=(1,), name='epigraph_var')
+        sage_constraint = sage_cone.PrimalSageCone(c, alpha, name='test')
+        epi_constraint = vector2norm(c - c0) <= t
+        constraints = [sage_constraint, epi_constraint]
+        prob = Problem(CL_MIN, t, constraints)
+        prob.solve(solver='ECOS')
+        v0 = sage_constraint.violation(norm_ord=1, rough=False)
+        assert v0 < 1e-6
+        v1 = sage_constraint.violation(norm_ord=np.inf, rough=True)
+        assert v1 < 1e-6
+
+    def test_conditional_sage_primal_1(self):
+        n, m = 2, 6
+        x = Variable(shape=(n,), name='x')
+        A, b, K, _, _ = compile_constrained_system([1 >= vector2norm(x)])
+        clear_variable_indices()
+        del x
+        np.random.seed(0)
+        alpha = 10 * np.random.randn(m, n)
+        c0 = np.array([1,2,3,4, -0.5, -0.1])
+        c = Variable(shape=(m,), name='projected_c0')
+        t = Variable(shape=(1,), name='epigraph_var')
+        sage_constraint = conditional_sage_cone.PrimalCondSageCone(c, alpha, A, b, K, name='test')
+        epi_constraint = vector2norm(c - c0) <= t
+        constraints = [sage_constraint, epi_constraint]
+        prob = Problem(CL_MIN, t, constraints)
+        prob.solve(solver='ECOS')
+        v0 = sage_constraint.violation(norm_ord=1, rough=False)
+        assert v0 < 1e-6
+        v1 = sage_constraint.violation(norm_ord=np.inf, rough=True)
+        assert v1 < 1e-6
+
 

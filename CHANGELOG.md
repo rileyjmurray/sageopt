@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [Unreleased]
 ## Changed
+ - Several bugs which resulted from previous version.
+ - Added unittests for primal and dual SAGE cone constraint violations (just make sure they produce sane output).
+
+# [0.3.2] - 2019-07-12
+## Changed
  - coniclifts Expression objects get value by ".value" instead of ".value()"
  - fixed a bug in "\_\_contains\_\_" for coniclifts PrimalCondSageCone
 
