@@ -49,7 +49,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6):
     gts = lag_gts + prob.associated_data['X']['gts']
     eqs = lag_eqs + prob.associated_data['X']['eqs']
     # Search for solutions which meet the feasibility criteria
-    v = con.v.value()
+    v = con.v.value
     if np.any(np.isnan(v)):
         return None
     if not hasattr(con, 'alpha'):
@@ -94,7 +94,7 @@ def _constrained_least_squares(con, alpha, log_v):
     cl.clear_variable_indices()
     res = prob.solve(verbose=False)
     if res[0] == cl.SOLVED:
-        mu_ls = x.value()[:con.n]
+        mu_ls = x.value[:con.n]
         return mu_ls
     else:
         return None
@@ -106,7 +106,7 @@ def _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol):
     raw_xs = []
     for i in mus_exist:
         mu_i = con.mu_vars[i]
-        xi = (mu_i.value() / v[i]).reshape((-1, 1))
+        xi = (mu_i.value / v[i]).reshape((-1, 1))
         raw_xs.append(xi)
     raw_xs = np.hstack(raw_xs)
     # build a matrix "weights", whose rows specify convex combination coefficients.

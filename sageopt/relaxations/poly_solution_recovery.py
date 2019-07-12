@@ -87,7 +87,7 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
         alpha = con.alpha
     dummy_modulated_lagrangian = Polynomial(alpha, np.ones(shape=(alpha.shape[0],)))  # coefficients dont matter
     modulator = prob.associated_data['modulator']
-    v = prob.associated_data['v_poly'].value()  # possible that v_sig and v are the same
+    v = prob.associated_data['v_poly'].value  # possible that v_sig and v are the same
     if np.any(np.isnan(v)):
         return []
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
@@ -110,7 +110,7 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
 
 def variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol):
     # This is essentially "Algorithm 3" in the conditional SAGE paper.
-    v_sig = con.v.value()
+    v_sig = con.v.value
     M_sig = np.eye(v_sig.size)
     mags0 = _dual_age_cone_magnitude_recovery(con, v_sig, M_sig)
     abs_mom_mag = _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol)
@@ -128,7 +128,7 @@ def _dual_age_cone_magnitude_recovery(con, v_sig, M_sig):
     raw_ys = []
     for i in mus_exist:
         mu_i = con.mu_vars[i]
-        yi = (mu_i.value() / v_sig[i]).reshape((-1, 1))
+        yi = (mu_i.value / v_sig[i]).reshape((-1, 1))
         raw_ys.append(yi)
     raw_ys = np.hstack(raw_ys)
     # build a matrix "weights", whose rows specify convex combination coefficients.
@@ -176,7 +176,7 @@ def _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, ze
     prob.solve(verbose=False)
     cl.clear_variable_indices()
     if prob.status == cl.SOLVED and prob.value < np.inf:
-        mag = np.exp(y.value().astype(np.float128))
+        mag = np.exp(y.value.astype(np.float128))
         return mag
     else:
         return None

@@ -100,7 +100,7 @@ class PrimalSageCone(SetMembership):
     def _age_violation(self, i, norm_ord, c_i):
         if np.any(self.ech.expcovers[i]):
             idx_set = self.ech.expcovers[i]
-            x_i = self.nu_vars[i].value()
+            x_i = self.nu_vars[i].value
             x_i[x_i < 0] = 0
             y_i = np.exp(1) * c_i[idx_set]
             relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i]  # <= 0
@@ -150,14 +150,14 @@ class PrimalSageCone(SetMembership):
             return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):
-        c = self.c.value()
+        c = self.c.value
         if self.m > 2:
             if not rough and c in self:
                 return 0
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
             #   and so only compute violation for "AGE vectors sum to <= c"
-            age_vectors = {i: v.value() for i, v in self.age_vectors.items()}
+            age_vectors = {i: v.value for i, v in self.age_vectors.items()}
             sum_age_vectors = sum(age_vectors.values())
             residual = c - sum_age_vectors  # want >= 0
             residual[residual < 0] = 0
@@ -177,7 +177,7 @@ class PrimalSageCone(SetMembership):
 
     def __contains__(self, item):
         item = Expression(item)
-        if item.is_constant() and np.all(item.value() >= 0):
+        if item.is_constant() and np.all(item.value >= 0):
             return True
         con = PrimalSageCone(item, self.alpha, name='check_mem')
         prob = Problem(CL_MAX, Expression([0]), [con])

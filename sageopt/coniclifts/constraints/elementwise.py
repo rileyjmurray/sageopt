@@ -107,7 +107,7 @@ class ElementwiseConstraint(Constraint):
 
     def violation(self, norm_ord=None):
         expr = (self.lhs - self.rhs).as_expr()
-        expr_val = expr.value()
+        expr_val = expr.value
         if self.initial_operator == '<=':
             ignore = expr_val <= 0
             expr_val[ignore] = 0

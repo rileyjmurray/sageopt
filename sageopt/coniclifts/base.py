@@ -554,6 +554,7 @@ class Expression(np.ndarray):
             B[tup] = se.offset
         return A, x, B
 
+    @property
     def value(self):
         val = np.zeros(shape=self.shape)
         for tup in array_index_iterator(self.shape):

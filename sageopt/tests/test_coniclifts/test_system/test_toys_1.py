@@ -43,7 +43,7 @@ class TestToys1(unittest.TestCase):
         res = prob.solve(solver=solver, verbose=False)
         assert res[0] == 'solved'
         assert abs(res[1] - 10.4075826) < 1e-6
-        x_star = x.value()
+        x_star = x.value
         expect = np.array([-4.93083, -2.73838])
         assert np.allclose(x_star, expect, atol=1e-4)
 

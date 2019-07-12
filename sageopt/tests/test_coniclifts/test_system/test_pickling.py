@@ -55,7 +55,7 @@ class TestPickling(unittest.TestCase):
             if v.name == 'x':
                 x = v
                 break
-        x_star = x.value()
+        x_star = x.value
         assert np.allclose(x_star, expect_x, atol=1e-4)
 
     def test_case_1_solve_then_pickle_unpickle(self):
@@ -71,5 +71,5 @@ class TestPickling(unittest.TestCase):
             if v.name == 'x':
                 x = v
                 break
-        x_star = x.value()
+        x_star = x.value
         assert np.allclose(x_star, expect_x, atol=1e-4)

@@ -243,7 +243,7 @@ class PrimalCondSageCone(SetMembership):
         from sageopt.coniclifts import clear_variable_indices, MIN as CL_MIN, SOLVED as CL_SOLVED
         item = Expression(item).ravel()
         name = self.name + ' check membership'
-        con = [PrimalCondSageCone(item, self.lifted_alpha, self.A, self.b, self.K, name, self.ech)]
+        con = [PrimalCondSageCone(item, self.lifted_alpha, self.A, self.b, self.K, name)]
         prob = Problem(CL_MIN, Expression([0]), con)
         prob.solve(verbose=False)
         clear_variable_indices()

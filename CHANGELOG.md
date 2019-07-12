@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 # [Unreleased]
+## Changed
+ - coniclifts Expression objects get value by ".value" instead of ".value()"
+ - fixed a bug in "\_\_contains\_\_" for coniclifts PrimalCondSageCone
 
 
 # [0.3.1] - 2019-07-09
