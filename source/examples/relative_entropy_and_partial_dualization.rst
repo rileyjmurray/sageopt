@@ -1,14 +1,13 @@
 .. toctree::
    :maxdepth: 2
 
-Examples from MCW19
-===================
+Optimization Examples
+=====================
 
 The examples shown here appear in `the 2019 article <https://arxiv.org/abs/1907.00814>`_ by Murray, Chandrasekaran,
 and Wierman, titled *Signomial and Polynomial Optimization via Relative Entropy and Partial Dualization*. That paper
 introduced conditional SAGE certificates.
 
-This page is under construction!
 
 Example 1 (signomial)
 ---------------------
@@ -227,3 +226,71 @@ The ``sageopt`` approach to this problem is to write it first as a signomial pro
    f_poly = f.as_polynomial()
    print(f_poly(x_star))
    print(x_star)
+
+
+Nonnegativity Examples
+======================
+
+Although sageopt is designed around optimization, the mechanism by which sageopt operates is to certify nonnegativity
+by decomposing a given function into a "Sum of AGE-functions". These AGE functions are nonnegative, and can be proven
+nonnegative in a relatively simple way. If you want to check nonnegativity of the AGE functions yourself (you might
+find yourself in this situation if a numerical solver seemed to struggle with a SAGE relaxation), then you can do
+that. Here we show how to get a hold on these AGE functions, from a given SAGE relaxation.
+
+Example 1 (signomial)
+---------------------
+
+Consider the following optimization problem:
+
+.. math::
+
+    \begin{align*}
+     \min_{x \in \mathbb{R}^3} &~ f(x) \doteq 0.5 \exp(x_1 - x_2) -\exp x_1  - 5 \exp(-x_2)  \\
+                            \text{s.t.} &~ g_1(x) \doteq 100 -  \exp(x_2 - x_3) -\exp x_2 - 0.05 \exp(x_1 + x_3) \geq 0\\
+                                        &~ g_{2:4}(x) \doteq \exp(x) - (70,\,1,\, 0.5) \geq (0, 0, 0)  \\
+                                        &~ g_{5:7}(x) \doteq (150,\,30,\,21) - \exp(x) \geq (0, 0, 0)
+    \end{align*}
+
+We can produce a bound on this minimum with a primal SAGE relaxation. ::
+
+   from sageopt import conditional_sage_data, sig_primal
+   from sageopt import standard_sig_monomials, Signomial
+   y = standard_sig_monomials(3)
+   f = 0.5 * y[0] * y[1] ** -1 - y[0] - 5 * y[1] ** -1
+   gts = [100 -  y[1] * y[2] ** -1 - y[1] - 0.05 * y[0] * y[2],
+          y[0] - 70, y[1] - 1, y[2] - 0.5,
+          150 - y[0], 30 - y[1], 21 - y[2]]
+   X = conditional_sage_data(f, gts, [])
+   prim = sig_primal(f, ell=0, X=X)
+   prim.solve(solver='ECOS')
+   print(prim.value)  # about -147.857
+
+As long as the solver (here, ECOS) succeeds in solving the problem, the function ``f - prim.value`` should be
+nonnegative over the set represented by ``X``. The intended proof that ``f - prim.value`` is nonnegative comes from
+the AGE functions participating in its decomposition. We can recover those functions as follows ::
+
+   sage_constraint = prim.user_cons[0]
+   alpha = sagecon.lifted_alpha[:, :f.n]
+   agefunctions = []
+   for ci in sagecon.age_vectors.values():
+       s = Signomial(alpha, ci.value)
+       agefunctions.append(s)
+
+You should find that one of these AGE functions has very small positive coefficients, and large negative term. We can
+investigate this suspicious AGE function further. Specifically, we can transform the suspicious AGE function into a
+convex function, and then solve a constrained convex optimization problem using a function from ``scipy``. ::
+
+   suspect_age = agefunctions[1]
+   convex_suspect_age = y[1] * suspect_age
+   import numpy as np
+   from scipy.optimize import fmin_cobyla
+   def sample_initial_point():
+       y1 = 70 + 80 * np.random.rand()
+       y2 = 1 + 29 * np.random.rand()
+       y3 = 0.5 + 20.5 * np.random.rand()
+       x0 = np.log([y1, y2, y3])
+       return x0
+   fmin_cobyla(convex_suspect_age, sample_initial_point(), gts, disp=1, maxfun=1e5, rhoend=1e-7)
+
+You should find that no matter how many initial conditions you provide to ``scipy``'s solver, the reported optimal
+objective is nonnegative.
