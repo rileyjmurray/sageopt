@@ -143,7 +143,7 @@ class PrimalCondSageCone(SetMembership):
         lambda_viol = DualProductCone.project(lambda_i, self.K)
         if np.any(self.ech.expcovers[i]):
             idx_set = self.ech.expcovers[i]
-            x_i = self.nu_vars[i].value()
+            x_i = self.nu_vars[i].value
             x_i[x_i < 0] = 0
             y_i = np.exp(1) * c_i[idx_set]
             relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i]  + self.b @ lambda_i # <= 0
@@ -154,7 +154,7 @@ class PrimalCondSageCone(SetMembership):
             total_viol = relent_viol + eq_viol + lambda_viol
             return total_viol
         else:
-            c_i = float(self.c_vars[i].value())
+            c_i = float(self.c_vars[i].value)
             residual = c_i - self.b @ lambda_i  # >= 0
             relent_viol = abs(min(0, residual))
             total_viol = relent_viol + lambda_viol
@@ -213,15 +213,15 @@ class PrimalCondSageCone(SetMembership):
             return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):
-        c = self.c.value()
+        c = self.c.value
         if self.m > 1:
             if not rough and c in self:
                 return 0
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
             #   and so only compute violation for "AGE vectors sum to <= c"
-            age_vectors = {i: v.value() for i, v in self.age_vectors.items()}
-            lambda_vectors = {i: v.value() for i, v in self.lambda_vars.items()}
+            age_vectors = {i: v.value for i, v in self.age_vectors.items()}
+            lambda_vectors = {i: v.value for i, v in self.lambda_vars.items()}
             sum_age_vectors = sum(age_vectors.values())
             residual = c - sum_age_vectors  # want >= 0
             residual[residual < 0] = 0
@@ -337,7 +337,7 @@ class DualCondSageCone(SetMembership):
             expr2 = v[selector].ravel()
             lowerbounds = special_functions.rel_entr(expr1, expr2)
             mat = -(self.lifted_alpha[selector, :] - self.lifted_alpha[i, :])
-            mu_i = self.lifted_mu_vars[i].value()
+            mu_i = self.lifted_mu_vars[i].value
             # compute rough violation for this dual AGE cone
             residual = mat @ mu_i - lowerbounds
             residual[residual >= 0] = 0
@@ -381,7 +381,7 @@ class DualCondSageCone(SetMembership):
             return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):
-        v = self.v.value()
+        v = self.v.value
         viols = []
         for i in self.ech.U_I:
             curr_viol = self._dual_age_cone_violation(i, norm_ord, rough, v)

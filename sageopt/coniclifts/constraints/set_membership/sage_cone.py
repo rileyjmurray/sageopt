@@ -111,7 +111,7 @@ class PrimalSageCone(SetMembership):
             total_viol = relent_viol + eq_viol
             return total_viol
         else:
-            c_i = float(self.c_vars[i].value())  # >= 0
+            c_i = float(self.c_vars[i].value)  # >= 0
             return abs(min(0, c_i))
 
     def _age_vectors_sum_to_c(self):
@@ -268,7 +268,7 @@ class DualSageCone(SetMembership):
         expr2 = v[selector].ravel()
         lowerbounds = special_functions.rel_entr(expr1, expr2)
         mat = -(self.alpha[selector, :] - self.alpha[i, :])
-        vec = self.mu_vars[i].value()
+        vec = self.mu_vars[i].value
         # compute rough violation for this dual AGE cone
         residual = mat @ vec - lowerbounds
         residual[residual >= 0] = 0
@@ -284,7 +284,7 @@ class DualSageCone(SetMembership):
         return curr_viol
 
     def violation(self, norm_ord=np.inf, rough=False):
-        v = self.v.value()
+        v = self.v.value
         viols = []
         for i in self.ech.U_I:
             curr_viol = self._dual_age_cone_violation(i, norm_ord, rough, v)
@@ -295,7 +295,7 @@ class DualSageCone(SetMembership):
     def __contains__(self, item):
         from sageopt.coniclifts import clear_variable_indices
         if isinstance(item, Expression):
-            item = item.value()
+            item = item.value
         for i in self.ech.U_I:
             selector = self.ech.expcovers[i]
             len_sel = np.count_nonzero(selector)
