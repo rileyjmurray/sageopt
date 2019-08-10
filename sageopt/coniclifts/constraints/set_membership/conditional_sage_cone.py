@@ -62,17 +62,20 @@ class PrimalCondSageCone(SetMembership):
             self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
             self.nu_vars = dict()
             self.c_vars = dict()
+            self.relent_epi_vars = dict()
             self.age_vectors = dict()
             self.lambda_vars = dict()
-            self._initialize_primary_variables()
+            self._initialize_variables()
         pass
 
-    def _initialize_primary_variables(self):
+    def _initialize_variables(self):
         for i in self.ech.U_I:
             nu_len = np.count_nonzero(self.ech.expcovers[i])
             if nu_len > 0:
                 var_name = 'nu^{(' + str(i) + ')}_' + self.name
                 self.nu_vars[i] = Variable(shape=(nu_len,), name=var_name)
+                var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
+                self.relent_epi_vars[i] = Variable(shape=(nu_len,), name=var_name)
             c_len = nu_len
             if i not in self.ech.N_I:
                 c_len += 1
@@ -82,6 +85,7 @@ class PrimalCondSageCone(SetMembership):
             self.lambda_vars[i] = Variable(shape=(self.A.shape[0],), name=var_name)
         self._variables += list(self.nu_vars.values())
         self._variables += list(self.c_vars.values())
+        self._variables += list(self.relent_epi_vars.values())
         self._variables += list(self.lambda_vars.values())
         pass
 
@@ -104,10 +108,8 @@ class PrimalCondSageCone(SetMembership):
             y = np.exp(1) * self.age_vectors[i][idx_set]
             # ^ # This line consumes a disproportionately large amount of runtime
             z = -self.age_vectors[i][i] + self.lambda_vars[i] @ self.b
-            name = self.name + '_' + str(i)
-            A_vals, A_rows, A_cols, b, K, aux_vars = sum_relent(x, y, z, name)
-            if len(aux_vars) > 0:
-                self._variables.append(aux_vars)
+            epi = self.relent_epi_vars[i]
+            A_vals, A_rows, A_cols, b, K, epi = sum_relent(x, y, z, epi)
         else:
             con = self.lambda_vars[i] @ self.b <= self.age_vectors[i][i]
             con.epigraph_checked = True
@@ -280,15 +282,23 @@ class DualCondSageCone(SetMembership):
             self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
             self.lifted_mu_vars = dict()
             self.mu_vars = dict()
-            self._initialize_primary_variables()
+            self.relent_epi_vars = dict()
+            self._initialize_variables()
         pass
 
-    def _initialize_primary_variables(self):
+    def _initialize_variables(self):
         for i in self.ech.U_I:
             var_name = 'mu[' + str(i) + ']_{' + self.name + '}'
             self.lifted_mu_vars[i] = Variable(shape=(self.lifted_n,), name=var_name)
             self._variables.append(self.lifted_mu_vars[i])
             self.mu_vars[i] = self.lifted_mu_vars[i][:self.n]
+
+            num_cover = np.count_nonzero(self.ech.expcovers[i])
+            if num_cover > 0:
+                var_name = '_relent_epi_[' + str(i) + ']_{' + self.name + '}'
+                epi = Variable(shape=(num_cover,), name=var_name)
+                self.relent_epi_vars[i] = epi
+                self._variables.append(epi)
         pass
 
     def _dual_age_cone_data(self, i):
@@ -300,16 +310,15 @@ class DualCondSageCone(SetMembership):
             # relative entropy constraints
             #
             expr1 = np.tile(self.v[i], len_sel).view(Expression)
-            aux_var_name = 'epi_relent_[' + str(i) + ']_{' + self.name + '}'
-            A_vals, A_rows, A_cols, b, K, z = elementwise_relent(expr1, self.v[selector], aux_var_name)
+            epi = self.relent_epi_vars[i]
+            A_vals, A_rows, A_cols, b, K, epi = elementwise_relent(expr1, self.v[selector], epi)
             cone_data.append((A_vals, A_rows, A_cols, b, K, []))
-            self._variables.append(z)
             #
             # Linear inequalities
             #
             matrix = self.lifted_alpha[selector, :] - self.lifted_alpha[i, :]
             vecvar = self.lifted_mu_vars[i]
-            A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(-matrix, vecvar, z)
+            A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(-matrix, vecvar, epi)
             num_rows = matrix.shape[0]
             b = np.zeros(num_rows)
             K = [Cone('+', num_rows)]
@@ -332,6 +341,8 @@ class DualCondSageCone(SetMembership):
         from sageopt.coniclifts import clear_variable_indices, MIN as CL_MIN, SOLVED as CL_SOLVED
         selector = self.ech.expcovers[i]
         len_sel = np.count_nonzero(selector)
+        # TODO: fix how this function handles len_sel == 0.
+        #   The current behavior isn't valid when {x: A @ x + b \in K} is the empty set.
         if len_sel > 0:
             expr1 = np.tile(v[i], len_sel).ravel()
             expr2 = v[selector].ravel()

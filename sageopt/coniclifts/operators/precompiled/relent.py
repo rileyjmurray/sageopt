@@ -18,7 +18,7 @@ from sageopt.coniclifts.base import Expression, Variable
 from sageopt.coniclifts.cones import Cone
 
 
-def sum_relent(x, y, z, aux_var_name):
+def sum_relent(x, y, z, aux_vars):
     # represent "sum{x[i] * ln( x[i] / y[i] )} + z <= 0" in conic form.
     # return the Variable object created for all epigraphs needed in
     # this process, as well as A_data, b, and K.
@@ -36,7 +36,6 @@ def sum_relent(x, y, z, aux_var_name):
     if x.size != y.size:
         raise RuntimeError('Illegal arguments to sum_relent.')
     num_rows = 1 + 3 * x.size
-    aux_vars = Variable(shape=(x.size,), name=aux_var_name)
     aux_var_ids = aux_vars.scalar_variable_ids
     b = np.zeros(num_rows,)
     K = [Cone('+', 1)] + [Cone('e', 3) for _ in range(x.size)]
@@ -71,7 +70,7 @@ def sum_relent(x, y, z, aux_var_name):
     return A_vals, np.array(A_rows), A_cols, b, K, aux_vars
 
 
-def elementwise_relent(x, y, aux_var_name):
+def elementwise_relent(x, y, z):
     """
     Return variables "z" and conic constraint data for the system
         x[i] * ln( x[i] / y[i] ) <= z[i]
@@ -92,7 +91,6 @@ def elementwise_relent(x, y, aux_var_name):
     if x.size != y.size:
         raise RuntimeError('Illegal arguments to sum_relent.')
     num_rows = 3 * x.size
-    z = Variable(shape=(x.size,), name=aux_var_name)
     aux_var_ids = z.scalar_variable_ids
     b = np.zeros(num_rows, )
     K = [Cone('e', 3) for _ in range(x.size)]
