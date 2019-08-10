@@ -14,16 +14,6 @@ very basic tests (e.g. violations of elementwise inequality constraints), while 
 more complicated behavior. The primal and dual conditional sage cones are yet to be tested.
 
 
-## Setup continuous-integration testing.
-
-This is a high-priority task. It should be the first thing we do after sageopt is posted to pypi.
-
-We will test on the most current version of Python, as well as two versions back. For the
-time being, that means Python 3.5, 3.6, and 3.7. We will use TravisCI, and only run tests on
-Linux machines. The lack of tests on OSX and Windows machines should not matter, since coniclifts
-is written in almost pure python.
-
-
 ## Populate the design_notes folder.
 
 This is a high-priority task. It can be done incrementally.
@@ -66,10 +56,8 @@ My "vision" for the rewriting system behind sageopt is roughly as follows.
    whether or not we do that depends on if cvxpy's compilation process is slower than coniclifts.
 
 The third part in that vision is the fuzziest bit. I don't want to make the relaxations submodule
-a mess of code that is hard to read and hard to maintain. In addition, although the coniclifts API
-closely matches the cvxpy API in many ways, there are some imporant differences (for example,
-accessing the value of a Variable ``x`` with ``x.value`` versus ``x.value()``). These differences
-will have to be resolved.
+a mess of code that is hard to read and hard to maintain. In addition, it will be important to
+make sure that the coniclifts API is aligned with the cvxpy API as best as possible.
 
 
 ## Add support for more solvers (coniclifts)
@@ -83,10 +71,47 @@ to coniclifts. It should be easy to add support for both SCS and SuperSCS.
 
 ## Add support for SDPs in MOSEK's coniclifts interface.
 
-This is a very low-priority task.
+This is a low-priority task.
 
 Coniclifts currently allows users to create linear matrix inequality constraints, but
 existing solver interfaces do not allow these constraints. (So right now, a user can construct
 an SDP, but cannot solve an SDP.)
 
 
+## Add more sophisticated dimension reduction for SAGE cones
+
+Suppose we want to represent a constraint "c is X-SAGE with respect to exponents alpha".
+Often, there are many indices "k" where the k^th X-AGE cone w.r.t. alpha is simply the
+nonnegative orthant.
+
+If X is a cone, then it is easy to identify these indices:
+
+find a nonzero vector x \in X so that (alpha - alpha[k,:]) @ x < 0.
+
+When X is not a cone, we can check that
+
+    min{ t : x in X, (alpha - alpha[k,:]) @ x <= t } = -\infty.
+
+In order to add this dimension-reduction to sageopt, it will be necessary to:
+
+1. Enable a CVXPY backend.
+2. Create "constraint factories", which perform this dimension reduction once,
+and allow it to be re-used across multiple desired constraints.
+
+The CVXPY backend is necessary because coniclifts does not allow a user to create
+and solve smaller optimization problems while in the middle of constructing a larger
+optimization problem.
+
+## Coniclifts: address global scope of Variable objects
+
+Coniclifts Variables have a "generation" attribute: the value of a counter
+which is incremented whenever the user calls "clear_variable_indices()".
+Coniclifts does not support compiling Problems with Variables from different
+generations. This is a huge limitation, and one that should be circumvented.
+
+A possible solution (to consider later): Add an "index_mapping" argument to
+the "conic_form()" function of Constraint objects. This would be a dictionary
+that maps a ScalarVariable's "id" to a contiguous index which places that
+ScalarVariable in the scope of the calling Problem. One difficulty here
+is how epigraph variables are not known until mid-way in the compilation
+process.

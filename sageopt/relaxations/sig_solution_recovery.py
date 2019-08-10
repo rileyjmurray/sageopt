@@ -34,7 +34,7 @@ def local_refine(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000):
     return res
 
 
-def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6):
+def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
     con = prob.user_cons[0]
     if not con.name == 'Lagrangian SAGE dual constraint':
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
@@ -60,7 +60,10 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6):
     alpha_reduced = lagrangian.alpha
     modulator = prob.associated_data['modulator']
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
-    mus0 = _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol)
+    if skip_ls:
+        mus0 = []
+    else:
+        mus0 = _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol)
     mus1 = _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol)
     mus = mus0 + mus1
     mus.sort(key=lambda mu: f(mu))
