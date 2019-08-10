@@ -6,13 +6,11 @@ rationales for those changes should be listed here.
 
 ## Add tests for constraint violations (coniclifts)
 
-This is a high-priority task.
+This is a low-priority task.
 
 The ability to compute constraint violations was added pretty late in the coniclifts development process.
-This is an important feature, and one that needs to be tested. Some constraints only require
-very basic tests (e.g. violations of elementwise inequality constraints), while others have much
-more complicated behavior. The primal and dual conditional sage cones are yet to be tested.
-
+Linear equations and inequalities, and SAGE cones have tests. Should add tests for other
+SetMembership constraints, and for some nonlinear atoms (such as vector2norm, or exp).
 
 ## Populate the design_notes folder.
 

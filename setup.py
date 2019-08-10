@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='sageopt',
-    version='0.3.3',
+    version='0.3.4',
     author='Riley John Murray',
     url='https://github.com/rileyjmurray/sageopt',
     author_email='rmurray@caltech.edu',
