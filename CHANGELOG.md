@@ -5,12 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 # [Unreleased]
+
+
+# [0.3.3] - 2019-08-10
+## Added
+ - unittests for primal and dual SAGE cone constraint violations.
+ - An option for the user to specify skipping constrained least-squares step of solution recovery.
 ## Changed
- - Several bugs which resulted from previous version.
- - Added unittests for primal and dual SAGE cone constraint violations (just make sure they produce sane output).
- - Allow the user to specify skipping least-squares solution recovery for signomial relaxations.
-## TODO
- - Update polynomial magnitude recovery to be consistent with the latest version of the arXiv paper.
+ - Constraint violation computations (to resolve several syntax bugs which showed up in version 0.3.2).
+ - Updated polynomial magnitude recovery to be consistent with the latest version of the arXiv paper.
 
 
 # [0.3.2] - 2019-07-12

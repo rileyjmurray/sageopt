@@ -16,7 +16,7 @@
 import sageopt.coniclifts as cl
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations.symbolic_correspondences import moment_reduction_array
-from sageopt.relaxations.sig_solution_recovery import is_feasible, local_refine
+from sageopt.relaxations.sig_solution_recovery import is_feasible
 import numpy as np
 from scipy.optimize import fmin_cobyla
 import itertools
@@ -74,7 +74,7 @@ def local_refine_polys_from_sigs(f, gts, eqs, x0, rhobeg=1.0, rhoend=1e-7, maxfu
     return res
 
 
-def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False, all_signs=True):
+def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False, all_signs=True, skip_ls=False):
     # implemented only for poly_constrained_dual (not yet implemented for sage_poly_dual).
     f = prob.associated_data['f']
     lag_gts = prob.associated_data['gts']
@@ -93,7 +93,7 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
     v_reduced = M @ v
     alpha_reduced = lagrangian.alpha
-    mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol)
+    mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol, skip_ls)
     signs = variable_sign_patterns(alpha_reduced, v_reduced, hueristic, all_signs)
     # Now we need to build the candidate solutions, and check them for feasibility.
     gts = lag_gts + [g for g in prob.associated_data['X']['gts']]
@@ -108,18 +108,21 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     return solutions
 
 
-def variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol):
+def variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol, skip_ls):
     # This is essentially "Algorithm 3" in the conditional SAGE paper.
     v_sig = con.v.value
     M_sig = np.eye(v_sig.size)
     mags0 = _dual_age_cone_magnitude_recovery(con, v_sig, M_sig)
-    abs_mom_mag = _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol)
-    if abs_mom_mag is None:
-        mags1 = []
+    if skip_ls:
+        return mags0
     else:
-        mags1 = [abs_mom_mag]
-    mags = mags0 + mags1
-    return mags
+        abs_mom_mag = _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol)
+        if abs_mom_mag is None:
+            mags1 = []
+        else:
+            mags1 = [abs_mom_mag]
+        mags = mags0 + mags1
+        return mags
 
 
 def _dual_age_cone_magnitude_recovery(con, v_sig, M_sig):
@@ -150,7 +153,7 @@ def _dual_age_cone_magnitude_recovery(con, v_sig, M_sig):
     return mus
 
 
-def _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
+def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
     v_abs = np.abs(v_reduced).ravel()
     if isinstance(con, cl.DualCondSageCone):
         n = con.lifted_n
@@ -162,16 +165,15 @@ def _abs_moment_feasibility_magnitude_recovery(con, alpha_reduced, v_reduced, ze
     y = cl.Variable(shape=(n,), name='abs moment mag recovery')
     are_nonzero = v_abs > np.sqrt(zero_tol)
     t = cl.Variable(shape=(1,), name='t')
+    residual = alpha_reduced[are_nonzero, :] @ y - np.log(v_abs[are_nonzero])
+    constraints = [cl.vector2norm(residual) <= t]
     if np.any(~are_nonzero):
-        constraints = [alpha_reduced[are_nonzero, :] @ y <= np.log(v_abs[are_nonzero] + zero_tol),
-                       np.log(v_abs[are_nonzero] - zero_tol) <= alpha_reduced[are_nonzero, :] @ y,
-                       np.log(zero_tol) <= t,
-                       alpha_reduced[~are_nonzero, :] @ y <= t]
-    else:
-        constraints = [cl.vector2norm(alpha_reduced @ y - np.log(v_abs)) <= t]
+        tempcon = alpha_reduced[~are_nonzero, :] @ y <= np.log(zero_tol)
+        constraints.append(tempcon)
     if isinstance(con, cl.DualCondSageCone):
         A, b, K = np.asarray(con.A), con.b, con.K
-        constraints.append(cl.PrimalProductCone(A @ y + b, K))
+        tempcon = cl.PrimalProductCone(A @ y + b, K)
+        constraints.append(tempcon)
     prob = cl.Problem(cl.MIN, t, constraints)
     prob.solve(verbose=False)
     cl.clear_variable_indices()
