@@ -22,7 +22,7 @@ copyright = '2019, Riley J. Murray'
 author = 'Riley J. Murray'
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.0'
+release = '0.3.3'
 
 
 # -- General configuration ---------------------------------------------------
