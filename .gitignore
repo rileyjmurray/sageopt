@@ -23,3 +23,6 @@ sageopt/tests/test_relaxations/__pycache__/*
 sageopt/tests/test_symbolic/__pycache__/*
 
 *.pyc
+
+docs/build
+docs/build/*
