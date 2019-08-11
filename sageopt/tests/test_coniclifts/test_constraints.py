@@ -179,7 +179,7 @@ class TestConstraints(unittest.TestCase):
     def test_conditional_sage_primal_1(self):
         n, m = 2, 6
         x = Variable(shape=(n,), name='x')
-        A, b, K, _ = compile_constrained_system([1 >= vector2norm(x)])
+        A, b, K, _, _ = compile_constrained_system([1 >= vector2norm(x)])
         clear_variable_indices()
         del x
         np.random.seed(0)
@@ -200,7 +200,7 @@ class TestConstraints(unittest.TestCase):
     def test_conditional_sage_dual_1(self):
         n, m = 2, 6
         x = Variable(shape=(n,), name='x')
-        A, b, K, _ = compile_constrained_system([1 >= vector2norm(x)])
+        A, b, K, _, _ = compile_constrained_system([1 >= vector2norm(x)])
         clear_variable_indices()
         del x
         np.random.seed(0)

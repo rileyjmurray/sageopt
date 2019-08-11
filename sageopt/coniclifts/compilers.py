@@ -27,23 +27,20 @@ from sageopt.coniclifts.base import ScalarVariable, Variable
 def compile_problem(objective, constraints):
     if not objective.is_affine():
         raise NotImplementedError()
-    # Find all user-defined Variable objects in this model.
-    user_vars = find_variables_from_constraints(constraints + [objective == 0])
     # Generate a conic system that is feasible iff the constraints are feasible.
-    A, b, K, var_name_to_locs = compile_constrained_system(constraints, user_vars)
+    A, b, K, index_map, var_name_to_locs = compile_constrained_system(constraints)
     # Find ** all ** Variable objects in the model (user-defined, or auxilliary).
     all_vars = find_variables_from_constraints(constraints + [objective == 0])
     # Generate the vector for the objective function.
-    c, c_offset, _ = compile_linear_expression(objective, all_vars)
+    c, c_offset, _ = compile_linear_expression(objective, all_vars, index_map)
     c = np.array(c.todense()).flatten().astype(float)
     return c, A, b, K, var_name_to_locs, all_vars
 
 
-def compile_constrained_system(constraints, variables=None):
+def compile_constrained_system(constraints):
     if any(not isinstance(c, Constraint) for c in constraints):
         raise RuntimeError('compile_constraints( ... ) only accepts iterables of Constraint objects.')
-    if variables is None:
-        variables = find_variables_from_constraints(constraints)
+    variables = find_variables_from_constraints(constraints)
     # Categorize constraints (set membership vs elementwise).
     elementwise_constrs, setmem_constrs = [], []
     for c in constraints:
@@ -53,7 +50,7 @@ def compile_constrained_system(constraints, variables=None):
             elementwise_constrs.append(c)
         else:
             raise RuntimeError('Unknown argument')
-    A, b, K = conify_constraints(elementwise_constrs, setmem_constrs)
+    A, b, K, index_map = conify_constraints(elementwise_constrs, setmem_constrs)
     check_dimensions(A, b, K)
     var_gens = np.array([v.generation for v in variables])
     if not np.all(var_gens == var_gens[0]):
@@ -62,19 +59,31 @@ def compile_constrained_system(constraints, variables=None):
         msg3 = 're-used between different Problem objects.\n'
         msg4 = '\nSuch re-use of Variable or Constraint objects is not supported.\n'
         raise RuntimeError(msg1 + msg2 + msg3 + msg4)
-    A, var_name_to_locs = finalize_system(A, variables)
+    variables.sort(key=lambda v: v.leading_scalar_variable_id())
+    var_indices = []
+    for v in variables:
+        vids = np.array(v.scalar_variable_ids, dtype=int)
+        vi = np.array([index_map[idx] for idx in vids])
+        var_indices.append(vi)
+    var_name_to_locs = make_variable_map(variables, var_indices)
     check_dimensions(A, b, K)
-    return A, b, K, var_name_to_locs
+    return A, b, K, index_map, var_name_to_locs
 
 
-def compile_linear_expression(expr, variables):
+def compile_linear_expression(expr, variables, index_map=None):
     lin_cone_data = (expr == 0).conic_form()
     b = -lin_cone_data[3]
     matrix_data = (lin_cone_data[0], lin_cone_data[1], lin_cone_data[2], b.size)
     # The above returns data for the negated expression.
-    A = -util.sparse_matrix_data_to_csc([matrix_data],
-                                        num_cols=ScalarVariable.curr_variable_count())
-    A, var_name_to_locs = finalize_system(A, variables)
+    A, index_map = util.sparse_matrix_data_to_csc([matrix_data], index_map)
+    A = -A
+    variables.sort(key=lambda v: v.leading_scalar_variable_id())
+    var_indices = []
+    for v in variables:
+        vids = np.array(v.scalar_variable_ids, dtype=int)
+        vi = np.array([index_map[idx] for idx in vids])
+        var_indices.append(vi)
+    var_name_to_locs = make_variable_map(variables, var_indices)
     return A, b, var_name_to_locs
 
 
@@ -112,11 +121,9 @@ def conify_constraints(elementwise_constrs, setmem_constrs):
         matrix_data.append((A_v, A_r, A_c, b.size))
         bs.append(b)
         K_total.extend(K)
-    cur_var_count = ScalarVariable.curr_variable_count()
-    A = util.sparse_matrix_data_to_csc(matrix_data,
-                                       num_cols=cur_var_count)
+    A, index_map = util.sparse_matrix_data_to_csc(matrix_data)
     b = np.hstack(bs)
-    return A, b, K_total
+    return A, b, K_total, index_map
 
 
 def epigraph_substitution(elementwise_constrs):
@@ -145,28 +152,6 @@ def epigraph_substitution(elementwise_constrs):
             se.atoms_to_coeffs[x] = c
         nl_cone_data.append((A_vals, A_rows, A_cols, b, K))
     return nl_cone_data
-
-
-def finalize_system(A, variables):
-    # Prepare input
-    if any(not isinstance(v, Variable) for v in variables):
-        raise RuntimeError('Argument "variables" must be an iterable of Variable objects.')
-    variables.sort(key=lambda v: v.leading_scalar_variable_id())
-    # Define helper variable (for constructing the "variable map" at the end of this function).
-    var_indices = []
-    for v in variables:
-        var_indices.append(np.array(v.scalar_variable_ids, dtype=int))
-    # Find zero columns of A, which don't correspond to given ScalarVariables.
-    cols_to_remove = util.find_zero_cols_outside_range(A, var_indices)
-    # Remove the columns from A. Translate variable indices in var_indices.
-    if len(cols_to_remove) > 0:
-        A, remaining_col_mapping = util.remove_select_cols_from_matrix(A, cols_to_remove)
-        for i in range(len(var_indices)):
-            var_indices[i] = remaining_col_mapping[var_indices[i]]
-    # Make a map from Variable names to column indices where the entries of the
-    # vectorized version of the variable will appear.
-    variable_map = make_variable_map(variables, var_indices)
-    return A, variable_map
 
 
 def make_variable_map(variables, var_indices):

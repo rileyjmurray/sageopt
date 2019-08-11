@@ -31,7 +31,7 @@ class TestOperators(unittest.TestCase):
         con = [re <= 10,
                3 <= x,
                x <= 5]
-        A, b, K, _ = compile_constrained_system(con)
+        A, b, K, _, _ = compile_constrained_system(con)
         A_expect = np.array([[0., 0., 0., 0., -1., -1.],  # linear inequality on epigraph for relent constr
                              [1., 0., 0., 0., 0., 0.],    # bound constraints on x
                              [0., 1., 0., 0., 0., 0.],    #
@@ -57,7 +57,7 @@ class TestOperators(unittest.TestCase):
                              [1, 0, 0,  0],   # start of main block in second order cone constraint
                              [0, 1, 0,  0],
                              [0, 0, 1,  0]])  # end of main block in second order cone constraint
-        A, b, K, _ = compile_constrained_system(con)
+        A, b, K, _1, _2 = compile_constrained_system(con)
         A = np.round(A.toarray(), decimals=1)
         assert np.all(A == A_expect)
         assert np.all(b == np.array([1, 0, 0, 0, 0]))
@@ -78,7 +78,7 @@ class TestOperators(unittest.TestCase):
         b_expect[2] = -0.1
         b_expect[3] = -0.2
         b_expect[4] = -0.3
-        A, b, K, _ = compile_constrained_system(con)
+        A, b, K, _, _ = compile_constrained_system(con)
         A = np.round(A.toarray(), decimals=1)
         assert np.all(A == A_expect)
         assert np.all(b == b_expect)

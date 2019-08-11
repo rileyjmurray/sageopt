@@ -29,47 +29,7 @@ def array_index_iterator(shape):
     return product(*[range(d) for d in shape])
 
 
-def find_zero_cols_outside_range(A, keepers):
-    # A is a sp matrix.
-    # We want to identify indices of columns of A
-    # that are all zeros, and *not* in the list called "keepers".
-    bool_drop_col = np.ones((A.shape[1],), dtype=bool)
-    bool_drop_col[np.hstack(keepers)] = False
-    _, nonzero_col_idxs = A.nonzero()
-    nonzero_col_idxs = np.unique(nonzero_col_idxs)
-    bool_drop_col[nonzero_col_idxs] = False
-    return np.where(bool_drop_col)[0]
-
-
-def remove_select_cols_from_matrix(A, select_zero_cols):
-    # A is a csc sp matrix.
-    # We want to modify A in such a way that certain
-    # columns of all zeros (as found in select_zero_cols)
-    # never existed.
-    #
-    # We also want to return a vector "mapping" so that if "idxs"
-    # is a numpy array of integers describing columns that
-    # were NOT dropped, then "mapping[idxs]" gives the positions
-    # of those column indices after being appropriately shifted
-    # leftward. For performance reasons "mapping" will be a vector
-    # of length A.shape[1] (for the original matrix A),
-    # even though this will result in "mapping" having some meaningless
-    # entries.
-    zcs = set(select_zero_cols.tolist())
-    mapping = np.arange(A.shape[1])
-    for i in range(A.shape[1]):
-        if i in zcs:
-            continue
-        else:
-            mapping[i] -= np.count_nonzero(select_zero_cols < i)
-    cols_to_keep = np.ones((A.shape[1] + 1,), dtype=bool)
-    cols_to_keep[select_zero_cols] = False
-    A.indptr = A.indptr[cols_to_keep]
-    A._shape = (A.shape[0], A.shape[1] - len(select_zero_cols))
-    return A, mapping
-
-
-def sparse_matrix_data_to_csc(data_tuples, num_cols=None, index_map=None):
+def sparse_matrix_data_to_csc(data_tuples, index_map=None):
     """
     :param data_tuples: a list of quadruplets, each of which contains the data necessary to
     construct a scipy sp matrix.
@@ -93,17 +53,15 @@ def sparse_matrix_data_to_csc(data_tuples, num_cols=None, index_map=None):
         A_vals += A_v
         row_index_offset += num_rows
     A_rows = np.hstack([d[1] for d in data_tuples]).astype(int)
-    if index_map is not None:
-        A_cols = np.array([index_map[ac] for ac in A_cols])
+    if index_map is None:
+        unique_cols = np.sort(np.unique(A_cols))
+        index_map = {c: idx for (idx, c) in enumerate(unique_cols)}
+    A_cols = np.array([index_map[ac] for ac in A_cols])
     num_rows = np.max(A_rows) + 1
-    if num_cols is None:
-        num_cols = np.max(A_cols) + 1
-    if all(v == 0 for v in A_vals):
-        A = sp.csc_matrix((int(num_rows), int(num_cols)))
-    else:
-        A = sp.csc_matrix((A_vals, (A_rows, A_cols)),
-                          shape=(int(num_rows), int(num_cols)), dtype=float)
-    return A
+    num_cols = np.max(list(index_map.values())) + 1
+    A = sp.csc_matrix((A_vals, (A_rows, A_cols)),
+                      shape=(int(num_rows), int(num_cols)), dtype=float)
+    return A, index_map
 
 
 def parse_cones(K):

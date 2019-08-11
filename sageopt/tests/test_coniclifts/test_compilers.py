@@ -48,7 +48,7 @@ class TestCompilers(unittest.TestCase):
         constraints = [G @ x == h,
                        x >= 0]
         # Reference case : the constraints are over x, and we are interested in no variables other than x.
-        A0, b0, K0, var_mapping0 = compile_constrained_system(constraints, variables=[x])
+        A0, b0, K0, _, var_mapping0 = compile_constrained_system(constraints)
         A0 = A0.toarray()
         #   A0 should be the (m+n)-by-n matrix formed by stacking -G on top of the identity.
         #   b0 should be the (m+n)-length vector formed by concatenating h with the zero vector.
@@ -59,52 +59,6 @@ class TestCompilers(unittest.TestCase):
         assert var_maps_equal(var_mapping0, {'x': np.arange(0, n).reshape((n, 1))})
         expected_A0 = np.vstack((-G, np.eye(n)))
         assert np.all(A0 == expected_A0)
-
-        # Tiny change to the above: don't supply any variables. See that it doesn't change the output.
-        A1, b1, K1, var_mapping1 = compile_constrained_system(constraints)
-        A1 = A1.toarray()
-        assert np.all(b0 == b1)
-        assert K0 == K1
-        assert var_maps_equal(var_mapping1, {'x': np.arange(0, n).reshape((n, 1))})
-        assert np.all(A0 == A1)
-
-        # weird use-case where we have unconstrained variables.
-        A2, b2, K2, var_mapping2 = compile_constrained_system(constraints, variables=[x, y])
-        A2 = A2.toarray()
-        #   A2 should be the (m+n)-by-(n+2) matrix formed by stacking G on the identity, and then padding that
-        #       matrix with an (m+n)-by-2 zero matrix on the *** left ***
-        #   b2 should equal b0.
-        #   K2 should equal K0.
-        #   var_mapping2 should equal {'x': np.arange(2,n+2).reshape((n,1)), 'y' : np.array([0,1])}
-        assert np.all(b0 == b2)
-        assert K0 == K2
-        assert var_maps_equal(var_mapping2, {'x': np.arange(2, n + 2).reshape((n, 1)), 'y': np.array([0, 1])})
-        expected_A2 = np.hstack((np.zeros(shape=(m + n, 2)), np.vstack((-G, np.eye(n)))))
-        assert np.all(A2 == expected_A2)
-
-        # tiny change to the above use-case: change the order of variables, from [x, y] to [y, x]. See that it does
-        # not affect the output.
-        A3, b3, K3, var_mapping3 = compile_constrained_system(constraints, variables=[y, x])
-        A3 = A3.toarray()
-        assert np.all(b0 == b3)
-        assert K0 == K3
-        assert var_maps_equal(var_mapping3, {'x': np.arange(2, n + 2).reshape((n, 1)), 'y': np.array([0, 1])})
-        assert np.all(A3 == expected_A2)
-
-        # another use-case where we have unconstrained variables
-        A4, b4, K4, var_mapping4 = compile_constrained_system(constraints, variables=[z, x])
-        A4 = A4.toarray()
-        #   A4 should be the (m+n)-by-(n+2) matrix formed by stacking G on the identity, and then padding that
-        #       matrix with an (m+n)-by-2 zero matrix on the *** right ***
-        #   b4 should equal b0.
-        #   K4 should equal K0.
-        #   var_mapping4 should equal {'x': np.arange(0,n).reshape((n,1)), 'z' : np.array([n,n+1])}
-        assert np.all(b0 == b4)
-        assert K0 == K4
-        assert var_maps_equal(var_mapping4, {'x': np.arange(0, n).reshape((n, 1)), 'z': np.array([n, n + 1])})
-        expected_A4 = np.hstack((np.vstack((-G, np.eye(n))), np.zeros(shape=(m + n, 2))))
-        assert np.all(A4 == expected_A4)
-        pass
 
     def test_SDP_system_1(self):
         x = Variable(shape=(2, 2), name='x', var_properties=['symmetric'])
@@ -118,7 +72,7 @@ class TestCompilers(unittest.TestCase):
                        B @ x @ B.T >= 1,
                        B @ x @ B.T >> 1,  # a 1-by-1 LMI
                        C @ x @ C.T >> -2]
-        A, b, K, var_mapping = compile_constrained_system(constraints)
+        A, b, K, _, var_mapping = compile_constrained_system(constraints)
         A = A.toarray()
         assert K == [Cone('0', 1), Cone('+', 1), Cone('P', 1), Cone('P', 3)]
         expect_row_0 = -np.array([D[0, 0], 2 * D[1, 0], D[1, 1]])
