@@ -28,7 +28,7 @@ def build_cone_type_selectors(K):
     {x : A @ x + b \in K}, and from cone type to a 1darray of cone lengths.
     """
     m = sum(co.len for co in K)
-    type_selectors = defaultdict(lambda: (lambda: np.zeros(shape=(m,), dtype=bool))())
+    type_selectors = defaultdict(lambda: (lambda: np.zeros(m, dtype=bool))())
     running_idx = 0
     for i, co in enumerate(K):
         type_selectors[co.type][running_idx:(running_idx+co.len)] = True
@@ -42,7 +42,7 @@ def find_cones_with_mutually_disjoint_scope(cones):
     # this function needs to be orders of magnitude faster. In addition to changing how it's
     # written, the final function might be simple enough to be accelerated by numba or cython.
     disjoint_cone_idxs = set()
-    remaining_cone_idxs = set(np.arange(len(cones)).tolist())
+    remaining_cone_idxs = {i for i in range(len(cones))}
     for co_idx, co in enumerate(cones):
         if 'isolated' in co.annotations and co.annotations['isolated']:
             disjoint_cone_idxs.add(co_idx)
@@ -101,7 +101,7 @@ def prep_sep_dis_diag_cone_cons(A, b, K, dont_sep=None):
     diag_cones = find_diagonal_cone_constraints(A, relevant_cones)  # gives cones an 'A' annotation
     Cone.annotate_cone_scopes(A, diag_cones)  # gives cones a 'scope' annotation.
     disjoint_diag_cones = find_cones_with_mutually_disjoint_scope(diag_cones)
-    disjoint_diagonal_idxs = set([co.annotations['position'] for co in disjoint_diag_cones])
+    disjoint_diagonal_idxs = {co.annotations['position'] for co in disjoint_diag_cones}
     #
     # Build the return values
     #
@@ -110,8 +110,8 @@ def prep_sep_dis_diag_cone_cons(A, b, K, dont_sep=None):
         K0[i].annotations = dict()
     sep_K0 = []
     type_selectors = build_cone_type_selectors(K)
-    scalings = np.ones(shape=(A.shape[1],))
-    translates = np.zeros(shape=(A.shape[1],))
+    scalings = np.ones(A.shape[1])
+    translates = np.zeros(A.shape[1])
     for co in disjoint_diag_cones:
         co_start, co_stop = co.annotations['ss']
         # record normalization and translation necessary to homogenize these cones
@@ -213,7 +213,7 @@ def replace_nonzero_cones_with_zero_cones_and_slacks(A, K, destructive=False, do
     if len(aug_data[2]) > 0:
         aug_data[2] = np.hstack(aug_data[2])
         aug_data[1] = np.hstack(aug_data[1])
-        aug_data[0] = -1 * np.ones(shape=(len(aug_data[1]),))
+        aug_data[0] = -1 * np.ones(len(aug_data[1]))
         augmenting_matrix = sp.csc_matrix((aug_data[0], (aug_data[1], aug_data[2])),
                                           shape=(A.shape[0], running_new_var_idx))
         A = sp.hstack([A, augmenting_matrix], format='csc')
@@ -293,13 +293,13 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None, avoid_s
         K0 = K
         b0 = b
         sep_K0 = []
-        scale = np.ones(shape=(A.shape[1],))
-        trans = np.zeros(shape=(A.shape[1],))
+        scale = np.ones(A.shape[1])
+        trans = np.zeros(A.shape[1])
     # (2) introduce slack variables (and separately record constraints) to factor remaining constraints
     #     of type "dont_sep" out of the matrix and into disjoint diagonal homogeneous cone constraints.
     A1, K1, sep_K1 = replace_nonzero_cones_with_zero_cones_and_slacks(A0, K0, destructive=True, dont_rep=dont_sep)
-    scale = np.hstack((scale, np.ones(shape=(A1.shape[1] - len(scale)))))
-    trans = np.hstack((trans, np.zeros(shape=(A1.shape[1] - len(trans)))))
+    scale = np.hstack((scale, np.ones(A1.shape[1] - len(scale))))
+    trans = np.hstack((trans, np.zeros(A1.shape[1] - len(trans))))
     #   A1 has the same number of rows of A0, but likely has more columns.
     #   K1 is of the same length of K0, but only contains the cones in "dont_sep".
     #   sep_K1 defines the constraints on any slack variables which allowed us to replace K0 by K1 as above.
@@ -309,16 +309,16 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None, avoid_s
 
 
 def separated_cones_to_matrix_cones(sep_K, num_cols, destructive=False):
-    m = sum([co.len for co in sep_K])
+    m = sum(co.len for co in sep_K)
     A_rows = np.arange(m)
-    A_vals = np.ones(shape=(m,))
-    A_cols = np.hstack([co.annotations['col mapping'] for co in sep_K])
+    A_vals = np.ones(m)
+    A_cols = np.hstack(co.annotations['col mapping'] for co in sep_K)
     if not destructive:
         # overwrite the reference to "sep_K" because we no longer need the annotations.
         sep_K = [Cone(co.type, co.len) for co in sep_K]
     else:
         for co in sep_K:
             co.annotations = dict()
-    b = np.zeros(shape=(m,))
+    b = np.zeros(m)
     A = sp.csc_matrix((A_vals, (A_rows, A_cols)), shape=(m, num_cols), dtype=float)
     return A, b, sep_K

@@ -13,11 +13,13 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import warnings
 import numpy as np
 from collections import defaultdict
 from sageopt.coniclifts import utilities as util
 from sageopt.coniclifts.constraints.constraint import Constraint
-from sageopt.coniclifts.base import ScalarVariable, Variable
+from sageopt.coniclifts.base import ScalarVariable
+
 
 #
 #   Core user-facing functions
@@ -29,10 +31,12 @@ def compile_problem(objective, constraints):
         raise NotImplementedError()
     # Generate a conic system that is feasible iff the constraints are feasible.
     A, b, K, index_map, var_name_to_locs = compile_constrained_system(constraints)
-    # Find ** all ** Variable objects in the model (user-defined, or auxilliary).
+    # Find all Variable objects in the model (user-defined, or auxilliary).
     all_vars = find_variables_from_constraints(constraints + [objective == 0])
     # Generate the vector for the objective function.
-    c, c_offset, _ = compile_linear_expression(objective, all_vars, index_map)
+    c, c_offset = compile_linear_expression(objective, all_vars, index_map)
+    if c_offset != 0:
+        warnings.warn('A constant-term ' + str(c_offset) + ' is being dropped from the objective.')
     c = np.array(c.todense()).flatten().astype(float)
     return c, A, b, K, var_name_to_locs, all_vars
 
@@ -41,6 +45,13 @@ def compile_constrained_system(constraints):
     if any(not isinstance(c, Constraint) for c in constraints):
         raise RuntimeError('compile_constraints( ... ) only accepts iterables of Constraint objects.')
     variables = find_variables_from_constraints(constraints)
+    var_gens = np.array([v.generation for v in variables])
+    if not np.all(var_gens == var_gens[0]):
+        msg1 = '\nThe model contains Variable objects of distinct "generation".\n'
+        msg2 = '\nIn between constructing some of these Variables the function \n '
+        msg3 = 'coniclifts.clear_variable_indices was called. Remove this function\n'
+        msg4 = 'call from your program flow and try again.\n'
+        raise RuntimeError(msg1 + msg2 + msg3 + msg4)
     # Categorize constraints (set membership vs elementwise).
     elementwise_constrs, setmem_constrs = [], []
     for c in constraints:
@@ -52,13 +63,6 @@ def compile_constrained_system(constraints):
             raise RuntimeError('Unknown argument')
     A, b, K, index_map = conify_constraints(elementwise_constrs, setmem_constrs)
     check_dimensions(A, b, K)
-    var_gens = np.array([v.generation for v in variables])
-    if not np.all(var_gens == var_gens[0]):
-        msg1 = '\nThe model contains Variable objects of distinct "generation".\n'
-        msg2 = '\nThis should only happen when Variable or Constraint objects are '
-        msg3 = 're-used between different Problem objects.\n'
-        msg4 = '\nSuch re-use of Variable or Constraint objects is not supported.\n'
-        raise RuntimeError(msg1 + msg2 + msg3 + msg4)
     variables.sort(key=lambda v: v.leading_scalar_variable_id())
     var_indices = []
     for v in variables:
@@ -66,25 +70,7 @@ def compile_constrained_system(constraints):
         vi = np.array([index_map[idx] for idx in vids])
         var_indices.append(vi)
     var_name_to_locs = make_variable_map(variables, var_indices)
-    check_dimensions(A, b, K)
     return A, b, K, index_map, var_name_to_locs
-
-
-def compile_linear_expression(expr, variables, index_map=None):
-    lin_cone_data = (expr == 0).conic_form()
-    b = -lin_cone_data[3]
-    matrix_data = (lin_cone_data[0], lin_cone_data[1], lin_cone_data[2], b.size)
-    # The above returns data for the negated expression.
-    A, index_map = util.sparse_matrix_data_to_csc([matrix_data], index_map)
-    A = -A
-    variables.sort(key=lambda v: v.leading_scalar_variable_id())
-    var_indices = []
-    for v in variables:
-        vids = np.array(v.scalar_variable_ids, dtype=int)
-        vi = np.array([index_map[idx] for idx in vids])
-        var_indices.append(vi)
-    var_name_to_locs = make_variable_map(variables, var_indices)
-    return A, b, var_name_to_locs
 
 
 #
@@ -128,7 +114,7 @@ def conify_constraints(elementwise_constrs, setmem_constrs):
 
 def epigraph_substitution(elementwise_constrs):
     # Do three things
-    #   (1) linearize the Constraint objects by introduction of epigraph variables
+    #   (1) linearize the Constraint objects by substituting epigraph variables
     #   (2) introduce conic constraints for the epigraph variables
     #   (3) return the conic constraints from (2).
     #
@@ -154,6 +140,22 @@ def epigraph_substitution(elementwise_constrs):
     return nl_cone_data
 
 
+def compile_linear_expression(expr, variables, index_map):
+    lin_cone_data = (expr == 0).conic_form()
+    # The above returns data for the negated expression.
+    b = -lin_cone_data[3]
+    matrix_data = (lin_cone_data[0], lin_cone_data[1], lin_cone_data[2], b.size)
+    A, index_map = util.sparse_matrix_data_to_csc([matrix_data], index_map)
+    A = -A
+    variables.sort(key=lambda v: v.leading_scalar_variable_id())
+    var_indices = []
+    for v in variables:
+        vids = np.array(v.scalar_variable_ids, dtype=int)
+        vi = np.array([index_map[idx] for idx in vids])
+        var_indices.append(vi)
+    return A, b
+
+
 def make_variable_map(variables, var_indices):
     """
     :param variables: a list of Variable objects with is_proper=True. These variables
@@ -177,8 +179,6 @@ def make_variable_map(variables, var_indices):
         As a result, skew-symmetric Variables or Variables with sparsity patterns are not supported
         by this very important function. Symmetric matrices are supported by this function.
 
-        var_indices is constructed in finalize_system (one of the last steps of compiling a system
-        Constraints into vectorized conic form).
     """
     variable_map = dict()
     for i, v in enumerate(variables):

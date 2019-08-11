@@ -48,7 +48,7 @@ class Cone(object):
                 curr_A = co.annotations['A']
             else:
                 curr_A = A[co_start:co_stop, :]
-            co.annotations['scope'] = set(curr_A.nonzero()[1].tolist())
+            co.annotations['scope'] = {i for i in curr_A.nonzero()[1]}
         pass
 
 

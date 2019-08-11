@@ -88,28 +88,12 @@ find a nonzero vector x \in X so that (alpha - alpha[k,:]) @ x < 0.
 
 When X is not a cone, we can check that
 
-    min{ t : x in X, (alpha - alpha[k,:]) @ x <= t } = -\infty.
+    min{ t : x in X, (alpha - alpha[k,:]) @ x <= t } = -\infty
 
-In order to add this dimension-reduction to sageopt, it will be necessary to:
+Or, for numeric purposes, it should suffice to check that the value
+of the above optimization problem is <= -1000 (since exp(-1000)
+is zero in 64 bit arithmetic).
 
-1. Enable a CVXPY backend.
-2. Create "constraint factories", which perform this dimension reduction once,
+In order to add this dimension-reduction to sageopt, it will be necessary to
+create "constraint factories", which perform this dimension reduction once,
 and allow it to be re-used across multiple desired constraints.
-
-The CVXPY backend is necessary because coniclifts does not allow a user to create
-and solve smaller optimization problems while in the middle of constructing a larger
-optimization problem.
-
-## Coniclifts: address global scope of Variable objects
-
-Coniclifts Variables have a "generation" attribute: the value of a counter
-which is incremented whenever the user calls "clear_variable_indices()".
-Coniclifts does not support compiling Problems with Variables from different
-generations. This is a huge limitation, and one that should be circumvented.
-
-A possible solution (to consider later): Add an "index_mapping" argument to
-the "conic_form()" function of Constraint objects. This would be a dictionary
-that maps a ScalarVariable's "id" to a contiguous index which places that
-ScalarVariable in the scope of the calling Problem. One difficulty here
-is how epigraph variables are not known until mid-way in the compilation
-process.

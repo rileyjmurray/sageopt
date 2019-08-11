@@ -253,11 +253,11 @@ class ScalarExpression(object):
         if not isinstance(atoms_to_coeffs, defaultdict):
             self.atoms_to_coeffs = defaultdict(int)
             if verify:
-                vals = list(atoms_to_coeffs.values()) + [offset]
-                if not all(isinstance(v, __REAL_TYPES__) for v in vals):
+                if not isinstance(offset, __REAL_TYPES__):
                     raise RuntimeError('Coefficients in ScalarExpressions can only be numeric types.')
-                keys = list(atoms_to_coeffs.keys())
-                if not all(isinstance(v, ScalarAtom) for v in keys):
+                if not all(isinstance(v, __REAL_TYPES__) for v in atoms_to_coeffs.values()):
+                    raise RuntimeError('Coefficients in ScalarExpressions can only be numeric types.')
+                if not all(isinstance(v, ScalarAtom) for v in atoms_to_coeffs.keys()):
                     raise RuntimeError('Keys in ScalarExpressions must be ScalarAtoms.')
             self.atoms_to_coeffs.update(atoms_to_coeffs)
         else:
@@ -548,7 +548,7 @@ class Expression(np.ndarray):
         # when all ScalarAtoms in this Expression are of the same type.
         # That's useful for, e.g. affine Expressions, which
         # we need to test for symbolic equivalence.
-        atoms_to_pos = dict((a, i) for (i, a) in enumerate(x))
+        atoms_to_pos = {a: i for (i, a) in enumerate(x)}
         A = np.zeros(self.shape + (len(x),))
         B = np.zeros(self.shape)
         for tup in array_index_iterator(self.shape):
