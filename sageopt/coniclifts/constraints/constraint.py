@@ -14,6 +14,7 @@
    limitations under the License.
 """
 
+
 class Constraint(object):
 
     def is_affine(self):
@@ -36,7 +37,7 @@ class Constraint(object):
             A_cols - list (of integers)
             b - numpy 1darray (of floats)
             K - list (of coniclifts Cone objects)
-            sep_K - list (of appropriately annotated coniclifts Cone objects)
+
         """
         raise NotImplementedError()
 

@@ -41,7 +41,7 @@ class Problem(object):
         self.user_cons = constraints
         self.timings = dict()
         t = time.time()
-        c, A, b, K, sep_K, var_name_to_locs, all_vars = compile_problem(objective_expression, constraints)
+        c, A, b, K, var_name_to_locs, all_vars = compile_problem(objective_expression, constraints)
         if objective_sense == CL_CONSTANTS.minimize:
             self.c = c
         else:
@@ -50,7 +50,6 @@ class Problem(object):
         self.A = A
         self.b = b
         self.K = K
-        self.sep_K = sep_K
         self.all_variables = all_vars
         self.user_variable_map = var_name_to_locs
         self.user_variable_values = None
@@ -85,7 +84,7 @@ class Problem(object):
 
         # Finish solver-specific compilation
         t0 = time.time()
-        data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K, self.sep_K,
+        data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K,
                                              options['destructive'],
                                              options['compilation_options'])
         self.timings[solver]['apply'] = time.time() - t0

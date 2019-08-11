@@ -61,4 +61,4 @@ class PSD(SetMembership):
                 cols_and_coeff = [(a.id, c) for a, c in se.atoms_to_coeffs.items()]
                 A_cols += [atom_id for (atom_id, _) in cols_and_coeff]
                 A_vals += [c for (_, c) in cols_and_coeff]
-        return [(A_vals, np.array(A_rows), A_cols, b, K, [])]
+        return [(A_vals, np.array(A_rows), A_cols, b, K)]

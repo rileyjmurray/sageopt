@@ -103,7 +103,7 @@ class ElementwiseConstraint(Constraint):
                 col_idx_to_coeff = [(a.id, c) for a, c in se.atoms_to_coeffs.items()]
                 A_cols += [atom_id for (atom_id, _) in col_idx_to_coeff]
                 A_vals += [-c for (_, c) in col_idx_to_coeff]
-        return A_vals, np.array(A_rows), A_cols, b, K, []
+        return A_vals, np.array(A_rows), A_cols, b, K
 
     def violation(self, norm_ord=None):
         expr = (self.lhs - self.rhs).as_expr()

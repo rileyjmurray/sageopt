@@ -60,10 +60,11 @@ class Exponential(NonlinearScalarAtom):
         Used to represent the epigraph of "e^x"
         :param x:
         """
+        self._args = (self.parse_arg(x),)
         self._id = Exponential._EXPONENTIAL_COUNTER_
         Exponential._EXPONENTIAL_COUNTER_ += 1
-        self._args = (self.parse_arg(x),)
-        self.aux_var = None
+        v = Variable(shape=(), name='_exp_epi_[' + str(self.id) + ']_')
+        self._epigraph_variable = v[()].scalar_variables()[0]
         pass
 
     def is_convex(self):
@@ -78,9 +79,6 @@ class Exponential(NonlinearScalarAtom):
         "(x, y) : e^x <= y" is represented as "(x, y, 1) \in K_{exp}".
         :return:
         """
-        if self.aux_var is None:
-            v = Variable(shape=(), name='_exp_epi_[' + str(self.id) + ']_')
-            self.aux_var = v[()].scalar_variables()[0]
         b = np.zeros(3,)
         K = [Cone('e', 3)]
         A_rows, A_cols, A_vals = [], [], []
@@ -92,14 +90,14 @@ class Exponential(NonlinearScalarAtom):
         b[0] = x[-1][1]
         # second coordinate
         A_rows.append(1),
-        A_cols.append(self.aux_var.id)
+        A_cols.append(self._epigraph_variable.id)
         A_vals.append(1)
         # third coordinate (zeros for A, but included to infer correct dims later on)
         A_rows.append(2)
         A_cols.append(ScalarVariable.curr_variable_count() - 1)
         A_vals.append(0)
         b[2] = 1
-        return A_vals, np.array(A_rows), A_cols, b, K, self.aux_var
+        return A_vals, np.array(A_rows), A_cols, b, K
 
     def value(self):
         x_list = self.args[0]

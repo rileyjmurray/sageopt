@@ -53,10 +53,11 @@ class RelEnt(NonlinearScalarAtom):
 
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.rel_entr.html#scipy.special.rel_entr
         """
+        self._args = (self.parse_arg(x), self.parse_arg(y))
         self._id = RelEnt._REL_ENT_COUNTER_
         RelEnt._REL_ENT_COUNTER_ += 1
-        self._args = (self.parse_arg(x), self.parse_arg(y))
-        self.aux_var = None
+        v = Variable(shape=(), name='_rel_ent_epi[' + str(self.id) + ']_')
+        self._epigraph_variable = v[()].scalar_variables()[0]
 
     def is_convex(self):
         return True
@@ -67,17 +68,14 @@ class RelEnt(NonlinearScalarAtom):
     def epigraph_conic_form(self):
         """
         Generate conic constraint for epigraph
-            self.args[0] * ln( self.args[0] / self.args[1] ) <= self.aux_var.
+            self.args[0] * ln( self.args[0] / self.args[1] ) <= self._epigraph_variable.
 
         :return:
         """
-        if self.aux_var is None:
-            v = Variable(shape=(), name='_rel_ent_epi[' + str(self.id) + ']_')
-            self.aux_var = v[()].scalar_variables()[0]
         b = np.zeros(3,)
         K = [Cone('e', 3)]
         # ^ initializations
-        A_rows, A_cols, A_vals = [0], [self.aux_var.id], [-1]
+        A_rows, A_cols, A_vals = [0], [self._epigraph_variable.id], [-1]
         # ^ first row
         x = self.args[0]
         A_rows += (len(x)-1) * [2]
@@ -91,7 +89,7 @@ class RelEnt(NonlinearScalarAtom):
         A_vals += [co for var, co in y[:-1]]
         b[1] = y[-1][1]
         # ^ second row
-        return A_vals, np.array(A_rows), A_cols, b, K, self.aux_var
+        return A_vals, np.array(A_rows), A_cols, b, K
 
     def value(self):
         vals = []

@@ -490,7 +490,7 @@ def conditional_sage_data(f, gts, eqs):
         rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
         coniclift_cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
     if len(coniclift_cons) > 0:
-        A, b, K, _, _ = cl.compile_constrained_system(coniclift_cons)
+        A, b, K, _ = cl.compile_constrained_system(coniclift_cons)
         cl.clear_variable_indices()
         AbK = (A, b, K)
         X = {'AbK': AbK, 'gts': conv_gt, 'eqs': conv_eqs}

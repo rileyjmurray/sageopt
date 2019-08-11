@@ -14,10 +14,11 @@
    limitations under the License.
 """
 
+
 class Solver(object):
 
     @staticmethod
-    def apply(c, A, b, K, sep_K, destructive, compilation_options):
+    def apply(c, A, b, K, destructive, compilation_options):
         raise NotImplementedError()
 
     @staticmethod

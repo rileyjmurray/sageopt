@@ -18,14 +18,13 @@ import scipy.sparse as sp
 from sageopt.coniclifts import utilities as util
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.solver import Solver
-from sageopt.coniclifts.reformulators import separated_cones_to_matrix_cones
 import copy
 
 
 class ECOS(Solver):
 
     @staticmethod
-    def apply(c, A, b, K, sep_K, destructive, compilation_options):
+    def apply(c, A, b, K, destructive, compilation_options):
         """
         :return: G, h, cones, A_ecos, b_ecos --- where we expect
          a function call: sol = ecos.solve(c, G, h, cones, A_ecos, b_ecos)
@@ -33,12 +32,6 @@ class ECOS(Solver):
         if not destructive:
             A = A.copy()
             K = copy.deepcopy(K)
-            sep_K = copy.deepcopy(sep_K)
-        if len(sep_K) > 0:
-            sep_A, sep_b, sep_K = separated_cones_to_matrix_cones(sep_K, A.shape[1], destructive)
-            K += sep_K
-            b = np.hstack([b, sep_b])
-            A = sp.hstack([A, sep_A], format='csr')  # deliberately convert to CSR
         for co in K:
             if co.type not in {'e', 'S', '+', '0'}:
                 msg1 = 'ECOS only supports cones with labels in the set {"e", "S", "+", "0"}. \n'

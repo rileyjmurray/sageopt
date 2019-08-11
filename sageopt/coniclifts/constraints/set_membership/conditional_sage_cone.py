@@ -113,8 +113,8 @@ class PrimalCondSageCone(SetMembership):
         else:
             con = self.lambda_vars[i] @ self.b <= self.age_vectors[i][i]
             con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-        return A_vals, A_rows, A_cols, b, K, []
+            A_vals, A_rows, A_cols, b, K = con.conic_form()
+        return A_vals, A_rows, A_cols, b, K
 
     def _age_lin_eq_cone_data(self, i):
         idx_set = self.ech.expcovers[i]
@@ -132,13 +132,13 @@ class PrimalCondSageCone(SetMembership):
             num_rows = mat1.shape[0]
         b = np.zeros(num_rows, )
         K = [Cone('0', num_rows)]
-        return A_vals, A_rows, A_cols, b, K, []
+        return A_vals, A_rows, A_cols, b, K
 
     def _age_lambda_var_domain_constraints(self, i):
         con = DualProductCone(self.lambda_vars[i], self.K)
         conic_data = con.conic_form()
-        A_vals, A_rows, A_cols, b, cur_K, sep_K = conic_data[0]
-        return A_vals, A_rows, A_cols, b, cur_K, sep_K
+        A_vals, A_rows, A_cols, b, cur_K = conic_data[0]
+        return A_vals, A_rows, A_cols, b, cur_K
 
     def _age_violation(self, i, norm_ord, c_i, lambda_i):
         # This is "rough" only.
@@ -189,7 +189,7 @@ class PrimalCondSageCone(SetMembership):
             A_rows += [i] * (len(svs) + len(id2co))
             # update b
             b[i] -= main_c_var[i].offset
-        return A_vals, np.array(A_rows), A_cols, b, K, []
+        return A_vals, np.array(A_rows), A_cols, b, K
 
     def variables(self):
         return self._variables
@@ -210,8 +210,8 @@ class PrimalCondSageCone(SetMembership):
         else:
             con = self.c >= 0
             con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
+            A_vals, A_rows, A_cols, b, K = con.conic_form()
+            cone_data = [(A_vals, A_rows, A_cols, b, K)]
             return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):
@@ -312,7 +312,7 @@ class DualCondSageCone(SetMembership):
             expr1 = np.tile(self.v[i], len_sel).view(Expression)
             epi = self.relent_epi_vars[i]
             A_vals, A_rows, A_cols, b, K, epi = elementwise_relent(expr1, self.v[selector], epi)
-            cone_data.append((A_vals, A_rows, A_cols, b, K, []))
+            cone_data.append((A_vals, A_rows, A_cols, b, K))
             #
             # Linear inequalities
             #
@@ -323,7 +323,7 @@ class DualCondSageCone(SetMembership):
             b = np.zeros(num_rows)
             K = [Cone('+', num_rows)]
             A_rows = np.array(A_rows)
-            cone_data.append((A_vals, A_rows, A_cols, b, K, []))
+            cone_data.append((A_vals, A_rows, A_cols, b, K))
         #
         # the additional constraints, for the generalized AGE dual cone
         #
@@ -334,7 +334,7 @@ class DualCondSageCone(SetMembership):
         A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_plus_vec_times_singlevar(mat, vecvar, vec, singlevar)
         b = np.zeros(self.A.shape[0], )
         cur_K = [Cone(co.type, co.len) for co in self.K]
-        cone_data.append((A_vals, A_rows, A_cols, b, cur_K, []))
+        cone_data.append((A_vals, A_rows, A_cols, b, cur_K))
         return cone_data
 
     def _dual_age_cone_violation(self, i, norm_ord, rough, v):
@@ -378,8 +378,8 @@ class DualCondSageCone(SetMembership):
             nontrivial_I = list(set(self.ech.U_I + self.ech.P_I))
             con = self.v[nontrivial_I] >= 0
             con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
+            A_vals, A_rows, A_cols, b, K = con.conic_form()
+            cone_data = [(A_vals, A_rows, A_cols, b, K)]
             for i in self.ech.U_I:
                 curr_age = self._dual_age_cone_data(i)
                 cone_data += curr_age
@@ -387,8 +387,8 @@ class DualCondSageCone(SetMembership):
         else:
             con = self.v >= 0
             con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
+            A_vals, A_rows, A_cols, b, K = con.conic_form()
+            cone_data = [(A_vals, A_rows, A_cols, b, K)]
             return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):

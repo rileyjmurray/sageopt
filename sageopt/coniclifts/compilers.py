@@ -30,13 +30,13 @@ def compile_problem(objective, constraints):
     # Find all user-defined Variable objects in this model.
     user_vars = find_variables_from_constraints(constraints + [objective == 0])
     # Generate a conic system that is feasible iff the constraints are feasible.
-    A, b, K, sep_K, var_name_to_locs = compile_constrained_system(constraints, user_vars)
+    A, b, K, var_name_to_locs = compile_constrained_system(constraints, user_vars)
     # Find ** all ** Variable objects in the model (user-defined, or auxilliary).
     all_vars = find_variables_from_constraints(constraints + [objective == 0])
     # Generate the vector for the objective function.
     c, c_offset, _ = compile_linear_expression(objective, all_vars)
     c = np.array(c.todense()).flatten().astype(float)
-    return c, A, b, K, sep_K, var_name_to_locs, all_vars
+    return c, A, b, K, var_name_to_locs, all_vars
 
 
 def compile_constrained_system(constraints, variables=None):
@@ -53,9 +53,8 @@ def compile_constrained_system(constraints, variables=None):
             elementwise_constrs.append(c)
         else:
             raise RuntimeError('Unknown argument')
-    A, b, K, sep_K = conify_constraints(elementwise_constrs, setmem_constrs)
+    A, b, K = conify_constraints(elementwise_constrs, setmem_constrs)
     check_dimensions(A, b, K)
-    variables = update_variables_from_sep_cones(variables, sep_K)
     var_gens = np.array([v.generation for v in variables])
     if not np.all(var_gens == var_gens[0]):
         msg1 = '\nThe model contains Variable objects of distinct "generation".\n'
@@ -63,9 +62,9 @@ def compile_constrained_system(constraints, variables=None):
         msg3 = 're-used between different Problem objects.\n'
         msg4 = '\nSuch re-use of Variable or Constraint objects is not supported.\n'
         raise RuntimeError(msg1 + msg2 + msg3 + msg4)
-    A, sep_K, var_name_to_locs = finalize_system(A, sep_K, variables)
+    A, var_name_to_locs = finalize_system(A, variables)
     check_dimensions(A, b, K)
-    return A, b, K, sep_K, var_name_to_locs
+    return A, b, K, var_name_to_locs
 
 
 def compile_linear_expression(expr, variables):
@@ -75,7 +74,7 @@ def compile_linear_expression(expr, variables):
     # The above returns data for the negated expression.
     A = -util.sparse_matrix_data_to_csc([matrix_data],
                                         num_cols=ScalarVariable.curr_variable_count())
-    A, _, var_name_to_locs = finalize_system(A, [], variables)
+    A, var_name_to_locs = finalize_system(A, variables)
     return A, b, var_name_to_locs
 
 
@@ -108,16 +107,16 @@ def conify_constraints(elementwise_constrs, setmem_constrs):
     #       from epigraph transformations.
     #   (3) The conic versions of the user's "set membership" constraints.
     all_cone_data = elementwise_cone_data + epigraph_cone_data + setmem_cone_data
-    matrix_data, bs, K_total, sep_K_total = [], [], [], []
-    for A_v, A_r, A_c, b, K, sep_K in all_cone_data:
+    matrix_data, bs, K_total = [], [], []
+    for A_v, A_r, A_c, b, K in all_cone_data:
         matrix_data.append((A_v, A_r, A_c, b.size))
         bs.append(b)
         K_total.extend(K)
-        sep_K_total.extend(sep_K)
     cur_var_count = ScalarVariable.curr_variable_count()
-    A = util.sparse_matrix_data_to_csc(matrix_data, num_cols=cur_var_count)
+    A = util.sparse_matrix_data_to_csc(matrix_data,
+                                       num_cols=cur_var_count)
     b = np.hstack(bs)
-    return A, b, K_total, sep_K_total
+    return A, b, K_total
 
 
 def epigraph_substitution(elementwise_constrs):
@@ -138,16 +137,17 @@ def epigraph_substitution(elementwise_constrs):
         c.epigraph_checked = True
     nl_cone_data = []
     for nl in nonlin_atom_to_scalar_exprs:
-        A_vals, A_rows, A_cols, b, K, x = nl.epigraph_conic_form()
+        x = nl.epigraph_variable
+        A_vals, A_rows, A_cols, b, K = nl.epigraph_conic_form()
         for se in nonlin_atom_to_scalar_exprs[nl]:
             c = se.atoms_to_coeffs[nl]
             del se.atoms_to_coeffs[nl]
             se.atoms_to_coeffs[x] = c
-        nl_cone_data.append((A_vals, A_rows, A_cols, b, K, []))
+        nl_cone_data.append((A_vals, A_rows, A_cols, b, K))
     return nl_cone_data
 
 
-def finalize_system(A, sep_K, variables):
+def finalize_system(A, variables):
     # Prepare input
     if any(not isinstance(v, Variable) for v in variables):
         raise RuntimeError('Argument "variables" must be an iterable of Variable objects.')
@@ -158,19 +158,15 @@ def finalize_system(A, sep_K, variables):
         var_indices.append(np.array(v.scalar_variable_ids, dtype=int))
     # Find zero columns of A, which don't correspond to given ScalarVariables.
     cols_to_remove = util.find_zero_cols_outside_range(A, var_indices)
-    # Remove the columns from A. Translate variable indices in var_indices and
-    # cones within "sep_K" appropriately.
+    # Remove the columns from A. Translate variable indices in var_indices.
     if len(cols_to_remove) > 0:
         A, remaining_col_mapping = util.remove_select_cols_from_matrix(A, cols_to_remove)
         for i in range(len(var_indices)):
             var_indices[i] = remaining_col_mapping[var_indices[i]]
-        for co in sep_K:
-            co_cm = co.annotations['col mapping']
-            co.annotations['col mapping'] = remaining_col_mapping[co_cm]
     # Make a map from Variable names to column indices where the entries of the
     # vectorized version of the variable will appear.
     variable_map = make_variable_map(variables, var_indices)
-    return A, sep_K, variable_map
+    return A, variable_map
 
 
 def make_variable_map(variables, var_indices):
@@ -224,23 +220,6 @@ def find_variables_from_constraints(constraints):
                 variable_ids.add(id(v))
                 variables.append(v)
     return variables
-
-
-def update_variables_from_sep_cones(variables, sep_K):
-    if len(sep_K) > 0:
-        variable_ids = set(id(v) for v in variables)
-        updated_variables = [v for v in variables]
-        for co in sep_K:
-            if 'variables' not in co.annotations:
-                raise RuntimeError('Improperly annotated cone.')
-            co_vars = co.annotations['variables']
-            for v in co_vars:
-                if id(v) not in variable_ids:
-                    variable_ids.add(id(v))
-                    updated_variables.append(v)
-        return updated_variables
-    else:
-        return variables
 
 
 def check_dimensions(A, b, K):

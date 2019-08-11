@@ -58,7 +58,7 @@ class PrimalProductCone(SetMembership):
                 col_idx_to_coeff = [(a.id, c) for a, c in se.atoms_to_coeffs.items()]
                 A_cols += [atom_id for (atom_id, _) in col_idx_to_coeff]
                 A_vals += [c for (_, c) in col_idx_to_coeff]
-        return [(A_vals, np.array(A_rows), A_cols, b, self.K, [])]
+        return [(A_vals, np.array(A_rows), A_cols, b, self.K)]
 
     @staticmethod
     def project(item, K):
@@ -136,9 +136,9 @@ class DualProductCone(SetMembership):
                     col_idx_to_coeff = [(a.id, c) for a, c in se.atoms_to_coeffs.items()]
                     A_cols += [atom_id for (atom_id, _) in col_idx_to_coeff]
                     A_vals += [c for (_, c) in col_idx_to_coeff]
-            return [(A_vals, np.array(A_rows), A_cols, b, cur_K, [])]
+            return [(A_vals, np.array(A_rows), A_cols, b, cur_K)]
         else:
-            return [([], np.zeros(shape=(0,), dtype=int), [], np.zeros(shape=(0,)), [], [])]
+            return [([], np.zeros(shape=(0,), dtype=int), [], np.zeros(shape=(0,)), [])]
 
     @staticmethod
     def project(item, K):

@@ -188,6 +188,11 @@ class NonlinearScalarAtom(ScalarAtom):
         # noinspection PyUnresolvedReferences
         return self._evaluator
 
+    @property
+    def epigraph_variable(self):
+        # noinspection PyUnresolvedReferences
+        return self._epigraph_variable
+
     def __hash__(self):
         return hash(self.args + (self.__atom_text__(),))
 
@@ -223,13 +228,12 @@ class NonlinearScalarAtom(ScalarAtom):
 
     def epigraph_conic_form(self):
         """
-        :return: A_vals, A_rows, A_cols, b, K, aux_var, sep_K
+        :return: A_vals, A_rows, A_cols, b, K, _epigraph_variable, sep_K
             A_vals - list (of floats)
             A_rows - numpy 1darray (of integers)
             A_cols - list (of integers)
             b - numpy 1darray (of floats)
             K - list (of coniclifts Cone objects)
-            aux_var - a ScalarVariable object for the epigraph of this ScalarAtom
         """
         raise NotImplementedError()
 

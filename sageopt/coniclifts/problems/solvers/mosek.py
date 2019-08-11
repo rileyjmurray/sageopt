@@ -29,7 +29,7 @@ class Mosek(Solver):
     _CO_TOL_NEAR_REL_ = 1000
 
     @staticmethod
-    def apply(c, A, b, K, sep_K, destructive, compilation_options):
+    def apply(c, A, b, K, destructive, compilation_options):
         # This function is analogous to "apply(...)" in cvxpy's mosek_conif.py.
         #
         # Main obstacle: even after running (A,b,K) through "separate_cone_constraints", the PSD constraints are
@@ -53,17 +53,15 @@ class Mosek(Solver):
             A = A.copy()
             b = b.copy()
             K = copy.deepcopy(K)
-            sep_K = copy.deepcopy(sep_K)
             c = c.copy()
         if 'avoid_slacks' in compilation_options:
             avoid_slacks = compilation_options['avoid_slacks']
         else:
             avoid_slacks = False
-        A, b, K, sep_K1, scale, trans = separate_cone_constraints(A, b, K,
-                                                                  destructive=True,
-                                                                  dont_sep={'0', '+', 'P'},
-                                                                  avoid_slacks=avoid_slacks)
-        sep_K += sep_K1
+        A, b, K, sep_K, scale, trans = separate_cone_constraints(A, b, K,
+                                                                 destructive=True,
+                                                                 dont_sep={'0', '+', 'P'},
+                                                                 avoid_slacks=avoid_slacks)
         # A,b,K now reflect a conic system where "x" has been replaced by "np.diag(scale) @ (x + trans)"
         c = np.hstack([c, np.zeros(shape=(A.shape[1] - len(c)))])
         objective_offset = c @ trans

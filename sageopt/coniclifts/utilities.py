@@ -69,7 +69,7 @@ def remove_select_cols_from_matrix(A, select_zero_cols):
     return A, mapping
 
 
-def sparse_matrix_data_to_csc(data_tuples, num_cols=None):
+def sparse_matrix_data_to_csc(data_tuples, num_cols=None, index_map=None):
     """
     :param data_tuples: a list of quadruplets, each of which contains the data necessary to
     construct a scipy sp matrix.
@@ -93,6 +93,8 @@ def sparse_matrix_data_to_csc(data_tuples, num_cols=None):
         A_vals += A_v
         row_index_offset += num_rows
     A_rows = np.hstack([d[1] for d in data_tuples]).astype(int)
+    if index_map is not None:
+        A_cols = np.array([index_map[ac] for ac in A_cols])
     num_rows = np.max(A_rows) + 1
     if num_cols is None:
         num_cols = np.max(A_cols) + 1

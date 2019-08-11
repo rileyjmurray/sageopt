@@ -86,7 +86,7 @@ class PrimalSageCone(SetMembership):
             A_vals, A_rows, A_cols = [1], np.array([0]), [self.age_vectors[i][i].scalar_variables()[0].id]
             b = np.array([0])
             K = [Cone('+', 1)]
-        return A_vals, A_rows, A_cols, b, K, []
+        return A_vals, A_rows, A_cols, b, K
 
     def _age_lin_eq_cone_data(self, i):
         # TODO: use the precompiled operator
@@ -98,7 +98,7 @@ class PrimalSageCone(SetMembership):
         A_vals = matrix.ravel(order='F').tolist()  # stack columns, then tolist
         b = np.zeros(matrix.shape[0], )
         K = [Cone('0', matrix.shape[0])]
-        return A_vals, A_rows, A_cols, b, K, []
+        return A_vals, A_rows, A_cols, b, K
 
     def _age_violation(self, i, norm_ord, c_i):
         if np.any(self.ech.expcovers[i]):
@@ -126,7 +126,7 @@ class PrimalSageCone(SetMembership):
         main_c_var = self.c[nonconst_locs]
         A_vals, A_rows, A_cols, b = compiled_aff.columns_sum_to_vec(mat=aux_c_vars, vec=main_c_var)
         K = [Cone('0', b.size)]
-        return A_vals, np.array(A_rows), A_cols, b, K, []
+        return A_vals, np.array(A_rows), A_cols, b, K
 
     def variables(self):
         return self._variables
@@ -148,8 +148,8 @@ class PrimalSageCone(SetMembership):
         else:
             con = self.c >= 0
             con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-            cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
+            A_vals, A_rows, A_cols, b, K = con.conic_form()
+            cone_data = [(A_vals, A_rows, A_cols, b, K)]
             return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):
@@ -242,8 +242,8 @@ class DualSageCone(SetMembership):
         nontrivial_I = list(set(self.ech.U_I + self.ech.P_I))
         con = self.v[nontrivial_I] >= 0
         con.epigraph_checked = True
-        A_vals, A_rows, A_cols, b, K, _ = con.conic_form()
-        cone_data = [(A_vals, A_rows, A_cols, b, K, [])]
+        A_vals, A_rows, A_cols, b, K = con.conic_form()
+        cone_data = [(A_vals, A_rows, A_cols, b, K)]
         if self.m > 2:
             for i in self.ech.U_I:
                 num_cover = np.count_nonzero(self.ech.expcovers[i])
@@ -263,7 +263,7 @@ class DualSageCone(SetMembership):
         expr1 = np.tile(self.v[i], len_sel).view(Expression)
         epi = self.relent_epi_vars[i]
         A_vals, A_rows, A_cols, b, K, epi = elementwise_relent(expr1, self.v[selector], epi)
-        cone_data.append((A_vals, A_rows, A_cols, b, K, []))
+        cone_data.append((A_vals, A_rows, A_cols, b, K))
         #
         # Linear inequalities
         #
@@ -273,7 +273,7 @@ class DualSageCone(SetMembership):
         b = np.zeros(num_rows)
         K = [Cone('+', num_rows)]
         A_rows = np.array(A_rows)
-        cone_data.append((A_vals, A_rows, A_cols, b, K, []))
+        cone_data.append((A_vals, A_rows, A_cols, b, K))
         return cone_data
 
     def _dual_age_cone_violation(self, i, norm_ord, rough, v):
