@@ -2,6 +2,7 @@ build/*
 dist/*
 sageopt.egg-info/*
 .idea/*
+docs/*
 
 .DS_STORE
 

@@ -29,10 +29,8 @@ Sageopt has extensive source code documentation, both in the usual function docs
 It has proven a little difficult to get that documentation on this website (at least in a clean, readable way).
 
 The web documentation for ``Signomial`` and ``Polynomial`` objects is in a decent state. Check it out for yourself by
-following the Web Documentation link on the left sidebar.
-
-Web documentation for functions which generate SAGE relaxations themselves has only just begin. The web documentation
-for these functions will be up very soon.
+following the Web Documentation link on the left sidebar. Web documentation for functions which generate SAGE
+relaxations themselves is in-progress.
 
 Sageopt contains a subpackage called ``coniclifts``. This is a backend package that most users will not need to
 interact with, beyond some very basic commands. Those basic commands will have web documentation soon.
@@ -63,7 +61,7 @@ Because the generalization follows so transparently from the original idea of SA
 "SAGE certificates" in reference to the most general idea.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Installation <install>
 

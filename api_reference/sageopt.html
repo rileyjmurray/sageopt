@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>API Documentation &#8212; sageopt 0.3.0 documentation</title>
+    <title>Overview of sageopt’s structure &#8212; sageopt 0.3.4 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -15,7 +15,7 @@
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Signomial and Polynomial objects." href="sageopt.symbolic.html" />
+    <link rel="next" title="Signomial objects" href="sageopt.symbolic_signomials.html" />
     <link rel="prev" title="Optimization Examples" href="../examples/relative_entropy_and_partial_dualization.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -33,8 +33,8 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="api-documentation">
-<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="overview-of-sageopt-s-structure">
+<h1>Overview of sageopt’s structure<a class="headerlink" href="#overview-of-sageopt-s-structure" title="Permalink to this headline">¶</a></h1>
 <dl class="simple">
 <dt>Sageopt version 0.3 is divided into three subpackages:</dt><dd><ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">sageopt.symbolic</span></code>,</p></li>
@@ -43,22 +43,38 @@
 </ol>
 </dd>
 </dl>
-<p>Most users will first want to read documentation for <code class="docutils literal notranslate"><span class="pre">sageopt.symbolic</span></code>, because this tells you how to construct
-and use <code class="docutils literal notranslate"><span class="pre">Signomial</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial</span></code> objects which you need to define your optimization problems.</p>
-<p>Once you know how to instantiate <code class="docutils literal notranslate"><span class="pre">Signomial</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial</span></code> objects, you will want to use the <code class="docutils literal notranslate"><span class="pre">sageopt.relaxations</span></code> subpackage to manage building and solving a SAGE relaxation for your optimization problem.</p>
+<p>Most users will first want to read documentation for <code class="docutils literal notranslate"><span class="pre">sageopt.symbolic</span></code>. This tells you how to construct
+and use <code class="docutils literal notranslate"><span class="pre">Signomial</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial</span></code> objects, which you will need to define optimization problems or
+nonnegativity problems.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sageopt.symbolic_signomials.html">Signomial objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sageopt.symbolic_polynomials.html">Polynomial objects</a></li>
+</ul>
+</div>
+<p>Once you know how to instantiate <code class="docutils literal notranslate"><span class="pre">Signomial</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial</span></code> objects, you will want to use the
+<code class="docutils literal notranslate"><span class="pre">sageopt.relaxations</span></code> subpackage to manage building a SAGE relaxation, solving that SAGE relaxation, and
+working with the solution.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sageopt.sage_signomials.html">SAGE signomials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.sage_signomials.html#optimization">optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.sage_signomials.html#certificates-of-nonnegativity">certificates of nonnegativity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.sage_signomials.html#helper-functions">helper functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sageopt.sage_polynomials.html">SAGE polynomials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.sage_polynomials.html#optimization">optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.sage_polynomials.html#certificates-of-nonnegativity">certificates of nonnegativity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.sage_polynomials.html#helper-functions">helper functions</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <p>If the <code class="docutils literal notranslate"><span class="pre">relaxations</span></code> subpackage does not contain some functionality which you need, then it should be possible to
 implement that functionality using <code class="docutils literal notranslate"><span class="pre">sageopt.coniclifts</span></code> as a basic, high-level modeling interface.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="sageopt.symbolic.html">Symbolic</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sageopt.symbolic.html#signomials">Signomials</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sageopt.symbolic.html#polynomials">Polynomials</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="sageopt.relaxations.html">Relaxations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sageopt.relaxations.html#signomials">Signomials</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="sageopt.coniclifts.html">Coniclifts</a></li>
 </ul>
 </div>
@@ -85,12 +101,7 @@ implement that functionality using <code class="docutils literal notranslate"><s
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples/relative_entropy_and_partial_dualization.html">Optimization Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples/relative_entropy_and_partial_dualization.html#nonnegativity-examples">Nonnegativity Examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Web Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sageopt.symbolic.html">Symbolic</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sageopt.relaxations.html">Relaxations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sageopt.coniclifts.html">Coniclifts</a></li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Web Documentation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
 </ul>
@@ -100,7 +111,7 @@ implement that functionality using <code class="docutils literal notranslate"><s
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
       <li>Previous: <a href="../examples/relative_entropy_and_partial_dualization.html" title="previous chapter">Optimization Examples</a></li>
-      <li>Next: <a href="sageopt.symbolic.html" title="next chapter">Signomial and Polynomial objects.</a></li>
+      <li>Next: <a href="sageopt.symbolic_signomials.html" title="next chapter">Signomial objects</a></li>
   </ul></li>
 </ul>
 </div>
