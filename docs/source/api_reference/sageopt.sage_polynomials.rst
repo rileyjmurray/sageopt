@@ -1,3 +1,5 @@
+.. _workwithsagepolys:
+
 Working with SAGE polynomials.
 ==============================
 

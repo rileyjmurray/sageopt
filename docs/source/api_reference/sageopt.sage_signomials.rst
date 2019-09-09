@@ -1,3 +1,5 @@
+.. _workwithsagesigs:
+
 Working with SAGE signomials.
 =============================
 
