@@ -30,6 +30,7 @@ from sageopt.relaxations import sig_solrec
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations import poly_primal, poly_dual
 from sageopt.relaxations import poly_constrained_primal, poly_constrained_dual
+from sageopt.relaxations import poly_relaxation, poly_constrained_relaxation
 from sageopt.relaxations import poly_solrec
 
 __version__ = '0.3.4'

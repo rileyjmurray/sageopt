@@ -12,6 +12,7 @@ from sageopt.relaxations.sig_solution_recovery import sig_solrec
 
 # import function names with the poly_ prefix.
 from sageopt.relaxations.sage_polys import poly_primal, poly_dual, poly_constrained_primal, poly_constrained_dual
+from sageopt.relaxations.sage_polys import poly_relaxation, poly_constrained_relaxation
 from sageopt.relaxations.poly_solution_recovery import poly_solrec
 
 # import remaining functions for solution recovery

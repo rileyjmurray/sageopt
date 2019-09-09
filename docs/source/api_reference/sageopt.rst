@@ -1,5 +1,5 @@
-API Documentation
-=================
+Overview of sageopt's structure
+===============================
 
 Sageopt version 0.3 is divided into three subpackages:
  1. ``sageopt.symbolic``,
@@ -17,6 +17,7 @@ implement that functionality using ``sageopt.coniclifts`` as a basic, high-level
 .. toctree::
    :maxdepth: 2
 
-   Symbolic <sageopt.symbolic>
-   Relaxations <sageopt.relaxations>
+   Signomial and Polynomial objects <sageopt.symbolic>
+   SAGE signomials <sageopt.sage_signomials>
+   SAGE polynomials <sageopt.sage_polynomials>
    Coniclifts <sageopt.coniclifts>

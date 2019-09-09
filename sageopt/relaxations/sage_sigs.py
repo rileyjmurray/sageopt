@@ -46,7 +46,7 @@ def sig_relaxation(f, form='dual', ell=0, X=None, mod_supp=None):
 
         \min\{ f(x) \,:\, x \\in X \}
 
-    where X=R^(f.n) by default.
+    where X = :math:`R^{\\texttt{f.n}}` by default.
 
     If ``form='dual'``, we can also attempt to recover solutions to the above problem.
 
@@ -59,7 +59,7 @@ def sig_relaxation(f, form='dual', ell=0, X=None, mod_supp=None):
     ell : int
         The level of the SAGE hierarchy. Must be nonnegative.
     X : dict
-        If ``X`` is None, then we produce a bound on ``f`` over R^n.
+        If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
         If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
         applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
     mod_supp : NumPy ndarray
@@ -107,7 +107,7 @@ def sig_dual(f, ell=0, X=None, modulator_support=None):
     ell : int
         The level of the SAGE hierarchy. Must be nonnegative.
     X : dict
-        If ``X`` is None, then we produce a bound on ``f`` over R^n.
+        If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
         If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
         applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
     modulator_support : NumPy ndarray
@@ -161,7 +161,7 @@ def sig_primal(f, ell=0, X=None, additional_cons=None, modulator_support=None):
     ell : int
         The level of the SAGE hierarchy. Must be nonnegative.
     X : dict
-        If ``X`` is None, then we produce a bound on ``f`` over R^n.
+        If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
         If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
         applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
     modulator_support : NumPy ndarray
@@ -221,7 +221,7 @@ def sage_feasibility(f, X=None, additional_cons=None):
     f : Signomial
         We want to test if this function admits an X-SAGE decomposition.
     X : dict
-        If ``X`` is None, then we test nonnegativity of ``f`` over R^n.
+        If ``X`` is None, then we test nonnegativity of ``f`` over :math:`R^{\\texttt{f.n}}`.
         If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
         applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
     additional_cons : :obj:`list` of :obj:`sageopt.coniclifts.Constraint`
@@ -258,7 +258,7 @@ def sage_multiplier_search(f, level=1, X=None):
     level : int
         Controls the complexity of the X-SAGE modulating function. Must be a positive integer.
     X : dict
-        If ``X`` is None, then we test nonnegativity of ``f`` over R^n.
+        If ``X`` is None, then we test nonnegativity of ``f`` over :math:`R^{\\texttt{f.n}}`.
         If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
         applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
 
@@ -309,7 +309,7 @@ def sig_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None
                        & \\text{and } x \\in X \}
         \\end{align*}
 
-    where X = R^(f.n) by default. The optimal value of this relaxation will produce
+    where X = :math:`R^{\\texttt{f.n}}` by default. The optimal value of this relaxation will produce
     a lower bound on the minimization problem described above. When ``form='dual'``,
     a solution to this relaxation can be used to help recover optimal solutions to
     the problem described above.
@@ -369,7 +369,7 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
                     g(x) == 0 for g in eqs,
                     and x in X }
 
-    where X = R^(f.n) by default.
+    where X = :math:`R^{\\texttt{f.n}}` by default.
 
     Parameters
     ----------
@@ -400,7 +400,7 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     if X is None:
         X = {'AbK': None, 'gts': [], 'eqs': []}
-    lagrangian, ineq_lag_mults, _, gamma = make_lagrangian(f, gts, eqs, p=p, q=q)
+    lagrangian, ineq_lag_mults, _, gamma = make_sig_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'X': X}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
@@ -432,7 +432,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
                     g(x) == 0 for g in eqs,
                     and x in X }
 
-    where X = R^(f.n) by default.
+    where X = :math:`R^{\\texttt{f.n}}` by default.
 
     Parameters
     ----------
@@ -464,7 +464,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     if X is None:
         X = {'AbK': None, 'gts': [], 'eqs': []}
-    lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_lagrangian(f, gts, eqs, p=p, q=q)
+    lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_sig_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'level': (p, q, ell), 'X': X}
     if ell > 0:
         alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
@@ -509,7 +509,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     return prob
 
 
-def make_lagrangian(f, gts, eqs, p, q):
+def make_sig_lagrangian(f, gts, eqs, p, q):
     """
     Given a problem
 
@@ -538,7 +538,7 @@ def make_lagrangian(f, gts, eqs, p, q):
         The objective in a desired minimization problem.
     gts : list of Signomials
         For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
-    eqs : list of Signomial
+    eqs : list of Signomials
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
     p : int
         Controls the complexity of ``s_g`` and ``z_g``.
