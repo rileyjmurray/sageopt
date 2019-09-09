@@ -1,5 +1,5 @@
 from sageopt import standard_sig_monomials, local_refine_polys_from_sigs
-from sageopt import sig_constrained_dual, sig_solrec
+from sageopt import sig_constrained_relaxation, sig_solrec
 
 x = standard_sig_monomials(6)
 f = x[0]**6 - x[1]**6 + x[2]**6 - x[3]**6 + x[4]**6 - x[5]**6 + x[0] - x[1]
@@ -23,7 +23,7 @@ gts = [
 ]
 eqs = []
 
-dual = sig_constrained_dual(f, gts, eqs, 1, 1, 0)
+dual = sig_constrained_relaxation(f, gts, eqs, 'D', 1, 1, 0)
 dual.solve(verbose=False, solver='MOSEK')  # ECOS fails
 solns = sig_solrec(dual)
 x0 = solns[0]

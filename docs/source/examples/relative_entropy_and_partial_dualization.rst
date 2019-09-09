@@ -26,7 +26,7 @@ We want to solve a constraint signomial program in three variables.
 It's often easier to specify a signomial program by defining symbols ``y``,
 which are related to variables ``x`` by ``y = exp(x)``. ::
 
-    from sageopt import conditional_sage_data, sig_dual
+    from sageopt import conditional_sage_data, sig_relaxation
     from sageopt import standard_sig_monomials, sig_solrec
     n = 3
     y = standard_sig_monomials(n)
@@ -41,10 +41,10 @@ which are related to variables ``x`` by ``y = exp(x)``. ::
     eqs = []
     X = conditional_sage_data(f, gts, eqs)
 
-We will use ``sig_dual`` for this problem. The dual formulation is used because we want to recover a solution,
+We will use the dual formulation for this problem. The dual formulation is used because we want to recover a solution,
 rather than just produce a bound on the optimization problem. We begin by solving a level ``ell=0`` relaxation. ::
 
-    dual = sig_dual(f, ell=0, X=X)
+    dual = sig_relaxation(f, form='dual', ell=0, X=X)
     dual.solve(verbose=False)
     solutions = sig_solrec(dual)
     best_soln = solutions[0]
@@ -65,7 +65,7 @@ We can certify that the solution is actually much closer to optimality than the 
 easily construct and solve a level ``ell=3`` SAGE relaxation to produce a stronger lower bound on this minimization
 problem. ::
 
-    dual = sig_dual(f, ell=3, X=X)
+    dual = sig_relaxation(f, form='dual', ell=3, X=X)
     dual.solve(verbose=False)
     print('The level 3 SAGE bound is ... ')
     print('\t' + str(dual.value))  # about  -147.6666
@@ -110,8 +110,8 @@ First we show the case with the equality constraint. ::
    gts = main_gts + bounds
    eqs = [70.7107 / A[0] + P / A[0] - P / A[2]]
    X = conditional_sage_data(f, bounds, [])
-   prim = sig_constrained_primal(f, main_gts, eqs, 0, 1, 0, X)
-   dual = sig_constrained_dual(f, main_gts, eqs, 0, 1, 0, X)
+   prim = sig_constrained_relaxation(f, main_gts, eqs, 'primal', 0, 1, 0, X)
+   dual = sig_constrained_relaxation(f, main_gts, eqs, 'dual', 0, 1, 0, X)
    prim.solve(verbose=False)
    dual.solve(verbose=False)
    print('\n')
@@ -137,7 +137,7 @@ to recover optimal solutions, we reformulate the problem after substituting :mat
    ]
    gts = main_gts + bounds
    X = conditional_sage_data(f, gts, [])
-   dual = sig_constrained_dual(f, main_gts, [], 0, 1, 0, X)
+   dual = sig_constrained_relaxation(f, main_gts, [], 'dual', 0, 1, 0, X)
    dual.solve()
    print('\n')
    print(dual.value)
@@ -158,7 +158,7 @@ over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
 
 
    from sageopt import standard_poly_monomials, conditional_sage_data
-   from sageopt import poly_solrec, poly_constrained_dual
+   from sageopt import poly_solrec, poly_constrained_relaxation
    import numpy as np
 
    n = 7
@@ -170,7 +170,7 @@ over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
        f -= 64 * np.prod(x[sel])
    gts = [0.25 - x[i]**2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
    X = conditional_sage_data(f, gts, [])
-   dual = poly_constrained_dual(f, gts=[], eqs=[], X=X)
+   dual = poly_constrained_relaxation(f, gts=[], eqs=[], form='dual', X=X)
    dual.solve(verbose=False, solver='MOSEK')
    print()
    solns = poly_solrec(dual)
@@ -201,7 +201,7 @@ We want to solve a degree six polynomial optimization problem in six variables.
 The ``sageopt`` approach to this problem is to write it first as a signomial program, and then perform solution recovery with consideration to the underlying polynomial structure. The solution recovery starts with ``sig_solrec`` as normal, but then we refine the solution with a special function ``local_refine_polys_from_sigs``. ::
 
    from sageopt import standard_sig_monomials, local_refine_polys_from_sigs
-   from sageopt import sig_constrained_dual, sig_solrec
+   from sageopt import sig_constrained_relaxation, sig_solrec
 
    x = standard_sig_monomials(6)
    f = x[0]**6 - x[1]**6 + x[2]**6 - x[3]**6 + x[4]**6 - x[5]**6 + x[0] - x[1]
@@ -216,7 +216,7 @@ The ``sageopt`` approach to this problem is to write it first as a signomial pro
    gts = [expr3, expr4, expr5, 1 - expr1, 1 - expr2, 1 - expr3, 1 - expr4, 1 - expr5]
    eqs = []
 
-   dual = sig_constrained_dual(f, gts, eqs, 1, 1, 0)
+   dual = sig_constrained_relaxation(f, gts, eqs, 'dual', 1, 1, 0)
    dual.solve(verbose=False, solver='MOSEK')  # ECOS fails
    x0 = sig_solrec(dual)[0]
    x_star = local_refine_polys_from_sigs(f, gts, eqs, x0)
@@ -253,7 +253,7 @@ Consider the following optimization problem:
 
 We can produce a bound on this minimum with a primal SAGE relaxation. ::
 
-   from sageopt import conditional_sage_data, sig_primal
+   from sageopt import conditional_sage_data, sig_relaxation
    from sageopt import standard_sig_monomials, Signomial
    y = standard_sig_monomials(3)
    f = 0.5 * y[0] * y[1] ** -1 - y[0] - 5 * y[1] ** -1
@@ -261,7 +261,7 @@ We can produce a bound on this minimum with a primal SAGE relaxation. ::
           y[0] - 70, y[1] - 1, y[2] - 0.5,
           150 - y[0], 30 - y[1], 21 - y[2]]
    X = conditional_sage_data(f, gts, [])
-   prim = sig_primal(f, ell=0, X=X)
+   prim = sig_relaxation(f, form='primal', ell=0, X=X)
    prim.solve(solver='ECOS')
    print(prim.value)  # about -147.857
 

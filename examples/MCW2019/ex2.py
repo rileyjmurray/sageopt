@@ -1,5 +1,5 @@
 from sageopt import standard_sig_monomials, sig_solrec
-from sageopt import conditional_sage_data, sig_constrained_dual, sig_constrained_primal
+from sageopt import conditional_sage_data, sig_constrained_relaxation
 
 # Problem data
 n = 3
@@ -20,8 +20,8 @@ gts = main_gts + bounds
 
 # setup SAGE relaxations
 X = conditional_sage_data(f, gts, [])
-prim = sig_constrained_primal(f, main_gts, [], 0, 1, 0, X)
-dual = sig_constrained_dual(f, main_gts, [], 0, 1, 0, X)
+prim = sig_constrained_relaxation(f, main_gts, [], 'P', 0, 1, 0, X)
+dual = sig_constrained_relaxation(f, main_gts, [], 'D', 0, 1, 0, X)
 
 # Solve SAGE relaxations, and print the resulting objective values.
 prim.solve(verbose=False)
@@ -55,8 +55,8 @@ bounds = [
 gts = main_gts + bounds
 eqs = [70.7107 / A[0] + P / A[0] - P / A[2]]
 X = conditional_sage_data(f, bounds, [])
-prim = sig_constrained_primal(f, main_gts, eqs, 0, 1, 0, X)
-dual = sig_constrained_dual(f, main_gts, eqs, 0, 1, 0, X)
+prim = sig_constrained_relaxation(f, main_gts, eqs, 'P', 0, 1, 0, X)
+dual = sig_constrained_relaxation(f, main_gts, eqs, 'D', 0, 1, 0, X)
 # Solve SAGE relaxations, and print the resulting objective values.
 prim.solve(verbose=False)
 dual.solve(verbose=False)
