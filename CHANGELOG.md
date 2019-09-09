@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# [Unreleased]
+# [0.3.4] - 2019-09-09
 ## Added
  - sig_relaxation and sig_constrained_relaxation. These are wrappers around sig_primal/sig_dual
  and sig_constrained_primal/sig_constrained_dual. I introduced these because now users can specify the
  form as a keyword argument. This keeps the number of user-facing functions lower, and
  the docstrings for these functions can be heavy on LaTeX for rendering in web documentation.
+ - Variants of the above for polynomial problems.
 ## Changed
  - Major changes to how coniclifts handles the compilation process. Refer to commit 7cb07866e55c6618ce17d090d52281512ea2351f.
 
