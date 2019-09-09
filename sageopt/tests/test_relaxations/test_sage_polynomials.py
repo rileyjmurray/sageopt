@@ -22,17 +22,17 @@ from sageopt import coniclifts as cl
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
-    prim = sage_polys.poly_primal(p, poly_ell, sigrep_ell, X)
+    prim = sage_polys.poly_relaxation(p, 'primal', poly_ell, sigrep_ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage_polys.poly_dual(p, poly_ell, sigrep_ell, X)
+    dual = sage_polys.poly_relaxation(p, 'dual', poly_ell, sigrep_ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
 
 def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
-    prim = sage_polys.poly_constrained_primal(f, gt, eq, p, q, ell, X)
+    prim = sage_polys.poly_constrained_relaxation(f, gt, eq, 'primal', p, q, ell, X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage_polys.poly_constrained_dual(f, gt, eq, p, q, ell, X)
+    dual = sage_polys.poly_constrained_relaxation(f, gt, eq, 'dual', p, q, ell, X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]], dual
 

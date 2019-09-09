@@ -22,11 +22,11 @@ from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 
 def primal_dual_vals(f, ell):
     # primal
-    prob = sage_sigs.sig_primal(f, ell=ell)
+    prob = sage_sigs.sig_relaxation(f, form='primal', ell=ell)
     status, value = prob.solve(solver='ECOS', verbose=False)
     prim = value
     # dual
-    prob = sage_sigs.sig_dual(f, ell=ell)
+    prob = sage_sigs.sig_relaxation(f, form='dual', ell=ell)
     status, value = prob.solve(solver='ECOS', verbose=False)
     dual = value
     return [prim, dual], prob
@@ -34,11 +34,13 @@ def primal_dual_vals(f, ell):
 
 def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='ECOS'):
     # primal
-    prob = sage_sigs.sig_constrained_primal(f, gts, eqs, p, q, ell, AbK)
+    prob = sage_sigs.sig_constrained_relaxation(f, gts, eqs,
+                                                form='primal', p=p, q=q, ell=ell, X=AbK)
     status, value = prob.solve(solver=solver, verbose=False)
     prim = value
     # dual
-    prob = sage_sigs.sig_constrained_dual(f, gts, eqs, p, q, ell, AbK)
+    prob = sage_sigs.sig_constrained_relaxation(f, gts, eqs,
+                                                form='dual', p=p, q=q, ell=ell, X=AbK)
     status, value = prob.solve(solver=solver, verbose=False)
     dual = value
     return [prim, dual], prob
@@ -155,7 +157,7 @@ class TestSAGERelaxations(unittest.TestCase):
         for ell in range(3):
             assert abs(pds[ell][0] == expected[ell]) < 1e-5
             assert abs(pds[ell][1] == expected[ell]) < 1e-5
-        dual = sage_sigs.sig_dual(s, ell=3)
+        dual = sage_sigs.sig_relaxation(s, form='dual', ell=3)
         dual.solve(solver='ECOS', verbose=False)
         optsols = sig_sols.sig_solrec(dual)
         assert s(optsols[0]) < 1e-6 + dual.value
@@ -231,7 +233,7 @@ class TestSAGERelaxations(unittest.TestCase):
         res0 = prob0.solve(solver='ECOS', verbose=False)
         val0 = res0[1]
         assert val0 == -np.inf
-        prob1 = sage_sigs.sig_primal(s, ell=1)
+        prob1 = sage_sigs.sig_relaxation(s, form='primal', ell=1)
         res1 = prob1.solve(solver='ECOS', verbose=False)
         s_bound = res1[1]
         assert -np.inf < s_bound < 0
