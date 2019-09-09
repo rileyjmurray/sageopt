@@ -7,6 +7,7 @@ from sageopt.symbolic.polynomials import Polynomial
 
 # import function names with the sig_ prefix.
 from sageopt.relaxations.sage_sigs import sig_primal, sig_dual, sig_constrained_primal, sig_constrained_dual
+from sageopt.relaxations.sage_sigs import sig_relaxation, sig_constrained_relaxation
 from sageopt.relaxations.sig_solution_recovery import sig_solrec
 
 # import function names with the poly_ prefix.

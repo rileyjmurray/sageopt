@@ -24,6 +24,7 @@ from sageopt.relaxations import sage_feasibility, sage_multiplier_search
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 from sageopt.relaxations import sig_primal, sig_dual
 from sageopt.relaxations import sig_constrained_primal, sig_constrained_dual
+from sageopt.relaxations import sig_relaxation, sig_constrained_relaxation
 from sageopt.relaxations import sig_solrec
 
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials

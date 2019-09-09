@@ -1,23 +1,27 @@
-Construct and solve SAGE relaxations.
-=====================================
+Constructing SAGE relaxations.
+==============================
+
+.. role:: raw-math(raw)
+    :format: latex html
 
 This page is under construction!
 
-Signomials
-----------
+Signomial optimization
+----------------------
 
-.. automethod:: sageopt.relaxations.sage_sigs.conditional_sage_data
+.. autofunction:: sageopt.sig_relaxation
 
-.. automethod:: sageopt.relaxations.sig_primal
+.. autofunction:: sageopt.sig_constrained_relaxation
 
-.. automethod:: sageopt.relaxations.sig_dual
+.. autofunction:: sageopt.relaxations.sage_sigs.conditional_sage_data
 
-.. automethod:: sageopt.relaxations.sig_constrained_primal
+.. autofunction:: sageopt.relaxations.sage_sigs.make_lagrangian
 
-.. automethod:: sageopt.relaxations.sig_constrained_dual
 
-.. automethod:: sageopt.relaxations.sage_sigs.sage_feasibility
+Signomial nonnegativity
+-----------------------
 
-.. automethod:: sageopt.relaxations.sage_sigs.sage_multiplier_search
+.. autofunction:: sageopt.relaxations.sage_sigs.sage_feasibility
 
-.. automethod:: sageopt.relaxations.sage_sigs.make_lagrangian
+.. autofunction:: sageopt.relaxations.sage_sigs.sage_multiplier_search
+

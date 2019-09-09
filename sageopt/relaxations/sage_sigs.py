@@ -38,6 +38,63 @@ def relative_dual_sage_cone(primal_sig, dual_var, name, AbK):
     return con
 
 
+def sig_relaxation(f, form='dual', ell=0, X=None, mod_supp=None):
+    """
+    Construct a coniclifts Problem instance for producing a lower bound on
+
+    .. math::
+
+        \min\{ f(x) \,:\, x \\in X \}
+
+    where X=R^(f.n) by default.
+
+    If ``form='dual'``, we can also attempt to recover solutions to the above problem.
+
+    Parameters
+    ----------
+    f : Signomial
+        The objective function to be minimized.
+    form : str
+        Either ``form='primal'`` or ``form='dual'``.
+    ell : int
+        The level of the SAGE hierarchy. Must be nonnegative.
+    X : dict
+        If ``X`` is None, then we produce a bound on ``f`` over R^n.
+        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
+        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
+    mod_supp : NumPy ndarray
+        This parameter is only used when ``ell > 0``. If ``mod_supp`` is not None, then the rows of this
+        array define the exponents of a positive definite modulating Signomial in the SAGE hierarchy.
+
+    Returns
+    -------
+    prob : sageopt.coniclifts.Problem
+        A coniclifts Problem which represents the SAGE relaxation, with given parameters.
+        The relaxation can be solved by calling ``prob.solve()``.
+
+    Notes
+    -----
+    When ``form='primal'``, the Problem can be stated in full generality without too much trouble.
+    We define a multiplier signomial ``t`` (with the canonical choice ``t = Signomial(f.alpha, np.ones(f.m))``),
+    then return problem data representing ::
+
+        max  gamma
+        s.t.    f_mod.c in C_{SAGE}(f_mod.alpha, X)
+        where   f_mod := (t ** ell) * (f - gamma).
+
+    Our implementation of Signomial objects allows Variables in the coefficient vector ``c``. As a result, the
+    map from ``gamma`` to ``f_mod.c`` is an affine function that takes in a Variable and returns an Expression.
+    This makes it very simple to represent ``f_mod.c in C_{SAGE}(f_mod.alpha, X)`` via coniclifts Constraints.
+    """
+    if form.lower()[0] == 'd':
+        prob = sig_dual(f, ell, X, mod_supp)
+    elif form.lower()[0] == 'p':
+        prob = sig_primal(f, ell, X, None, mod_supp)
+    else:
+        raise RuntimeError('Unrecognized form: ' + form + '.')
+    return prob
+
+
 def sig_dual(f, ell=0, X=None, modulator_support=None):
     """
     Construct a coniclifts Problem instance for producing a lower bound for ``f`` over the set defined by ``X``,
@@ -218,7 +275,7 @@ def sage_multiplier_search(f, level=1, X=None):
         ``mult = Signomial(alpha_hat, c_tilde)``
 
     where the rows of ``alpha_hat`` are all ``level``-wise sums of rows from ``f.alpha``, and ``c_tilde``
-    is a coniclifts Variable defining a nonzero X-SAGE function. Then we check if ``f_mod := f * mult``
+    is a coniclifts Variable defining a nonzero X-SAGE function. Then we check if ``f_mod = f * mult``
     is X-SAGE for any choice of ``c_tilde``.
     """
     if X is None:
@@ -239,30 +296,107 @@ def sage_multiplier_search(f, level=1, X=None):
     return prob
 
 
+def sig_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None):
+    """
+    Construct a coniclifts Problem instance representing a level-``(p, q, ell)`` SAGE relaxation
+    for the signomial program
+
+    .. math::
+
+        \\begin{align*}
+          \min\{ f(x) :~& g(x) \geq 0 \\text{ for } g \\in \\text{gts}, \\\\
+                       & g(x) = 0  \\text{ for } g \\in \\text{eqs}, \\\\
+                       & \\text{and } x \\in X \}
+        \\end{align*}
+
+    where X = R^(f.n) by default. The optimal value of this relaxation will produce
+    a lower bound on the minimization problem described above. When ``form='dual'``,
+    a solution to this relaxation can be used to help recover optimal solutions to
+    the problem described above.
+
+    Parameters
+    ----------
+    f : Signomial
+        The objective function to be minimized.
+    gts : list of Signomials
+        For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
+    eqs : list of Signomials
+        For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    form : str
+        Either ``form='primal'`` or ``form='dual'``.
+    p : int
+        Controls the complexity of Lagrange multipliers in the primal formulation, and (equivalently) constraints in
+        the dual formulation. The smallest value is ``p=0``, which corresponds to scalar Lagrange multipliers.
+    q : int
+        The number of folds applied to the constraints ``gts`` and ``eqs``. The smallest value is ``q=1``, which
+        means "leave ``gts`` and ``eqs`` as-is."
+    ell : int
+        Controls the complexity of any modulator applied to the Lagrangian in the primal formulation, and
+        (equivalently) constraints in the dual formulation. The smallest value is ``ell=0``, which means
+        the primal Lagrangian must be a SAGE signomial.
+    X : dict
+        If ``X`` is None, then this parameter is ignored.
+        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
+        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
+
+    Returns
+    -------
+    prob : sageopt.coniclifts.Problem
+
+    Notes
+    -----
+    The exact meaning of parameters ``p`` and ``q`` is determined by the function ``make_lagrangian(...).``.
+
+    The meaning of the parameter ``ell`` is most clear from the implementation of ``sig_constrained_primal(...)``,
+    although both ``sig_constrained_primal`` and ``sig_constrained_dual`` contain logic for handling this parameter.
+
+    """
+    if form.lower()[0] == 'd':
+        prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X)
+    elif form.lower()[0] == 'p':
+        prob = sig_constrained_primal(f, gts, eqs, p, q, ell, X)
+    else:
+        raise RuntimeError('Unrecognized form: ' + form + '.')
+    return prob
+    pass
+
+
 def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the SAGE-(p, q, ell) primal problem for the signomial program
 
-        inf{ f(x) : g(x) >= 0 for g in gts,
+        min{ f(x) : g(x) >= 0 for g in gts,
                     g(x) == 0 for g in eqs,
                     and x in X }
 
     where X = R^(f.n) by default.
 
-    :param f: a Signomial.
-    :param gts: a list of Signomials.
-    :param eqs: a list of Signomials.
-    :param p: a nonnegative integer.
-        Controls the complexity of Lagrange multipliers. p=0 corresponds to scalars.
-    :param q: a positive integer.
-        The number of folds applied to the constraints "gts" and "eqs". p=1 means "leave gts and eqs as-is."
-    :param ell: a nonnegative integer.
-        Controls the complexity of any modulator applied to the Lagrangian. ell=0 means that
-        the Lagrangian must be SAGE. ell=1 means "tilde_L := modulator * Lagrangian" must be SAGE.
-    :param X: None, or a dictionary with three keys 'AbK', 'gts', 'eqs' such as that generated by
-     the function "conditional_sage_data(...)".
+    Parameters
+    ----------
+    f : Signomial
+        The objective function to be minimized.
+    gts : list of Signomials
+        For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
+    eqs : list of Signomials
+        For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    p : int
+        Controls the complexity of Lagrange multipliers. Smallest value is ``p=0``, which corresponds to scalars.
+    q : int
+        The number of folds applied to the constraints ``gts`` and ``eqs``. Smallest value is ``q=1``, which means
+        "leave ``gts`` and ``eqs`` as-is."
+    ell : int
+        Controls the complexity of any modulator applied to the Lagrangian.
+        The smallest value is ``ell=0``, which means that the Lagrangian must be SAGE.
+        ``ell=1`` means ``tilde_L = modulator * Lagrangian`` must be SAGE.
+    X : dict
+        If ``X`` is None, then this parameter is ignored.
+        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
+        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
 
-    :return: The primal form SAGE-(p, q, ell) relaxation for the given signomial program.
+    Returns
+    -------
+    prob : sageopt.coniclifts.Problem
+
     """
     if X is None:
         X = {'AbK': None, 'gts': [], 'eqs': []}
@@ -294,27 +428,39 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     """
     Construct the SAGE-(p, q, ell) dual problem for the signomial program
 
-        inf{ f(x) : g(x) >= 0 for g in gts,
+        min{ f(x) : g(x) >= 0 for g in gts,
                     g(x) == 0 for g in eqs,
                     and x in X }
 
     where X = R^(f.n) by default.
 
-    :param f: a Signomial.
-    :param gts: a list of Signomials.
-    :param eqs: a list of Signomials.
-    :param p: a nonnegative integer.
-        Controls the complexity of Lagrange multipliers in the primal problem (p=0 corresponds to scalars),
-        and in turn the complexity of constraints in this dual problem (p=0 corresponds to linear inequalities).
-    :param q: a positive integer.
-        The number of folds applied to the constraints "gts" and "eqs". p=1 means "leave gts and eqs as-is."
-    :param ell: a nonnegative integer.
+    Parameters
+    ----------
+    f : Signomial
+        The objective function to be minimized.
+    gts : list of Signomials
+        For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
+    eqs : list of Signomials
+        For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    p : int
+        Controls the complexity of Lagrange multipliers in the primal problem, and in an turn the complexity of
+        constraints in this dual problem. The smallest value is ``p=0``, which corresponds to scalar Lagrange
+        multipliers in the primal problem, and linear inequality constraints in this dual problem.
+    q : int
+        The number of folds applied to the constraints ``gts`` and ``eqs``. Smallest value is ``q=1``, which means
+        "leave ``gts`` and ``eqs`` as-is."
+    ell : int
         Controls the complexity of any modulator applied to the Lagrangian in the primal problem.
-        ell=0 means that the Lagrangian is unchanged / not modulated.
-    :param X: None, or a dictionary with three keys 'AbK', 'gts', 'eqs' such as that generated by
-     the function "conditional_sage_data(...)".
+        The smallest value is ``ell=0``, which means the primal Lagrangian is unchanged / not modulated.
+    X : dict
+        If ``X`` is None, then this parameter is ignored.
+        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
+        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
 
-    :return: The dual form SAGE-(p, q, ell) relaxation for the given signomial program.
+    Returns
+    -------
+    prob : sageopt.coniclifts.Problem
+
     """
     if X is None:
         X = {'AbK': None, 'gts': [], 'eqs': []}
@@ -367,24 +513,37 @@ def make_lagrangian(f, gts, eqs, p, q):
     """
     Given a problem
 
-        inf_{x in X}{ f(x) : g(x) >= 0 for g in gts, g(x) == 0 for g in eqs },
+    .. math::
 
-    construct the q-fold constraints "folded_gts" and "folded_eqs," and the Lagrangian
+        \\begin{align*}
+          \min\{ f(x) :~& g(x) \geq 0 \\text{ for } g \\in \\text{gts}, \\\\
+                       & g(x) = 0  \\text{ for } g \\in \\text{eqs}, \\\\
+                       & \\text{and } x \\in X \}
+        \\end{align*}
 
-        L = f - gamma - sum_{g in folded_gts} s_g * g - sum_{g in folded_eqs} z_g * g
+    construct the q-fold constraints ``q-gts`` and ``q-eqs,`` and the Lagrangian
 
-    where gamma and the coefficients on Signomials s_g / z_g are coniclifts Variables.
+    .. math::
 
-    The values returned by this function are used to construct constrained SAGE relaxations.
-    The basic primal SAGE relaxation is obtained by maximizing gamma, subject to the constraint
-    that L and each s_g are SAGE functions. The dual SAGE relaxation is obtained by symbolically
-    applying conic duality to the primal.
+        L = f - \\gamma
+            - \sum_{g \, \\in  \, \\text{q-gts}} s_g \cdot g
+            - \sum_{g \, \\in  \, \\text{q-eqs}} z_g \cdot g
 
-    :param f: a Signomial.
-    :param gts: a list of Signomials.
-    :param eqs: a list of Signomials.
-    :param p: a nonnegative integer. Controls the complexity of s_g and z_g.
-    :param q: a positive integer. The number of folds of constraints "gts" and "eqs".
+    where :math:`\\gamma` and the coefficients on Signomials :math:`s_g` and :math:`z_g`
+    are coniclifts Variables.
+
+    Parameters
+    ----------
+    f : Signomial
+        The objective in a desired minimization problem.
+    gts : list of Signomials
+        For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
+    eqs : list of Signomial
+        For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    p : int
+        Controls the complexity of ``s_g`` and ``z_g``.
+    q : int
+        The number of folds of constraints ``gts`` and ``eqs``.
 
     Returns
     -------
@@ -401,8 +560,16 @@ def make_lagrangian(f, gts, eqs, p, q):
 
     gamma : coniclifts.Variable.
         In primal-form SAGE relaxations, we want to maximize ``gamma``. In dual form SAGE relaxations,
-        ``gamma`` induces a normalizing equality constraint. This return value is not explicitly accessed
-        for dual-form SAGE relaxations.
+        ``gamma`` induces a normalizing equality constraint. This return value is not accessed for
+        dual-form SAGE relaxations.
+
+
+    Notes
+    -----
+    The values returned by this function are used to construct constrained SAGE relaxations.
+    The basic primal SAGE relaxation is obtained by maximizing gamma, subject to the constraint
+    that ``L`` and each ``s_g`` are SAGE functions. The dual SAGE relaxation is obtained by
+    symbolically applying conic duality to the primal.
     """
     folded_gt = con_gen.up_to_q_fold_cons(gts, q)
     gamma = cl.Variable(name='gamma')
@@ -426,6 +593,9 @@ def make_lagrangian(f, gts, eqs, p, q):
 
 def conditional_sage_data(f, gts, eqs):
     """
+    Identify a subset of the constraints in ``gts`` and ``eqs`` which can be incorporated into
+    conditional SAGE relaxations. Generate conic data that relaxation-constructors will need
+    in downstream applications.
 
     Parameters
     ----------
@@ -444,18 +614,15 @@ def conditional_sage_data(f, gts, eqs):
         ``X`` is keyed by three strings: ``'AbK'``, ``'gts'``, and ``'eqs'``.
 
         ``X['gts']`` is a list of Signomials so that every ``g in X['gts']`` has an efficient
-        convex representation of {x : g(x) >= 0}. The intersection of all of these sets
-        is contained within {x : g(x) >= 0 for all g in gts}. ``X['eqs']`` is defined
+        convex representation of ``{x : g(x) >= 0}``. The intersection of all of these sets
+        is contained within ``{x : g(x) >= 0 for all g in gts}``. ``X['eqs']`` is defined
         similarly, but for equality constraints instead of inequality constraints.
-
-        If there are no constraints defined by ``X['gts']`` and ``X['eqs']``, then ``X['AbK']`` is None.
-
-        Otherwise, ``X['AbK']`` is a conic representation of the feasible set cut out by
+        ``X['AbK']`` is a conic representation of the feasible set cut out by
         ``X['gts']`` and ``X['eqs']``. The conic representation is a triple ``X['AbK'] = (A, b, K)``,
         where ``A`` is a SciPy sparse matrix, ``b`` is a numpy 1d array, and ``K`` is a list of
         coniclifts Cone objects. The number of columns for ``A`` in ``X['AbK']`` will always
         be at least ``f.n``. If the number of columns is greater than ``f.n``, then the first ``f.n``
-        columns of ``A`` correspond (in order!) to the variables over which ``f`` is defined. Any
+        columns of ``A`` correspond to the variables over which ``f`` is defined. Any
         remaining columns are auxiliary variables needed to represent ``X`` in coniclifts primitives.
 
     Notes

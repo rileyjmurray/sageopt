@@ -32,7 +32,8 @@ release = '0.3.3'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    # 'sphinx.ext.imgmath'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
