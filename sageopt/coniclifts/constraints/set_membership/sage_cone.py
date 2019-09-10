@@ -20,10 +20,13 @@ from sageopt.coniclifts.operators import affine as aff
 from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementwise_relent
 from sageopt.coniclifts.operators.precompiled import affine as compiled_aff
 from sageopt.coniclifts.problems.problem import Problem
-from sageopt.coniclifts.standards.constants import maximize as CL_MAX, solved as CL_SOLVED
+from sageopt.coniclifts.standards.constants import maximize as CL_MAX, solved as CL_SOLVED, minimize as CL_MIN
 import numpy as np
 import scipy.special as special_functions
 import warnings
+
+
+_EXPENSIVE_REDUCTION_ = True
 
 
 class PrimalSageCone(SetMembership):
@@ -185,8 +188,6 @@ class PrimalSageCone(SetMembership):
         con = PrimalSageCone(item, self.alpha, name='check_mem')
         prob = Problem(CL_MAX, Expression([0]), [con])
         status, value = prob.solve(verbose=False)
-        from sageopt.coniclifts import clear_variable_indices
-        clear_variable_indices()
         if status == CL_SOLVED:
             return abs(value) < 1e-7
         else:
@@ -277,7 +278,6 @@ class DualSageCone(SetMembership):
         return cone_data
 
     def _dual_age_cone_violation(self, i, norm_ord, rough, v):
-        from sageopt.coniclifts import clear_variable_indices
         selector = self.ech.expcovers[i]
         len_sel = np.count_nonzero(selector)
         if len_sel > 0:
@@ -295,7 +295,6 @@ class DualSageCone(SetMembership):
                 temp_var = Variable(shape=(mat.shape[1],), name='temp_var')
                 prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
                 status, value = prob.solve(verbose=False)
-                clear_variable_indices()
                 if status == CL_SOLVED and abs(value) < 1e-7:
                     curr_viol = 0
             return curr_viol
@@ -316,7 +315,6 @@ class DualSageCone(SetMembership):
         return viol
 
     def __contains__(self, item):
-        from sageopt.coniclifts import clear_variable_indices
         if isinstance(item, Expression):
             item = item.value
         for i in self.ech.U_I:
@@ -329,7 +327,6 @@ class DualSageCone(SetMembership):
             temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
             prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
             status, value = prob.solve(verbose=False)
-            clear_variable_indices()
             if status != CL_SOLVED or abs(value) > 1e-7:
                 return False
         return True
@@ -402,4 +399,18 @@ class ExpCoverHelper(object):
                 for j in range(self.m):
                     if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
                         curr_cover[j] = False
+        for i in self.U_I:
+            if np.count_nonzero(expcovers[i]) == 1:
+                expcovers[i][:] = False
+        if _EXPENSIVE_REDUCTION_:
+            for i in self.U_I:
+                if np.any(expcovers[i]):
+                    mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
+                    x = Variable(shape=(mat.shape[1],), name='temp_x')
+                    objective = Expression([0])
+                    cons = [mat @ x <= -1]
+                    prob = Problem(CL_MIN, objective, cons)
+                    prob.solve(verbose=False)
+                    if prob.status == CL_SOLVED and abs(prob.value) < 1e-7:
+                        expcovers[i][:] = False
         return expcovers

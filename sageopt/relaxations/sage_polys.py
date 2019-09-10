@@ -512,7 +512,7 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     return L, ineq_dual_polys, eq_dual_polys, gamma
 
 
-def conditional_sage_data(f, gts, eqs):
+def conditional_sage_data(f, gts, eqs, check_feas=True):
     """
 
     Parameters
@@ -524,6 +524,8 @@ def conditional_sage_data(f, gts, eqs):
         For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
     eqs : list of Polynomials
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    check_feas : bool
+        Indicates whether or not to verify that the returned conic system is feasible.
 
     Returns
     -------
@@ -573,7 +575,7 @@ def conditional_sage_data(f, gts, eqs):
     gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]
     # Fall back on conditional SAGE data implementation for signomials
     dummy_f = Signomial({(0,) * f.n: 1})
-    logX = sage_sigs.conditional_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps)
+    logX = sage_sigs.conditional_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps, check_feas)
     X = {'log_AbK': logX['AbK'], 'gts': gp_gts, 'eqs': gp_eqs}
     return X
 

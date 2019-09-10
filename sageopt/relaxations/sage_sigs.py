@@ -345,9 +345,9 @@ def sig_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None
 
     Notes
     -----
-    The exact meaning of parameters ``p`` and ``q`` is determined by the function ``make_lagrangian(...).``.
+    The exact meaning of parameters ``p`` and ``q`` is determined by the function ``make_sig_lagrangian``.
 
-    The meaning of the parameter ``ell`` is most clear from the implementation of ``sig_constrained_primal(...)``,
+    The meaning of the parameter ``ell`` is most clear from the implementation of ``sig_constrained_primal``,
     although both ``sig_constrained_primal`` and ``sig_constrained_dual`` contain logic for handling this parameter.
 
     """
@@ -591,7 +591,7 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
     return L, ineq_dual_sigs, eq_dual_sigs, gamma
 
 
-def conditional_sage_data(f, gts, eqs):
+def conditional_sage_data(f, gts, eqs, check_feas=True):
     """
     Identify a subset of the constraints in ``gts`` and ``eqs`` which can be incorporated into
     conditional SAGE relaxations. Generate conic data that relaxation-constructors will need
@@ -606,6 +606,8 @@ def conditional_sage_data(f, gts, eqs):
         For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
     eqs : list of Signomial
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    check_feas : bool
+        Indicates whether or not to verify that the returned conic system is feasible.
 
     Returns
     -------
@@ -642,7 +644,6 @@ def conditional_sage_data(f, gts, eqs):
             x = cl.Variable(shape=(f.n,), name='x')
             constraints = [1 >= cl.vector2norm(x)]
             A, b, K, _, _ = cl.compile_constrained_system(constraints)
-            cl.clear_variable_indices()
             my_gts = [lambda dummy_x: 1 - np.linalg.norm(dummy_x, ord=2)]
             my_eqs = []
             X = {'AbK': (A, b, K), 'gts': my_gts, 'eqs': my_eqs}
@@ -684,12 +685,23 @@ def conditional_sage_data(f, gts, eqs):
         coniclift_cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
     if len(coniclift_cons) > 0:
         A, b, K, _, _ = cl.compile_constrained_system(coniclift_cons)
-        cl.clear_variable_indices()
+        if check_feas:
+            x = cl.Variable(shape=(A.shape[1],), name='temp_x')
+            A_dense = A.toarray()
+            cons = [cl.PrimalProductCone(A_dense @ x + b, K)]
+            prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
+            prob.solve(verbose=False)
+            if not prob.value < 1e-7:
+                msg1 = 'Inferred constraints could not be verified as feasible.\n'
+                msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'
+                msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
+                msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
+                msg = msg1 + msg2 + msg3 + msg4
+                raise RuntimeError(msg)
         AbK = (A, b, K)
         X = {'AbK': AbK, 'gts': conv_gt, 'eqs': conv_eqs}
         return X
     else:
-        cl.clear_variable_indices()
         X = {'AbK': None, 'gts': [], 'eqs': []}
         return X
 

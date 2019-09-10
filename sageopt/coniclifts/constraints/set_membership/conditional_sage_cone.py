@@ -21,6 +21,7 @@ from sageopt.coniclifts.operators import affine as aff
 from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementwise_relent
 from sageopt.coniclifts.operators.precompiled import affine as compiled_aff
 from sageopt.coniclifts.problems.problem import Problem
+from sageopt.coniclifts.standards.constants import minimize as CL_MIN, solved as CL_SOLVED
 import numpy as np
 import warnings
 from scipy.sparse import issparse
@@ -29,6 +30,8 @@ import scipy.special as special_functions
 _ALLOWED_CONES_ = {'+', 'S', 'P', 'e', '0'}
 
 _AGGRESSIVE_REDUCTION_ = True
+
+_EXPENSIVE_REDUCTION_ = True
 
 
 def check_cones(K):
@@ -40,6 +43,9 @@ def check_cones(K):
 
 
 class PrimalCondSageCone(SetMembership):
+    """
+    This class assumes that the conic system {x : A @ x + b \in K } is feasible.
+    """
 
     def __init__(self, c, alpha, A, b, K, name, expcovers=None):
         self.name = name
@@ -148,7 +154,7 @@ class PrimalCondSageCone(SetMembership):
             x_i = self.nu_vars[i].value
             x_i[x_i < 0] = 0
             y_i = np.exp(1) * c_i[idx_set]
-            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i]  + self.b @ lambda_i # <= 0
+            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + self.b @ lambda_i # <= 0
             relent_viol = abs(max(relent_res, 0))
             eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - self.A.T @ lambda_i  # == 0
             eq_res = eq_res.reshape((-1,))
@@ -169,27 +175,9 @@ class PrimalCondSageCone(SetMembership):
         aux_c_vars = aff.vstack(aux_c_vars).T
         aux_c_vars = aux_c_vars[nonconst_locs, :]
         main_c_var = self.c[nonconst_locs]
-        # add constraint that the columns of all_cs sum to self.c[need_constr]
-        # TODO: make "sums of vectors equaling another vector" a precompiled atom.
-        A_rows, A_cols, A_vals = [], [], []
-        num_cons = np.count_nonzero(nonconst_locs)
-        b = np.zeros(num_cons,)
-        K = [Cone('0', num_cons)]
-        for i in range(num_cons):
-            # update cols and data to reflect addition of elements in ith row of aux_c_vars
-            svs = aux_c_vars[i, :].scalar_variables()
-            A_cols += [sv.id for sv in svs]
-            A_vals += [1] * len(svs)
-            # update cols and data to reflect addition of elements from ith element of main_c_var
-            #   ith element of main_c_var is a ScalarExpression!
-            id2co = [(a.id, co) for a, co in main_c_var[i].atoms_to_coeffs.items()]
-            A_cols += [aid for aid, _ in id2co]
-            A_vals += [-co for _, co in id2co]  # we are subtracting, after all.
-            # update rows with appropriate number of "i"s.
-            A_rows += [i] * (len(svs) + len(id2co))
-            # update b
-            b[i] -= main_c_var[i].offset
-        return A_vals, np.array(A_rows), A_cols, b, K
+        A_vals, A_rows, A_cols, b = compiled_aff.columns_sum_to_vec(aux_c_vars, main_c_var)
+        K = [Cone('0', b.size)]
+        return A_vals, A_rows, A_cols, b, K
 
     def variables(self):
         return self._variables
@@ -242,17 +230,18 @@ class PrimalCondSageCone(SetMembership):
         pass
 
     def __contains__(self, item):
-        from sageopt.coniclifts import clear_variable_indices, MIN as CL_MIN, SOLVED as CL_SOLVED
         item = Expression(item).ravel()
         name = self.name + ' check membership'
         con = [PrimalCondSageCone(item, self.lifted_alpha, self.A, self.b, self.K, name)]
         prob = Problem(CL_MIN, Expression([0]), con)
         prob.solve(verbose=False)
-        clear_variable_indices()
         return prob.status == CL_SOLVED and abs(prob.value) < 1e-7
 
 
 class DualCondSageCone(SetMembership):
+    """
+    This class assumes that the conic system {x : A @ x + b \in K } is feasible.
+    """
 
     def __init__(self, v, alpha, A, b, K, name, c=None, expcovers=None):
         """
@@ -338,11 +327,8 @@ class DualCondSageCone(SetMembership):
         return cone_data
 
     def _dual_age_cone_violation(self, i, norm_ord, rough, v):
-        from sageopt.coniclifts import clear_variable_indices, MIN as CL_MIN, SOLVED as CL_SOLVED
         selector = self.ech.expcovers[i]
         len_sel = np.count_nonzero(selector)
-        # TODO: fix how this function handles len_sel == 0.
-        #   The current behavior isn't valid when {x: A @ x + b \in K} is the empty set.
         if len_sel > 0:
             expr1 = np.tile(v[i], len_sel).ravel()
             expr2 = v[selector].ravel()
@@ -363,7 +349,6 @@ class DualCondSageCone(SetMembership):
                         PrimalProductCone(self.A @ temp_var + v[i] * self.b, self.K)]
                 prob = Problem(CL_MIN, Expression([0]), cons)
                 status, value = prob.solve(verbose=False)
-                clear_variable_indices()
                 if status == CL_SOLVED and abs(value) < 1e-7:
                     curr_viol = 0
             return curr_viol
@@ -468,4 +453,16 @@ class ExpCoverHelper(object):
                     for j in range(self.m):
                         if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
                             curr_cover[j] = False
+        if _EXPENSIVE_REDUCTION_:
+            for i in self.U_I:
+                if np.any(expcovers[i]):
+                    mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
+                    x = Variable(shape=(mat.shape[1],), name='temp_x')
+                    t = Variable(shape=(1,), name='temp_t')
+                    objective = t
+                    cons = [mat @ x <= t, PrimalProductCone(self.A @ x + self.b, self.K)]
+                    prob = Problem(CL_MIN, objective, cons)
+                    prob.solve(verbose=False)
+                    if prob.status == CL_SOLVED and prob.value < -100:
+                        expcovers[i][:] = False
         return expcovers

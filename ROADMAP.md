@@ -97,3 +97,8 @@ is zero in 64 bit arithmetic).
 In order to add this dimension-reduction to sageopt, it will be necessary to
 create "constraint factories", which perform this dimension reduction once,
 and allow it to be re-used across multiple desired constraints.
+
+*UPDATE* There is now an \_EXPENSIVE\_REDUCTION\_ flag in both sage_cone.py and
+conditional_sage_cone.py which has ExpCoverHelper objects solve these optimization
+problems. From a performance standpoint it would still be good to have sig_constrained_relaxation
+and poly_constrained_relaxation recycle the expcovers from different Lagrange multipliers.
