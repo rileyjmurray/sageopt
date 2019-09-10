@@ -20,21 +20,21 @@ from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
 
 
-def primal_sage_cone(sig, name, AbK):
+def primal_sage_cone(sig, name, AbK, expcovers=None):
     if AbK is None:
-        con = cl.PrimalSageCone(sig.c, sig.alpha, name)
+        con = cl.PrimalSageCone(sig.c, sig.alpha, name, expcovers)
     else:
         A, b, K = AbK
-        con = cl.PrimalCondSageCone(sig.c, sig.alpha, A, b, K, name)
+        con = cl.PrimalCondSageCone(sig.c, sig.alpha, A, b, K, name, expcovers)
     return con
 
 
-def relative_dual_sage_cone(primal_sig, dual_var, name, AbK):
+def relative_dual_sage_cone(primal_sig, dual_var, name, AbK, expcovers=None):
     if AbK is None:
-        con = cl.DualSageCone(dual_var, primal_sig.alpha, name, primal_sig.c)
+        con = cl.DualSageCone(dual_var, primal_sig.alpha, name, primal_sig.c, expcovers)
     else:
         A, b, K = AbK
-        con = cl.DualCondSageCone(dual_var, primal_sig.alpha, A, b, K, name, primal_sig.c)
+        con = cl.DualCondSageCone(dual_var, primal_sig.alpha, A, b, K, name, primal_sig.c, expcovers)
     return con
 
 
@@ -413,9 +413,11 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     con = primal_sage_cone(lagrangian, name='Lagrangian is SAGE', AbK=X['AbK'])
     constrs = [con]
     #  Lagrange multipliers (for inequality constraints) must be SAGE signomials.
+    expcovers = None
     for i, (s_h, _) in enumerate(ineq_lag_mults):
         con_name = 'SAGE multiplier for signomial inequality # ' + str(i)
-        con = primal_sage_cone(s_h, name=con_name, AbK=X['AbK'])
+        con = primal_sage_cone(s_h, name=con_name, AbK=X['AbK'], expcovers=expcovers)
+        expcovers = con.ech.expcovers  # only * really * needed in first iteration, but keeps code flat.
         constrs.append(con)
     # Construct the coniclifts Problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
@@ -479,13 +481,15 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     v = cl.Variable(shape=(lagrangian.m, 1), name='v')
     con = relative_dual_sage_cone(lagrangian, v, name='Lagrangian SAGE dual constraint', AbK=X['AbK'])
     constraints = [con]
+    expcovers = None
     for i, (s_h, h) in enumerate(ineq_lag_mults):
         # These generalized Lagrange multipliers "s_h" are SAGE signomials.
         # For each such multiplier, introduce an appropriate dual variable "v_h", along
         # with constraints over that dual variable.
         v_h = cl.Variable(name='v_' + str(h), shape=(s_h.m, 1))
         con_name = 'SAGE dual for signomial inequality # ' + str(i)
-        con = relative_dual_sage_cone(s_h, v_h, name=con_name, AbK=X['AbK'])
+        con = relative_dual_sage_cone(s_h, v_h, name=con_name, AbK=X['AbK'], expcovers=expcovers)
+        expcovers = con.ech.expcovers  # only * really * needed in first iteration, but keeps code flat.
         constraints.append(con)
         h = h * modulator
         c_h = sym_corr.moment_reduction_array(s_h, h, lagrangian)

@@ -5,8 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 # [unreleased]
-## Changed
- - Nothing.
+## Addded
+ - Support for automatic elimination of trivial AGE cones from SAGE relaxations. This can be disabled
+ by setting the variable \_EXPENSIVE\_REDUCTION\_=False for both sage_cone.py and conditional_sage_cone.py.
+ - An argument to conditional\_sage\_data functions, so that they now can check if the system
+ defined by the inferred constraints is feasible. Adding this allowed me to make it an assumption
+ in conditional_sage_cone.py that the conic system is feasible, which resolved a standing issue
+ in computing constraint violations for conditional SAGE cones.
 
 # [0.3.4] - 2019-09-09
 ## Added

@@ -62,14 +62,13 @@ class PrimalProductCone(SetMembership):
 
     @staticmethod
     def project(item, K):
-        from sageopt.coniclifts import MIN as CL_MIN, clear_variable_indices
+        from sageopt.coniclifts import MIN as CL_MIN
         item = Expression(item).ravel()
         x = Variable(shape=(item.size,))
         t = Variable(shape=(1,))
         cons = [vector2norm(item - x) <= t, PrimalProductCone(x, K)]
         prob = Problem(CL_MIN, t, cons)
         prob.solve(verbose=False)
-        clear_variable_indices()
         return prob.value
 
     def __contains__(self, item, tol=1e-7):
@@ -142,14 +141,13 @@ class DualProductCone(SetMembership):
 
     @staticmethod
     def project(item, K):
-        from sageopt.coniclifts import MIN as CL_MIN, clear_variable_indices
+        from sageopt.coniclifts import MIN as CL_MIN
         item = Expression(item).ravel()
         x = Variable(shape=(item.size,))
         t = Variable(shape=(1,))
         cons = [vector2norm(item - x) <= t, DualProductCone(x, K)]
         prob = Problem(CL_MIN, t, cons)
         prob.solve(verbose=False)
-        clear_variable_indices()
         return prob.value
 
     def __contains__(self, item, tol=1e-7):

@@ -18,6 +18,7 @@ from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalPro
 from sageopt.coniclifts.base import Variable, Expression
 from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.operators import affine as aff
+from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementwise_relent
 from sageopt.coniclifts.operators.precompiled import affine as compiled_aff
 from sageopt.coniclifts.problems.problem import Problem
@@ -64,35 +65,35 @@ class PrimalCondSageCone(SetMembership):
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
         self._variables = self.c.variables()
         self.K = check_cones(K)
-        if self.m > 1:
-            self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
-            self.nu_vars = dict()
-            self.c_vars = dict()
-            self.relent_epi_vars = dict()
-            self.age_vectors = dict()
-            self.lambda_vars = dict()
-            self._initialize_variables()
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
+        self.nu_vars = dict()
+        self.c_vars = dict()
+        self.relent_epi_vars = dict()
+        self.age_vectors = dict()
+        self.lambda_vars = dict()
+        self._initialize_variables()
         pass
 
     def _initialize_variables(self):
-        for i in self.ech.U_I:
-            nu_len = np.count_nonzero(self.ech.expcovers[i])
-            if nu_len > 0:
-                var_name = 'nu^{(' + str(i) + ')}_' + self.name
-                self.nu_vars[i] = Variable(shape=(nu_len,), name=var_name)
-                var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
-                self.relent_epi_vars[i] = Variable(shape=(nu_len,), name=var_name)
-            c_len = nu_len
-            if i not in self.ech.N_I:
-                c_len += 1
-            var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
-            self.c_vars[i] = Variable(shape=(c_len,), name=var_name)
-            var_name = 'lambda^{(' + str(i) + ')}_{' + self.name + '}'
-            self.lambda_vars[i] = Variable(shape=(self.A.shape[0],), name=var_name)
-        self._variables += list(self.nu_vars.values())
-        self._variables += list(self.c_vars.values())
-        self._variables += list(self.relent_epi_vars.values())
-        self._variables += list(self.lambda_vars.values())
+        if self.m > 1:
+            for i in self.ech.U_I:
+                nu_len = np.count_nonzero(self.ech.expcovers[i])
+                if nu_len > 0:
+                    var_name = 'nu^{(' + str(i) + ')}_' + self.name
+                    self.nu_vars[i] = Variable(shape=(nu_len,), name=var_name)
+                    var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
+                    self.relent_epi_vars[i] = Variable(shape=(nu_len,), name=var_name)
+                c_len = nu_len
+                if i not in self.ech.N_I:
+                    c_len += 1
+                var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
+                self.c_vars[i] = Variable(shape=(c_len,), name=var_name)
+                var_name = 'lambda^{(' + str(i) + ')}_{' + self.name + '}'
+                self.lambda_vars[i] = Variable(shape=(self.A.shape[0],), name=var_name)
+            self._variables += list(self.nu_vars.values())
+            self._variables += list(self.c_vars.values())
+            self._variables += list(self.relent_epi_vars.values())
+            self._variables += list(self.lambda_vars.values())
         pass
 
     def _build_aligned_age_vectors(self):
@@ -202,11 +203,26 @@ class PrimalCondSageCone(SetMembership):
             cone_data = [(A_vals, A_rows, A_cols, b, K)]
             return cone_data
 
+    @staticmethod
+    def project(item, alpha, A, b, K):
+        if np.all(item >= 0):
+            return 0
+        c = Variable(shape=(item.size,))
+        t = Variable(shape=(1,))
+        cons = [
+            vector2norm(item - c) <= t,
+            PrimalCondSageCone(c, alpha, A, b, K, 'temp_con')
+        ]
+        prob = Problem(CL_MIN, t, cons)
+        prob.solve(verbose=False)
+        return prob.value
+
     def violation(self, norm_ord=np.inf, rough=False):
         c = self.c.value
         if self.m > 1:
-            if not rough and c in self:
-                return 0
+            if not rough:
+                dist = PrimalCondSageCone.project(c, self.lifted_alpha, self.A, self.b, self.K)
+                return dist
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
             #   and so only compute violation for "AGE vectors sum to <= c"
@@ -221,21 +237,17 @@ class PrimalCondSageCone(SetMembership):
             for idx, i in enumerate(self.ech.U_I):
                 age_viols[idx] = self._age_violation(i, norm_ord, age_vectors[i], lambda_vectors[i])
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
-            total_viol = sum_to_c_viol + np.max(age_viols)
+            if np.any(age_viols == np.inf):
+                total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
+                total_viol += PrimalCondSageCone.project(c, self.lifted_alpha, self.A, self.b, self.K)
+            else:
+                total_viol = sum_to_c_viol + np.max(age_viols)
             return total_viol
         else:
             residual = c.reshape((-1,))  # >= 0
             residual[residual >= 0] = 0
             return np.linalg.norm(c, ord=norm_ord)
         pass
-
-    def __contains__(self, item):
-        item = Expression(item).ravel()
-        name = self.name + ' check membership'
-        con = [PrimalCondSageCone(item, self.lifted_alpha, self.A, self.b, self.K, name)]
-        prob = Problem(CL_MIN, Expression([0]), con)
-        prob.solve(verbose=False)
-        return prob.status == CL_SOLVED and abs(prob.value) < 1e-7
 
 
 class DualCondSageCone(SetMembership):
@@ -263,31 +275,31 @@ class DualCondSageCone(SetMembership):
         self.v = v
         self.name = name
         self._variables = self.v.variables()
-        if self.m > 1:
-            if c is None:
-                self.c = None
-            else:
-                self.c = Expression(c)
-            self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
-            self.lifted_mu_vars = dict()
-            self.mu_vars = dict()
-            self.relent_epi_vars = dict()
-            self._initialize_variables()
+        if c is None:
+            self.c = None
+        else:
+            self.c = Expression(c)
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
+        self.lifted_mu_vars = dict()
+        self.mu_vars = dict()
+        self.relent_epi_vars = dict()
+        self._initialize_variables()
         pass
 
     def _initialize_variables(self):
-        for i in self.ech.U_I:
-            var_name = 'mu[' + str(i) + ']_{' + self.name + '}'
-            self.lifted_mu_vars[i] = Variable(shape=(self.lifted_n,), name=var_name)
-            self._variables.append(self.lifted_mu_vars[i])
-            self.mu_vars[i] = self.lifted_mu_vars[i][:self.n]
+        if self.m > 1:
+            for i in self.ech.U_I:
+                var_name = 'mu[' + str(i) + ']_{' + self.name + '}'
+                self.lifted_mu_vars[i] = Variable(shape=(self.lifted_n,), name=var_name)
+                self._variables.append(self.lifted_mu_vars[i])
+                self.mu_vars[i] = self.lifted_mu_vars[i][:self.n]
 
-            num_cover = np.count_nonzero(self.ech.expcovers[i])
-            if num_cover > 0:
-                var_name = '_relent_epi_[' + str(i) + ']_{' + self.name + '}'
-                epi = Variable(shape=(num_cover,), name=var_name)
-                self.relent_epi_vars[i] = epi
-                self._variables.append(epi)
+                num_cover = np.count_nonzero(self.ech.expcovers[i])
+                if num_cover > 0:
+                    var_name = '_relent_epi_[' + str(i) + ']_{' + self.name + '}'
+                    epi = Variable(shape=(num_cover,), name=var_name)
+                    self.relent_epi_vars[i] = epi
+                    self._variables.append(epi)
         pass
 
     def _dual_age_cone_data(self, i):

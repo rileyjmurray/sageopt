@@ -15,7 +15,7 @@
 """
 import unittest
 import numpy as np
-from sageopt.coniclifts.base import Variable
+from sageopt.coniclifts.base import Variable, Expression
 from sageopt.coniclifts.operators.relent import relent
 from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.constraints.set_membership import sage_cone, conditional_sage_cone, product_cone, psd_cone
@@ -157,7 +157,9 @@ class TestConstraints(unittest.TestCase):
         alpha = 10 * np.random.randn(m, n)
         x0 = np.random.randn(n) / 10
         v0 = np.exp(alpha @ x0)
-        c = np.array([1, 2, 3, 4, -0.5, -0.1])
+        dummy_vars = Variable(shape=(2,)).scalar_variables()
+        c = np.array([1, 2, 3, 4, dummy_vars[0], dummy_vars[1]])
+        c = Expression(c)
         v = Variable(shape=(m,), name='projected_v0')
         t = Variable(shape=(1,), name='epigraph_var')
         sage_constraint = sage_cone.DualSageCone(v, alpha, 'test_con', c)

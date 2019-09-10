@@ -17,6 +17,7 @@ from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
 from sageopt.coniclifts.base import Variable, Expression
 from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.operators import affine as aff
+from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementwise_relent
 from sageopt.coniclifts.operators.precompiled import affine as compiled_aff
 from sageopt.coniclifts.problems.problem import Problem
@@ -155,11 +156,26 @@ class PrimalSageCone(SetMembership):
             cone_data = [(A_vals, A_rows, A_cols, b, K)]
             return cone_data
 
+    @staticmethod
+    def project(item, alpha):
+        if np.all(item >= 0):
+            return 0
+        c = Variable(shape=(item.size,))
+        t = Variable(shape=(1,))
+        cons = [
+            vector2norm(item - c) <= t,
+            PrimalSageCone(c, alpha, 'temp_con')
+        ]
+        prob = Problem(CL_MIN, t, cons)
+        prob.solve(verbose=False)
+        return prob.value
+
     def violation(self, norm_ord=np.inf, rough=False):
         c = self.c.value
         if self.m > 2:
-            if not rough and c in self:
-                return 0
+            if not rough:
+                dist = PrimalSageCone.project(c, self.alpha)
+                return dist
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
             #   and so only compute violation for "AGE vectors sum to <= c"
@@ -173,25 +189,17 @@ class PrimalSageCone(SetMembership):
             for idx, i in enumerate(self.ech.U_I):
                 age_viols[idx] = self._age_violation(i, norm_ord, age_vectors[i])
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
-            total_viol = sum_to_c_viol + np.max(age_viols)
+            if np.any(age_viols == np.inf):
+                total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
+                total_viol += PrimalSageCone.project(c, self.alpha)
+            else:
+                total_viol = sum_to_c_viol + np.max(age_viols)
             return total_viol
         else:
             residual = c.reshape((-1,))  # >= 0
             residual[residual >= 0] = 0
             return np.linalg.norm(c, ord=norm_ord)
         pass
-
-    def __contains__(self, item):
-        item = Expression(item)
-        if item.is_constant() and np.all(item.value >= 0):
-            return True
-        con = PrimalSageCone(item, self.alpha, name='check_mem')
-        prob = Problem(CL_MAX, Expression([0]), [con])
-        status, value = prob.solve(verbose=False)
-        if status == CL_SOLVED:
-            return abs(value) < 1e-7
-        else:
-            return False
 
 
 class DualSageCone(SetMembership):
@@ -314,23 +322,6 @@ class DualSageCone(SetMembership):
         viol = max(viols)
         return viol
 
-    def __contains__(self, item):
-        if isinstance(item, Expression):
-            item = item.value
-        for i in self.ech.U_I:
-            selector = self.ech.expcovers[i]
-            len_sel = np.count_nonzero(selector)
-            expr1 = np.tile(item[i], len_sel)
-            expr2 = item[selector]
-            lowerbounds = special_functions.rel_entr(expr1, expr2).reshape((-1, 1))
-            mat = -(self.alpha[selector, :] - self.alpha[i, :])
-            temp_var = Variable(shape=(mat.shape[1], 1), name='temp_var')
-            prob = Problem(CL_MAX, Expression([0]), [mat @ temp_var >= lowerbounds])
-            status, value = prob.solve(verbose=False)
-            if status != CL_SOLVED or abs(value) > 1e-7:
-                return False
-        return True
-
 
 class ExpCoverHelper(object):
 
@@ -413,4 +404,7 @@ class ExpCoverHelper(object):
                     prob.solve(verbose=False)
                     if prob.status == CL_SOLVED and abs(prob.value) < 1e-7:
                         expcovers[i][:] = False
+        for i in self.N_I:
+            if np.count_nonzero(expcovers[i]) == 0:
+                raise RuntimeError('This SAGE cone constraint is infeasible.')
         return expcovers
