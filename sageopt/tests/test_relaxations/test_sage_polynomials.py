@@ -235,10 +235,10 @@ class TestSagePolynomials(unittest.TestCase):
         #       could not solve.
         #
         x = standard_poly_monomials(3)
-        p = (np.sum(x)) ** 2 + 0.5 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
+        p = (np.sum(x)) ** 2 + 0.35 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
         res1 = sage_polys.sage_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
         assert abs(res1[1]) < 1e-8
-        p -= 0.20 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
+        p -= 0.2 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
         res2 = sage_polys.sage_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
         assert abs(res2[1]) < 1e-8
 

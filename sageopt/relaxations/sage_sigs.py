@@ -694,7 +694,7 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
             A_dense = A.toarray()
             cons = [cl.PrimalProductCone(A_dense @ x + b, K)]
             prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
-            prob.solve(verbose=False)
+            prob.solve(verbose=False, solver='ECOS')
             if not prob.value < 1e-7:
                 msg1 = 'Inferred constraints could not be verified as feasible.\n'
                 msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'

@@ -474,7 +474,7 @@ class ExpCoverHelper(object):
                     objective = t
                     cons = [mat @ x <= t, PrimalProductCone(self.A @ x + self.b, self.K)]
                     prob = Problem(CL_MIN, objective, cons)
-                    prob.solve(verbose=False)
+                    prob.solve(verbose=False, solver='ECOS')
                     if prob.status == CL_SOLVED and prob.value < -100:
                         expcovers[i][:] = False
         return expcovers
