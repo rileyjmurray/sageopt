@@ -100,5 +100,12 @@ and allow it to be re-used across multiple desired constraints.
 
 *UPDATE* There is now an \_EXPENSIVE\_REDUCTION\_ flag in both sage_cone.py and
 conditional_sage_cone.py which has ExpCoverHelper objects solve these optimization
-problems. From a performance standpoint it would still be good to have sig_constrained_relaxation
-and poly_constrained_relaxation recycle the expcovers from different Lagrange multipliers.
+problems. Here are some useful extensions:
+
+1. Enable performing the reductions in parallel, with Dask.
+2. Recycle the expcovers across primal and dual forms of the same
+SAGE relaxation.
+3. Allow some logging during this reduction phase, so users have a sense
+for how long it's going to take.
+4. Make it easier for users to change the reduction behavior. I.e. have
+a top-level function in the sageopt package which handles this setting.
