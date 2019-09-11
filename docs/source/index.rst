@@ -17,7 +17,7 @@ You can also use sageopt as part of a broader effort to find locally-optimal sol
 (with bounds on possible optimality gaps).
 
 These underlying convex relaxations are built upon the idea of "SAGE certificates" for signomial and
-polynomial nonnegativity. Refer to the paper `Signomial and Polynomial Optimization by Relative Entropy
+polynomial nonnegativity. Refer to the paper `Signomial and Polynomial Optimization via Relative Entropy
 and Partial Dualization <https://arxiv.org/abs/1907.00814>`_ for a mathematical description of the functionality
 implemented by this python package.
 

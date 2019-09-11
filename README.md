@@ -5,13 +5,19 @@
 
 Sageopt provides functionality for constructing, solving, and analyzing convex relaxations for
 signomial and polynomial optimization problems. It also provides functionality for recovering feasible
-solutions from these convex relaxations. This means that sageopt can be used as a standalone tool to find provably
-optimal solutions to hard optimization problems, or as part of a broader effort to find locally-optimal
-solutions to especially difficult problems (with bounds on possible optimality gaps).
+solutions from these convex relaxations.
+
+You can use sageopt as a standalone tool to find provably optimal solutions to hard optimization problems.
+You can also use sageopt as part of a broader effort to find locally-optimal solutions to especially difficult problems
+(with bounds on possible optimality gaps).
 
 These underlying convex relaxations are built upon the idea of "SAGE certificates" for signomial and
-polynomial nonnegativity. Refer to the paper "Signomial and Polynomial Optimization by Relative Entropy
-and Partial Dualization" for a mathematical description of the functionality implemented by this python package.
+polynomial nonnegativity. Refer to the paper [Signomial and Polynomial Optimization via Relative Entropy
+and Partial Dualization](https://arxiv.org/abs/1907.00814) for a mathematical description of the functionality
+implemented by this python package.
+
+This readme file contains a minimal amount of information on sageopt. Users of this software
+are encouraged to visit [the main sageopt website](https://rileyjmurray.github.io/sageopt/).
 
 ## Dependencies
 
@@ -48,19 +54,24 @@ To install sageopt from source, do the following:
 
 ## Mathematical background
 
-SAGE certificates were originally developed for signomials ([Chandrasekaran and Shah, 2016](https://arxiv.org/abs/1409.7640)).
-Around the same time that SAGE certificates were first developed, there were similar developments for polynomials, 
-under the name "SONC certificates." Work by Murray, Chandrasekaran, and Wierman ([MCW 2018](https://arxiv.org/abs/1810.01614))
-described the first efficient way to use these SONC certificates in optimization; they referred to their efficient proof
- system as the method of "SAGE polynomials."
+SAGE certificates were originally developed for signomials
+([Chandrasekaran and Shah, 2016](https://arxiv.org/abs/1409.7640)).
 
- The appendix of the 2018 paper by MCW describes a python package called
- "sigpy", which implements SAGE relaxations for both signomial and polynomial optimization problems. Sageopt 
- supercedes sigpy by implementing a significant generalization of the original SAGE certificates for both signomials 
- and polynomials. The formal name for these  generalizations are "conditional SAGE signomials" and "conditional SAGE
-  polynomials". This concept is introduced in a 2019 paper by Murray, Chandrasekaran, and Wierman, titled "Signomial 
-  and Polynomial Optimization via Relative Entropy and Partial 
- Dualization." Because the generalization follows so transparently from the original idea of SAGE certificates, we say simply say "SAGE
- certificates" in reference to the most general idea.
+Subsequent work by Murray, Chandrasekaran, and Wierman ([MCW2018](https://arxiv.org/abs/1810.01614)) described how
+these methods could be adapted to polynomial optimization, and they referred to their proof system as "SAGE
+polynomials".  These ideas are especially well-suited to sparse polynomials or polynomials of high degree. The bounds
+returned are always at least as strong as those computed by [SDSOS](https://arxiv.org/abs/1706.02586), and can be
+stronger. The expressive power of SAGE polyomials is equivalent to that of SONC polynomials, however there is no
+known method to efficiently optimize over the set of SONC polynomials without using the SAGE proof system. For
+example, the [2018 algorithm](https://arxiv.org/abs/1808.08431) for computing SONC certificates is efficient, but
+is also known to have simple cases where it fails to find SONC certificates that do in fact exist.
 
+The appendix of the 2018 paper by MCW describes a python package called "sigpy", which implements SAGE relaxations
+for both signomial and polynomial optimization problems. Sageopt supercedes sigpy by implementing a significant
+generalization of the original SAGE certificates for both signomials and polynomials. The formal name for these
+generalizations are *conditional SAGE signomials* and *conditional SAGE polynomials*. This concept is introduced in a
+2019 paper by Murray, Chandrasekaran, and Wierman, titled [Signomial and Polynomial Optimization via Relative Entropy
+and Partial Dualization](https://arxiv.org/abs/1907.00814).
+Because the generalization follows so transparently from the original idea of SAGE certificates, we say simply say
+"SAGE certificates" in reference to the most general idea.
 
