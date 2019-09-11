@@ -360,9 +360,9 @@ class Signomial(object):
         if x.ndim > 2:
             msg = 'Signomials cannot be called on ndarrays with more than 2 dimensions.'
             raise ValueError(msg)
-        x = x.astype(np.float128)
-        exponents = np.dot(self.alpha.astype(np.float128), x)
-        linear_vars = np.exp(exponents).astype(np.float128)
+        x = x.astype(np.longdouble)
+        exponents = np.dot(self.alpha.astype(np.longdouble), x)
+        linear_vars = np.exp(exponents).astype(np.longdouble)
         val = np.dot(self.c, linear_vars)
         return val
 

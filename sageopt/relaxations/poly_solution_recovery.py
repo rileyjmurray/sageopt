@@ -147,7 +147,7 @@ def _dual_age_cone_magnitude_recovery(con, v_sig, M_sig):
     reduced_ys = raw_ys @ weights.T
     # concatenate the new solutions (reduced_ys) with original solutions (raw_ys)
     all_ys = np.hstack((raw_ys, reduced_ys))
-    all_ys = np.unique(all_ys, axis=1).astype(np.float128)
+    all_ys = np.unique(all_ys, axis=1).astype(np.longdouble)
     all_xs = np.exp(all_ys)
     mus = [xi for xi in all_xs.T]
     return mus
@@ -178,7 +178,7 @@ def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
     prob.solve(verbose=False)
     cl.clear_variable_indices()
     if prob.status == cl.SOLVED and prob.value < np.inf:
-        mag = np.exp(y.value.astype(np.float128))
+        mag = np.exp(y.value.astype(np.longdouble))
         return mag
     else:
         return None
