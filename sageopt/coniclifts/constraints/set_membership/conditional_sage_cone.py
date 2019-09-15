@@ -34,6 +34,8 @@ _AGGRESSIVE_REDUCTION_ = True
 
 _EXPENSIVE_REDUCTION_ = True
 
+_REDUCTION_SOLVER_ = 'ECOS'
+
 
 def check_cones(K):
     if any([co.type not in _ALLOWED_CONES_ for co in K]):
@@ -474,7 +476,7 @@ class ExpCoverHelper(object):
                     objective = t
                     cons = [mat @ x <= t, PrimalProductCone(self.A @ x + self.b, self.K)]
                     prob = Problem(CL_MIN, objective, cons)
-                    prob.solve(verbose=False, solver='ECOS')
+                    prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
                     if prob.status == CL_SOLVED and prob.value < -100:
                         expcovers[i][:] = False
         return expcovers

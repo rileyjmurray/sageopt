@@ -47,7 +47,7 @@ def valid_posynomial_inequalities(gs):
         if num_pos >= 2:
             # cannot convexify
             continue
-        elif num_pos == 0:
+        elif num_pos == 0 and np.count_nonzero(g.c < 0) > 0:
             raise RuntimeError('Attempting to convexify an infeasible signomial inequality constraint.')
         else:
             pos_loc = np.where(g.c > 0)[0][0]

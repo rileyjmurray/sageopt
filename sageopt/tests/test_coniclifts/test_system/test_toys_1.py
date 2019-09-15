@@ -70,6 +70,17 @@ class TestToys1(unittest.TestCase):
         v = con.violation()
         assert v < 1e-6
 
+    def test_redundant_components(self):
+        # create problems where some (but not all) components of a vector variable
+        # participate in the final conic formulation.
+        x = cl.Variable(shape=(4,))
+        cons = [0 <= x[1:], cl.sum(x[1:]) <= 1]
+        objective = x[1] + 0.5 * x[2] + 0.25 * x[3]
+        prob = cl.Problem(cl.MAX, objective, cons)
+        prob.solve(solver='ECOS', verbose=False)
+        assert np.allclose(x.value, np.array([0, 1, 0, 0]))
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

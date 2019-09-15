@@ -155,6 +155,10 @@ class ECOS(Solver):
         :return: a dictionary mapping names of coniclifts Variables to arrays of their
         corresponding values.
         """
+        x = np.hstack([x, 0])
+        # The final coordinate is a dummy value, which is loaded into ScalarVariables
+        # which (1) did not participate in the problem, but (2) whose parent Variable
+        # object did participate in the problem.
         var_values = dict()
         for var_name in var_mapping:
             var_values[var_name] = x[var_mapping[var_name]]

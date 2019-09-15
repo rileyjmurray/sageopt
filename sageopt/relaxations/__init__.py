@@ -112,7 +112,7 @@ def sage_multiplier_search(f, level=1, X=None):
         raise ValueError('"f" must be a Signomial or Polynomial.')
 
 
-def conditional_sage_data(f, gts, eqs):
+def conditional_sage_data(f, gts, eqs, check_feas=True):
     """
     Infer (and construct a representation for) a tractable set ``X`` which
     is contained within { x : g(x) >= 0 for g in gts } and
@@ -126,6 +126,8 @@ def conditional_sage_data(f, gts, eqs):
         Desired inequality constraint functions.
     eqs : list of Signomials, or list of Polynomials
         Desired equality constraint functions.
+    check_feas : bool
+        Indicates whether or not to verify that the returned conic system is feasible.
 
     Returns
     -------
@@ -145,17 +147,17 @@ def conditional_sage_data(f, gts, eqs):
     which generate ``X`` in the signomial and polynomial cases.
 
     The signomial and polynomial cases are implemented in
-    ``sageopt.relaxations.sage_sigs.sage_feasibility`` and
-    ``sageopt.relaxations.sage_polys.sage_feasibility`` respectively.
+    ``sageopt.relaxations.sage_sigs.conditional_sage_data`` and
+    ``sageopt.relaxations.sage_polys.conditional_sage_data` respectively.
 
     Refer to those functions for detailed documentation.
 
     """
     if isinstance(f, Polynomial):
-        X = _poly_cond_sage_data(f, gts, eqs)
+        X = _poly_cond_sage_data(f, gts, eqs, check_feas)
         return X
     elif isinstance(f, Signomial):
-        X = _sig_cond_sage_data(f, gts, eqs)
+        X = _sig_cond_sage_data(f, gts, eqs, check_feas)
         return X
     else:
         raise ValueError('"f" must be a Signomial or Polynomial.')

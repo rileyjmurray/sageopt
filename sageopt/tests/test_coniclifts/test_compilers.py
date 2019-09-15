@@ -38,10 +38,7 @@ class TestCompilers(unittest.TestCase):
     def test_LP_systems(self):
         n = 4
         m = 5
-
-        y = Variable(shape=(2,), name='y')
         x = Variable(shape=(n, 1), name='x')
-        z = Variable(shape=(2,), name='z')
 
         G = np.random.randn(m, n)
         h = G @ np.abs(np.random.randn(n, 1))
@@ -72,7 +69,7 @@ class TestCompilers(unittest.TestCase):
                        B @ x @ B.T >= 1,
                        B @ x @ B.T >> 1,  # a 1-by-1 LMI
                        C @ x @ C.T >> -2]
-        A, b, K, _, var_mapping = compile_constrained_system(constraints)
+        A, b, K, _, _ = compile_constrained_system(constraints)
         A = A.toarray()
         assert K == [Cone('0', 1), Cone('+', 1), Cone('P', 1), Cone('P', 3)]
         expect_row_0 = -np.array([D[0, 0], 2 * D[1, 0], D[1, 1]])

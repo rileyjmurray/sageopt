@@ -29,6 +29,8 @@ import warnings
 
 _EXPENSIVE_REDUCTION_ = True
 
+_REDUCTION_SOLVER_ = 'ECOS'
+
 
 class PrimalSageCone(SetMembership):
 
@@ -401,7 +403,7 @@ class ExpCoverHelper(object):
                     objective = Expression([0])
                     cons = [mat @ x <= -1]
                     prob = Problem(CL_MIN, objective, cons)
-                    prob.solve(verbose=False, solver='ECOS')
+                    prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
                     if prob.status == CL_SOLVED and abs(prob.value) < 1e-7:
                         expcovers[i][:] = False
         for i in self.N_I:

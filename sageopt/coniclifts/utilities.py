@@ -56,9 +56,16 @@ def sparse_matrix_data_to_csc(data_tuples, index_map=None):
     if index_map is None:
         unique_cols = np.sort(np.unique(A_cols))
         index_map = {c: idx for (idx, c) in enumerate(unique_cols)}
+        index_map = defaultdict(lambda: -1, index_map)
+        num_cols = unique_cols.size
+        # We convert to a defaultdict with dummy value.
+        # The dummy value is used to assign values to ScalarVariable objects
+        # whose parent Variable participates in an optimization problem,
+        # even when the ScalarVariable itself does not appear in the problem.
+    else:
+        num_cols = np.max(list(index_map.values())) + 1
     A_cols = np.array([index_map[ac] for ac in A_cols])
     num_rows = np.max(A_rows) + 1
-    num_cols = np.max(list(index_map.values())) + 1
     A = sp.csc_matrix((A_vals, (A_rows, A_cols)),
                       shape=(int(num_rows), int(num_cols)), dtype=float)
     return A, index_map

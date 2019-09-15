@@ -34,7 +34,7 @@ def compile_problem(objective, constraints):
     # Find all Variable objects in the model (user-defined, or auxilliary).
     all_vars = find_variables_from_constraints(constraints + [objective == 0])
     # Generate the vector for the objective function.
-    c, c_offset = compile_linear_expression(objective, all_vars, index_map)
+    c, c_offset = compile_linear_expression(objective, index_map)
     if c_offset != 0:
         warnings.warn('A constant-term ' + str(c_offset) + ' is being dropped from the objective.')
     c = np.array(c.todense()).flatten().astype(float)
@@ -140,19 +140,14 @@ def epigraph_substitution(elementwise_constrs):
     return nl_cone_data
 
 
-def compile_linear_expression(expr, variables, index_map):
-    lin_cone_data = (expr == 0).conic_form()
-    # The above returns data for the negated expression.
-    b = -lin_cone_data[3]
+def compile_linear_expression(expr, index_map):
+    dummy_con = expr >= 0
+    dummy_con.epigraph_checked = True
+    lin_cone_data = dummy_con.conic_form()
+    b = lin_cone_data[3]
     matrix_data = (lin_cone_data[0], lin_cone_data[1], lin_cone_data[2], b.size)
     A, index_map = util.sparse_matrix_data_to_csc([matrix_data], index_map)
-    A = -A
-    variables.sort(key=lambda v: v.leading_scalar_variable_id())
-    var_indices = []
-    for v in variables:
-        vids = np.array(v.scalar_variable_ids, dtype=int)
-        vi = np.array([index_map[idx] for idx in vids])
-        var_indices.append(vi)
+    A = A
     return A, b
 
 
@@ -178,6 +173,13 @@ def make_variable_map(variables, var_indices):
         This function assumes that every entry of a Variable object is an unadorned ScalarVariable.
         As a result, skew-symmetric Variables or Variables with sparsity patterns are not supported
         by this very important function. Symmetric matrices are supported by this function.
+
+        If some but not-all components of a Variable "my_var" participate in a vectorized conic
+        system {x : A @ x + b \in K }, then var_indices is presumed to map these ScalarVariables
+        to the number -1. The number -1 will then appear as a value in variable_map. When values
+        are set for ScalarVariable objects, the system {x : A @ x + b \in K} is extended to
+        { [x,0] : A @ x + b \in K}. In this way, ScalarVariables which do not participate in a
+        given optimization problem are assigned the value 0.
 
     """
     variable_map = dict()

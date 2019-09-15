@@ -678,13 +678,11 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
             expr = g.alpha[nonconst_selector, :] @ x
             cst = np.log(g.c[~nonconst_selector] / abs(g.c[nonconst_selector]))
             coniclift_cons.append(expr <= cst)
-        else:
-            raise RuntimeError('Trivial (or infeasible) signomial constraint.')
     conv_eqs = con_gen.valid_monomial_equations(eqs)
     for g in conv_eqs:
         # g is of the form c1 - c2 * exp(a.T @ x) == 0, where c1, c2 > 0
         cst_loc = g.constant_location()
-        non_cst_loc = 1 if cst_loc == 0 else 1
+        non_cst_loc = 1 - cst_loc
         rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
         coniclift_cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
     if len(coniclift_cons) > 0:

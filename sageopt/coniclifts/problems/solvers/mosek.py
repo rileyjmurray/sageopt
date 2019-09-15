@@ -238,6 +238,10 @@ class Mosek(Solver):
     @staticmethod
     def load_variable_values(x0, inv_data, var_mapping):
         x = np.power(inv_data['scaling'], -1) * x0 - inv_data['translation']
+        x = np.hstack([x, 0])
+        # The final coordinate is a dummy value, which is loaded into ScalarVariables
+        # which (1) did not participate in the problem, but (2) whose parent Variable
+        # object did participate in the problem.
         var_values = dict()
         for var_name in var_mapping:
             var_values[var_name] = x[var_mapping[var_name]]
