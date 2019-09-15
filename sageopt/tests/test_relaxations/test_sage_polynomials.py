@@ -203,7 +203,7 @@ class TestSagePolynomials(unittest.TestCase):
         gts = [1 - x, x - (-1)]
         eqs = []
         res, _ = primal_dual_constrained(f, gts, eqs, 0, 2, 0, None)
-        assert abs(res[0] - (-1)) < 1e-6 and  abs(res[1] - (-1)) < 1e-6
+        assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
 
     #
     #   Test multiplier search

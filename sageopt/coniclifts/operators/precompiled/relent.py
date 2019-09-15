@@ -14,7 +14,7 @@
    limitations under the License.
 """
 import numpy as np
-from sageopt.coniclifts.base import Expression, Variable
+from sageopt.coniclifts.base import Expression
 from sageopt.coniclifts.cones import Cone
 
 

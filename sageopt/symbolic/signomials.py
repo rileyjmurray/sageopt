@@ -218,7 +218,6 @@ class Signomial(object):
         self._cache_grad()
         return self._grad
 
-
     @property
     def hess(self):
         """

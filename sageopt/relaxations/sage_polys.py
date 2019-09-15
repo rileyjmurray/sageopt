@@ -589,5 +589,6 @@ def hierarchy_e_k(polys, k):
 
 
 def log_domain_converter(f):
+    # noinspection PyPep8
     fhat = lambda x: f(np.exp(x))
     return fhat

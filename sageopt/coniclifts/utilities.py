@@ -31,13 +31,23 @@ def array_index_iterator(shape):
 
 def sparse_matrix_data_to_csc(data_tuples, index_map=None):
     """
-    :param data_tuples: a list of quadruplets, each of which contains the data necessary to
-    construct a scipy sp matrix.
-    :param num_cols: the number of columns to require of the returned matrix (this parameter
-    is important if some trailing columns of the matrix are zero, but we want them nevertheless).
+    Parameters
+    ----------
+    data_tuples : a list of tuples
+        Each tuple is of the form ``(A_vals, A_rows, A_cols, len)``, where ``A_vals`` is a
+        list, ``A_rows`` is a 1d numpy array, ``A_cols`` is a list, and ``len`` is the number
+        of rows in the matrix block specified by this tuple.
+    index_map : dict
+        If provided, will map ScalarVariable ids to columns of the returned sparse matrix.
+        If none, this function computes and returns an appropriate value for index_map which
+        eliminates all unnecessary ScalarVariables.
 
-    :return: a CSC matrix that is equivalently formed by concatenating the various CSC matrices
-    specified by the quadruplets in "data_tuples".
+    Returns
+    -------
+    (A, index_map) - a tuple (CSC matrix, dict)
+        ``A`` is the sparse matrix formed by concatenating the various CSC matrices
+        specified by the quadruplets in ``data_tuples``, and dropping / reindexing rows
+         per ``index_map``.
     """
     # d in data_tuples is length 4, and has the following format:
     #   d[0] = A_vals, a list
@@ -55,8 +65,8 @@ def sparse_matrix_data_to_csc(data_tuples, index_map=None):
     A_rows = np.hstack([d[1] for d in data_tuples]).astype(int)
     if index_map is None:
         unique_cols = np.sort(np.unique(A_cols))
-        index_map = {c: idx for (idx, c) in enumerate(unique_cols)}
-        index_map = defaultdict(lambda: -1, index_map)
+        index_map = defaultdict(lambda: -1)
+        index_map.update({c: idx for (idx, c) in enumerate(unique_cols)})
         num_cols = unique_cols.size
         # We convert to a defaultdict with dummy value.
         # The dummy value is used to assign values to ScalarVariable objects

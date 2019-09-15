@@ -94,7 +94,7 @@ class TestConstraints(unittest.TestCase):
         n, m = 2, 6
         np.random.seed(0)
         alpha = 10 * np.random.randn(m, n)
-        c0 = np.array([1,2,3,4, -0.5, -0.1])
+        c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
         c = Variable(shape=(m,), name='projected_c0')
         t = Variable(shape=(1,), name='epigraph_var')
         sage_constraint = sage_cone.PrimalSageCone(c, alpha, name='test')
@@ -186,7 +186,7 @@ class TestConstraints(unittest.TestCase):
         del x
         np.random.seed(0)
         alpha = 10 * np.random.randn(m, n)
-        c0 = np.array([1,2,3,4, -0.5, -0.1])
+        c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
         c = Variable(shape=(m,), name='projected_c0')
         t = Variable(shape=(1,), name='epigraph_var')
         sage_constraint = conditional_sage_cone.PrimalCondSageCone(c, alpha, A, b, K, name='test')

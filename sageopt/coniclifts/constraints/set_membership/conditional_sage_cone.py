@@ -157,7 +157,7 @@ class PrimalCondSageCone(SetMembership):
             x_i = self.nu_vars[i].value
             x_i[x_i < 0] = 0
             y_i = np.exp(1) * c_i[idx_set]
-            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + self.b @ lambda_i # <= 0
+            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + self.b @ lambda_i  # <= 0
             relent_viol = abs(max(relent_res, 0))
             eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - self.A.T @ lambda_i  # == 0
             eq_res = eq_res.reshape((-1,))

@@ -15,7 +15,7 @@
 """
 import unittest
 import numpy as np
-from sageopt.relaxations.poly_solution_recovery import mod2linsolve, mod2nullspace, mod2rref, mod2nullspace_basis
+from sageopt.relaxations.poly_solution_recovery import mod2linsolve, mod2rref
 
 
 # noinspection SpellCheckingInspection
