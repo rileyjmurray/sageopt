@@ -61,7 +61,7 @@ Because the generalization follows so transparently from the original idea of SA
 "SAGE certificates" in reference to the most general idea.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
 
    Installation <install>
 

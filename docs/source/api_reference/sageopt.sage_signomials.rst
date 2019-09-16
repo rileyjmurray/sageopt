@@ -24,13 +24,23 @@ functions to help recover solutions from a dual relaxation.
 Primal relaxations have important theoretical properties, but we will not describe those here.
 From a practical standpoint, the main purpose of solving the primal relaxation is to verify that reportedly "optimal"
 primal and dual objectives are close to one another.
-It is a good idea to check this manually, since numerical solvers (such as MOSEK, or ECOS, or SCS) can sometimes
+It is a good idea to check this manually, since numerical solvers (such as MOSEK or ECOS) can sometimes
 report "optimal" status codes even when a returned solution is infeasible or highly-suboptimal.
 
 
 .. autofunction:: sageopt.sig_relaxation
 
 .. autofunction:: sageopt.sig_constrained_relaxation
+
+The documentation for ``sig_constrained_relaxation`` concerning parameters ``p``, ``q``, and ``ell`` (typeset in
+math as :math:`(p, q, \ell)`) is admittedly somewhat vague. There are two places you can look for the precise
+meanings of these parameters: Section 3.4
+of the article `MCW2019 <https://arxiv.org/abs/1907.00814>`_, and appropriate helper functions in sageopt's source code.
+Many readers will find it difficult to understand Section 3.4 of
+`MCW2019 <https://arxiv.org/abs/1907.00814>`_ without first reading all the article's Section 2 (which is
+deliberately written as background for non-experts). When it comes to souce code, the best place to look for
+parameters ``p`` and ``q`` is the function ``make_sig_lagrangian``, which we describe below.
+
 
 .. autofunction:: sageopt.relaxations.sage_sigs.make_sig_lagrangian
 

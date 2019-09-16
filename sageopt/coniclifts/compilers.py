@@ -30,11 +30,11 @@ def compile_problem(objective, constraints):
     if not objective.is_affine():
         raise NotImplementedError()
     # Generate a conic system that is feasible iff the constraints are feasible.
-    A, b, K, index_map, var_name_to_locs = compile_constrained_system(constraints)
+    A, b, K, svid2col, var_name_to_locs = compile_constrained_system(constraints)
     # Find all Variable objects in the model (user-defined, or auxilliary).
     all_vars = find_variables_from_constraints(constraints + [objective == 0])
     # Generate the vector for the objective function.
-    c, c_offset = compile_linear_expression(objective, index_map)
+    c, c_offset = compile_linear_expression(objective, svid2col)
     if c_offset != 0:
         warnings.warn('A constant-term ' + str(c_offset) + ' is being dropped from the objective.')
     c = np.array(c.todense()).flatten().astype(float)
@@ -42,6 +42,43 @@ def compile_problem(objective, constraints):
 
 
 def compile_constrained_system(constraints):
+    """
+    Find all Variable objects which participate in at least one of the specified constraints.
+    Construct a vectorized representation of the set of variable values which satisfy the
+    constraints ("the feasible set"). Return both the vectorized representation of the feasible
+    set, and dictionaries which enable mapping the vectorized representation back to user-defined
+    Variable objects.
+
+    Parameters
+    ----------
+    constraints : list of coniclifts Constraint objects
+
+    Returns
+    -------
+    A : CSC-format sparse matrix
+        The matrix appearing in the vectorized representation of the feasible set.
+    b : ndarray
+        The offset vector appearing in the vectorized representation of the feasible set.
+    K : list of coniclifts Cone objects
+        The cartesian product of these cones (in order) defines the convex cone appearing
+        in the vectorized representation of the feasible set.
+    svid2col : Dict[int, int]
+        A map from a ScalarVariable's ``id`` to the index of the column in ``A`` where the ScalarVariable
+        participates in the conic system. If the given ScalarVariable does not participate in the conic
+        system, its ``id`` maps to ``-1``.
+    var_name_to_locs : Dict[str, ndarray]
+        A map from a Variable's ``name`` field to a numpy array. If ``myvar`` is a coniclifts
+        Variable appearing in the system defined by ``constraints``, then a point ``x``
+        satisfying :math:`A x + b \in K` maps to a feasible value for ``myvar`` by ::
+
+            x0 = np.hstack([x, 0])
+            myvar_val = x0[var_name_to_locs[myvar.name]]
+
+        In particular, we guarantee ``myvar.shape == var_name_to_locs[myvar.name].shape``.
+        Augmenting ``x`` by zero to create ``x0`` reflects a convention that if a component of
+        a Variable does not affect the constraints, that component is automatically assigned
+        the value zero.
+    """
     if any(not isinstance(c, Constraint) for c in constraints):
         raise RuntimeError('compile_constraints( ... ) only accepts iterables of Constraint objects.')
     variables = find_variables_from_constraints(constraints)
@@ -61,16 +98,16 @@ def compile_constrained_system(constraints):
             elementwise_constrs.append(c)
         else:
             raise RuntimeError('Unknown argument')
-    A, b, K, index_map = conify_constraints(elementwise_constrs, setmem_constrs)
+    A, b, K, svid2col = conify_constraints(elementwise_constrs, setmem_constrs)
     check_dimensions(A, b, K)
     variables.sort(key=lambda v: v.leading_scalar_variable_id())
     var_indices = []
     for v in variables:
         vids = np.array(v.scalar_variable_ids, dtype=int)
-        vi = np.array([index_map[idx] for idx in vids])
+        vi = np.array([svid2col[idx] for idx in vids])
         var_indices.append(vi)
     var_name_to_locs = make_variable_map(variables, var_indices)
-    return A, b, K, index_map, var_name_to_locs
+    return A, b, K, svid2col, var_name_to_locs
 
 
 #
@@ -147,7 +184,6 @@ def compile_linear_expression(expr, index_map):
     b = lin_cone_data[3]
     matrix_data = (lin_cone_data[0], lin_cone_data[1], lin_cone_data[2], b.size)
     A, index_map = util.sparse_matrix_data_to_csc([matrix_data], index_map)
-    A = A
     return A, b
 
 

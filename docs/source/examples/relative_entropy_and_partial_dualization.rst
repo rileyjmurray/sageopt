@@ -1,16 +1,19 @@
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-Optimization Examples
-=====================
+Examples
+========
 
 The examples shown here appear in `the 2019 article <https://arxiv.org/abs/1907.00814>`_ by Murray, Chandrasekaran,
 and Wierman, titled *Signomial and Polynomial Optimization via Relative Entropy and Partial Dualization*. That paper
 introduced conditional SAGE certificates.
 
+Optimization Examples
+---------------------
+
 
 Example 1 (signomial)
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 We want to solve a constraint signomial program in three variables.
 
@@ -24,12 +27,11 @@ We want to solve a constraint signomial program in three variables.
     \end{align*}
 
 It's often easier to specify a signomial program by defining symbols ``y``,
-which are related to variables ``x`` by ``y = exp(x)``. ::
+which are related to variables ``x`` by ``y = exp(x)``. You can get a hold of these symbols ``y`` by using the
+function ``standard_sig_monomials``, and providing a dimension of your desired variable. ::
 
-    from sageopt import conditional_sage_data, sig_relaxation
-    from sageopt import standard_sig_monomials, sig_solrec
-    n = 3
-    y = standard_sig_monomials(n)
+    import sageopt as so
+    y = so.standard_sig_monomials(3)
     f = 0.5 * y[0] * y[1] ** -1 - y[0] - 5 * y[1] ** -1
     gts = [100 -  y[1] * y[2] ** -1 - y[1] - 0.05 * y[0] * y[2],
            y[0] - 70,
@@ -39,14 +41,21 @@ which are related to variables ``x`` by ``y = exp(x)``. ::
            30 - y[1],
            21 - y[2]]
     eqs = []
-    X = conditional_sage_data(f, gts, eqs)
 
-We will use the dual formulation for this problem. The dual formulation is used because we want to recover a solution,
-rather than just produce a bound on the optimization problem. We begin by solving a level ``ell=0`` relaxation. ::
+Next we will pass our problem through a function called ``conditional_sage_data``. This function parses the given
+constraint signomials, and infers any which can be written in a tractable convex form with respect to the
+optimization variable ``x``
+. ::
 
-    dual = sig_relaxation(f, form='dual', ell=0, X=X)
+  X = so.conditional_sage_data(f, gts, eqs)
+
+For this problem, it just so happens that all constraints can be written in a convex form. Taking this as given, we use
+the function ``sig_relaxation``
+for the resulting problem. The dual formulation is used because we want to recover a solution. ::
+
+    dual = so.sig_relaxation(f, 'dual', X=X)
     dual.solve(verbose=False)
-    solutions = sig_solrec(dual)
+    solutions = so.sig_solrec(dual)
     best_soln = solutions[0]
     print(best_soln)
 
@@ -65,13 +74,13 @@ We can certify that the solution is actually much closer to optimality than the 
 easily construct and solve a level ``ell=3`` SAGE relaxation to produce a stronger lower bound on this minimization
 problem. ::
 
-    dual = sig_relaxation(f, form='dual', ell=3, X=X)
+    dual = so.sig_relaxation(f, 'dual', ell=3, X=X)
     dual.solve(verbose=False)
     print('The level 3 SAGE bound is ... ')
     print('\t' + str(dual.value))  # about  -147.6666
 
 Example 2 (signomial)
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 We want to solve the following equality-constrained signomial program.
 
@@ -93,7 +102,8 @@ difficult. Thus we show this problem in two forms: once with the equality constr
 constraint is used to *define* a value of :math:`P` (which we can then substitute into the rest of the formulation).
 First we show the case with the equality constraint. ::
 
-   x = standard_sig_monomials(4)
+   import sageopt as so
+   x = so.standard_sig_monomials(4)
    A = x[:3]
    P = x[3]
    f = 1e4 * sum(A)
@@ -109,9 +119,9 @@ First we show the case with the equality constraint. ::
    ]
    gts = main_gts + bounds
    eqs = [70.7107 / A[0] + P / A[0] - P / A[2]]
-   X = conditional_sage_data(f, bounds, [])
-   prim = sig_constrained_relaxation(f, main_gts, eqs, 'primal', 0, 1, 0, X)
-   dual = sig_constrained_relaxation(f, main_gts, eqs, 'dual', 0, 1, 0, X)
+   X = so.conditional_sage_data(f, bounds, [])
+   prim = so.sig_constrained_relaxation(f, main_gts, eqs, 'primal', X=X)
+   dual = so.sig_constrained_relaxation(f, main_gts, eqs, 'dual', X=X)
    prim.solve(verbose=False)
    dual.solve(verbose=False)
    print('\n')
@@ -119,10 +129,10 @@ First we show the case with the equality constraint. ::
    print(dual.value)
 
 The equality constraint in this problem creates an unnecessary challenge in solution recovery. Since we usually want
-to recover optimal solutions, we reformulate the problem after substituting :math:`P \leftarrow 70.7107 A_3 / (A_1 + A_3)`, and clearing the denominator :math:`(A_1 + A_3)` from constraints which involved :math:`P`. ::
+to recover optimal solutions, we reformulate the problem by substituting :math:`P \leftarrow 70.7107 A_3 / (A_1 + A_3)
+`, and clearing the denominator :math:`(A_1 + A_3)` from constraints which involved :math:`P`. ::
 
-   n = 3
-   A = standard_sig_monomials(n)
+   A = so.standard_sig_monomials(3)
    f = 1e4 * sum(A)
    main_gts = [
        1e4 + 1e-2 * A[2] / A[0] - 7.0711 / A[0],
@@ -136,17 +146,17 @@ to recover optimal solutions, we reformulate the problem after substituting :mat
        A[0] - 69.7107 * A[2], (1e8 * 70.7107 - 1) - A[0] / A[2]
    ]
    gts = main_gts + bounds
-   X = conditional_sage_data(f, gts, [])
-   dual = sig_constrained_relaxation(f, main_gts, [], 'dual', 0, 1, 0, X)
+   X = so.conditional_sage_data(f, gts, [])
+   dual = so.sig_constrained_relaxation(f, main_gts, [], 'dual', X=X)
    dual.solve()
    print('\n')
    print(dual.value)
-   solns = sig_solrec(dual)
+   solns = so.sig_solrec(dual)
    print(f(solns[0]))
 
 
 Example 3 (polynomial)
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 In this example, we minimize
 
@@ -156,24 +166,21 @@ In this example, we minimize
 
 over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
 
-
-   from sageopt import standard_poly_monomials, conditional_sage_data
-   from sageopt import poly_solrec, poly_constrained_relaxation
    import numpy as np
-
-   n = 7
-   x = standard_poly_monomials(n)
+   import sageopt as so
+   x = so.standard_poly_monomials(7)
    f = 0
-   for i in range(n):
-       sel = np.ones(n, dtype=bool)
+   for i in range(7):
+       sel = np.ones(7, dtype=bool)
        sel[i] = False
        f -= 64 * np.prod(x[sel])
-   gts = [0.25 - x[i]**2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
-   X = conditional_sage_data(f, gts, [])
-   dual = poly_constrained_relaxation(f, gts=[], eqs=[], form='dual', X=X)
+       # ^ use simple NumPy functions to construct Polynomials!
+   gts = [0.25 - x[i]**2 for i in range(7)]  # -.5 <= x[i] <= .5
+   X = so.conditional_sage_data(f, gts, [])
+   dual = so.poly_constrained_relaxation(f, [], [], 'dual', X=X)
    dual.solve(verbose=False, solver='MOSEK')
    print()
-   solns = poly_solrec(dual)
+   solns = so.poly_solrec(dual)
    for sol in solns:
        print(sol)
 
@@ -181,7 +188,7 @@ You can also try this example with ECOS. When using ECOS, you might want to use 
 in ``sageopt.local_refinement``.
 
 Example 4 (polynomial)
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 We want to solve a degree six polynomial optimization problem in six variables.
 
@@ -200,10 +207,9 @@ We want to solve a degree six polynomial optimization problem in six variables.
 
 The ``sageopt`` approach to this problem is to write it first as a signomial program, and then perform solution recovery with consideration to the underlying polynomial structure. The solution recovery starts with ``sig_solrec`` as normal, but then we refine the solution with a special function ``local_refine_polys_from_sigs``. ::
 
-   from sageopt import standard_sig_monomials, local_refine_polys_from_sigs
-   from sageopt import sig_constrained_relaxation, sig_solrec
+   import sageopt as so
 
-   x = standard_sig_monomials(6)
+   x = so.standard_sig_monomials(6)
    f = x[0]**6 - x[1]**6 + x[2]**6 - x[3]**6 + x[4]**6 - x[5]**6 + x[0] - x[1]
 
    expr1 = 2*x[0]**6 + 3*x[1]**2 + 2*x[0]*x[1] + 2*x[2]**6 + 3*x[3]**2 + 2*x[2]*x[3] + 2*x[4]**6 + 3*x[5]**2 + 2*x[4]*x[5]
@@ -216,10 +222,10 @@ The ``sageopt`` approach to this problem is to write it first as a signomial pro
    gts = [expr3, expr4, expr5, 1 - expr1, 1 - expr2, 1 - expr3, 1 - expr4, 1 - expr5]
    eqs = []
 
-   dual = sig_constrained_relaxation(f, gts, eqs, 'dual', 1, 1, 0)
+   dual = so.sig_constrained_relaxation(f, gts, eqs, 'dual', p=1, q=1, ell=0)
    dual.solve(verbose=False, solver='MOSEK')  # ECOS fails
-   x0 = sig_solrec(dual)[0]
-   x_star = local_refine_polys_from_sigs(f, gts, eqs, x0)
+   x0 = so.sig_solrec(dual)[0]
+   x_star = so.local_refine_polys_from_sigs(f, gts, eqs, x0)
 
    print()
    print(dual.value)
@@ -229,7 +235,7 @@ The ``sageopt`` approach to this problem is to write it first as a signomial pro
 
 
 Nonnegativity Examples
-======================
+----------------------
 
 Although sageopt is designed around optimization, the mechanism by which sageopt operates is to certify nonnegativity
 by decomposing a given function into a "Sum of AGE-functions". These AGE functions are nonnegative, and can be proven
@@ -238,7 +244,7 @@ find yourself in this situation if a numerical solver seemed to struggle with a 
 that. Here we show how to get a hold on these AGE functions, from a given SAGE relaxation.
 
 Example 1 (signomial)
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Consider the following optimization problem:
 
@@ -253,15 +259,14 @@ Consider the following optimization problem:
 
 We can produce a bound on this minimum with a primal SAGE relaxation. ::
 
-   from sageopt import conditional_sage_data, sig_relaxation
-   from sageopt import standard_sig_monomials, Signomial
-   y = standard_sig_monomials(3)
+   import sageopt as so
+   y = so.standard_sig_monomials(3)
    f = 0.5 * y[0] * y[1] ** -1 - y[0] - 5 * y[1] ** -1
    gts = [100 -  y[1] * y[2] ** -1 - y[1] - 0.05 * y[0] * y[2],
           y[0] - 70, y[1] - 1, y[2] - 0.5,
           150 - y[0], 30 - y[1], 21 - y[2]]
-   X = conditional_sage_data(f, gts, [])
-   prim = sig_relaxation(f, form='primal', ell=0, X=X)
+   X = so.conditional_sage_data(f, gts, [])
+   prim = so.sig_relaxation(f, form='primal', ell=0, X=X)
    prim.solve(solver='ECOS')
    print(prim.value)  # about -147.857
 
@@ -269,19 +274,19 @@ As long as the solver (here, ECOS) succeeds in solving the problem, the function
 nonnegative over the set represented by ``X``. The intended proof that ``f - prim.value`` is nonnegative comes from
 the AGE functions participating in its decomposition. We can recover those functions as follows ::
 
-   sage_constraint = prim.user_cons[0]
+   sage_constraint = prim.user_cons[0]  # a PrimalCondSageCone object
    alpha = sagecon.lifted_alpha[:, :f.n]
    agefunctions = []
    for ci in sagecon.age_vectors.values():
-       s = Signomial(alpha, ci.value)
+       s = so.Signomial(alpha, ci.value)
        agefunctions.append(s)
 
-You should find that one of these AGE functions has very small positive coefficients, and large negative term. We can
+You should find that one of these AGE functions has very small positive coefficients, and a large negative term. We can
 investigate this suspicious AGE function further. Specifically, we can transform the suspicious AGE function into a
 convex function, and then solve a constrained convex optimization problem using a function from ``scipy``. ::
 
-   suspect_age = agefunctions[1]
-   convex_suspect_age = y[1] * suspect_age
+   suspicious_age = agefunctions[1]
+   convexified_suspicious_age = y[1] * suspicious_age
    import numpy as np
    from scipy.optimize import fmin_cobyla
    def sample_initial_point():
@@ -290,7 +295,9 @@ convex function, and then solve a constrained convex optimization problem using 
        y3 = 0.5 + 20.5 * np.random.rand()
        x0 = np.log([y1, y2, y3])
        return x0
-   fmin_cobyla(convex_suspect_age, sample_initial_point(), gts, disp=1, maxfun=1e5, rhoend=1e-7)
+   fmin_cobyla(convexified_suspicious_age,
+               sample_initial_point(), gts,
+               disp=1, maxfun=1e5, rhoend=1e-7)
 
 You should find that no matter how many initial conditions you provide to ``scipy``'s solver, the reported optimal
 objective is nonnegative.

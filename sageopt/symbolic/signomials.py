@@ -454,7 +454,7 @@ class Signomial(object):
         Returns
         -------
         f : Polynomial
-            For every elementwise vector ``x``, we have ``self(x) == f(np.exp(x))``.
+            For every vector ``x``, we have ``self(x) == f(np.exp(x))``.
         """
         from sageopt.symbolic.polynomials import Polynomial
         f = Polynomial(self.alpha, self.c)

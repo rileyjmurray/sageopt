@@ -538,7 +538,7 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
         bars denote elementwise absolute value, and the logarithm is meant elementwise.)
         The intersection of all of these sets is contained within
 
-                ``{log(|x|) : g(|x|) >= 0 for all g in gts, |x| > 0}``.
+                ``{log(|x|) : g(|x|) >= 0 for g in gts, |x| > 0}``.
 
         ``X['eqs']`` is defined similarly, but for equality constraints.
 

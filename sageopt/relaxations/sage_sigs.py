@@ -342,14 +342,6 @@ def sig_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None
     Returns
     -------
     prob : sageopt.coniclifts.Problem
-
-    Notes
-    -----
-    The exact meaning of parameters ``p`` and ``q`` is determined by the function ``make_sig_lagrangian``.
-
-    The meaning of the parameter ``ell`` is most clear from the implementation of ``sig_constrained_primal``,
-    although both ``sig_constrained_primal`` and ``sig_constrained_dual`` contain logic for handling this parameter.
-
     """
     if form.lower()[0] == 'd':
         prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X)

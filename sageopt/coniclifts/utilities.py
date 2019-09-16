@@ -73,7 +73,7 @@ def sparse_matrix_data_to_csc(data_tuples, index_map=None):
         # whose parent Variable participates in an optimization problem,
         # even when the ScalarVariable itself does not appear in the problem.
     else:
-        num_cols = np.max(list(index_map.values())) + 1
+        num_cols = max(index_map.values()) + 1
     A_cols = np.array([index_map[ac] for ac in A_cols])
     num_rows = np.max(A_rows) + 1
     A = sp.csc_matrix((A_vals, (A_rows, A_cols)),
