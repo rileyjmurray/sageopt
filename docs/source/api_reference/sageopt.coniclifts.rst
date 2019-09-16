@@ -1,5 +1,5 @@
-``sageopt.coniclifts`` is a basic modeling language.
-====================================================
+``coniclifts`` is ``sageopt``'s backend
+=======================================
 
 Sageopt does not solve SAGE relaxations on its own; it relies on third party convex optimization solvers, such as
 ECOS or MOSEK. These solvers require input in very specific standard-forms. *Coniclifts*
@@ -132,4 +132,3 @@ The most important function in coniclifts' compilation process is given below.
 The fourth return argument mentions "ScalarVariable" objects, which users of coniclifts need not interact with directly.
 
 .. autofunction:: sageopt.coniclifts.compilers.compile_constrained_system
-
