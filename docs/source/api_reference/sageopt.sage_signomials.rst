@@ -4,27 +4,28 @@ Working with SAGE signomials.
 =============================
 
 
-optimization
+Optimization
 ------------
 
-There are two main functions for generating SAGE relaxations of signomial programs.
-
-The simpler function is called ``sig_relaxation``, it applies to unconstrained problems, or
-constrained problems where the feasible set :math:`X` has a tractable convex representation.
-
-The more complicated function is called ``sig_constrained_relaxation``, it applies when the problem
-includes explicit signomial inequality constraints (:math:`g(x) \geq 0`) or equality constraints (:math:`g(x) = 0`).
+There are two main functions for generating SAGE relaxations of signomial programs: ``sig_relaxation`` and
+``sig_constrained_relaxation``. Both of these functions can handle constraints, but they differ in
+which constraints they allow. ``sig_relaxation`` requires that all constraints are incorporated into
+a set :math:`X`, which has a tractable convex representation. In more general settings,
+you can use ``sig_constrained_relaxation``. In addition to convex constraints represented by :math:`X`, this function
+allows explicit signomial inequality constraints
+(:math:`g(x) \geq 0`) and equality constraints (:math:`g(x) = 0`).
 Explicit signomial constraints are necessary when the feasible set is nonconvex,
-although explicit constraints can sometimes be useful even when the feasible set is convex.
+although they can be useful in other contexts.
 
-These functions allow the user to specify whether they want to construct primal-form or dual-form SAGE
-relaxations. Generally speaking, the dual is more useful, because sageopt includes additional
-functions to help recover solutions from a dual relaxation. Primal relaxations have
-important theoretical properties, but we will not describe those here.
-From a practical standpoint, the main purpose of constructing and solving the primal relaxation is to verify that
-primal and dual objectives are close to one another. It is a good idea to check this manually, since numerical
-solvers (such as MOSEK, or ECOS, or SCS) can sometimes report "optimal" status codes even when a returned solution is
-infeasible or highly-suboptimal.
+Both ``sig_relaxation`` and ``sig_constrained_relaxation`` allow the user to specify whether they want primal-form or
+dual-form SAGE
+relaxations. Generally speaking, the dual is more useful. This is because sageopt includes additional
+functions to help recover solutions from a dual relaxation.
+Primal relaxations have important theoretical properties, but we will not describe those here.
+From a practical standpoint, the main purpose of solving the primal relaxation is to verify that reportedly "optimal"
+primal and dual objectives are close to one another.
+It is a good idea to check this manually, since numerical solvers (such as MOSEK, or ECOS, or SCS) can sometimes
+report "optimal" status codes even when a returned solution is infeasible or highly-suboptimal.
 
 
 .. autofunction:: sageopt.sig_relaxation
@@ -34,7 +35,7 @@ infeasible or highly-suboptimal.
 .. autofunction:: sageopt.relaxations.sage_sigs.make_sig_lagrangian
 
 
-certificates of nonnegativity
+Certificates of nonnegativity
 -----------------------------
 
 .. autofunction:: sageopt.relaxations.sage_sigs.sage_feasibility
@@ -42,7 +43,7 @@ certificates of nonnegativity
 .. autofunction:: sageopt.relaxations.sage_sigs.sage_multiplier_search
 
 
-helper functions
+Helper functions
 ----------------
 
 .. autofunction:: sageopt.relaxations.sage_sigs.conditional_sage_data
