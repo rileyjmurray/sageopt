@@ -655,6 +655,11 @@ class Variable(Expression):
         else:
             Variable.__unstructured_populate__(obj, name)
             raise UserWarning('The variable with name ' + name + ' was declared with an unknown property.')
+        if obj._scalar_variable_ids[-1] > np.iinfo(np.int).max:
+            # ScalarVariable objects can no longer be properly tracked
+            msg = 'An index used by coniclifts\' backend has overflowed. \n'
+            msg += 'Call coniclifts.clear_variable_indices(), and build your model again.'
+            raise RuntimeError(msg)
         return obj
 
     # noinspection PyProtectedMember

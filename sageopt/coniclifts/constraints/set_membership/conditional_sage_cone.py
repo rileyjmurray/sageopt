@@ -28,11 +28,11 @@ import warnings
 from scipy.sparse import issparse
 import scipy.special as special_functions
 
-_ALLOWED_CONES_ = {'+', 'S', 'P', 'e', '0'}
+_ALLOWED_CONES_ = {'+', 'S', 'e', '0'}
 
 _AGGRESSIVE_REDUCTION_ = True
 
-_EXPENSIVE_REDUCTION_ = True
+_ELIMINATE_TRIVIAL_AGE_CONES_ = True
 
 _REDUCTION_SOLVER_ = 'ECOS'
 
@@ -467,7 +467,7 @@ class ExpCoverHelper(object):
                     for j in range(self.m):
                         if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
                             curr_cover[j] = False
-        if _EXPENSIVE_REDUCTION_:
+        if _ELIMINATE_TRIVIAL_AGE_CONES_:
             for i in self.U_I:
                 if np.any(expcovers[i]):
                     mat = self.alpha[expcovers[i], :] - self.alpha[i, :]

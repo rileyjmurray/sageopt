@@ -27,7 +27,7 @@ import scipy.special as special_functions
 import warnings
 
 
-_EXPENSIVE_REDUCTION_ = True
+_ELIMINATE_TRIVIAL_AGE_CONES_ = True
 
 _REDUCTION_SOLVER_ = 'ECOS'
 
@@ -395,7 +395,7 @@ class ExpCoverHelper(object):
         for i in self.U_I:
             if np.count_nonzero(expcovers[i]) == 1:
                 expcovers[i][:] = False
-        if _EXPENSIVE_REDUCTION_:
+        if _ELIMINATE_TRIVIAL_AGE_CONES_:
             for i in self.U_I:
                 if np.any(expcovers[i]):
                     mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
