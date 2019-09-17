@@ -155,10 +155,17 @@ def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
 
 def _make_dummy_lagrangian(f, gts, eqs):
     dummy_gamma = cl.Variable(shape=())
-    dummy_slacks = cl.Variable(shape=(len(gts),))
-    dummy_multipliers = cl.Variable(shape=(len(eqs)))
-    ineq_term = sum([gts[i] * dummy_slacks[i] for i in range(len(gts))])
-    eq_term = sum([eqs[i] * dummy_multipliers[i] for i in range(len(eqs))])
+    if len(gts) > 0:
+        dummy_slacks = cl.Variable(shape=(len(gts),))
+        ineq_term = sum([gts[i] * dummy_slacks[i] for i in range(len(gts))])
+    else:
+        ineq_term = 0
+    if len(eqs) > 0:
+        dummy_multipliers = cl.Variable(shape=(len(eqs),))
+        eq_term = sum([eqs[i] * dummy_multipliers[i] for i in range(len(eqs))])
+    else:
+        eq_term = 0
     dummy_L = f - dummy_gamma - ineq_term - eq_term
     cl.clear_variable_indices()
     return dummy_L
+

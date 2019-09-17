@@ -16,7 +16,7 @@
 import sageopt.coniclifts as cl
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations.symbolic_correspondences import moment_reduction_array
-from sageopt.relaxations.sig_solution_recovery import is_feasible
+from sageopt.relaxations.sig_solution_recovery import is_feasible, _make_dummy_lagrangian
 import numpy as np
 from scipy.optimize import fmin_cobyla
 import itertools
@@ -386,14 +386,3 @@ def mod2linsolve(A, b):
             x[pc] = (b1[row] - np.dot(A1[row, (pc+1):], x[(pc+1):])) % 2
             row -= 1
         return x
-
-
-def _make_dummy_lagrangian(f, gts, eqs):
-    dummy_gamma = cl.Variable(shape=())
-    dummy_slacks = cl.Variable(shape=(len(gts),))
-    dummy_multipliers = cl.Variable(shape=(len(eqs)))
-    ineq_term = sum([gts[i] * dummy_slacks[i] for i in range(len(gts))])
-    eq_term = sum([eqs[i] * dummy_multipliers[i] for i in range(len(eqs))])
-    dummy_L = f - dummy_gamma - ineq_term - eq_term
-    cl.clear_variable_indices()
-    return dummy_L

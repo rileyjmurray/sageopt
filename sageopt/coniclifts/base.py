@@ -655,6 +655,8 @@ class Variable(Expression):
         else:
             Variable.__unstructured_populate__(obj, name)
             raise UserWarning('The variable with name ' + name + ' was declared with an unknown property.')
+        if obj.size == 0:
+            raise RuntimeError('Cannot declare Variables with zero components.')
         if obj._scalar_variable_ids[-1] > np.iinfo(np.int).max:
             # ScalarVariable objects can no longer be properly tracked
             msg = 'An index used by coniclifts\' backend has overflowed. \n'
