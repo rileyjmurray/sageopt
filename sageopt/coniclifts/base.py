@@ -630,6 +630,62 @@ class Expression(np.ndarray):
 
 
 class Variable(Expression):
+    """
+    An abstraction for a symbol appearing in constraint sets, or optimization problems.
+
+    Variable objects are a custom subclass of numpy ndarrays.
+
+    Parameters
+    ----------
+    shape : tuple
+
+        The dimensions of the Variable object. Defaults to ``shape=()``.
+
+    name : str
+
+        A string which should uniquely identify this Variable object in all models
+        where it appears. Ideally, this string should be human-readable.
+        Defaults to ``'unnamed_var_N'``,  where ``N`` is an integer.
+
+    var_properties : list of str
+
+        Currently, the only accepted forms of this argument are the empty
+        list (in which case an unstructured Variable is returned), or a list
+        containing the string ``'symmetric'`` (in which case a symmetric matrix
+        Variable is returned).
+
+    Examples
+    --------
+
+    The symbol you use in the Python interpreter does not need to match the "name" of a Variable. ::
+
+        x = Variable(shape=(3,), name='my_name')
+
+    A Variable object can take on any dimension that a numpy ndarray could take on. ::
+
+        y = Variable(shape=(10,4,1,2), name='strange_shaped_var')
+
+
+    Notes
+    -----
+
+    Upon construction, Variable objects are "proper". If you index into them, they are
+    still considered Variable objects, but they no longer contain information about
+    all of their components. If ``v.is_proper() == False``, then the original Variable
+    object can be recovered with ``original_v = v.base``. A Variable object's ``name`` field
+    only uniquely determines the "proper" version of that Variable.::
+
+        x = Variable(shape=(3,), name='x')
+        print(type(x))  # sageopt.coniclifts.base.Variable
+        print(x.is_proper())  # True
+
+        y = x[1:]
+        print(type(y))  # sageopt.coniclifts.base.Variable
+        print(y.is_proper())  # False
+        print(x.name == y.name)  # True
+        print(id(x) == id(y.base))  # True; these exist at the same place in memory.
+
+    """
 
     _UNNAMED_VARIABLE_CALL_COUNT = 0
 
@@ -746,6 +802,19 @@ class Variable(Expression):
             return self[(0,) * len(self.shape)].scalar_variables()[0].id
 
     def set_scalar_variables(self, value):
+        """
+        Assign numeric values to the components of this Variable object.
+
+        Parameters
+        ----------
+        value : ndarray
+
+            We must have value.shape == self.shape.
+
+        Returns
+        -------
+        None
+        """
         if value.shape != self.shape:
             raise RuntimeError('Dimension mismatch.')
         for tup in array_index_iterator(self.shape):
@@ -755,6 +824,11 @@ class Variable(Expression):
 
     @property
     def scalar_variable_ids(self):
+        """
+        Each component of this Variable object (i.e. each "scalar variable") contains
+        an index which uniquely identifies it in all models where this Variable appears.
+        Return the list of these indices.
+        """
         if self.is_proper():
             return self._scalar_variable_ids
         else:
@@ -762,6 +836,10 @@ class Variable(Expression):
 
     @property
     def name(self):
+        """
+        A Variable object's name is a string which uniquely identifies the object
+        in all models where it appeas
+        """
         if hasattr(self, '_name'):
             return self._name
         else:
@@ -775,6 +853,10 @@ class Variable(Expression):
 
     @property
     def generation(self):
+        """
+        An internally-maintained index. Variable objects of different "generation" cannot
+        participate in a common optimization problem.
+        """
         return self._generation
 
     def is_proper(self):

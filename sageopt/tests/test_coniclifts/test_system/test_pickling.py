@@ -54,6 +54,7 @@ class TestPickling(unittest.TestCase):
         for v in prob.all_variables:
             if v.name == 'x':
                 x = v
+                assert x.is_proper()
                 break
         x_star = x.value
         assert np.allclose(x_star, expect_x, atol=1e-4)
@@ -69,6 +70,7 @@ class TestPickling(unittest.TestCase):
         x = None
         for v in prob.all_variables:
             if v.name == 'x':
+                assert v.is_proper()
                 x = v
                 break
         x_star = x.value

@@ -239,9 +239,15 @@ def find_variables_from_constraints(constraints):
     variables = []
     for c in constraints:
         for v in c.variables():
-            if id(v) not in variable_ids:
-                variable_ids.add(id(v))
-                variables.append(v)
+            if v.is_proper():
+                vid = id(v)
+                prop_v = v
+            else:
+                vid = id(v.base)
+                prop_v = v.base
+            if vid not in variable_ids:
+                variable_ids.add(vid)
+                variables.append(prop_v)
     return variables
 
 

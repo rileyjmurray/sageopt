@@ -136,8 +136,7 @@ API for key classes
 -------------------
 
 .. autoclass:: sageopt.coniclifts.Variable
-
-.. autoclass:: sageopt.coniclifts.Expression
+    :members:
 
 .. autoclass:: sageopt.coniclifts.Problem
 
@@ -150,3 +149,10 @@ API for key classes
 .. autoclass:: sageopt.coniclifts.DualSageCone
 
 .. autoclass:: sageopt.coniclifts.PrimalProductCone
+
+
+The Expression system
+---------------------
+
+
+.. autoclass:: sageopt.coniclifts.Expression
