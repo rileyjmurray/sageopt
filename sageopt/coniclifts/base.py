@@ -781,9 +781,28 @@ class Variable(Expression):
     def __rmatmul__(self, other):
         return Expression.__rmatmul__(self.view(Expression), other)
 
+    def __reduce__(self):
+        # https://stackoverflow.com/questions/26598109/preserve-custom-attributes-when-pickling-subclass-of-numpy-array
+        # Get the parent's __reduce__ tuple
+        pickled_state = super(Variable, self).__reduce__()
+        # Create our own tuple to pass to __setstate__
+        extra_info = (self._is_proper, self._name, self._var_properties,
+                      self._scalar_variable_ids, self._generation)
+        new_state = pickled_state[2] + extra_info
+        # Return a tuple that replaces the parent's __setstate__ tuple with our own
+        desired_reduce = (pickled_state[0], pickled_state[1], new_state)
+        return desired_reduce
+
     # noinspection PyMethodOverriding
     def __setstate__(self, state):
-        np.ndarray.__setstate__(self, state)
+        # set the custom attributes
+        self._generation = state[-1]
+        self._scalar_variable_ids = state[-2]
+        self._var_properties = state[-3]
+        self._name = state[-4]
+        self._is_proper = state[-5]
+        # fall back on the
+        np.ndarray.__setstate__(self, state[:-5])
         self.relink_scalar_variables()
 
     def is_constant(self):
@@ -837,8 +856,8 @@ class Variable(Expression):
     @property
     def name(self):
         """
-        A Variable object's name is a string which uniquely identifies the object
-        in all models where it appeas
+        A Variable object's name is a string which should uniquely identify the object
+        in all models where it appears, provided ``self.is_proper() == True``.
         """
         if hasattr(self, '_name'):
             return self._name
@@ -860,7 +879,7 @@ class Variable(Expression):
         return self._generation
 
     def is_proper(self):
-        return hasattr(self, '_is_proper')
+        return getattr(self, '_is_proper', False)
 
     def relink_scalar_variables(self):
         if not self.is_proper():
