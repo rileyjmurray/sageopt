@@ -29,12 +29,60 @@ def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8):
 
 
 def local_refine(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000):
-    res = fmin_cobyla(f, x0, gts + eqs + [-g for g in eqs],
+    """
+    Use SciPy's COBYLA solver in an attempt to find a minimizer of ``f`` subject to
+    inequality constraints in ``gts`` and equality constraints in ``eqs``.
+
+    Parameters
+    ----------
+    f : a callable function
+        The minimization objective.
+    gts : a list of callable functions
+        Each ``g in gts`` specifies an inequality constraint ``g(x) >= 0``.
+    eqs : a list of callable functions
+        Each ``g in eqs`` specifies an equality constraint ``g(x) == 0``.
+    x0 : ndarray
+        An initial point for COBYLA.
+    rhobeg : float
+        Controls the size of COBYLA's initial search space.
+    rhoend : float
+        Termination criteria, controlling the size of COBYLA's smallest search space.
+    maxfun : int
+        Termination criteria, bounding the number of COBYLA's iterations.
+    Returns
+    -------
+    x : ndarray
+        The solution returned by COBYLA.
+
+    """
+    x = fmin_cobyla(f, x0, gts + eqs + [-g for g in eqs],
                       rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun)
-    return res
+    return x
 
 
 def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
+    """
+    Recover a list of candidate solutions from a dual SAGE relaxation. Solutions are
+    guaranteed to be feasible up to specified tolerances, but not necessarily optimal.
+
+    Parameters
+    ----------
+    prob : coniclifts.Problem
+        A dual-form SAGE relaxation.
+    ineq_tol : float
+        The amount by which recovered solutions can violate inequality constraints.
+    eq_tol : float
+        The amount by which recovered solutions can violate equality constraints.
+    skip_ls : bool
+        Whether or not to skip constrained least-squares solution recovery.
+
+    Returns
+    -------
+    sols : list of ndarrays
+        A list of feasible solutions, sorted in increasing order of objective function value.
+        It is possible that this list is empty, in which case no feasible solutions were recovered.
+
+    """
     con = prob.user_cons[0]
     if not con.name == 'Lagrangian SAGE dual constraint':
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
@@ -61,13 +109,13 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
     modulator = prob.associated_data['modulator']
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
     if skip_ls:
-        mus0 = []
+        sols0 = []
     else:
-        mus0 = _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol)
-    mus1 = _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol)
-    mus = mus0 + mus1
-    mus.sort(key=lambda mu: f(mu))
-    return mus
+        sols0 = _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol)
+    sols1 = _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol)
+    sols = sols0 + sols1
+    sols.sort(key=lambda mu: f(mu))
+    return sols
 
 
 def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol):

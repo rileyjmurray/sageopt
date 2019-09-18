@@ -536,7 +536,7 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
         ``X['gts']`` is a list of Polynomials so that every ``g in X['gts']`` has an efficient
         convex representation for ``{log(|x|) : g(|x|) >= 0, |x| > 0}``. (Where the vertical
         bars denote elementwise absolute value, and the logarithm is meant elementwise.)
-        The intersection of all of these sets is contained within
+        The intersection of all of these sets contains
 
                 ``{log(|x|) : g(|x|) >= 0 for g in gts, |x| > 0}``.
 
@@ -545,15 +545,16 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
         If both ``X['gts']`` and ``X['eqs']`` are empty, then ``X['log_AbK']`` is None.
         Otherwise, ``X['log_AbK']`` is a conic representation of the pointwise, elementwise
         log-absolute-values of the feasible sets cut out by ``X['gts']`` and ``X['eqs']``.
-        The conic representation is a triple ``X['log_AbK'] = (A, b, K)``, where ``A`` is a SciPy
-        sparse matrix, ``b`` is a numpy 1d array, and ``K`` is a list of coniclifts Cone objects.
-        The number of columns for ``A`` in ``X['AbK']`` will always be at least ``f.n``.
-        If the number of columns is greater than ``f.n``, then the first f.n columns of ``A``
-        correspond (in order!) to the log-absolute-values of variables over which ``f`` is  defined.
-        Any remaining columns are auxiliary variables needed to represent ``X`` in coniclifts primitives.
+        For details on the conic representation, refer to the Notes.
 
     Notes
     -----
+    The conic representation is a triple ``X['log_AbK'] = (A, b, K)``, where ``A`` is a SciPy
+    sparse matrix, ``b`` is a numpy 1d array, and ``K`` is a list of coniclifts Cone objects.
+    The number of columns for ``A`` in ``X['AbK']`` will always be at least ``f.n``.
+    If the number of columns is greater than ``f.n``, then the first f.n columns of ``A``
+    correspond (in order!) to the log-absolute-values of variables over which ``f`` is  defined.
+    Any remaining columns are auxiliary variables needed to represent ``X`` in coniclifts primitives.
 
     This function essentially defines the requirements for ``X`` which may be passed to
     conditional SAGE polynomial relaxations defined in this python module.

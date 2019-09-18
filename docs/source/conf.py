@@ -52,6 +52,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 html_theme = 'alabaster'
 
+# https://alabaster.readthedocs.io/en/latest/customization.html#theme-options
+html_theme_options = {
+    'github_user': 'rileyjmurray',
+    'github_repo': 'sageopt',
+    'body_text_align': 'justify',
+    'fixed_sidebar': 'true',
+    'page_width': '1000px'
+}
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

@@ -51,6 +51,24 @@ class PrimalCondSageCone(SetMembership):
     """
 
     def __init__(self, c, alpha, A, b, K, name, expcovers=None):
+        """
+
+        Parameters
+        ----------
+        c
+        alpha
+        A
+        b
+        K
+        name
+        expcovers
+
+
+        There must be at least as many columns in ``A`` as there are in ``alpha``.
+        If the number of columns in ``A`` is is greater than that of ``alpha``, then the first
+        ``alpha.shape[1]`` columns of ``A`` correspond to variables over which a Signomial
+        would be defined. Any remaining columns are auxiliary variables.
+        """
         self.name = name
         if issparse(A):
             A = A.toarray()

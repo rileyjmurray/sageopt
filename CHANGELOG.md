@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  by default, but we only do this if its value does not affect the feasibility of the constraints.
  - Fixed a bug in condiational_sage_data. Equality constraints were not being correctly compiled.
  The bug only meant that SAGE relaxations solved in the past were weaker than they should have been.
+## Removed
+ - sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
+ as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.
 
 # [0.3.4] - 2019-09-09
 ## Added

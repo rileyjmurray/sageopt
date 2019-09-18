@@ -1,6 +1,6 @@
 
-Sageopt is for signomial and polynomial optimization
-====================================================
+Sageopt enables proof-based signomial and polynomial optimization
+=================================================================
 
 .. image:: https://travis-ci.org/rileyjmurray/sageopt.svg?branch=master
    :target: https://travis-ci.org/rileyjmurray/sageopt
@@ -65,7 +65,7 @@ Because the generalization follows so transparently from the original idea of SA
 
    Installation <install>
 
-   Examples <examples/relative_entropy_and_partial_dualization>
+   Examples <examples/examples>
 
    Web Documentation <api_reference/sageopt>
 

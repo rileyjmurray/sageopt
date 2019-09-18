@@ -6,8 +6,8 @@ ECOS or MOSEK. These solvers require input in very specific standard-forms. *Con
 provides abstractions that allow us to state SAGE relaxations in high-level syntax, and manage
 interactions with these low-level solvers.
 
-Coniclifts as an optimization interface
----------------------------------------
+Optimization interface
+----------------------
 
 The optimization abstractions used in coniclifts are similar to those in `CVXPY <cvxpy
 .org>`_.
@@ -107,9 +107,8 @@ The example above also alludes to a useful set-membership constraint, called ``P
 `this link <https://github.com/rileyjmurray/sageopt/tree/master/sageopt/coniclifts/constraints/set_membership>`_
 for source code of set-membership constraints available in coniclifts.
 
-
-Coniclifts as a compiler
-------------------------
+Compiler interface
+------------------
 
 Up until now we have only described coniclifts as a tool for creating optimization problems. However, coniclifts'
 more fundamental use is to exploit the following fact: for every convex set :math:`X \subset R^n`, there exists a
@@ -132,3 +131,22 @@ The most important function in coniclifts' compilation process is given below.
 The fourth return argument mentions "ScalarVariable" objects, which users of coniclifts need not interact with directly.
 
 .. autofunction:: sageopt.coniclifts.compilers.compile_constrained_system
+
+API for key classes
+-------------------
+
+.. autoclass:: sageopt.coniclifts.Variable
+
+.. autoclass:: sageopt.coniclifts.Expression
+
+.. autoclass:: sageopt.coniclifts.Problem
+
+.. autoclass:: sageopt.coniclifts.PrimalCondSageCone
+
+.. autoclass:: sageopt.coniclifts.DualCondSageCone
+
+.. autoclass:: sageopt.coniclifts.PrimalSageCone
+
+.. autoclass:: sageopt.coniclifts.DualSageCone
+
+.. autoclass:: sageopt.coniclifts.PrimalProductCone

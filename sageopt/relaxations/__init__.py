@@ -57,11 +57,11 @@ def sage_feasibility(f, X=None):
     ``sageopt.relaxations.sage_polys.sage_feasibility`` respectively.
 
     """
-    if isinstance(f, Signomial):
-        prob = _sig_sage_feasibility(f, X)
-        return prob
-    elif isinstance(f, Polynomial):
+    if isinstance(f, Polynomial):
         prob = _poly_sage_feasibility(f, X)
+        return prob
+    elif isinstance(f, Signomial):
+        prob = _sig_sage_feasibility(f, X)
         return prob
     else:
         raise ValueError('"f" must be a Signomial or Polynomial.')
@@ -115,7 +115,7 @@ def sage_multiplier_search(f, level=1, X=None):
 def conditional_sage_data(f, gts, eqs, check_feas=True):
     """
     Infer (and construct a representation for) a tractable set ``X`` which
-    is contained within { x : g(x) >= 0 for g in gts } and
+    is contains { x : g(x) >= 0 for g in gts } and
     {x : g(x) == 0 for g in eqs}. For use in conditional SAGE relaxations.
 
     Parameters

@@ -44,7 +44,7 @@ def sig_relaxation(f, form='dual', ell=0, X=None, mod_supp=None):
 
     .. math::
 
-        \min\{ f(x) \,:\, x \\in X \}
+        f_X^{\\star} \doteq \min\{ f(x) \,:\, x \\in X \}
 
     where X = :math:`R^{\\texttt{f.n}}` by default.
 
@@ -71,20 +71,6 @@ def sig_relaxation(f, form='dual', ell=0, X=None, mod_supp=None):
     prob : sageopt.coniclifts.Problem
         A coniclifts Problem which represents the SAGE relaxation, with given parameters.
         The relaxation can be solved by calling ``prob.solve()``.
-
-    Notes
-    -----
-    When ``form='primal'``, the Problem can be stated in full generality without too much trouble.
-    We define a multiplier signomial ``t`` (with the canonical choice ``t = Signomial(f.alpha, np.ones(f.m))``),
-    then return problem data representing ::
-
-        max  gamma
-        s.t.    f_mod.c in C_{SAGE}(f_mod.alpha, X)
-        where   f_mod := (t ** ell) * (f - gamma).
-
-    Our implementation of Signomial objects allows Variables in the coefficient vector ``c``. As a result, the
-    map from ``gamma`` to ``f_mod.c`` is an affine function that takes in a Variable and returns an Expression.
-    This makes it very simple to represent ``f_mod.c in C_{SAGE}(f_mod.alpha, X)`` via coniclifts Constraints.
     """
     if form.lower()[0] == 'd':
         prob = sig_dual(f, ell, X, mod_supp)
@@ -304,15 +290,13 @@ def sig_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None
     .. math::
 
         \\begin{align*}
-          \min\{ f(x) :~& g(x) \geq 0 \\text{ for } g \\in \\text{gts}, \\\\
-                       & g(x) = 0  \\text{ for } g \\in \\text{eqs}, \\\\
+          \min\{ f(x) :~& g(x) \geq 0 \\text{ for } g \\in \\mathtt{gts}, \\\\
+                       & g(x) = 0  \\text{ for } g \\in \\mathtt{eqs}, \\\\
                        & \\text{and } x \\in X \}
         \\end{align*}
 
-    where X = :math:`R^{\\texttt{f.n}}` by default. The optimal value of this relaxation will produce
-    a lower bound on the minimization problem described above. When ``form='dual'``,
-    a solution to this relaxation can be used to help recover optimal solutions to
-    the problem described above.
+    where X = :math:`R^{\\texttt{f.n}}` by default. When ``form='dual'``, a solution to this
+    relaxation can be used  to help recover optimal solutions to the problem described above.
 
     Parameters
     ----------
@@ -512,21 +496,23 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
     .. math::
 
         \\begin{align*}
-          \min\{ f(x) :~& g(x) \geq 0 \\text{ for } g \\in \\text{gts}, \\\\
-                       & g(x) = 0  \\text{ for } g \\in \\text{eqs}, \\\\
+          \min\{ f(x) :~& g(x) \geq 0 \\text{ for } g \\in \\mathtt{gts}, \\\\
+                       & g(x) = 0  \\text{ for } g \\in \\mathtt{eqs}, \\\\
                        & \\text{and } x \\in X \}
         \\end{align*}
 
-    construct the q-fold constraints ``q-gts`` and ``q-eqs,`` and the Lagrangian
+    construct the q-fold constraints ``q-gts`` and ``q-eqs``, by taking all products
+    of ``<= q`` elements from ``gts`` and ``eqs`` respectively. Then form the Lagrangian
 
     .. math::
 
         L = f - \\gamma
-            - \sum_{g \, \\in  \, \\text{q-gts}} s_g \cdot g
-            - \sum_{g \, \\in  \, \\text{q-eqs}} z_g \cdot g
+            - \sum_{g \, \\in  \, \\mathtt{q-gts}} s_g \cdot g
+            - \sum_{g \, \\in  \, \\mathtt{q-eqs}} z_g \cdot g
 
-    where :math:`\\gamma` and the coefficients on Signomials :math:`s_g` and :math:`z_g`
-    are coniclifts Variables.
+    where :math:`\\gamma` is a coniclifts Variable of dimension 1, and the coefficients
+    on Signomials  :math:`s_g` and :math:`z_g` are coniclifts Variables of a dimension
+    determined by ``p``.
 
     Parameters
     ----------
@@ -547,25 +533,27 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
         ``L.c`` is an affine expression of coniclifts Variables.
 
     ineq_dual_sigs : a list of pairs of Signomial objects.
-        If the pair ``(s1, s2)`` is in this list, then ``s1`` is a generalized Lagrange multiplier
-        to the constraint ``s2(x) >= 0``.
+        If the pair ``(s_g, g)`` is in this list, then ``s_g`` is a generalized Lagrange multiplier
+        to the constraint ``g(x) >= 0``.
 
     eq_dual_sigs : a list of pairs of Signomial objects.
-        If the pair ``(s1, s2)`` is in this list, then ``s1`` is a generalized Lagrange multiplier to the
-        constraint ``s2(x) == 0``. This return value is not accessed for primal-form SAGE relaxations.
+        If the pair ``(z_g, g)`` is in this list, then ``z_g`` is a generalized Lagrange multiplier to the
+        constraint ``g(x) == 0``.
 
     gamma : coniclifts.Variable.
         In primal-form SAGE relaxations, we want to maximize ``gamma``. In dual form SAGE relaxations,
-        ``gamma`` induces a normalizing equality constraint. This return value is not accessed for
-        dual-form SAGE relaxations.
-
+        ``gamma`` induces an equality constraint.
 
     Notes
     -----
-    The values returned by this function are used to construct constrained SAGE relaxations.
-    The basic primal SAGE relaxation is obtained by maximizing gamma, subject to the constraint
-    that ``L`` and each ``s_g`` are SAGE functions. The dual SAGE relaxation is obtained by
-    symbolically applying conic duality to the primal.
+    The Lagrange multipliers ``s_g`` and ``z_g`` share a common matrix of exponent vectors,
+    which we call ``alpha_hat``.
+
+    When ``p = 0``, ``alpha_hat`` consists of a single row, of all zeros. In this case,
+    ``s_g`` and ``z_g`` are constant Signomials, and the coefficient vectors ``s_g.c``
+    and ``z_g.c`` are effectively scalars. When ``p > 0``, the rows of ``alpha_hat`` are
+    set to all ``p``-wise sums  of exponent vectors appearing in either ``f``, or some
+    ``g in gts``,  or some ``g in eqs``.
     """
     folded_gt = con_gen.up_to_q_fold_cons(gts, q)
     gamma = cl.Variable(name='gamma')
@@ -596,11 +584,11 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     Parameters
     ----------
     f : Signomial
-        The objective in a desired optimization problem. This parameter is only used to determine
+        The objective in a desired SAGE relaxation. This parameter is only used to determine
         the dimension of the set defined by constraints in ``gts`` and ``eqs``.
     gts : list of Signomials
         For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
-    eqs : list of Signomial
+    eqs : list of Signomials
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
     check_feas : bool
         Indicates whether or not to verify that the returned conic system is feasible.
@@ -609,50 +597,25 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     -------
     X : dict
 
-        ``X`` is keyed by three strings: ``'AbK'``, ``'gts'``, and ``'eqs'``.
-
-        ``X['gts']`` is a list of Signomials so that every ``g in X['gts']`` has an efficient
-        convex representation of ``{x : g(x) >= 0}``. The intersection of all of these sets
-        is contained within ``{x : g(x) >= 0 for all g in gts}``. ``X['eqs']`` is defined
-        similarly, but for equality constraints instead of inequality constraints.
-        ``X['AbK']`` is a conic representation of the feasible set cut out by
-        ``X['gts']`` and ``X['eqs']``. The conic representation is a triple ``X['AbK'] = (A, b, K)``,
-        where ``A`` is a SciPy sparse matrix, ``b`` is a numpy 1d array, and ``K`` is a list of
-        coniclifts Cone objects. The number of columns for ``A`` in ``X['AbK']`` will always
-        be at least ``f.n``. If the number of columns is greater than ``f.n``, then the first ``f.n``
-        columns of ``A`` correspond to the variables over which ``f`` is defined. Any
-        remaining columns are auxiliary variables needed to represent ``X`` in coniclifts primitives.
+        ``X`` is keyed by three strings: ``'AbK'``, ``'gts'``, and ``'eqs'``. Refer to the Notes
+        for discussion on the values associated with these keys.
 
     Notes
     -----
-        This function essentially defines the requirements for ``X`` which may be passed to
-        conditional SAGE relaxations defined in this python module.
+    ``X['gts']`` is a list of Signomials. Every ``g in X['gts']`` has an efficient
+    convex representation of ``{x : g(x) >= 0}``, and the intersection of all these
+    sets contains ``{x : g(x) >= 0 for all g in gts}``. There is one signomial ``g in X['gts']``
+    for every ``g in gts`` which has one positive coefficient.
 
-        If a user wants to define their own ``X`` without calling this function, that is doable.
-        A possible use-case here is when ``X`` has a simple convex description, but not a simple
-        description in terms of signomial inequality and equality constraints.
+    ``X['eqs]`` is a list of Signomials. Every ``g in X['eqs']`` has an efficient
+    convex representation of ``{x : g(x) == 0}``, and the intersection of all these sets
+    contains ``{x : g(x) == 0 for all g in eqs}``. There is one signomial ``g in X['eqs']``
+    for every ``g in eqs`` which has exactly two coefficients (one positive, one negative).
 
-        Suppose for example that we want ``X`` to represent the ell-2 unit ball in R^{f.n}.
-        This can be accomplished as follows ::
-
-            import sageopt.coniclifts as cl
-            import numpy as np
-            x = cl.Variable(shape=(f.n,), name='x')
-            constraints = [1 >= cl.vector2norm(x)]
-            A, b, K, _, _ = cl.compile_constrained_system(constraints)
-            my_gts = [lambda dummy_x: 1 - np.linalg.norm(dummy_x, ord=2)]
-            my_eqs = []
-            X = {'AbK': (A, b, K), 'gts': my_gts, 'eqs': my_eqs}
-
-        The message of this example is that ``X['gts']`` and ``X['eqs']`` don't actually need
-        to be lists of Signomials. They just need to be callable functions which define membership
-        in ``X['AbK]``. To really hit this home, functions in ``X['gts']`` don't even need to be
-        continuous! For example, if you wanted to test membership in the ell-2 ball without
-        allowing even the smallest constraint violation, you could use the function ::
-
-            my_gts = [lambda dummy_x: 1 if 1 >= np.linalg.norm(dummy_x, ord=2) else -np.inf]
-
-        and every important feature of sageopt's signomial relaxations would work as expected.
+    ``X['AbK']`` is a coniclifts-standard representation of the feasible set cut out by
+    ``X['gts']`` and ``X['eqs']``. We can check membership in ``X['AbK']`` by evaluating
+    the functions in ``X['gts']`` and ``X['eqs']``, and checking that the results are
+    nonnegative and zero respectively.
     """
     x = cl.Variable(shape=(f.n,), name='x')
     coniclift_cons = []
