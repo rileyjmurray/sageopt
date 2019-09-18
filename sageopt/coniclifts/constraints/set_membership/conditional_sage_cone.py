@@ -50,7 +50,7 @@ class PrimalCondSageCone(SetMembership):
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, c, alpha, A, b, K, name, expcovers=None):
+    def __init__(self, c, alpha, A, b, K, name, cov=None):
         """
 
         Parameters
@@ -61,7 +61,7 @@ class PrimalCondSageCone(SetMembership):
         b
         K
         name
-        expcovers
+        cov
 
 
         There must be at least as many columns in ``A`` as there are in ``alpha``.
@@ -85,7 +85,7 @@ class PrimalCondSageCone(SetMembership):
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
         self._variables = self.c.variables()
         self.K = check_cones(K)
-        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, cov)
         self.nu_vars = dict()
         self.c_vars = dict()
         self.relent_epi_vars = dict()
@@ -275,7 +275,7 @@ class DualCondSageCone(SetMembership):
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, v, alpha, A, b, K, name, c=None, expcovers=None):
+    def __init__(self, v, alpha, A, b, K, name, c=None, cov=None):
         """
         Aggregates constraints on "v" so that "v" can be viewed as a dual variable
         to a constraint of the form "c \in C_{SAGE}(alpha, A, b, K)".
@@ -299,7 +299,7 @@ class DualCondSageCone(SetMembership):
             self.c = None
         else:
             self.c = Expression(c)
-        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, expcovers)
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, cov)
         self.lifted_mu_vars = dict()
         self.mu_vars = dict()
         self.relent_epi_vars = dict()

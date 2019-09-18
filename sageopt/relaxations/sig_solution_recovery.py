@@ -83,7 +83,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
         It is possible that this list is empty, in which case no feasible solutions were recovered.
 
     """
-    con = prob.user_cons[0]
+    con = prob.constraints[0]
     if not con.name == 'Lagrangian SAGE dual constraint':
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
     f = prob.associated_data['f']

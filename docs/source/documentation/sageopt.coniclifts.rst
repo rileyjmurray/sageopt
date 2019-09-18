@@ -9,8 +9,7 @@ interactions with these low-level solvers.
 Optimization interface
 ----------------------
 
-The optimization abstractions used in coniclifts are similar to those in `CVXPY <cvxpy
-.org>`_.
+The optimization abstractions used in coniclifts are similar to those in `CVXPY <cvxpy.org>`_.
 For example, it is possible to construct and solve a linear program using coniclifts::
 
    import sageopt.coniclifts as cl
@@ -132,13 +131,52 @@ The fourth return argument mentions "ScalarVariable" objects, which users of con
 
 .. autofunction:: sageopt.coniclifts.compilers.compile_constrained_system
 
-API for key classes
--------------------
+The Variable class
+------------------
 
 .. autoclass:: sageopt.coniclifts.Variable
     :members:
 
+The Problem class
+-----------------
+
 .. autoclass:: sageopt.coniclifts.Problem
+    :members:
+
+The Expression system
+---------------------
+
+Coniclifts is built around a few core ideas, including ...
+
+- transparency in the compilation process,
+- ease-of-extension for experts in convex optimization,
+- no dependence on a C or C++ backend,
+- full compatibility with numpy.
+
+In order to achieve full compatibility with numpy, coniclifts takes an elementwise approach to symbolic expressions.
+Specifically, coniclifts begins with a few simple abstractions for scalar-valued symbolic expressions, and wraps
+those abstractions in a custom subclass of numpy's ndarray. The coniclifts abstractions for scalar-valued symbolic
+expressions are as follows:
+
+- A "ScalarExpression" class represents scalar-valued affine functions of certain irreducible primatives.
+  ScalarExpressions are operator-overloaded to support ``+``, ``-``, and ``*``. This allows ndarrays of
+  ScalarExpressions to fall back on many functions which are implemented for numeric ndarrays.
+
+- An abstract "ScalarAtom" class specifies the behavior of the irreducible primitives in ScalarExpressions. The
+  ScalarAtom class immediately specializes into "ScalarVariables" (far and away the most important ScalarAtom), and
+  another abstract class, called "NonlinearScalarAtom". NonlinearScalarAtoms are implemented on a case-by-case basis,
+  but include such things as the exponential function and the vector 2-norm.
+
+We ask interested users to refer to the source code for additional information on ScalarExpressions and
+ScalarAtoms. For most people, all you need to work with is the Expression class.
+
+
+.. autoclass:: sageopt.coniclifts.Expression
+    :members:
+
+
+SAGE constraint classes
+-----------------------
 
 .. autoclass:: sageopt.coniclifts.PrimalCondSageCone
 
@@ -149,10 +187,3 @@ API for key classes
 .. autoclass:: sageopt.coniclifts.DualSageCone
 
 .. autoclass:: sageopt.coniclifts.PrimalProductCone
-
-
-The Expression system
----------------------
-
-
-.. autoclass:: sageopt.coniclifts.Expression

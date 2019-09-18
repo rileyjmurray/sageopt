@@ -80,7 +80,7 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     lag_gts = prob.associated_data['gts']
     lag_eqs = prob.associated_data['eqs']
     lagrangian = _make_dummy_lagrangian(f, lag_gts, lag_eqs)
-    con = prob.user_cons[0]
+    con = prob.constraints[0]
     if isinstance(con, cl.DualCondSageCone):
         alpha = con.lifted_alpha[:, :con.n]
     else:

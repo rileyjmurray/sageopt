@@ -34,13 +34,13 @@ _REDUCTION_SOLVER_ = 'ECOS'
 
 class PrimalSageCone(SetMembership):
 
-    def __init__(self, c, alpha, name, expcovers=None):
+    def __init__(self, c, alpha, name, cov=None):
         self.name = name
         self.alpha = alpha
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
-        self.ech = ExpCoverHelper(self.alpha, self.c, expcovers)
+        self.ech = ExpCoverHelper(self.alpha, self.c, cov)
         self.nu_vars = dict()
         self.c_vars = dict()
         self.relent_epi_vars = dict()
@@ -206,7 +206,7 @@ class PrimalSageCone(SetMembership):
 
 class DualSageCone(SetMembership):
 
-    def __init__(self, v, alpha, name, c=None, expcovers=None):
+    def __init__(self, v, alpha, name, c=None, cov=None):
         """
         Aggregrates constraints on "v" so that "v" can be viewed as a dual variable
         to a constraint of the form "c \in C_{SAGE}(alpha)".
@@ -218,7 +218,7 @@ class DualSageCone(SetMembership):
         else:
             self.c = Expression(c)
         self.alpha = alpha
-        self.ech = ExpCoverHelper(self.alpha, self.c, expcovers)
+        self.ech = ExpCoverHelper(self.alpha, self.c, cov)
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
         self.v = v

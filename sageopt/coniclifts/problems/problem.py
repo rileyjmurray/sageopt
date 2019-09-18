@@ -23,25 +23,109 @@ import time
 
 
 class Problem(object):
+    """
+    An abstract representation for convex optimization problems. When the Problem object is constructed,
+    the constraints are immediately compiled into a flattened conic representation. This compilation
+    process may take some time for large problems.
+
+    Parameters
+    ----------
+    objective_sense : coniclifts.MIN or coniclifts.MAX
+
+    objective_expr : Expression or float
+        The function to minimize. ScalarExpressions and real numeric types are also accepted.
+        The resulting expression must be linear in its Variables.
+
+    constraints : list of coniclifts.Constraint
+
+    Attributes
+    ----------
+    objective_sense: str
+
+        The value passed by the user to the constructor.
+
+    objective_expr : Expression
+
+        The value passed by the user to the constructor.
+
+    constraints : list of coniclifts.Constraint
+
+        The value passed by the user to the constructor.
+
+    A : CSC-format sparse matrix
+
+        The matrix in the flattened conic representation of the feasible set.
+
+    b : ndarray
+
+        The offset vector in the flattened conic representation of the feasible set.
+
+    K : list of coniclifts.Cone
+
+        The cartesian product of these cones (in order) defines the convex cone appearing
+        in the flattened conic representation of the feasible set.
+
+    all_variables : list of coniclifts.Variable
+
+        All Variable objects needed to represent the feasible set. This includes user-declared
+        Variables, and Variables which were required to write the problem in terms of coniclifts
+        primitives.
+
+    user_variable_map : Dict[str,ndarray]
+
+        A map from a Variable's ``name`` field to a numpy array. If ``myvar`` is a coniclifts
+        Variable appearing in the system defined by ``constraints``, then a point ``x``
+        satisfying :math:`A x + b \in K` maps to a feasible value for ``myvar`` by ::
+
+            x0 = np.hstack([x, 0])
+            myvar_val = x0[var_name_to_locs[myvar.name]]
+
+        In particular, we guarantee ``myvar.shape == var_name_to_locs[myvar.name].shape``.
+        Augmenting ``x`` by zero to create ``x0`` reflects a convention that if a component of
+        a Variable does not affect the constraints, that component is automatically assigned
+        the value zero.
+
+    user_variable_values : Dict[str, ndarray]
+
+        A map from a Variable's ``name`` field to a numpy array, containing a feasible
+        value for that Variable for this problem's constraints.
+
+    solver_apply_data : Dict[str,dict]
+
+        A place to store metadata during a call to ``self.solve(cache_applytime=True)``.
+
+    solver_runtime_data : Dict[str,dict]
+
+        A place to store metadata during a call to ``self.solve(cache_solvetime=True)``.
+
+    associated_data : dict
+
+        A place for users to store metadata produced when constructing this Problem.
+
+    value : float
+
+        The objective value returned by the solver from the last solve.
+
+    status : str
+
+        The problem status returned by the solver from the last solve.
+        Either ``coniclifts.SOLVED`` or ``coniclifts.INACCURATE`` or ``coniclifts.FAILED``.
+
+    """
 
     _SOLVERS_ = {'ECOS': ECOS(), 'MOSEK': Mosek()}
 
     _SOLVER_ORDER_ = ['MOSEK', 'ECOS']
 
-    def __init__(self, objective_sense, objective_expression, constraints):
-        """
-        :param objective_sense: either coniclifts.minimize or coniclifts.maximize.
-        :param objective_expression: A real numeric type, or Expression with .size == 1, or ScalarExpression.
-        :param constraints: a list of coniclifts Constraint objects.
-        """
+    def __init__(self, objective_sense, objective_expr, constraints):
         self.objective_sense = objective_sense
-        if not isinstance(objective_expression, Expression):
-            objective_expression = Expression(objective_expression)
-        self.user_obj = objective_expression
-        self.user_cons = constraints
+        if not isinstance(objective_expr, Expression):
+            objective_expr = Expression(objective_expr)
+        self.objective_expr = objective_expr
+        self.constraints = constraints
         self.timings = dict()
         t = time.time()
-        c, A, b, K, var_name_to_locs, all_vars = compile_problem(objective_expression, constraints)
+        c, A, b, K, var_name_to_locs, all_vars = compile_problem(objective_expr, constraints)
         if objective_sense == CL_CONSTANTS.minimize:
             self.c = c
         else:
@@ -65,8 +149,16 @@ class Problem(object):
 
     def solve(self, solver=None, **kwargs):
         """
-        :param solver: a string. 'MOSEK' or 'ECOS'.
-        :return:
+        Parameters
+        ----------
+        solver : str
+            Either 'MOSEK' or 'ECOS'.
+
+        kwargs
+
+        Returns
+        -------
+
         """
         if solver is None:
             for svr in Problem._SOLVER_ORDER_:

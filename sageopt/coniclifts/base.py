@@ -411,11 +411,34 @@ class ScalarExpression(object):
 
 
 class Expression(np.ndarray):
-
     """
-    SUBCLASSING NDARRAY
+    An Expression is an ndarray whose entries are ScalarExpressions. Variable objects are
+    a special case of Expression objects.
 
-    https://docs.scipy.org/doc/numpy/user/basics.subclassing.html#basics-subclassing
+    Construction
+
+        Expression objects can be constructed from ndarrays of numeric types, or ndarrays
+        containing ScalarExpressions. In both cases, the construction syntax is ::
+
+            expr = Expression(existing_array)
+
+    Arithmetic operator overloading
+
+        Operations ``+``, ``-``, ``/`` and ``*`` work in the exact same way as for numpy arrays.
+
+        Expressions do not allow exponentiation (``**``).
+
+        Expressions overload ``@`` (a.k.a. ``__matmul__``) in a way that is consistent with
+        numpy, but only for arguments which have up to two dimensions.
+
+    Constraint-based operator overloading
+
+        Operations ``<=`` and ``>=`` produce elementwise inequality constraints.
+
+        The operation ``==`` produces an elementwise equality constraint.
+
+        The operations ``>>`` and ``<<`` produce linear matrix inequality constraints.
+
     """
 
     def __new__(cls, obj):
@@ -456,7 +479,7 @@ class Expression(np.ndarray):
         else:
             other_times_A = np.tensordot(other.reshape((1, -1)), A, axes=1)
             other_times_A = np.squeeze(other_times_A, axis=0)
-        other_times_A_x = Expression.disjoint_dot(other_times_A, x)
+        other_times_A_x = Expression._disjoint_dot(other_times_A, x)
         res = other_times_A_x
         other_times_B = np.tensordot(other, B, axes=1)
         for tup in array_index_iterator(other_times_A_x.shape):
@@ -496,12 +519,21 @@ class Expression(np.ndarray):
             raise RuntimeError('Can only initialize with numeric, ScalarExpression, or ScalarAtom types.')
 
     def scalar_atoms(self):
+        """
+        Return a list of all ScalarAtoms appearing in this Expression.
+        """
         return list(set.union(*[set(se.scalar_atoms()) for se in self.flat]))
 
     def scalar_variables(self):
+        """
+        Return a list of all ScalarVariables appearing in this Expression.
+        """
         return list(set.union(*[set(se.scalar_variables()) for se in self.flat]))
 
     def variables(self):
+        """
+        Return a list of all Variable objects appearing in this Expression.
+        """
         var_ids = set()
         var_list = []
         for se in self.ravel():
@@ -512,35 +544,63 @@ class Expression(np.ndarray):
         return var_list
 
     def is_affine(self):
-        if not Expression.can_assume_affine(self):
+        """
+        True if the Expression is an affine function of Variables within its scope.
+        """
+        if not Expression._can_assume_affine(self):
             return all(v.is_affine() for v in self.flat)
         else:
             return True
 
     def is_constant(self):
+        """
+        True if no Variables appear in this Expression.
+        """
         return all(v.is_constant() for v in self.flat)
 
     def is_convex(self):
+        """
+        Return an ndarray of booleans. For a fixed component index, the value
+        of the returned array indicates if that component of the current Expression
+        is a convex function of Variables within its scope.
+        """
         res = np.empty(shape=self.shape, dtype=bool)
         for tup in array_index_iterator(self.shape):
             res[tup] = self[tup].is_convex()
         return res
 
     def is_concave(self):
+        """
+        Return an ndarray of booleans. For a fixed component index, the value
+        of the returned array indicates if that component of the current Expression
+        is a concave function of Variables within its scope.
+        """
         res = np.empty(shape=self.shape, dtype=bool)
         for tup in array_index_iterator(self.shape):
             res[tup] = self[tup].is_concave()
         return res
 
     def as_expr(self):
+        """
+        A no-op. Return self.
+        """
         return self
 
     def factor(self):
         """
-        :return: (A, x, b) -- A is a numpy ndarray of numeric scalars. x is an Expression object
-        where each entry in x.ravel() is a ScalarExpression consisting of a single atom
-        (with zero offset), and b is a numpy array of same dimensions as the Expression
-        np.matmul(A, x).
+        Returns a tuple ``(A, x, B)``.
+
+        ``A`` is a tensor of one order higher than the current Expression object, i.e.
+        ``A.ndim == self.ndim + 1``. The dimensions of ``A`` and ``self`` agree up until
+        ``self.ndim``, i.e. ``A.shape[:-1] == self.shape``.
+
+        ``x`` is a list of ScalarAtom objects, with ``len(x) == A.shape[-1]``.
+
+        ``B`` is a numpy array of the same shape as ``self``.
+
+        The purpose of this function is to enable faster matrix multiplications of Expression
+        objects. The idea is that if you tensor-contract ``A`` along its final dimension according
+        to ``x``, and then add ``B``, you recover this Expression.
         """
         x = list(set(a for se in self.flat for a in se.atoms_to_coeffs))
         x.sort(key=lambda a: a.id)
@@ -560,13 +620,18 @@ class Expression(np.ndarray):
 
     @property
     def value(self):
+        """
+        An ndarray containing numeric entries, of shape equal to ``self.shape``.
+        This is the result of propagating the value of ScalarVariable objects
+        through the symbolic operations tracked by this Expression.
+        """
         val = np.zeros(shape=self.shape)
         for tup in array_index_iterator(self.shape):
             val[tup] = self[tup].value()
         return val
 
     @staticmethod
-    def disjoint_dot(array, list_of_atoms):
+    def _disjoint_dot(array, list_of_atoms):
         # This is still MUCH SLOWER than adding numbers together.
         if len(list_of_atoms) != array.shape[-1]:
             raise RuntimeError('Incompatible dimensions to disjoint_dot.')
@@ -580,7 +645,7 @@ class Expression(np.ndarray):
         return expr.view(Expression)
 
     @staticmethod
-    def disjoint_add(expr1, expr2):
+    def _disjoint_add(expr1, expr2):
         if expr1.shape != expr2.shape:
             raise RuntimeError('Disjoint add requires operands of the same shape.')
         expr3 = np.empty(expr1.shape, dtype=object)
@@ -592,7 +657,7 @@ class Expression(np.ndarray):
         return expr3.view(Expression)
 
     @staticmethod
-    def can_assume_affine(expr):
+    def _can_assume_affine(expr):
         unadorned_var = isinstance(expr, (Variable, ScalarVariable))
         constant_array = isinstance(expr, np.ndarray) and expr.dtype != object
         numeric = isinstance(expr, __REAL_TYPES__)
@@ -600,14 +665,32 @@ class Expression(np.ndarray):
 
     @staticmethod
     def are_equivalent(expr1, expr2, rtol=1e-5, atol=1e-8):
-        # WARNING:
-        #   The behavior of this function is conservative.
-        #   Non-deterministic behavior of factor(...) when either Expression
-        #   contains a mix of different ScalarAtoms (e.g. ScalarVariables
-        #   and NonlinearScalarAtoms) can cause this function to return
-        #   False when the expressions are in fact equivalent.
-        #
-        #   This function only works on 0d, 1d, and 2d expressions.
+        """
+        Perform a check that ``expr1`` and ``expr2`` are symbolically equivalent, in the
+        sense of linear operators applied to ScalarAtoms. The equivalence is up to numerical
+        tolerance in the sense of ``np.allclose``.
+
+        Parameters
+        ----------
+        expr1 : Expression
+        expr2 : Expression
+        rtol : float
+            relative numerical tolerance
+        atol : float
+            absolute numerical tolerance
+
+        Returns
+        -------
+        True if the Expressions can be verified as symbolically equivalent. False otherwise.
+
+        Notes
+        -----
+        The behavior of this function is conservative. If ``self`` contains a mix of
+        ScalarAtoms (e.g. ScalarVariables and NonlinearScalarAtoms), then this function
+        might return False even when ``expr1`` and ``expr2`` are equivalent. This is
+        due to nondeterministic behavior of ``Expression.factor`` in such situations.
+
+        """
         if not isinstance(expr1, Expression):
             expr1 = Expression(expr1)
         if not isinstance(expr2, Expression):
@@ -671,9 +754,9 @@ class Variable(Expression):
 
     Upon construction, Variable objects are "proper". If you index into them, they are
     still considered Variable objects, but they no longer contain information about
-    all of their components. If ``v.is_proper() == False``, then the original Variable
-    object can be recovered with ``original_v = v.base``. A Variable object's ``name`` field
-    only uniquely determines the "proper" version of that Variable.::
+    all of their components. A Variable object's ``name`` field only uniquely determines
+    the "proper" version of that Variable. If ``v.is_proper() == False``, then it should
+    be possible to recover the original Variable object with ``original_v = v.base``. ::
 
         x = Variable(shape=(3,), name='x')
         print(type(x))  # sageopt.coniclifts.base.Variable
@@ -823,16 +906,7 @@ class Variable(Expression):
     def set_scalar_variables(self, value):
         """
         Assign numeric values to the components of this Variable object.
-
-        Parameters
-        ----------
-        value : ndarray
-
-            We must have value.shape == self.shape.
-
-        Returns
-        -------
-        None
+        We require ``self.shape == value.shape``.
         """
         if value.shape != self.shape:
             raise RuntimeError('Dimension mismatch.')
@@ -856,14 +930,14 @@ class Variable(Expression):
     @property
     def name(self):
         """
-        A Variable object's name is a string which should uniquely identify the object
-        in all models where it appears, provided ``self.is_proper() == True``.
+        A string which should uniquely identify this object in all models
+        where it appears, provided ``self.is_proper() == True``.
         """
         if hasattr(self, '_name'):
             return self._name
         else:
             tup = (0,) * len(self.shape)
-            temp = self[(0,) * len(self.shape)].scalar_variables()[0].name
+            temp = self[tup].scalar_variables()[0].name
             if self.ndim > 0:
                 # Need to trim the indices at the end of the string
                 return temp[:-len(str(list(tup)))]
@@ -876,7 +950,22 @@ class Variable(Expression):
         An internally-maintained index. Variable objects of different "generation" cannot
         participate in a common optimization problem.
         """
-        return self._generation
+        if hasattr(self, '_generation'):
+            return self._generation
+        else:
+            sv = self[(0,) * len(self.shape)].scalar_variables()[0]
+            gen = sv.parent.generation
+            return gen
+
+    @property
+    def value(self):
+        """
+        An ndarray containing numeric entries, of shape equal to ``self.shape``.
+        This is the result of the most recent call to ``set_scalar_variables``.
+        """
+        expr = self.view(Expression)
+        val = expr.value
+        return val
 
     def is_proper(self):
         return getattr(self, '_is_proper', False)

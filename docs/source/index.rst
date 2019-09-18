@@ -67,7 +67,7 @@ Because the generalization follows so transparently from the original idea of SA
 
    Examples <examples/examples>
 
-   Web Documentation <api_reference/sageopt>
+   Documentation <documentation/sageopt>
 
    File a Bug Report <https://github.com/rileyjmurray/sageopt/issues>
 
