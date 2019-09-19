@@ -34,6 +34,7 @@ Multiple changes here are API breaking. The next release will be 0.4.0.
  by keyword arguments, and the argument ``X`` comes before the argument ``form``.
  - Fixed a bug in conditional_sage_data. Equality constraints were being incorrectly compiled.
  The bug only meant that SAGE relaxations solved in the past were weaker than they should have been.
+ - The signature of PrimalCondSageCone and DualCondSageCone
 ## Removed
  - sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
  as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.

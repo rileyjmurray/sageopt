@@ -50,25 +50,17 @@ class PrimalCondSageCone(SetMembership):
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, c, alpha, A, b, K, name, cov=None):
+    def __init__(self, c, alpha, AbK, name, cov=None):
         """
 
-        Parameters
-        ----------
-        c
-        alpha
-        A
-        b
-        K
-        name
-        cov
-
-
+        """
+        """
         There must be at least as many columns in ``A`` as there are in ``alpha``.
         If the number of columns in ``A`` is is greater than that of ``alpha``, then the first
         ``alpha.shape[1]`` columns of ``A`` correspond to variables over which a Signomial
         would be defined. Any remaining columns are auxiliary variables.
         """
+        A, b, K = AbK
         self.name = name
         if issparse(A):
             A = A.toarray()
@@ -231,7 +223,7 @@ class PrimalCondSageCone(SetMembership):
         t = Variable(shape=(1,))
         cons = [
             vector2norm(item - c) <= t,
-            PrimalCondSageCone(c, alpha, A, b, K, 'temp_con')
+            PrimalCondSageCone(c, alpha, (A, b, K), 'temp_con')
         ]
         prob = Problem(CL_MIN, t, cons)
         prob.solve(verbose=False)
@@ -275,11 +267,12 @@ class DualCondSageCone(SetMembership):
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, v, alpha, A, b, K, name, c=None, cov=None):
+    def __init__(self, v, alpha, AbK, name, c=None, cov=None):
         """
         Aggregates constraints on "v" so that "v" can be viewed as a dual variable
         to a constraint of the form "c \in C_{SAGE}(alpha, A, b, K)".
         """
+        A, b, K = AbK
         if issparse(A):
             A = A.toarray()
         self.A = A

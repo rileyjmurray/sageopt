@@ -189,7 +189,7 @@ class TestConstraints(unittest.TestCase):
         c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
         c = Variable(shape=(m,), name='projected_c0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = conditional_sage_cone.PrimalCondSageCone(c, alpha, A, b, K, name='test')
+        sage_constraint = conditional_sage_cone.PrimalCondSageCone(c, alpha, (A, b, K), name='test')
         epi_constraint = vector2norm(c - c0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)
@@ -213,7 +213,7 @@ class TestConstraints(unittest.TestCase):
         v0 = np.exp(alpha @ x0)
         v = Variable(shape=(m,), name='projected_v0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = conditional_sage_cone.DualCondSageCone(v, alpha, A, b, K, 'test', c)
+        sage_constraint = conditional_sage_cone.DualCondSageCone(v, alpha, (A, b, K), 'test', c)
         epi_constraint = vector2norm(v - v0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)

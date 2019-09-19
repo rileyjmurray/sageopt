@@ -24,8 +24,7 @@ def primal_sage_cone(sig, name, AbK, expcovers=None):
     if AbK is None:
         con = cl.PrimalSageCone(sig.c, sig.alpha, name, expcovers)
     else:
-        A, b, K = AbK
-        con = cl.PrimalCondSageCone(sig.c, sig.alpha, A, b, K, name, expcovers)
+        con = cl.PrimalCondSageCone(sig.c, sig.alpha, AbK, name, expcovers)
     return con
 
 
@@ -33,8 +32,7 @@ def relative_dual_sage_cone(primal_sig, dual_var, name, AbK, expcovers=None):
     if AbK is None:
         con = cl.DualSageCone(dual_var, primal_sig.alpha, name, primal_sig.c, expcovers)
     else:
-        A, b, K = AbK
-        con = cl.DualCondSageCone(dual_var, primal_sig.alpha, A, b, K, name, primal_sig.c, expcovers)
+        con = cl.DualCondSageCone(dual_var, primal_sig.alpha, AbK, name, primal_sig.c, expcovers)
     return con
 
 

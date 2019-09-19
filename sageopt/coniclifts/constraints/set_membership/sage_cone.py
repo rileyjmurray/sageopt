@@ -286,7 +286,6 @@ class DualSageCone(SetMembership):
 
         #. Any constant components of an optional argument "``c``".
 
-
     Parameters
     ----------
 
@@ -355,12 +354,6 @@ class DualSageCone(SetMembership):
     """
 
     def __init__(self, v, alpha, name, c=None, cov=None):
-        """
-        Aggregrates constraints on "v" so that "v" can be viewed as a dual variable
-        to a constraint of the form "c \in C_{SAGE}(alpha)".
-
-        :param v: a Coniclifts Expression of length s.m.
-        """
         if c is None:
             self.c = None
         else:
