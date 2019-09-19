@@ -50,7 +50,7 @@ class PrimalCondSageCone(SetMembership):
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, c, alpha, AbK, name, cov=None):
+    def __init__(self, c, alpha, AbK, name, covers=None):
         """
 
         """
@@ -77,7 +77,7 @@ class PrimalCondSageCone(SetMembership):
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
         self._variables = self.c.variables()
         self.K = check_cones(K)
-        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, cov)
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, covers)
         self.nu_vars = dict()
         self.c_vars = dict()
         self.relent_epi_vars = dict()
@@ -261,13 +261,17 @@ class PrimalCondSageCone(SetMembership):
             return np.linalg.norm(c, ord=norm_ord)
         pass
 
+    @property
+    def alpha(self):
+        return self.lifted_alpha[:, self.n]
+
 
 class DualCondSageCone(SetMembership):
     """
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, v, alpha, AbK, name, c=None, cov=None):
+    def __init__(self, v, alpha, AbK, name, c=None, covers=None):
         """
         Aggregates constraints on "v" so that "v" can be viewed as a dual variable
         to a constraint of the form "c \in C_{SAGE}(alpha, A, b, K)".
@@ -292,7 +296,7 @@ class DualCondSageCone(SetMembership):
             self.c = None
         else:
             self.c = Expression(c)
-        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, cov)
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, covers)
         self.lifted_mu_vars = dict()
         self.mu_vars = dict()
         self.relent_epi_vars = dict()
@@ -409,6 +413,10 @@ class DualCondSageCone(SetMembership):
             viols.append(curr_viol)
         viol = max(viols)
         return viol
+
+    @property
+    def alpha(self):
+        return self.lifted_alpha[:, :self.n]
 
 
 class ExpCoverHelper(object):

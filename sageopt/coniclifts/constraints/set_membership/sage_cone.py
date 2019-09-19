@@ -56,9 +56,9 @@ class PrimalSageCone(SetMembership):
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
         for the name of any auxiliary Variable created when compiling to the coniclifts-standard.
 
-    cov : Dict[int, ndarray]
+    covers : Dict[int, ndarray]
 
-        ``cov[i]`` is a boolean selector array, indicating which exponents have a nontrivial role
+        ``covers[i]`` is a boolean selector array, indicating which exponents have a nontrivial role
         in representing the i-th AGE cone. A standard value for this argument is automatically
         constructed when unspecified. Providing this value can reduce the overhead associated
         with presolving a SAGE constraint.
@@ -80,8 +80,8 @@ class PrimalSageCone(SetMembership):
 
     ech : ExpCoverHelper
 
-        A simple wrapper around the constructor argument ``cov``. Manages validation of ``cov``
-        when provided, and manages construction of ``cov`` when a user does not provide it.
+        A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
+        when provided, and manages construction of ``covers`` when a user does not provide it.
         This is an essential component of the duality relationship between PrimalSagecCone
         and DualSageCone objects.
 
@@ -104,13 +104,13 @@ class PrimalSageCone(SetMembership):
         ``self.c.value == np.sum([ ci.value for ci in c_vars.values() ])``.
     """
 
-    def __init__(self, c, alpha, name, cov=None):
+    def __init__(self, c, alpha, name, covers=None):
         self.name = name
         self.alpha = alpha
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
-        self.ech = ExpCoverHelper(self.alpha, self.c, cov)
+        self.ech = ExpCoverHelper(self.alpha, self.c, covers)
         self.nu_vars = dict()
         self.c_vars = dict()
         self.relent_epi_vars = dict()
@@ -310,9 +310,9 @@ class DualSageCone(SetMembership):
         of a component of ``c``, then it is possible to reduce the number of coniclifts primitives
         needed to represent this constraint.
 
-    cov : Dict[int, ndarray]
+    covers : Dict[int, ndarray]
 
-        ``cov[i]`` is a boolean selector array, indicating which exponents have a nontrivial role
+        ``covers[i]`` is a boolean selector array, indicating which exponents have a nontrivial role
         in representing the i-th AGE cone. A standard value for this argument is automatically
         constructed when unspecified. Providing this value can reduce the overhead associated
         with presolving a SAGE constraint.
@@ -334,8 +334,8 @@ class DualSageCone(SetMembership):
 
     ech : ExpCoverHelper
 
-        A simple wrapper around the constructor argument ``cov``. Manages validation of ``cov``
-        when provided, and manages construction of ``cov`` when a user does not provide it.
+        A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
+        when provided, and manages construction of ``covers`` when a user does not provide it.
         This is an essential component of the duality relationship between PrimalSagecCone
         and DualSageCone objects.
 
@@ -353,13 +353,13 @@ class DualSageCone(SetMembership):
 
     """
 
-    def __init__(self, v, alpha, name, c=None, cov=None):
+    def __init__(self, v, alpha, name, c=None, covers=None):
         if c is None:
             self.c = None
         else:
             self.c = Expression(c)
         self.alpha = alpha
-        self.ech = ExpCoverHelper(self.alpha, self.c, cov)
+        self.ech = ExpCoverHelper(self.alpha, self.c, covers)
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
         self.v = v
