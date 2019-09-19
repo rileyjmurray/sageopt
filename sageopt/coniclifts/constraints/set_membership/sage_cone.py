@@ -49,7 +49,7 @@ class PrimalSageCone(SetMembership):
 
     alpha : ndarray
 
-        The matrix of exponent vectors defining the primal SAGE cone. alpha.shape[0] == c.size.
+        The matrix of exponent vectors defining the primal SAGE cone. ``alpha.shape[0] == c.size.``
 
     name : str
 
@@ -58,7 +58,7 @@ class PrimalSageCone(SetMembership):
 
     cov : Dict[int, ndarray]
 
-        cov[i] is a boolean selector array, indicating which exponents have a nontrivial role
+        ``cov[i]`` is a boolean selector array, indicating which exponents have a nontrivial role
         in representing the i-th AGE cone. A standard value for this argument is automatically
         constructed when unspecified. Providing this value can reduce the overhead associated
         with presolving a SAGE constraint.
@@ -68,7 +68,7 @@ class PrimalSageCone(SetMembership):
 
     m : int
 
-        The number of rows in ``alpha``; the number of entries in``c``.
+        The number of rows in ``alpha``; the number of entries in ``c``.
 
     n : int
 
@@ -275,6 +275,84 @@ class PrimalSageCone(SetMembership):
 
 
 class DualSageCone(SetMembership):
+    """
+    Represent the constraint that a certain vector ``v`` belongs to the dual ordinary SAGE
+    cone induced by exponent vectors ``alpha``. Maintain auxiliary variables for each dual
+    AGE cone (these auxiliary variables play a crucial role in recovering solutions from
+    SAGE relaxations of signomial programs). Instances of this class automatically apply
+    a presolve behavior based on:
+
+        #. The geometric properties of the rows of ``alpha``, and
+
+        #. Any constant components of an optional argument "``c``".
+
+
+    Parameters
+    ----------
+
+    v : Expression
+
+        The vector subject to the dual SAGE-cone constraint.
+
+    alpha : ndarray
+
+        The matrix of exponent vectors defining the SAGE cone; ``alpha.shape[0] == v.size``.
+
+    name : str
+
+        Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
+        for the name of any auxiliary Variable created when compiling to the coniclifts-standard.
+
+    c : Expression or None
+
+        When provided, this DualSageCone instance will compile to a constraint to ensure that ``v``
+        is a valid dual variable to the constraint that :math:`c \\in C_{\\mathrm{SAGE}}(\\alpha)`.
+        If ``c`` has some constant components, or we otherhave have information about the sign
+        of a component of ``c``, then it is possible to reduce the number of coniclifts primitives
+        needed to represent this constraint.
+
+    cov : Dict[int, ndarray]
+
+        ``cov[i]`` is a boolean selector array, indicating which exponents have a nontrivial role
+        in representing the i-th AGE cone. A standard value for this argument is automatically
+        constructed when unspecified. Providing this value can reduce the overhead associated
+        with presolving a SAGE constraint.
+
+    Attributes
+    ----------
+
+    m : int
+
+        The number of rows in ``alpha``; the number of entries in ``v``.
+
+    n : int
+
+        The number of columns in ``alpha``.
+
+    v : Expression
+
+        The vector subject to the dual SAGE-cone constraint.
+
+    ech : ExpCoverHelper
+
+        A simple wrapper around the constructor argument ``cov``. Manages validation of ``cov``
+        when provided, and manages construction of ``cov`` when a user does not provide it.
+        This is an essential component of the duality relationship between PrimalSagecCone
+        and DualSageCone objects.
+
+    c : Expression or None
+
+        If not-None, this constraint will compile into primitives which only ensure that
+        ``v`` is a valid dual variable to :math:`c \\in C_{\\mathrm{SAGE}}(\\alpha)`.
+
+    mu_vars : Dict[int, Variable]
+
+        ``mu_vars[i]`` is the auxiliary variable associated with the i-th dual AGE cone.
+        These variables are of shape ``mu_vars[i].size == self.n``. The most basic solution
+        recovery algorithm takes these variables, and considers points ``x`` of the form
+        ``x = mu_vars[i].value / self.v[i].value``.
+
+    """
 
     def __init__(self, v, alpha, name, c=None, cov=None):
         """
