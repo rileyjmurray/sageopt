@@ -57,8 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [0.3.2] - 2019-07-12
 ## Changed
- - coniclifts Expression objects get value by ".value" instead of ".value()"
- - fixed a bug in "\_\_contains\_\_" for coniclifts PrimalCondSageCone
+ - coniclifts Expression objects get value by ``.value`` instead of ``.value()``
+ - fixed a bug in ``__contains__`` for coniclifts PrimalCondSageCone
 
 
 # [0.3.1] - 2019-07-09
