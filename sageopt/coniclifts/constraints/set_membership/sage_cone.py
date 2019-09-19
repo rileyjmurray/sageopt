@@ -33,6 +33,76 @@ _REDUCTION_SOLVER_ = 'ECOS'
 
 
 class PrimalSageCone(SetMembership):
+    """
+    Represent the constraint that a certain vector ``c`` belongs to the primal ordinary SAGE cone
+    induced by a given set of exponent vectors ``alpha``. Maintain metadata such as summand
+    "AGE vectors", and auxiliary variables needed to represent the primal SAGE cone in terms of
+    coniclifts primitives. Instances of this class automatically apply a presolve procedure based
+    on any constant components in ``c``, and geometric properties of the rows of ``alpha``.
+
+    Parameters
+    ----------
+
+    c : Expression
+
+        The vector subject to the primal SAGE-cone constraint.
+
+    alpha : ndarray
+
+        The matrix of exponent vectors defining the primal SAGE cone. alpha.shape[0] == c.size.
+
+    name : str
+
+        Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
+        for the name of any auxiliary Variable created when compiling to the coniclifts-standard.
+
+    cov : Dict[int, ndarray]
+
+        cov[i] is a boolean selector array, indicating which exponents have a nontrivial role
+        in representing the i-th AGE cone. A standard value for this argument is automatically
+        constructed when unspecified. Providing this value can reduce the overhead associated
+        with presolving a SAGE constraint.
+
+    Attributes
+    ----------
+
+    m : int
+
+        The number of rows in ``alpha``; the number of entries in``c``.
+
+    n : int
+
+        The number of columns in ``alpha``.
+
+    c : Expression
+
+        The vector subject to the primal SAGE-cone constraint.
+
+    ech : ExpCoverHelper
+
+        A simple wrapper around the constructor argument ``cov``. Manages validation of ``cov``
+        when provided, and manages construction of ``cov`` when a user does not provide it.
+        This is an essential component of the duality relationship between PrimalSagecCone
+        and DualSageCone objects.
+
+    nu_vars : Dict[int, Variable]
+
+        ``nu_vars[i]`` is an auxiliary Variable needed to represent the i-th AGE cone.
+        The size of this variable is related to presolve behavior of ``self.ech``.
+
+    c_vars : Dict[int, Variable]
+
+        ``c_vars[i]`` is a Variable which determines the i-th summand in a SAGE decomposition
+        of ``self.c``. The size of this variable is related to presolve behaivor of ``self.ech``,
+        and this can be strictly smaller than ``self.m``.
+
+    age_vectors : Dict[int, Expression]
+
+        ``age_vectors[i]`` is a lifted representation of ``c_vars[i]``. If ``c_vars`` and
+        ``nu_vars`` are assigned feasible values, then we should have that ``c_vars[i]``
+        belongs to the i-th AGE cone induced by ``alpha``, and that
+        ``self.c.value == np.sum([ ci.value for ci in c_vars.values() ])``.
+    """
 
     def __init__(self, c, alpha, name, cov=None):
         self.name = name
