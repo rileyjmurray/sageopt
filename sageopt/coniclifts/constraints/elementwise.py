@@ -27,31 +27,58 @@ class ElementwiseConstraint(Constraint):
     _ELEMENTWISE_OPS_ = ('==', '<=', '>=')
 
     def __init__(self, lhs, rhs, operator):
+        from sageopt.coniclifts.base import Expression
         self.id = ElementwiseConstraint._ELEMENTWISE_CONSTRAINT_ID_
         ElementwiseConstraint._ELEMENTWISE_CONSTRAINT_ID_ += 1
+        if not isinstance(lhs, Expression):
+            lhs = Expression(lhs)
+        if not isinstance(rhs, Expression):
+            rhs = Expression(rhs)
         self.lhs = lhs
         self.rhs = rhs
         self.initial_operator = operator
         name_str = 'Elementwise[' + str(self.id) + '] : '
         self.name = name_str
         if operator == '==':
-            self.expr = (self.lhs - self.rhs).as_expr().ravel()
+            self.expr = (self.lhs - self.rhs).ravel()
             if ElementwiseConstraint._CURVATURE_CHECK_ and not self.expr.is_affine():
                 raise RuntimeError('Equality constraints must be affine.')
             self.operator = '=='  # now we are a linear constraint "self.expr == 0"
             self.epigraph_checked = True
         else:  # elementwise inequality.
             if operator == '>=':
-                self.expr = (self.rhs - self.lhs).as_expr().ravel()
+                self.expr = (self.rhs - self.lhs).ravel()
             else:
-                self.expr = (self.lhs - self.rhs).as_expr().ravel()
+                self.expr = (self.lhs - self.rhs).ravel()
             if ElementwiseConstraint._CURVATURE_CHECK_ and not all(self.expr.is_convex()):
                 raise RuntimeError('Cannot canonicalize.')
             self.operator = '<='  # now we are a convex constraint "self.expr <= 0"
             self.epigraph_checked = False
 
     def variables(self):
-        return self.expr.variables()
+        """
+        If this function is called before
+        """
+        all_vars = []
+        all_vars_ids = set()
+        # Find user-defined Variables
+        lhs_vars = self.lhs.variables()
+        for v in lhs_vars:
+            if id(v) not in all_vars_ids:
+                all_vars_ids.add(id(v))
+                all_vars.append(v)
+        rhs_vars = self.rhs.variables()
+        for v in rhs_vars:
+            if id(v) not in all_vars_ids:
+                all_vars_ids.add(id(v))
+                all_vars.append(v)
+        # Look for epigraph variables
+        expr_vars = self.expr.variables()
+        for v in expr_vars:
+            if id(v) not in all_vars_ids:
+                all_vars_ids.add(id(v))
+                all_vars.append(v)
+        return all_vars
 
     def is_affine(self):
         if self.operator in ['==']:
@@ -67,10 +94,8 @@ class ElementwiseConstraint(Constraint):
 
     def conic_form(self):
         from sageopt.coniclifts.base import ScalarVariable
-        # This function assumes that every Constraint "c" in "constraints" has
-        # c.is_affine() == True. (For constraints that were not affine when first
-        # constructed, we must have since performed an epigraph substitution to
-        # handle the nonlinear terms.)
+        # This function assumes that self.expr is affine (i.e. that any necessary epigraph
+        # variables have been substituted into the nonlinear expression).
         #
         # The vector "K" returned by this function may only include entries for
         # the zero cone and R_+.

@@ -86,16 +86,17 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
     con = prob.constraints[0]
     if not con.name == 'Lagrangian SAGE dual constraint':
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
-    f = prob.associated_data['f']
+    metadata = prob.metadata
+    f = metadata['f']
     # Recover any constraints present in "prob"
     lag_gts, lag_eqs = [], []
-    if 'gts' in prob.associated_data:
+    if 'gts' in metadata:
         # only happens in "constrained_sage_dual".
-        lag_gts = prob.associated_data['gts']
-        lag_eqs = prob.associated_data['eqs']
+        lag_gts = metadata['gts']
+        lag_eqs = metadata['eqs']
     lagrangian = _make_dummy_lagrangian(f, lag_gts, lag_eqs)
-    gts = lag_gts + prob.associated_data['X']['gts']
-    eqs = lag_eqs + prob.associated_data['X']['eqs']
+    gts = lag_gts + metadata['X']['gts']
+    eqs = lag_eqs + metadata['X']['eqs']
     # Search for solutions which meet the feasibility criteria
     v = con.v.value
     if np.any(np.isnan(v)):
@@ -106,7 +107,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
         alpha = con.alpha
     dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
     alpha_reduced = lagrangian.alpha
-    modulator = prob.associated_data['modulator']
+    modulator = metadata['modulator']
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
     if skip_ls:
         sols0 = []

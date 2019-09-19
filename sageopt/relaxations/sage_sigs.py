@@ -131,7 +131,7 @@ def sig_dual(f, ell=0, X=None, modulator_support=None):
     obj = obj_vec.T @ v
     # Create coniclifts Problem
     prob = cl.Problem(cl.MIN, obj, constraints)
-    prob.associated_data = metadata
+    prob.metadata = metadata
     cl.clear_variable_indices()
     return prob
 
@@ -397,7 +397,7 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
         constrs.append(con)
     # Construct the coniclifts Problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
-    prob.associated_data = metadata
+    prob.metadata = metadata
     cl.clear_variable_indices()
     return prob
 
@@ -484,7 +484,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     obj = obj_vec.T @ v
     # Return the coniclifts Problem.
     prob = cl.Problem(cl.MIN, obj, constraints)
-    prob.associated_data = metadata
+    prob.metadata = metadata
     cl.clear_variable_indices()
     return prob
 
@@ -641,7 +641,7 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
         rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
         coniclift_cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
     if len(coniclift_cons) > 0:
-        A, b, K, _, _ = cl.compile_constrained_system(coniclift_cons)
+        A, b, K, _, _, _ = cl.compile_constrained_system(coniclift_cons)
         if check_feas:
             x = cl.Variable(shape=(A.shape[1],), name='temp_x')
             A_dense = A.toarray()

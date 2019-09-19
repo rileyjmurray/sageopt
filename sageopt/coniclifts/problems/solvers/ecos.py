@@ -84,7 +84,7 @@ class ECOS(Solver):
         of indices. The array var_mapping['my_var'] contains the indices in
         "solver_output['x']" of the coniclifts Variable object named 'my_var'.
 
-        :return: problem_status, user_variable_values, problem_value. The first of
+        :return: problem_status, variable_values, problem_value. The first of
         these is a string (coniclifts.solved, coniclifts.inaccurate, or coniclifts.failed).
         The second of these is a dictionary from coniclifts Variable names to numpy arrays
         containing the values of those Variables at the returned solution. The last of

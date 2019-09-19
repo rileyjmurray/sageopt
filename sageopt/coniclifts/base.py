@@ -582,7 +582,7 @@ class Expression(np.ndarray):
 
     def as_expr(self):
         """
-        A no-op. Return self.
+        Return self.
         """
         return self
 
@@ -667,7 +667,7 @@ class Expression(np.ndarray):
     def are_equivalent(expr1, expr2, rtol=1e-5, atol=1e-8):
         """
         Perform a check that ``expr1`` and ``expr2`` are symbolically equivalent, in the
-        sense of linear operators applied to ScalarAtoms. The equivalence is up to numerical
+        sense of affine operators applied to ScalarAtoms. The equivalence is up to numerical
         tolerance in the sense of ``np.allclose``.
 
         Parameters

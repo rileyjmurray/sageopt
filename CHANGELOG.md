@@ -7,22 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [unreleased]
 ## Addded
  - Support for automatic elimination of trivial AGE cones from SAGE relaxations. This can be disabled
- by setting the variable \_EXPENSIVE\_REDUCTION\_=False for both sage_cone.py and conditional_sage_cone.py.
- - An argument to conditional\_sage\_data functions, so that they now can check if the system
+ by setting the variable ``_EXPENSIVE_REDUCTION_=False`` for both sage_cone.py and conditional_sage_cone.py.
+ - An argument to ``conditional_sage_data`` functions, so that they now can check if the system
  defined by the inferred constraints is feasible. Adding this allowed me to make it an assumption
  in conditional_sage_cone.py that the conic system is feasible, which resolved a standing issue
  in computing constraint violations for conditional SAGE cones.
 ## Changed
  - The "var_name_to_locs" dict from coniclifts.compilers.compile_constrained_system. If a ScalarVariable
  does not participate in the conic system but its parent Variable object does, then that ScalarVariable's
- selector index in var_name_to_locs\[parent_variable.name\] will **now** be -1. In order to load values
+ selector index in ``var_name_to_locs[parent_variable.name]`` will **now** be -1. In order to load values
  into user-defined Variable objects, the vector "x" for the vectorized conic system **must now be** augmented
- to "x0 = np.hstack(\[x,0\])". Augmenting in this way means that ScalarVariables are set to the value 0
+ to ``x0 = np.hstack([x,0])``. Augmenting in this way means that ScalarVariables are set to the value 0
  by default, but we only do this if its value does not affect the feasibility of the constraints.
- - Fixed a bug in condiational_sage_data. Equality constraints were not being correctly compiled.
+ This return value has also been renamed to "variable_map".
+ - Fixed a bug in conditional_sage_data. Equality constraints were being incorrectly compiled.
  The bug only meant that SAGE relaxations solved in the past were weaker than they should have been.
- - Problem.user_cons is now Problem.constraints.
- - Problem.user_obj is now Problem.objective_expr.
+ - Many changes to fields in the Problem class. Problem.user_cons is now Problem.constraints.
+ Problem.user_obj is now Problem.objective_expr. Problem.user_variable_map is now Problem.variable_map.
+ - How ElementwiseConstraint objects report their variables. They now always include user-defined variables,
+ and if ``con.variables()`` is called after epigraph substitution, then the list will also contain the epigraph
+ variables. ``con.violation()`` is still only computed with respect to user-defined variables.
+ - When compile_constrained_system finds all variables. Now there is no need for a separate call to find variables
+ within compile_problem.
 ## Removed
  - sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
  as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.

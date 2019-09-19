@@ -76,9 +76,10 @@ def local_refine_polys_from_sigs(f, gts, eqs, x0, rhobeg=1.0, rhoend=1e-7, maxfu
 
 def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False, all_signs=True, skip_ls=False):
     # implemented only for poly_constrained_dual (not yet implemented for sage_poly_dual).
-    f = prob.associated_data['f']
-    lag_gts = prob.associated_data['gts']
-    lag_eqs = prob.associated_data['eqs']
+    metadata = prob.metadata
+    f = metadata['f']
+    lag_gts = metadata['gts']
+    lag_eqs = metadata['eqs']
     lagrangian = _make_dummy_lagrangian(f, lag_gts, lag_eqs)
     con = prob.constraints[0]
     if isinstance(con, cl.DualCondSageCone):
@@ -86,8 +87,8 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     else:
         alpha = con.alpha
     dummy_modulated_lagrangian = Polynomial(alpha, np.ones(shape=(alpha.shape[0],)))  # coefficients dont matter
-    modulator = prob.associated_data['modulator']
-    v = prob.associated_data['v_poly'].value  # possible that v_sig and v are the same
+    modulator = metadata['modulator']
+    v = metadata['v_poly'].value  # possible that v_sig and v are the same
     if np.any(np.isnan(v)):
         return []
     M = moment_reduction_array(lagrangian, modulator, dummy_modulated_lagrangian)
@@ -96,8 +97,8 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol, skip_ls)
     signs = variable_sign_patterns(alpha_reduced, v_reduced, hueristic, all_signs)
     # Now we need to build the candidate solutions, and check them for feasibility.
-    gts = lag_gts + [g for g in prob.associated_data['X']['gts']]
-    eqs = lag_eqs + [g for g in prob.associated_data['X']['eqs']]
+    gts = lag_gts + [g for g in metadata['X']['gts']]
+    eqs = lag_eqs + [g for g in metadata['X']['eqs']]
     solutions = []
     for mag in mags:
         for sign in signs:

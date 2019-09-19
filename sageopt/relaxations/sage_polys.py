@@ -348,7 +348,7 @@ def poly_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
         constrs += cons
     # Construct the coniclifts problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
-    prob.associated_data = metadata
+    prob.metadata = metadata
     cl.clear_variable_indices()
     return prob
 
@@ -422,7 +422,7 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     obj = obj_vec.T @ v
     # Return the coniclifts Problem.
     prob = cl.Problem(cl.MIN, obj, constraints)
-    prob.associated_data = metadata
+    prob.metadata = metadata
     cl.clear_variable_indices()
     return prob
 

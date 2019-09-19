@@ -122,7 +122,7 @@ this standard form, where :math:`K` is a product of elementary convex cones
 #. The vectorized positive semidefinite cone.
 
 
-Crucially, coniclifts provides a means provides a means to map back and forth
+Crucially, coniclifts provides a means to map back and forth
 between models specified in high-level syntax, and models which exist in a flattened conic form using only primitives
 above.
 
@@ -178,12 +178,21 @@ ScalarAtoms. For most people, all you need to work with is the Expression class.
 SAGE constraint classes
 -----------------------
 
-.. autoclass:: sageopt.coniclifts.PrimalCondSageCone
+Words about primal / dual formulation, and preface about expcovers. Address expcovers in detail in each section.
+Words about how the conditional SAGE cone is similar to ordinary SAGE cone.
 
-.. autoclass:: sageopt.coniclifts.DualCondSageCone
+Ordinary SAGE constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: sageopt.coniclifts.PrimalSageCone
 
 .. autoclass:: sageopt.coniclifts.DualSageCone
 
-.. autoclass:: sageopt.coniclifts.PrimalProductCone
+
+Conditional SAGE constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+.. autoclass:: sageopt.coniclifts.PrimalCondSageCone
+
+.. autoclass:: sageopt.coniclifts.DualCondSageCone

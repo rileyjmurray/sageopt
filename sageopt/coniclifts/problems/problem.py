@@ -69,48 +69,59 @@ class Problem(object):
 
         All Variable objects needed to represent the feasible set. This includes user-declared
         Variables, and Variables which were required to write the problem in terms of coniclifts
-        primitives.
+        primitives. It is recommended to access this list by calling ``self.variables()``.
 
-    user_variable_map : Dict[str,ndarray]
+    variable_map : Dict[str,ndarray]
 
-        A map from a Variable's ``name`` field to a numpy array. If ``myvar`` is a coniclifts
-        Variable appearing in the system defined by ``constraints``, then a point ``x``
-        satisfying :math:`A x + b \in K` maps to a feasible value for ``myvar`` by ::
+        A map from a Variable's ``name`` field to a numpy array. If ``myvar``
+        is a coniclifts Variable appearing in the system defined by ``constraints``,
+        then a point ``x`` satisfying :math:`A x + b \in K` maps to a feasible value for
+        ``myvar`` by ::
 
             x0 = np.hstack([x, 0])
-            myvar_val = x0[var_name_to_locs[myvar.name]]
+            myvar_val = x0[variable_map[myvar.name]]
 
-        In particular, we guarantee ``myvar.shape == var_name_to_locs[myvar.name].shape``.
+        In particular, we guarantee ``myvar.shape == variable_map[myvar.name].shape``.
         Augmenting ``x`` by zero to create ``x0`` reflects a convention that if a component of
         a Variable does not affect the constraints, that component is automatically assigned
         the value zero.
 
-    user_variable_values : Dict[str, ndarray]
+    variable_values : Dict[str, ndarray]
 
         A map from a Variable's ``name`` field to a numpy array, containing a feasible
         value for that Variable for this problem's constraints.
 
     solver_apply_data : Dict[str,dict]
 
-        A place to store metadata during a call to ``self.solve(cache_applytime=True)``.
+        A place to store metadata during a call to ``self.solve(cache_apply_data=True)``.
 
-    solver_runtime_data : Dict[str,dict]
+    solver_raw_output : Dict[str,dict]
 
-        A place to store metadata during a call to ``self.solve(cache_solvetime=True)``.
+        A place to store metadata during a call to ``self.solve(cache_raw_output=True)``.
 
-    associated_data : dict
+    metadata : dict
 
         A place for users to store metadata produced when constructing this Problem.
 
     value : float
 
-        The objective value returned by the solver from the last solve.
+        The objective value from the last call to ``self.solve``. Can be a float,
+         ``np.inf``,``-np.inf``, or ``np.NaN``.
 
     status : str
 
-        The problem status returned by the solver from the last solve.
+        The problem status from the last call to ``Problem.solve``.
         Either ``coniclifts.SOLVED`` or ``coniclifts.INACCURATE`` or ``coniclifts.FAILED``.
 
+    Notes
+    -----
+
+    Problem status being ``coniclifts.SOLVED`` does not mean that the decision variables have
+    been assigned specific values. It only means that the solver returned a normal status code
+    (i.e. that the solver didn't run into numerical difficulties). If a solver return code
+    indicates the problem is "infeasible" or "unbounded", ``self.status = coniclifts.SOLVED``.
+    Therefore it is important to check that ``self.status == coniclifts.SOLVED``, and that
+    ``-np.inf < self.value < np.inf`` before accessing a Variable's value.
     """
 
     _SOLVERS_ = {'ECOS': ECOS(), 'MOSEK': Mosek()}
@@ -125,7 +136,7 @@ class Problem(object):
         self.constraints = constraints
         self.timings = dict()
         t = time.time()
-        c, A, b, K, var_name_to_locs, all_vars = compile_problem(objective_expr, constraints)
+        c, A, b, K, variable_map, all_vars = compile_problem(objective_expr, constraints)
         if objective_sense == CL_CONSTANTS.minimize:
             self.c = c
         else:
@@ -135,14 +146,14 @@ class Problem(object):
         self.b = b
         self.K = K
         self.all_variables = all_vars
-        self.user_variable_map = var_name_to_locs
-        self.user_variable_values = None
+        self.variable_map = variable_map
+        self.variable_values = dict()
         self.solver_apply_data = dict()
-        self.solver_runtime_data = dict()
+        self.solver_raw_output = dict()
         self.status = None  # "solved", "inaccurate", or "failed"
         self.value = np.NaN
-        self.associated_data = dict()
-        self.default_options = {'cache_applytime': False, 'cache_solvetime': False,
+        self.metadata = dict()
+        self.default_options = {'cache_apply_data': False, 'cache_raw_output': False,
                                 'destructive': False, 'compilation_options': dict(),
                                 'verbose': True}
         pass
@@ -180,25 +191,29 @@ class Problem(object):
                                              options['destructive'],
                                              options['compilation_options'])
         self.timings[solver]['apply'] = time.time() - t0
-        if options['cache_applytime']:
+        if options['cache_apply_data']:
             self.solver_apply_data[solver] = data
 
         # Solve the problem
         t1 = time.time()
         raw_result = solver_object.solve_via_data(data, options)
         self.timings[solver]['solve_via_data'] = time.time() - t1
-        if options['cache_solvetime']:
-            self.solver_runtime_data[solver] = raw_result
-        parsed_result = solver_object.parse_result(raw_result, inv_data, self.user_variable_map)
+        if options['cache_raw_output']:
+            self.solver_raw_output[solver] = raw_result
+        parsed_result = solver_object.parse_result(raw_result, inv_data, self.variable_map)
         self.status = parsed_result[0]
-        self.user_variable_values = parsed_result[1]
+        self.variable_values = parsed_result[1]
 
         # Load values into ScalarVariable objects.
-        if len(self.user_variable_values) > 0:
+        if len(self.variable_values) > 0:
             for v in self.all_variables:
-                if v.name in self.user_variable_values:
-                    var_val = self.user_variable_values[v.name]
+                if v.name in self.variable_values:
+                    var_val = self.variable_values[v.name]
                     v.set_scalar_variables(var_val)
+        else:
+            for v in self.all_variables:
+                nans = np.NaN * np.empty(v.shape)
+                v.set_scalar_variables(nans)
 
         # Record objective value
         if self.status in {CL_CONSTANTS.solved, CL_CONSTANTS.inaccurate}:

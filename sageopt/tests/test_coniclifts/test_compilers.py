@@ -45,7 +45,7 @@ class TestCompilers(unittest.TestCase):
         constraints = [G @ x == h,
                        x >= 0]
         # Reference case : the constraints are over x, and we are interested in no variables other than x.
-        A0, b0, K0, _, var_mapping0 = compile_constrained_system(constraints)
+        A0, b0, K0, _, var_mapping0, _ = compile_constrained_system(constraints)
         A0 = A0.toarray()
         #   A0 should be the (m+n)-by-n matrix formed by stacking -G on top of the identity.
         #   b0 should be the (m+n)-length vector formed by concatenating h with the zero vector.
@@ -69,7 +69,7 @@ class TestCompilers(unittest.TestCase):
                        B @ x @ B.T >= 1,
                        B @ x @ B.T >> 1,  # a 1-by-1 LMI
                        C @ x @ C.T >> -2]
-        A, b, K, _, _ = compile_constrained_system(constraints)
+        A, b, K, _, _, _ = compile_constrained_system(constraints)
         A = A.toarray()
         assert K == [Cone('0', 1), Cone('+', 1), Cone('P', 1), Cone('P', 3)]
         expect_row_0 = -np.array([D[0, 0], 2 * D[1, 0], D[1, 1]])

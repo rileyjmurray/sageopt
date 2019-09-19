@@ -28,67 +28,72 @@ from sageopt.coniclifts.base import ScalarVariable
 
 def compile_problem(objective, constraints):
     if not objective.is_affine():
-        raise NotImplementedError()
+        raise NotImplementedError('The objective function must be affine.')
     # Generate a conic system that is feasible iff the constraints are feasible.
-    A, b, K, svid2col, var_name_to_locs = compile_constrained_system(constraints)
-    # Find all Variable objects in the model (user-defined, or auxilliary).
-    all_vars = find_variables_from_constraints(constraints + [objective == 0])
+    A, b, K, svid2col, variable_map, variables = compile_constrained_system(constraints)
     # Generate the vector for the objective function.
     c, c_offset = compile_linear_expression(objective, svid2col)
     if c_offset != 0:
         warnings.warn('A constant-term ' + str(c_offset) + ' is being dropped from the objective.')
     c = np.array(c.todense()).flatten().astype(float)
-    return c, A, b, K, var_name_to_locs, all_vars
+    return c, A, b, K, variable_map, variables
 
 
 def compile_constrained_system(constraints):
     """
     Find all Variable objects which participate in at least one of the specified constraints.
-    Construct a vectorized representation of the set of variable values which satisfy the
-    constraints ("the feasible set"). Return both the vectorized representation of the feasible
-    set, and dictionaries which enable mapping the vectorized representation back to user-defined
-    Variable objects.
+    Construct a flattened conic representation of the set of variable values which satisfy the
+    constraints ("the feasible set"). Return the flattened representation of the feasible set,
+    data structures for mapping the vectorized representation back to user-defined Variables,
+    and a list of all Variable objects needed to represent the feasible set.
 
     Parameters
     ----------
-    constraints : list of coniclifts Constraint objects
+    constraints : list of coniclifts.Constraint
 
     Returns
     -------
     A : CSC-format sparse matrix
-        The matrix appearing in the vectorized representation of the feasible set.
+
+        The matrix appearing in the flattened representation of the feasible set.
+
     b : ndarray
-        The offset vector appearing in the vectorized representation of the feasible set.
+
+        The offset vector appearing in the flattened representation of the feasible set.
+
     K : list of coniclifts Cone objects
+
         The cartesian product of these cones (in order) defines the convex cone appearing
-        in the vectorized representation of the feasible set.
+        in the flattened representation of the feasible set.
+
     svid2col : Dict[int, int]
+
         A map from a ScalarVariable's ``id`` to the index of the column in ``A`` where the ScalarVariable
         participates in the conic system. If the given ScalarVariable does not participate in the conic
         system, its ``id`` maps to ``-1``.
-    var_name_to_locs : Dict[str, ndarray]
+
+    variable_map : Dict[str, ndarray]
+
         A map from a Variable's ``name`` field to a numpy array. If ``myvar`` is a coniclifts
         Variable appearing in the system defined by ``constraints``, then a point ``x``
         satisfying :math:`A x + b \in K` maps to a feasible value for ``myvar`` by ::
 
             x0 = np.hstack([x, 0])
-            myvar_val = x0[var_name_to_locs[myvar.name]]
+            myvar_val = x0[variable_map[myvar.name]]
 
-        In particular, we guarantee ``myvar.shape == var_name_to_locs[myvar.name].shape``.
+        In particular, we guarantee ``myvar.shape == variable_map[myvar.name].shape``.
         Augmenting ``x`` by zero to create ``x0`` reflects a convention that if a component of
         a Variable does not affect the constraints, that component is automatically assigned
         the value zero.
+
+    variables : list of coniclifts.Variable
+
+        All proper Variable objects appearing in the constraint set, including any auxiliary
+        variables introduced to obtain a flattened conic system.
+
     """
     if any(not isinstance(c, Constraint) for c in constraints):
         raise RuntimeError('compile_constraints( ... ) only accepts iterables of Constraint objects.')
-    variables = find_variables_from_constraints(constraints)
-    var_gens = np.array([v.generation for v in variables])
-    if not np.all(var_gens == var_gens[0]):
-        msg1 = '\nThe model contains Variable objects of distinct "generation".\n'
-        msg2 = '\nIn between constructing some of these Variables the function \n '
-        msg3 = 'coniclifts.clear_variable_indices was called. Remove this function\n'
-        msg4 = 'call from your program flow and try again.\n'
-        raise RuntimeError(msg1 + msg2 + msg3 + msg4)
     # Categorize constraints (set membership vs elementwise).
     elementwise_constrs, setmem_constrs = [], []
     for c in constraints:
@@ -98,16 +103,27 @@ def compile_constrained_system(constraints):
             elementwise_constrs.append(c)
         else:
             raise RuntimeError('Unknown argument')
+    # Compile into a conic system (substituting epigraph variables as necessary)
     A, b, K, svid2col = conify_constraints(elementwise_constrs, setmem_constrs)
     check_dimensions(A, b, K)
+    # Find all variables (user-defined, and auxilliary)
+    variables = find_variables_from_constraints(constraints)
+    var_gens = np.array([v.generation for v in variables])
+    if not np.all(var_gens == var_gens[0]):
+        msg1 = '\nThe model contains Variable objects of distinct "generation".\n'
+        msg2 = '\nIn between constructing some of these Variables the function \n '
+        msg3 = 'coniclifts.clear_variable_indices was called. Remove this function\n'
+        msg4 = 'call from your program flow and try again.\n'
+        raise RuntimeError(msg1 + msg2 + msg3 + msg4)
+    # Construct the "variable map"
     variables.sort(key=lambda v: v.leading_scalar_variable_id())
     var_indices = []
     for v in variables:
         vids = np.array(v.scalar_variable_ids, dtype=int)
         vi = np.array([svid2col[idx] for idx in vids])
         var_indices.append(vi)
-    var_name_to_locs = make_variable_map(variables, var_indices)
-    return A, b, K, svid2col, var_name_to_locs
+    variable_map = make_variable_map(variables, var_indices)
+    return A, b, K, svid2col, variable_map, variables
 
 
 #
@@ -202,7 +218,7 @@ def make_variable_map(variables, var_indices):
 
     For example, if "my_var" is the name of a Variable with shape (10, 2, 1, 4), and "x" is
     feasible for the conic system {x : A @ x + b \in K}, then a feasible value for "my_var"
-    is the 10-by-2-by-1-by-4 array given by x[user_variable_map['my_var']].
+    is the 10-by-2-by-1-by-4 array given by x[variable_map['my_var']].
 
     NOTES:
 
