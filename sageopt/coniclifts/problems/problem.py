@@ -24,19 +24,21 @@ import time
 
 class Problem(object):
     """
-    An abstract representation for convex optimization problems. When the Problem object is constructed,
+    A representation for a convex optimization problem. When this Problem object is constructed,
     the constraints are immediately compiled into a flattened conic representation. This compilation
     process may take some time for large problems.
 
     Parameters
     ----------
-    objective_sense : coniclifts.MIN or coniclifts.MAX
+    objective_sense : str
+        Either coniclifts.MIN or coniclifts.MAX
 
-    objective_expr : Expression or float
-        The function to minimize. ScalarExpressions and real numeric types are also accepted.
-        The resulting expression must be linear in its Variables.
+    objective_expr : Expression
+        The function to minimize or maximize. ScalarExpressions and real numeric types
+        are also accepted. The final (cast) expression must be linear in its Variables.
 
     constraints : list of coniclifts.Constraint
+        Variables appearing in objective_expr are subject to Constraint objects in this list.
 
     Attributes
     ----------
@@ -106,11 +108,11 @@ class Problem(object):
     value : float
 
         The objective value from the last call to ``self.solve``. Can be a float,
-         ``np.inf``,``-np.inf``, or ``np.NaN``.
+         ``np.inf``, ``-np.inf``, or ``np.NaN``.
 
     status : str
 
-        The problem status from the last call to ``Problem.solve``.
+        The problem status from the last call to ``self.solve``.
         Either ``coniclifts.SOLVED`` or ``coniclifts.INACCURATE`` or ``coniclifts.FAILED``.
 
     Notes
@@ -119,9 +121,10 @@ class Problem(object):
     Problem status being ``coniclifts.SOLVED`` does not mean that the decision variables have
     been assigned specific values. It only means that the solver returned a normal status code
     (i.e. that the solver didn't run into numerical difficulties). If a solver return code
-    indicates the problem is "infeasible" or "unbounded", ``self.status = coniclifts.SOLVED``.
-    Therefore it is important to check that ``self.status == coniclifts.SOLVED``, and that
-    ``-np.inf < self.value < np.inf`` before accessing a Variable's value.
+    indicates the problem is "infeasible" or "unbounded", we still set
+    ``self.status = coniclifts.SOLVED``. Therefore it is important to check that
+    ``self.status == coniclifts.SOLVED`` and that ``-np.inf < self.value < np.inf`` before
+    accessing a Variable's value.
     """
 
     _SOLVERS_ = {'ECOS': ECOS(), 'MOSEK': Mosek()}
@@ -163,13 +166,27 @@ class Problem(object):
         Parameters
         ----------
         solver : str
-            Either 'MOSEK' or 'ECOS'.
-
-        kwargs
+            None or ``'MOSEK'`` or ``'ECOS'``. Defaults to the first installed solver found in
+            ``Problem._SOLVER_ORDER_``.
 
         Returns
         -------
+        status : str
 
+            Either ``coniclifts.SOLVED`` or ``coniclifts.INACCURATE`` or ``coniclifts.FAILED``.
+            Refer to the Notes of the Problem class for the meanings of these values.
+
+        value : float
+
+            The optimal objective value reported by the solver. Can be a float, ``-np.inf``,
+            ``np.inf``, or ``np.NaN``.
+
+        Notes
+        -----
+
+        Keyword arguments.
+
+            cache_apply_data
         """
         if solver is None:
             for svr in Problem._SOLVER_ORDER_:
@@ -227,7 +244,13 @@ class Problem(object):
         self.timings[solver]['total'] = time.time() - t0
         return self.status, self.value
 
+    def variables(self):
+        """
+        Return a shallow copy of ``self.all_variables``.
 
-
+        This function is provided to match the syntax of CVXPY Problem objects.
+        """
+        shallow_copy = [v for v in self.all_variables]
+        return shallow_copy
 
 

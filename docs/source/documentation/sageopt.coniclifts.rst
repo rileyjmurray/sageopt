@@ -26,15 +26,14 @@ For example, it is possible to construct and solve a linear program using conicl
    prob.solve(solver='ECOS', verbose=False)
    x_opt = x.value
 
-In the example above, ``constrs`` consists of two coniclifts Constraint objects. Both of these
+In the example above, ``constrs`` consists of two coniclifts *Constraint* objects. Both of these
 objects were constructed with operator overloading (``<=`` and ``==``), and the second Constraint made use of
 operator-overloaded matrix multiplication (``@``). If you check the datatype of the object ``y = A @ x``, you
-would find that ``y`` is a coniclifts Expression. Expression objects track functions of Variables,
-in an elementwise fashion.
+would find that ``y`` is a coniclifts *Expression*. Expression objects track functions of *Variable* objects.
 
 Coniclifts has support for nonlinear convex constraints. The most important of these constraints are specified as
 "set membership", rather than elementwise inequalities.
-For example, we have a ``PrimalSageCone`` class, which is used to construct some of the SAGE
+For example, we have a *PrimalSageCone* class, which is used to construct some of the SAGE
 relaxations in the ``sageopt.relaxations`` package. Here is a concrete example ::
 
    alpha = np.array([[0, 0],
@@ -58,7 +57,7 @@ By solving the problem described above, we have that ``val`` is a lower bound on
 There are only a few set-membership constraints currently implemented in
 coniclifts; they can all be found in ``sageopt.coniclifts.constraints.set_membership``.
 
-Coniclifts contains "operators" which symbolically represent functions applied to Expression objects.
+Coniclifts contains *operators* which represent functions applied to Expression objects.
 The module ``sageopt/coniclifts/operators/affine.py`` contains all affine array-manipulation operators you would use on
 a numpy ndarray `[link] <https://github.com/rileyjmurray/sageopt/blob/master/sageopt/coniclifts/operators/affine.py>`_.
 This includes linear algebra operators such as ``kron`` or ``trace``, reshaping
@@ -89,7 +88,7 @@ If you run the code above, you should find that it prints ``True``.
 
 It is important to note that nonlinear
 operators are not allowed in the objective function. So if you want to minimize a nonlinear convex function given by
-``expr``, you need to create an auxilliary variable such as ``t = Variable(shape=(1,))``, add the constraint ``expr
+``expr``, you need to create an auxiliary variable such as ``t = Variable(shape=(1,))``, add the constraint ``expr
 <= t``, and set the objective to minimize ``t``. Here is an example of a constrained least-squares problem we solve
 for solution recovery in dual SAGE relaxations ::
 
@@ -127,7 +126,7 @@ between models specified in high-level syntax, and models which exist in a flatt
 above.
 
 The most important function in coniclifts' compilation process is given below.
-The fourth return argument mentions "ScalarVariable" objects, which users of coniclifts need not interact with directly.
+The final return argument mentions "ScalarVariable" objects, which users of coniclifts need not interact with directly.
 
 .. autofunction:: sageopt.coniclifts.compilers.compile_constrained_system
 
@@ -158,13 +157,13 @@ Specifically, coniclifts begins with a few simple abstractions for scalar-valued
 those abstractions in a custom subclass of numpy's ndarray. The coniclifts abstractions for scalar-valued symbolic
 expressions are as follows:
 
-- A "ScalarExpression" class represents scalar-valued affine functions of certain irreducible primatives.
+- A *ScalarExpression* class represents scalar-valued affine functions of certain irreducible primatives.
   ScalarExpressions are operator-overloaded to support ``+``, ``-``, and ``*``. This allows ndarrays of
   ScalarExpressions to fall back on many functions which are implemented for numeric ndarrays.
 
-- An abstract "ScalarAtom" class specifies the behavior of the irreducible primitives in ScalarExpressions. The
-  ScalarAtom class immediately specializes into "ScalarVariables" (far and away the most important ScalarAtom), and
-  another abstract class, called "NonlinearScalarAtom". NonlinearScalarAtoms are implemented on a case-by-case basis,
+- An abstract *ScalarAtom* class specifies the behavior of the irreducible primitives in ScalarExpressions. The
+  ScalarAtom class immediately specializes into *ScalarVariables* (far and away the most important ScalarAtom), and
+  another abstract class, called *NonlinearScalarAtom*. NonlinearScalarAtoms are implemented on a case-by-case basis,
   but include such things as the exponential function and the vector 2-norm.
 
 We ask interested users to refer to the source code for additional information on ScalarExpressions and
