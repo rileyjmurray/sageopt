@@ -27,6 +27,10 @@ class Constraint(object):
         raise NotImplementedError()
 
     def variables(self):
+        """
+        Return a list of all Variable objects appearing in this Constraint.
+        All Variables must be "proper".
+        """
         raise NotImplementedError()
 
     def conic_form(self):

@@ -45,7 +45,7 @@ class TestCompilers(unittest.TestCase):
         constraints = [G @ x == h,
                        x >= 0]
         # Reference case : the constraints are over x, and we are interested in no variables other than x.
-        A0, b0, K0, _, var_mapping0, _ = compile_constrained_system(constraints)
+        A0, b0, K0, var_mapping0, _, _ = compile_constrained_system(constraints)
         A0 = A0.toarray()
         #   A0 should be the (m+n)-by-n matrix formed by stacking -G on top of the identity.
         #   b0 should be the (m+n)-length vector formed by concatenating h with the zero vector.

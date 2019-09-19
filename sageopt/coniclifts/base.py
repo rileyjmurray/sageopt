@@ -533,6 +533,7 @@ class Expression(np.ndarray):
     def variables(self):
         """
         Return a list of all Variable objects appearing in this Expression.
+        You can assume that all Variable objects will be "proper".
         """
         var_ids = set()
         var_list = []

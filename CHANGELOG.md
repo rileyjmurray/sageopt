@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  defined by the inferred constraints is feasible. Adding this allowed me to make it an assumption
  in conditional_sage_cone.py that the conic system is feasible, which resolved a standing issue
  in computing constraint violations for conditional SAGE cones.
+ - An explicit requirement that ``Constraint.variables`` returns both all variables in its scope,
+ and that all returned Variables be "proper".
 ## Changed
  - The "var_name_to_locs" dict from coniclifts.compilers.compile_constrained_system. If a ScalarVariable
  does not participate in the conic system but its parent Variable object does, then that ScalarVariable's

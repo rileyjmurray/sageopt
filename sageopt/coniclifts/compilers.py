@@ -30,7 +30,7 @@ def compile_problem(objective, constraints):
     if not objective.is_affine():
         raise NotImplementedError('The objective function must be affine.')
     # Generate a conic system that is feasible iff the constraints are feasible.
-    A, b, K, svid2col, variable_map, variables = compile_constrained_system(constraints)
+    A, b, K, variable_map, variables, svid2col = compile_constrained_system(constraints)
     # Generate the vector for the objective function.
     c, c_offset = compile_linear_expression(objective, svid2col)
     if c_offset != 0:
@@ -41,11 +41,12 @@ def compile_problem(objective, constraints):
 
 def compile_constrained_system(constraints):
     """
-    Find all Variable objects which participate in at least one of the specified constraints.
     Construct a flattened conic representation of the set of variable values which satisfy the
     constraints ("the feasible set"). Return the flattened representation of the feasible set,
-    data structures for mapping the vectorized representation back to user-defined Variables,
-    and a list of all Variable objects needed to represent the feasible set.
+    data structures for mapping the vectorized representation back to Variables, and a list of
+    all Variables needed to represent the feasible set.
+
+    The final return argument (``svid2col``) can likely be ignored by end-users.
 
     Parameters
     ----------
@@ -66,12 +67,6 @@ def compile_constrained_system(constraints):
         The cartesian product of these cones (in order) defines the convex cone appearing
         in the flattened representation of the feasible set.
 
-    svid2col : Dict[int, int]
-
-        A map from a ScalarVariable's ``id`` to the index of the column in ``A`` where the ScalarVariable
-        participates in the conic system. If the given ScalarVariable does not participate in the conic
-        system, its ``id`` maps to ``-1``.
-
     variable_map : Dict[str, ndarray]
 
         A map from a Variable's ``name`` field to a numpy array. If ``myvar`` is a coniclifts
@@ -90,6 +85,12 @@ def compile_constrained_system(constraints):
 
         All proper Variable objects appearing in the constraint set, including any auxiliary
         variables introduced to obtain a flattened conic system.
+
+    svid2col : Dict[int, int]
+
+        A map from a ScalarVariable's ``id`` to the index of the column in ``A`` where the ScalarVariable
+        participates in the conic system. If the given ScalarVariable does not participate in the conic
+        system, its ``id`` maps to ``-1``.
 
     """
     if any(not isinstance(c, Constraint) for c in constraints):
@@ -123,7 +124,7 @@ def compile_constrained_system(constraints):
         vi = np.array([svid2col[idx] for idx in vids])
         var_indices.append(vi)
     variable_map = make_variable_map(variables, var_indices)
-    return A, b, K, svid2col, variable_map, variables
+    return A, b, K, variable_map, variables, svid2col
 
 
 #
@@ -247,9 +248,7 @@ def make_variable_map(variables, var_indices):
 
 def find_variables_from_constraints(constraints):
     """
-    :param constraints: a list of Constraint objects.
-    :return: a list of all coniclifts Variable objects appearing
-    in at least one of the Constraints.
+    Return a list of all "proper" Variable objects appearing in some ``c in constraints``.
     """
     variable_ids = set()
     variables = []
@@ -257,13 +256,13 @@ def find_variables_from_constraints(constraints):
         for v in c.variables():
             if v.is_proper():
                 vid = id(v)
-                prop_v = v
+                if vid not in variable_ids:
+                    variable_ids.add(vid)
+                    variables.append(v)
             else:
-                vid = id(v.base)
-                prop_v = v.base
-            if vid not in variable_ids:
-                variable_ids.add(vid)
-                variables.append(prop_v)
+                msg = 'Constraint \n \t' + str(c) + '\n'
+                msg += 'returned an improper Variable \n \t' + str(v) + '\n'
+                raise RuntimeError(msg)
     return variables
 
 
