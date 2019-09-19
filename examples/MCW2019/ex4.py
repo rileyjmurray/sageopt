@@ -23,7 +23,7 @@ gts = [
 ]
 eqs = []
 
-dual = sig_constrained_relaxation(f, gts, eqs, 'D', 1, 1, 0)
+dual = sig_constrained_relaxation(f, gts, eqs, None, 'D', p=1, q=1, ell=0)
 dual.solve(verbose=False, solver='MOSEK')  # ECOS fails
 solns = sig_solrec(dual)
 x0 = solns[0]

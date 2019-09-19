@@ -138,7 +138,7 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
         and ``X['eqs']`` is a list of functions which define equality constraints.
 
         The third key depends on if provided functions were Signomials or Polynomials.
-        If the given functions were Signomials, then ``X`` has a key  ``X['AbK']``.
+        If the given functions were Signomials, then ``X`` has a key  ``X['X']``.
         If the given functions were Polynomials, then ``X`` has a key ``X['log_AbK']``.
 
     Notes

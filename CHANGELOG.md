@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 # [unreleased]
+Multiple changes here are API breaking. The next release will be 0.4.0.
 ## Addded
  - Support for automatic elimination of trivial AGE cones from SAGE relaxations. This can be disabled
  by setting the variable ``_EXPENSIVE_REDUCTION_=False`` for both sage_cone.py and conditional_sage_cone.py.
@@ -22,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  to ``x0 = np.hstack([x,0])``. Augmenting in this way means that ScalarVariables are set to the value 0
  by default, but we only do this if its value does not affect the feasibility of the constraints.
  This return value has also been renamed to "variable_map".
- - Fixed a bug in conditional_sage_data. Equality constraints were being incorrectly compiled.
- The bug only meant that SAGE relaxations solved in the past were weaker than they should have been.
  - Many changes to fields in the Problem class. Problem.user_cons is now Problem.constraints.
  Problem.user_obj is now Problem.objective_expr. Problem.user_variable_map is now Problem.variable_map.
  - How ElementwiseConstraint objects report their variables. They now always include user-defined variables,
@@ -31,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  variables. ``con.violation()`` is still only computed with respect to user-defined variables.
  - When compile_constrained_system finds all variables. Now there is no need for a separate call to find variables
  within compile_problem.
+ - The signature of ``sig_relaxation`` and ``sig_constrained_relaxation``. Hierarchy parameters are now specified
+ by keyword arguments, and the argument ``X`` comes before the argument ``form``.
+ - Fixed a bug in conditional_sage_data. Equality constraints were being incorrectly compiled.
+ The bug only meant that SAGE relaxations solved in the past were weaker than they should have been.
 ## Removed
  - sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
  as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.
@@ -102,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
  - Removed the local_refine implementation for polynomials; replaced
    it by a generic implementation which works for polynomials and signomials
- - Changed references to "AbK" and "logAbK" in user-facing functions to "X".
+ - Changed references to "X" and "logAbK" in user-facing functions to "X".
   This is both out of consistency with the paper, and to reflect the fact that
   the set X carries more information than just a conic representation.
 ## Removed

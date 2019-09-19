@@ -38,7 +38,7 @@ def relative_dual_sage_cone(primal_sig, dual_var, name, AbK, expcovers=None):
     return con
 
 
-def sig_relaxation(f, form='dual', ell=0, X=None, mod_supp=None):
+def sig_relaxation(f, X=None, form='dual', **kwargs):
     """
     Construct a coniclifts Problem instance for producing a lower bound on
 
@@ -56,22 +56,31 @@ def sig_relaxation(f, form='dual', ell=0, X=None, mod_supp=None):
         The objective function to be minimized.
     form : str
         Either ``form='primal'`` or ``form='dual'``.
-    ell : int
-        The level of the SAGE hierarchy. Must be nonnegative.
     X : dict
         If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
-    mod_supp : NumPy ndarray
-        This parameter is only used when ``ell > 0``. If ``mod_supp`` is not None, then the rows of this
-        array define the exponents of a positive definite modulating Signomial in the SAGE hierarchy.
+        If ``X`` is a dict, then it must be generated in accordance with Notes (1) - (3)
+        of the docstring for ``sage_sigs.conditional_sage_data``.
 
     Returns
     -------
     prob : sageopt.coniclifts.Problem
         A coniclifts Problem which represents the SAGE relaxation, with given parameters.
         The relaxation can be solved by calling ``prob.solve()``.
+
+    Notes
+    -----
+
+    This function also accepts the following keyword arguments:
+
+    ell : int
+        The level of the SAGE hierarchy. Must be nonnegative.
+
+    mod_supp : NumPy ndarray
+        Only used when ``ell > 0``. If ``mod_supp`` is not None, then the rows of this
+        array define the exponents of a positive definite modulating Signomial ``t`` in the SAGE hierarchy.
     """
+    ell = kwargs['ell'] if 'ell' in kwargs else 0
+    mod_supp = kwargs['mod_supp'] if 'mod_supp' in kwargs else None
     if form.lower()[0] == 'd':
         prob = sig_dual(f, ell, X, mod_supp)
     elif form.lower()[0] == 'p':
@@ -94,8 +103,8 @@ def sig_dual(f, ell=0, X=None, modulator_support=None):
         The level of the SAGE hierarchy. Must be nonnegative.
     X : dict
         If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
+        If ``X`` is a dict, then it must be generated in accordance with Notes (1) - (3)
+        of the docstring for ``sage_sigs.conditional_sage_data``.
     modulator_support : NumPy ndarray
         If ``modulator_support`` is not None, then its rows define the exponents of a positive definite
         modulating Signomial in the SAGE hierarchy. This parameter is only used when ``ell > 0``.
@@ -144,16 +153,20 @@ def sig_primal(f, ell=0, X=None, additional_cons=None, modulator_support=None):
     ----------
     f : Signomial
         The objective function to be minimized.
+
     ell : int
         The level of the SAGE hierarchy. Must be nonnegative.
+
     X : dict
-        If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
+        If ``X`` is None, then this parameter is ignored.
+        If ``X`` is a dict, then it must be generated in accordance with Notes (1) - (3)
+        of the docstring for ``sage_sigs.conditional_sage_data``.
+
     modulator_support : NumPy ndarray
         If ``modulator_support`` is not None, then its rows define the exponents of a positive definite
         modulating Signomial in the SAGE hierarchy. This parameter is only used when ``ell > 0``.
-    additional_cons: list of coniclifts Constraint objects
+
+    additional_cons: list of coniclifts.Constraint
         Some primal SAGE polynomial relaxations can easily be transformed to primal SAGE signomial relaxations,
         by way of "signomial representatives". The signomial representatives are often accompanied by additional
         constraints. Those constraints may be passed as a list, via this argument. End-users are unlikely to use
@@ -200,16 +213,17 @@ def sig_primal(f, ell=0, X=None, additional_cons=None, modulator_support=None):
 
 def sage_feasibility(f, X=None, additional_cons=None):
     """
-    Constructs a coniclifts maximization Problem which is feasible iff ``f`` admits an X-SAGE decomposition.
+    Constructs a coniclifts maximization Problem which is feasible if and only if
+    ``f`` admits an X-SAGE decomposition (:math:`X=R^{\\texttt{f.n}}` by default).
 
     Parameters
     ----------
     f : Signomial
         We want to test if this function admits an X-SAGE decomposition.
     X : dict
-        If ``X`` is None, then we test nonnegativity of ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
+        If ``X`` is None, then this parameter is ignored.
+        If ``X`` is a dict, then it must be generated in accordance with Notes (1) - (3)
+        of the docstring for ``sage_sigs.conditional_sage_data``.
     additional_cons : :obj:`list` of :obj:`sageopt.coniclifts.Constraint`
         This is mostly used for SAGE polynomials. When provided, it should be a list of Constraints over
         coniclifts Variables appearing in ``f.c``.
@@ -244,9 +258,9 @@ def sage_multiplier_search(f, level=1, X=None):
     level : int
         Controls the complexity of the X-SAGE modulating function. Must be a positive integer.
     X : dict
-        If ``X`` is None, then we test nonnegativity of ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
+        If ``X`` is None, then this parameter is ignored.
+        If ``X`` is a dict, then it must be generated in accordance with Notes (1) - (3)
+        of the docstring for ``sage_sigs.conditional_sage_data``.
 
     Returns
     -------
@@ -282,10 +296,9 @@ def sage_multiplier_search(f, level=1, X=None):
     return prob
 
 
-def sig_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None):
+def sig_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
     """
-    Construct a coniclifts Problem instance representing a level-``(p, q, ell)`` SAGE relaxation
-    for the signomial program
+    Construct a coniclifts Problem representing a SAGE relaxation for the signomial program
 
     .. math::
 
@@ -297,36 +310,46 @@ def sig_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None
 
     where X = :math:`R^{\\texttt{f.n}}` by default. When ``form='dual'``, a solution to this
     relaxation can be used  to help recover optimal solutions to the problem described above.
+    Refer to the Notes for keyword arguments accepted by this function.
 
     Parameters
     ----------
     f : Signomial
         The objective function to be minimized.
-    gts : list of Signomials
+    gts : list of Signomial
         For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
-    eqs : list of Signomials
+    eqs : list of Signomial
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    X : dict or None
+        If ``X`` is None, then this parameter is ignored.
+        If ``X`` is a dict, then it must be generated in accordance with Notes (1) - (3)
+        of the docstring for ``sage_sigs.conditional_sage_data``.
     form : str
         Either ``form='primal'`` or ``form='dual'``.
-    p : int
-        Controls the complexity of Lagrange multipliers in the primal formulation, and (equivalently) constraints in
-        the dual formulation. The smallest value is ``p=0``, which corresponds to scalar Lagrange multipliers.
-    q : int
-        The number of folds applied to the constraints ``gts`` and ``eqs``. The smallest value is ``q=1``, which
-        means "leave ``gts`` and ``eqs`` as-is."
-    ell : int
-        Controls the complexity of any modulator applied to the Lagrangian in the primal formulation, and
-        (equivalently) constraints in the dual formulation. The smallest value is ``ell=0``, which means
-        the primal Lagrangian must be a SAGE signomial.
-    X : dict
-        If ``X`` is None, then this parameter is ignored.
-        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
 
     Returns
     -------
     prob : sageopt.coniclifts.Problem
+
+    Notes
+    -----
+
+    This function also accepts the following keyword arguments:
+
+    p : int
+        Controls the complexity of Lagrange multipliers on explicit signomial constraints ``gts`` and ``eqs``.
+        Defaults to ``p=0``, which corresponds to scalar Lagrange multipliers.
+    q : int
+        The lists ``gts`` and ``eqs`` are replaced by lists of signomials formed by all products of ``<= q``
+        elements from ``gts`` and ``eqs`` respectively. Defaults to ``q = 1``.
+    ell : int
+        Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
+        ``ell=0``, which means the primal Lagrangian must be an X-SAGE signomial.
     """
+    p = kwargs['p'] if 'p' in kwargs else 0
+    q = kwargs['q'] if 'q' in kwargs else 1
+    ell = kwargs['ell'] if 'ell' in kwargs else 0
+
     if form.lower()[0] == 'd':
         prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X)
     elif form.lower()[0] == 'p':
@@ -432,8 +455,8 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
         The smallest value is ``ell=0``, which means the primal Lagrangian is unchanged / not modulated.
     X : dict
         If ``X`` is None, then this parameter is ignored.
-        If ``X`` is a dict, then it must contain three fields: ``'AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
+        If ``X`` is a dict, then it must be generated in accordance with Notes (1), (2), and (3)
+        of the docstring for ``sage_sigs.conditional_sage_data``.
 
     Returns
     -------
@@ -578,8 +601,8 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
 def conditional_sage_data(f, gts, eqs, check_feas=True):
     """
     Identify a subset of the constraints in ``gts`` and ``eqs`` which can be incorporated into
-    conditional SAGE relaxations. Generate conic data that relaxation-constructors will need
-    in downstream applications.
+    conditional SAGE relaxations for signomials. Generate conic data that relaxation-constructors
+    will need in downstream applications.
 
     Parameters
     ----------
@@ -598,24 +621,31 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     X : dict
 
         ``X`` is keyed by three strings: ``'AbK'``, ``'gts'``, and ``'eqs'``. Refer to the Notes
-        for discussion on the values associated with these keys.
+        for discussion on the associated values.
 
     Notes
     -----
-    ``X['gts']`` is a list of Signomials. Every ``g in X['gts']`` has an efficient
-    convex representation of ``{x : g(x) >= 0}``, and the intersection of all these
-    sets contains ``{x : g(x) >= 0 for all g in gts}``. There is one signomial ``g in X['gts']``
-    for every ``g in gts`` which has one positive coefficient.
 
-    ``X['eqs]`` is a list of Signomials. Every ``g in X['eqs']`` has an efficient
-    convex representation of ``{x : g(x) == 0}``, and the intersection of all these sets
-    contains ``{x : g(x) == 0 for all g in eqs}``. There is one signomial ``g in X['eqs']``
-    for every ``g in eqs`` which has exactly two coefficients (one positive, one negative).
+    This function comes with the following minimum specification for ``X``:
 
-    ``X['AbK']`` is a coniclifts-standard representation of the feasible set cut out by
+    (1) ``X['gts']`` is a list of callables. Every ``g in X['gts']`` induces a convex
+    set ``{x : g(x) >= 0}`` which contains ``{x : g(x) >= 0 for all g in gts}``.
+
+    (2) ``X['eqs']`` is a list of callables. Every ``g in X['eqs']`` induces a convex
+    set ``{x : g(x) == 0}`` which contains ``{x : g(x) == 0 for all g in eqs}``.
+
+    (3) ``X['AbK']`` is a coniclifts-standard representation of the feasible set cut out by
     ``X['gts']`` and ``X['eqs']``. We can check membership in ``X['AbK']`` by evaluating
     the functions in ``X['gts']`` and ``X['eqs']``, and checking that the results are
     nonnegative and zero respectively.
+
+    The implementation of this function acts as follows:
+
+    Elements of ``X['gts']`` and ``X['eqs']`` are Signomials. There is one signomial
+    ``g in X['gts']`` for every ``g in gts`` which has one positive coefficient, and
+    there is one signomial ``g in X['eqs']`` for every ``g in eqs`` which has exactly
+    two coefficients (one positive, one negative).
+
     """
     x = cl.Variable(shape=(f.n,), name='x')
     coniclift_cons = []

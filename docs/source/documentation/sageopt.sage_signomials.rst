@@ -6,10 +6,19 @@ Working with SAGE signomials.
 =============================
 
 SAGE signomials can be used for optimization (i.e. signomial programming) and certifying function nonnegativity.
-This page describes core functions which can assist in these goals. The functions described here are largely reference
+This page describes core functions which can assist in these goals. These functions are
+
+ - :func:`sageopt.sig_relaxation`,
+ - :func:`sageopt.sig_constrained_relaxation`,
+ - :func:`sageopt.sig_solrec`,
+ - :func:`sageopt.local_refine`,
+ - :func:`sageopt.relaxations.sage_sigs.conditional_sage_data`,
+ - :func:`sageopt.relaxations.sage_sigs.sage_feasibility`, and
+ - :func:`sageopt.relaxations.sage_sigs.sage_multiplier_search`.
+
+The functions described here are largely reference
 implementations. Depending on the specifics of your problem, it may be beneficial to implement variants of these
 functions by directly working with sageopt's backend: coniclifts.
-
 Newcomers to sageopt might benefit from reading this page in
 one browser window, and keeping our page of :ref:`allexamples` open in an adjacent window.
 It might also be useful to have a copy of MCW2019_ at hand, since that article is
@@ -64,15 +73,13 @@ although they can be useful in other contexts.
 
 .. autofunction:: sageopt.sig_constrained_relaxation
 
-The documentation for parameters ``p``, ``q``, and ``ell`` in ``sig_constrained_relaxation`` is admittedly
-somewhat vague.
-The precise meanings of these parameters are given in Section 3.4 of MCW2019_, however we also describe
-them here.
 
+Before we move on to solution recovery, we take some time to describe the precise meanings of parameters
+``p`` and ``ell`` in ``sig_constrained_relaxation``.
 In primal form, ``sig_constrained_relaxation`` operates by moving explicit signomial constraints into a Lagrangian,
 and attempting to certify the Lagrangian as nonnegative over ``X``;
 this is a standard combination of the concepts reviewed in Section 2 of MCW2019_.
-Parameter ``ell`` is conceptually the same as in ``sig_relaxation``: to improve the strength of the SAGE
+Parameter ``ell`` is essentially the same as in ``sig_relaxation``: to improve the strength of the SAGE
 proof system, modulate the Lagrangian ``L - gamma`` by powers of the signomial
 ``t = Signomial(L.alpha, np.ones(L.m))``.
 Parameters ``p`` and ``q`` affect the *unmodulated Lagrangian* seen by ``sig_constrained_relaxation``;
@@ -134,7 +141,6 @@ a convex set :math:`X \supset \Omega` which is implied by the constraint signomi
 It is possible that the function above cannot capture a convex set of interest. This is
 particularly likely if the desired convex set is not naturally described
 by signomial inequality and equality constraints.
-
 Suppose for example that you want ``X`` to represent the :math:`\ell_2` unit ball in :math:`R^{\texttt{f.n}}`.
 This can easily be accomplished by leveraging ``sageopt.coniclifts``' compilation features. ::
 
@@ -142,17 +148,22 @@ This can easily be accomplished by leveraging ``sageopt.coniclifts``' compilatio
     import numpy as np
     x = cl.Variable(shape=(f.n,), name='x')
     constraints = [1 >= cl.vector2norm(x)]
-    A, b, K, _, _ = cl.compile_constrained_system(constraints)
+    A, b, K, _, _, _ = cl.compile_constrained_system(constraints)
     my_gts = [lambda dummy_x: 1 - np.linalg.norm(dummy_x, ord=2)]
     my_eqs = []
     X = {'AbK': (A, b, K), 'gts': my_gts, 'eqs': my_eqs}
 
 One message of this example is that ``X['gts']`` and ``X['eqs']`` don't need to be lists
-of Signomials. They just need to be callable functions which define membership in ``X['AbK]``.
+of Signomials. They just need to be callable functions which define membership in ``X['AbK']``.
 
 
 Nonnegativity
 -------------
+
+Sageopt offers two pre-made functions for certifying nonnegativity and finding SAGE decompositions:
+``sage_feasibility`` and ``sage_multiplier_search``. These functions are accessible as top-level imports
+``sageopt.sage_feasibility`` and ``sageopt.sage_multiplier_search``, where they accept Signomial or Polynomial objects.
+The documentation below addresses the Signomial implementations.
 
 .. autofunction:: sageopt.relaxations.sage_sigs.sage_feasibility
 

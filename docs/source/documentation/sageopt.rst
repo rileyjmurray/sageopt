@@ -1,7 +1,7 @@
 Overview of sageopt's structure
 ===============================
 
-Sageopt version 0.3 is divided into three subpackages:
+Sageopt version 0.4 is divided into three subpackages:
  1. ``sageopt.symbolic``,
  2. ``sageopt.relaxations``, and
  3. ``sageopt.coniclifts``.
