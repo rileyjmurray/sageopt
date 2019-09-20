@@ -107,7 +107,7 @@ def compile_constrained_system(constraints):
     # Compile into a conic system (substituting epigraph variables as necessary)
     A, b, K, svid2col = conify_constraints(elementwise_constrs, setmem_constrs)
     check_dimensions(A, b, K)
-    # Find all variables (user-defined, and auxilliary)
+    # Find all variables (user-defined, and auxiliary)
     variables = find_variables_from_constraints(constraints)
     var_gens = np.array([v.generation for v in variables])
     if not np.all(var_gens == var_gens[0]):

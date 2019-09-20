@@ -160,7 +160,7 @@ class PrimalOrdinarySageCone(SetMembership):
             y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
             z = -self.age_vectors[i][i]
             epi = self.relent_epi_vars[i]
-            A_vals, A_rows, A_cols, b, K, epi = sum_relent(x, y, z, epi)
+            A_vals, A_rows, A_cols, b, K = sum_relent(x, y, z, epi)
         else:
             # just constrain -age_vectors[i][i] <= 0.
             A_vals, A_rows, A_cols = [1], np.array([0]), [self.age_vectors[i][i].scalar_variables()[0].id]
@@ -418,7 +418,7 @@ class DualOrdinarySageCone(SetMembership):
         #
         expr1 = np.tile(self.v[i], len_sel).view(Expression)
         epi = self.relent_epi_vars[i]
-        A_vals, A_rows, A_cols, b, K, epi = elementwise_relent(expr1, self.v[selector], epi)
+        A_vals, A_rows, A_cols, b, K = elementwise_relent(expr1, self.v[selector], epi)
         cone_data.append((A_vals, A_rows, A_cols, b, K))
         #
         # Linear inequalities

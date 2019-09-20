@@ -35,7 +35,7 @@ class Constraint(object):
 
     def conic_form(self):
         """
-        :return: A_vals, A_rows, A_cols, b, K, sep_K
+        :return: A_vals, A_rows, A_cols, b, K
             A_vals - list (of floats)
             A_rows - numpy 1darray (of integers)
             A_cols - list (of integers)

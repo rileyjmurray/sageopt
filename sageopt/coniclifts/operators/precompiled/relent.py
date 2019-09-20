@@ -67,7 +67,7 @@ def sum_relent(x, y, z, aux_vars):
         A_cols += [aid for aid, _ in id2co]
         A_vals += [co for _, co in id2co]
         b[curr_cone_start + 1] = y[i].offset
-    return A_vals, np.array(A_rows), A_cols, b, K, aux_vars
+    return A_vals, np.array(A_rows), A_cols, b, K
 
 
 def elementwise_relent(x, y, z):
@@ -80,7 +80,6 @@ def elementwise_relent(x, y, z):
     A_cols - a list of ints,
     b - a numpy 1darray,
     K - a list of coniclifts Cone objects (of type 'e'),
-    z - a coniclifts Variable
     """
     if not isinstance(x, Expression):
         x = Expression(x)
@@ -117,4 +116,4 @@ def elementwise_relent(x, y, z):
         A_cols += [aid for aid, _ in id2co]
         A_vals += [co for _, co in id2co]
         b[curr_cone_start + 1] = y[i].offset
-    return A_vals, np.array(A_rows), A_cols, b, K, z
+    return A_vals, np.array(A_rows), A_cols, b, K

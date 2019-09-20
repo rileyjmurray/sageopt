@@ -31,4 +31,14 @@ class SetMembership(Constraint):
         raise NotImplementedError()
 
     def conic_form(self):
+        """
+        Return a list, with tuples of the form
+
+        (A_vals, A_rows, A_cols, b, K)
+            A_vals - list (of floats)
+            A_rows - numpy 1darray (of integers)
+            A_cols - list (of integers)
+            b - numpy 1darray (of floats)
+            K - list (of coniclifts Cone objects)
+        """
         raise NotImplementedError()
