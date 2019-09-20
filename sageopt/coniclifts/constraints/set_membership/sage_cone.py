@@ -66,6 +66,21 @@ class PrimalSageCone(SetMembership):
     Attributes
     ----------
 
+    alpha : ndarray
+
+         The matrix whose rows define the exponent vectors of this primal SAGE cone.
+
+    c : Expression
+
+        The vector subject to the primal SAGE-cone constraint.
+
+    age_vectors : Dict[int, Expression]
+
+        ``age_vectors[i]`` is a lifted representation of ``c_vars[i]``. If ``c_vars`` and
+        ``nu_vars`` are assigned feasible values, then we should have that ``age_vectors[i]``
+        belongs to the i-th AGE cone induced by ``alpha``, and that
+        ``self.c.value == np.sum([ av.value for av in age_vectors.values() ])``.
+
     m : int
 
         The number of rows in ``alpha``; the number of entries in ``c``.
@@ -73,17 +88,6 @@ class PrimalSageCone(SetMembership):
     n : int
 
         The number of columns in ``alpha``.
-
-    c : Expression
-
-        The vector subject to the primal SAGE-cone constraint.
-
-    ech : ExpCoverHelper
-
-        A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
-        when provided, and manages construction of ``covers`` when a user does not provide it.
-        This is an essential component of the duality relationship between PrimalSagecCone
-        and DualSageCone objects.
 
     nu_vars : Dict[int, Variable]
 
@@ -93,15 +97,15 @@ class PrimalSageCone(SetMembership):
     c_vars : Dict[int, Variable]
 
         ``c_vars[i]`` is a Variable which determines the i-th summand in a SAGE decomposition
-        of ``self.c``. The size of this variable is related to presolve behaivor of ``self.ech``,
+        of ``self.c``. The size of this variable is related to presolve behavior of ``self.ech``,
         and this can be strictly smaller than ``self.m``.
 
-    age_vectors : Dict[int, Expression]
+    ech : ExpCoverHelper
 
-        ``age_vectors[i]`` is a lifted representation of ``c_vars[i]``. If ``c_vars`` and
-        ``nu_vars`` are assigned feasible values, then we should have that ``c_vars[i]``
-        belongs to the i-th AGE cone induced by ``alpha``, and that
-        ``self.c.value == np.sum([ ci.value for ci in c_vars.values() ])``.
+        A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
+        when provided, and manages construction of ``covers`` when a user does not provide it.
+        This is an essential component of the duality relationship between PrimalSageCone
+        and DualSageCone objects.
     """
 
     def __init__(self, c, alpha, name, covers=None):
