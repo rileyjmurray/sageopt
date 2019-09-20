@@ -60,29 +60,26 @@ class PrimalCondSageCone(SetMembership):
         ``alpha.shape[1]`` columns of ``A`` correspond to variables over which a Signomial
         would be defined. Any remaining columns are auxiliary variables.
         """
-        A, b, K = AbK
         self.name = name
-        if issparse(A):
-            A = A.toarray()
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
+        A = AbK[0].toarray() if issparse(AbK[0]) else AbK[0]
+        K = check_cones(AbK[2])
+        self.AbK = (A, AbK[1], K)
         self.lifted_n = A.shape[1]
         if self.lifted_n > self.n:
             # Then need to zero-pad alpha
             zero_block = np.zeros(shape=(alpha.shape[0], self.lifted_n - self.n))
             alpha = np.hstack((alpha, zero_block))
         self.lifted_alpha = alpha
-        self.A = A
-        self.b = b
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
-        self._variables = self.c.variables()
-        self.K = check_cones(K)
-        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, covers)
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.AbK, covers)
         self.nu_vars = dict()
         self.c_vars = dict()
         self.relent_epi_vars = dict()
         self.age_vectors = dict()
         self.eta_vars = dict()
+        self._variables = self.c.variables()
         self._initialize_variables()
         pass
 
@@ -100,7 +97,7 @@ class PrimalCondSageCone(SetMembership):
                     # the i-th AGE cone is the nonnegative orthant. Therefore only define
                     # eta_var[i] when num_cover > 0.
                     var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
-                    self.eta_vars[i] = Variable(shape=(self.A.shape[0],), name=var_name)
+                    self.eta_vars[i] = Variable(shape=(self.AbK[1].size,), name=var_name)
                 c_len = num_cover
                 if i not in self.ech.N_I:
                     c_len += 1
@@ -130,7 +127,7 @@ class PrimalCondSageCone(SetMembership):
             x = self.nu_vars[i]
             y = np.exp(1) * self.age_vectors[i][idx_set]
             # ^ # This line consumes a disproportionately large amount of runtime
-            z = -self.age_vectors[i][i] + self.eta_vars[i] @ self.b
+            z = -self.age_vectors[i][i] + self.eta_vars[i] @ self.AbK[1]
             epi = self.relent_epi_vars[i]
             A_vals, A_rows, A_cols, b, K, epi = sum_relent(x, y, z, epi)
         else:
@@ -142,7 +139,7 @@ class PrimalCondSageCone(SetMembership):
     def _age_lin_eq_cone_data(self, i):
         idx_set = self.ech.expcovers[i]
         mat1 = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T
-        mat2 = -self.A.T
+        mat2 = -self.AbK[0].T
         var1 = self.nu_vars[i]
         var2 = self.eta_vars[i]
         A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_plus_mat_times_vecvar(mat1, var1, mat2, var2)
@@ -152,22 +149,23 @@ class PrimalCondSageCone(SetMembership):
         return A_vals, A_rows, A_cols, b, K
 
     def _age_eta_var_domain_constraints(self, i):
-        con = DualProductCone(self.eta_vars[i], self.K)
+        con = DualProductCone(self.eta_vars[i], self.AbK[2])
         conic_data = con.conic_form()
         A_vals, A_rows, A_cols, b, cur_K = conic_data[0]
         return A_vals, A_rows, A_cols, b, cur_K
 
     def _age_violation(self, i, norm_ord, c_i, eta_i):
         # This is "rough" only.
-        idx_set = self.ech.expcovers[i]
-        if np.any(idx_set):
-            eta_viol = DualProductCone.project(eta_i, self.K)
+        if self.ech.expcover_counts[i] > 0:
+            A, b, K = self.AbK
+            eta_viol = DualProductCone.project(eta_i, K)
             x_i = self.nu_vars[i].value
             x_i[x_i < 0] = 0
+            idx_set = self.ech.expcovers[i]
             y_i = np.exp(1) * c_i[idx_set]
-            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + self.b @ eta_i  # <= 0
+            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + b @ eta_i  # <= 0
             relent_viol = abs(max(relent_res, 0))
-            eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - self.A.T @ eta_i  # == 0
+            eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - A.T @ eta_i  # == 0
             eq_res = eq_res.reshape((-1,))
             eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
             total_viol = relent_viol + eq_viol + eta_viol
@@ -213,14 +211,14 @@ class PrimalCondSageCone(SetMembership):
             return cone_data
 
     @staticmethod
-    def project(item, alpha, A, b, K):
+    def project(item, alpha, AbK):
         if np.all(item >= 0):
             return 0
         c = Variable(shape=(item.size,))
         t = Variable(shape=(1,))
         cons = [
             vector2norm(item - c) <= t,
-            PrimalCondSageCone(c, alpha, (A, b, K), 'temp_con')
+            PrimalCondSageCone(c, alpha, AbK, 'temp_con')
         ]
         prob = Problem(CL_MIN, t, cons)
         prob.solve(verbose=False)
@@ -230,7 +228,7 @@ class PrimalCondSageCone(SetMembership):
         c = self.c.value
         if self.m > 1:
             if not rough:
-                dist = PrimalCondSageCone.project(c, self.lifted_alpha, self.A, self.b, self.K)
+                dist = PrimalCondSageCone.project(c, self.lifted_alpha, self.AbK)
                 return dist
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
@@ -252,7 +250,7 @@ class PrimalCondSageCone(SetMembership):
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
             if np.any(age_viols == np.inf):
                 total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
-                total_viol += PrimalCondSageCone.project(c, self.lifted_alpha, self.A, self.b, self.K)
+                total_viol += PrimalCondSageCone.project(c, self.lifted_alpha, self.AbK)
             else:
                 total_viol = sum_to_c_viol + np.max(age_viols)
             return total_viol
@@ -277,12 +275,9 @@ class DualCondSageCone(SetMembership):
         Aggregates constraints on "v" so that "v" can be viewed as a dual variable
         to a constraint of the form "c \in C_{SAGE}(alpha, A, b, K)".
         """
-        A, b, K = AbK
-        if issparse(A):
-            A = A.toarray()
-        self.A = A
-        self.b = b
-        self.K = check_cones(K)
+        A = AbK[0].toarray() if issparse(AbK[0]) else AbK[0]
+        K = check_cones(AbK[2])
+        self.AbK = (A, AbK[1], K)
         self.n = alpha.shape[1]
         self.m = alpha.shape[0]
         self.lifted_n = A.shape[1]
@@ -297,7 +292,7 @@ class DualCondSageCone(SetMembership):
             self.c = None
         else:
             self.c = Expression(c)
-        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.A, self.b, self.K, covers)
+        self.ech = ExpCoverHelper(self.lifted_alpha, self.c, self.AbK, covers)
         self.lifted_mu_vars = dict()
         self.mu_vars = dict()
         self.relent_epi_vars = dict()
@@ -345,13 +340,12 @@ class DualCondSageCone(SetMembership):
         #
         # the additional constraints, for the generalized AGE dual cone
         #
-        mat = self.A
+        mat, vec, K = self.AbK
         vecvar = self.lifted_mu_vars[i]
-        vec = self.b
         singlevar = self.v[i]
         A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_plus_vec_times_singlevar(mat, vecvar, vec, singlevar)
-        b = np.zeros(self.A.shape[0], )
-        cur_K = [Cone(co.type, co.len) for co in self.K]
+        b = np.zeros(vec.size,)
+        cur_K = [Cone(co.type, co.len) for co in K]
         cone_data.append((A_vals, A_rows, A_cols, b, cur_K))
         return cone_data
 
@@ -368,14 +362,15 @@ class DualCondSageCone(SetMembership):
             residual = mat @ mu_i - lowerbounds
             residual[residual >= 0] = 0
             relent_viol = np.linalg.norm(residual, ord=norm_ord)
-            AbK_val = self.A @ mu_i + v[i] * self.b
-            AbK_viol = PrimalProductCone.project(AbK_val, self.K)
+            A, b, K = self.AbK
+            AbK_val = A @ mu_i + v[i] * b
+            AbK_viol = PrimalProductCone.project(AbK_val, K)
             curr_viol = relent_viol + AbK_viol
             # as applicable, solve an optimization problem to compute the violation.
             if curr_viol > 0 and not rough:
                 temp_var = Variable(shape=(mat.shape[1],), name='temp_var')
                 cons = [mat @ temp_var >= lowerbounds,
-                        PrimalProductCone(self.A @ temp_var + v[i] * self.b, self.K)]
+                        PrimalProductCone(A @ temp_var + v[i] * b, K)]
                 prob = Problem(CL_MIN, Expression([0]), cons)
                 status, value = prob.solve(verbose=False)
                 if status == CL_SOLVED and abs(value) < 1e-7:
@@ -421,13 +416,11 @@ class DualCondSageCone(SetMembership):
 
 class ExpCoverHelper(object):
 
-    def __init__(self, alpha, c, A, b, K, expcovers=None):
+    def __init__(self, alpha, c, AbK, expcovers=None):
         if c is not None and not isinstance(c, Expression):
             raise RuntimeError()
         self.alpha = alpha
-        self.A = A
-        self.b = b
-        self.K = K
+        self.AbK = AbK
         self.m = alpha.shape[0]
         self.c = c
         if self.c is not None:
@@ -496,7 +489,8 @@ class ExpCoverHelper(object):
                     x = Variable(shape=(mat.shape[1],), name='temp_x')
                     t = Variable(shape=(1,), name='temp_t')
                     objective = t
-                    cons = [mat @ x <= t, PrimalProductCone(self.A @ x + self.b, self.K)]
+                    A, b, K = self.AbK
+                    cons = [mat @ x <= t, PrimalProductCone(A @ x + b, K)]
                     prob = Problem(CL_MIN, objective, cons)
                     prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
                     if prob.status == CL_SOLVED and prob.value < -100:

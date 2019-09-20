@@ -136,8 +136,7 @@ def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_to
 
 
 def _constrained_least_squares(con, alpha, log_v):
-    A, b, K = con.A, con.b, con.K
-    A = np.asarray(A)
+    A, b, K = con.AbK
     x = cl.Variable(shape=(A.shape[1],))
     t = cl.Variable(shape=(1,))
     cons = [cl.vector2norm(log_v - alpha @ x[:con.n]) <= t,

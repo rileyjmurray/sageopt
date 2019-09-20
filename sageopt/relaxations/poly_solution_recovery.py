@@ -172,7 +172,7 @@ def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
         tempcon = alpha_reduced[~are_nonzero, :] @ y <= np.log(zero_tol)
         constraints.append(tempcon)
     if isinstance(con, cl.DualCondSageCone):
-        A, b, K = np.asarray(con.A), con.b, con.K
+        A, b, K = con.AbK
         tempcon = cl.PrimalProductCone(A @ y + b, K)
         constraints.append(tempcon)
     prob = cl.Problem(cl.MIN, t, constraints)
