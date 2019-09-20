@@ -22,7 +22,7 @@ from sageopt.relaxations import symbolic_correspondences as sym_corr
 
 def primal_sage_cone(sig, name, AbK, expcovers=None):
     if AbK is None:
-        con = cl.PrimalSageCone(sig.c, sig.alpha, name, expcovers)
+        con = cl.PrimalOrdinarySageCone(sig.c, sig.alpha, name, expcovers)
     else:
         con = cl.PrimalCondSageCone(sig.c, sig.alpha, AbK, name, expcovers)
     return con
@@ -30,7 +30,7 @@ def primal_sage_cone(sig, name, AbK, expcovers=None):
 
 def relative_dual_sage_cone(primal_sig, dual_var, name, AbK, expcovers=None):
     if AbK is None:
-        con = cl.DualSageCone(dual_var, primal_sig.alpha, name, primal_sig.c, expcovers)
+        con = cl.DualOrdinarySageCone(dual_var, primal_sig.alpha, name, primal_sig.c, expcovers)
     else:
         con = cl.DualCondSageCone(dual_var, primal_sig.alpha, AbK, name, primal_sig.c, expcovers)
     return con

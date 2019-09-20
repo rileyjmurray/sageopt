@@ -32,7 +32,7 @@ _ELIMINATE_TRIVIAL_AGE_CONES_ = True
 _REDUCTION_SOLVER_ = 'ECOS'
 
 
-class PrimalSageCone(SetMembership):
+class PrimalOrdinarySageCone(SetMembership):
     """
     Represent the constraint that a certain vector ``c`` belongs to the primal ordinary SAGE cone
     induced by a given set of exponent vectors ``alpha``. Maintain metadata such as summand
@@ -104,8 +104,8 @@ class PrimalSageCone(SetMembership):
 
         A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
         when provided, and manages construction of ``covers`` when a user does not provide it.
-        This is an essential component of the duality relationship between PrimalSageCone
-        and DualSageCone objects.
+        This is an essential component of the duality relationship between PrimalOrdinarySageCone
+        and DualOrdinarySageCone objects.
     """
 
     def __init__(self, c, alpha, name, covers=None):
@@ -240,7 +240,7 @@ class PrimalSageCone(SetMembership):
         t = Variable(shape=(1,))
         cons = [
             vector2norm(item - c) <= t,
-            PrimalSageCone(c, alpha, 'temp_con')
+            PrimalOrdinarySageCone(c, alpha, 'temp_con')
         ]
         prob = Problem(CL_MIN, t, cons)
         prob.solve(verbose=False)
@@ -250,7 +250,7 @@ class PrimalSageCone(SetMembership):
         c = self.c.value
         if self.m > 2:
             if not rough:
-                dist = PrimalSageCone.project(c, self.alpha)
+                dist = PrimalOrdinarySageCone.project(c, self.alpha)
                 return dist
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
@@ -267,7 +267,7 @@ class PrimalSageCone(SetMembership):
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
             if np.any(age_viols == np.inf):
                 total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
-                total_viol += PrimalSageCone.project(c, self.alpha)
+                total_viol += PrimalOrdinarySageCone.project(c, self.alpha)
             else:
                 total_viol = sum_to_c_viol + np.max(age_viols)
             return total_viol
@@ -278,7 +278,7 @@ class PrimalSageCone(SetMembership):
         pass
 
 
-class DualSageCone(SetMembership):
+class DualOrdinarySageCone(SetMembership):
     """
     Represent the constraint that a certain vector ``v`` belongs to the dual ordinary SAGE
     cone induced by exponent vectors ``alpha``. Maintain auxiliary variables for each dual
@@ -308,7 +308,7 @@ class DualSageCone(SetMembership):
 
     c : Expression or None
 
-        When provided, this DualSageCone instance will compile to a constraint to ensure that ``v``
+        When provided, this DualOrdinarySageCone instance will compile to a constraint to ensure that ``v``
         is a valid dual variable to the constraint that :math:`c \\in C_{\\mathrm{SAGE}}(\\alpha)`.
         If ``c`` has some constant components, or we otherhave have information about the sign
         of a component of ``c``, then it is possible to reduce the number of coniclifts primitives
@@ -341,7 +341,7 @@ class DualSageCone(SetMembership):
         A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
         when provided, and manages construction of ``covers`` when a user does not provide it.
         This is an essential component of the duality relationship between PrimalSagecCone
-        and DualSageCone objects.
+        and DualOrdinarySageCone objects.
 
     c : Expression or None
 

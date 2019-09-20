@@ -6,7 +6,7 @@ from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.compilers import compile_constrained_system, compile_problem
 from sageopt.coniclifts.constraints.constraint import Constraint
 from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone
-from sageopt.coniclifts.constraints.set_membership.sage_cone import PrimalSageCone, DualSageCone
+from sageopt.coniclifts.constraints.set_membership.ordinary_sage_cone import PrimalOrdinarySageCone, DualOrdinarySageCone
 from sageopt.coniclifts.constraints.set_membership.conditional_sage_cone import PrimalCondSageCone, DualCondSageCone
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.coniclifts.problems.solvers.mosek import Mosek
@@ -50,7 +50,7 @@ def presolve_trivial_age_cones(true_or_false=True):
     The default value for ``true_or_false`` in this function's signature represents
     sageopt's default behavior for this setting.
     """
-    import sageopt.coniclifts.constraints.set_membership.sage_cone as sc
+    import sageopt.coniclifts.constraints.set_membership.ordinary_sage_cone as sc
     sc._ELIMINATE_TRIVIAL_AGE_CONES_ = true_or_false
     import sageopt.coniclifts.constraints.set_membership.conditional_sage_cone as csc
     csc._ELIMINATE_TRIVIAL_AGE_CONES_ = true_or_false

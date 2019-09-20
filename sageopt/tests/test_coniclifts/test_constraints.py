@@ -18,7 +18,7 @@ import numpy as np
 from sageopt.coniclifts.base import Variable, Expression
 from sageopt.coniclifts.operators.relent import relent
 from sageopt.coniclifts.operators.norms import vector2norm
-from sageopt.coniclifts.constraints.set_membership import sage_cone, conditional_sage_cone, product_cone, psd_cone
+from sageopt.coniclifts.constraints.set_membership import ordinary_sage_cone, conditional_sage_cone, product_cone, psd_cone
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.coniclifts import MIN as CL_MIN, clear_variable_indices, compile_constrained_system
 
@@ -84,7 +84,7 @@ class TestConstraints(unittest.TestCase):
         np.random.seed(0)
         alpha = np.random.randn(m, n)
         c = Variable(shape=(m,), name='test_c')
-        constraint = sage_cone.PrimalSageCone(c, alpha, name='test')
+        constraint = ordinary_sage_cone.PrimalOrdinarySageCone(c, alpha, name='test')
         c0 = np.ones(shape=(m,))
         c.set_scalar_variables(c0)
         viol_default = constraint.violation()
@@ -97,7 +97,7 @@ class TestConstraints(unittest.TestCase):
         c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
         c = Variable(shape=(m,), name='projected_c0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = sage_cone.PrimalSageCone(c, alpha, name='test')
+        sage_constraint = ordinary_sage_cone.PrimalOrdinarySageCone(c, alpha, name='test')
         epi_constraint = vector2norm(c - c0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)
@@ -116,7 +116,7 @@ class TestConstraints(unittest.TestCase):
         v0[0] = -v0[0]
         v = Variable(shape=(m,), name='projected_v0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = sage_cone.DualSageCone(v, alpha, 'test_con')
+        sage_constraint = ordinary_sage_cone.DualOrdinarySageCone(v, alpha, 'test_con')
         epi_constraint = vector2norm(v - v0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)
@@ -137,7 +137,7 @@ class TestConstraints(unittest.TestCase):
         v0 = np.exp(alpha @ x0)
         v = Variable(shape=(m,), name='projected_v0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = sage_cone.DualSageCone(v, alpha, 'test_con')
+        sage_constraint = ordinary_sage_cone.DualOrdinarySageCone(v, alpha, 'test_con')
         epi_constraint = vector2norm(v - v0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)
@@ -162,7 +162,7 @@ class TestConstraints(unittest.TestCase):
         c = Expression(c)
         v = Variable(shape=(m,), name='projected_v0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = sage_cone.DualSageCone(v, alpha, 'test_con', c)
+        sage_constraint = ordinary_sage_cone.DualOrdinarySageCone(v, alpha, 'test_con', c)
         epi_constraint = vector2norm(v - v0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)

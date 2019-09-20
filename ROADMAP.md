@@ -98,7 +98,7 @@ In order to add this dimension-reduction to sageopt, it will be necessary to
 create "constraint factories", which perform this dimension reduction once,
 and allow it to be re-used across multiple desired constraints.
 
-*UPDATE* There is now an \_EXPENSIVE\_REDUCTION\_ flag in both sage_cone.py and
+*UPDATE* There is now an \_EXPENSIVE\_REDUCTION\_ flag in both ordinary_sage_cone.py and
 conditional_sage_cone.py which has ExpCoverHelper objects solve these optimization
 problems. Here are some useful extensions:
 

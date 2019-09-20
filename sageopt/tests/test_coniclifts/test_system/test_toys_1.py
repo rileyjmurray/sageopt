@@ -61,7 +61,7 @@ class TestToys1(unittest.TestCase):
                           [0, 0.5]])
         gamma = cl.Variable(shape=(), name='gamma')
         c = np.array([0 - gamma, 3, 2, 1, -4, -2])
-        con = cl.PrimalSageCone(c, alpha, name='words')
+        con = cl.PrimalOrdinarySageCone(c, alpha, name='words')
         obj = gamma
         prob = Problem(cl.MAX, obj, [con])
         status, val = prob.solve(solver='ECOS', verbose=False)

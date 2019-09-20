@@ -16,6 +16,7 @@ Multiple changes here are API breaking. The next release will be 0.4.0.
  - An explicit requirement that ``Constraint.variables`` returns both all variables in its scope,
  and that all returned Variables be "proper".
 ## Changed
+ - sage_cone.py to ordinary_sage_cone.py
  - The "var_name_to_locs" dict from coniclifts.compilers.compile_constrained_system. If a ScalarVariable
  does not participate in the conic system but its parent Variable object does, then that ScalarVariable's
  selector index in ``var_name_to_locs[parent_variable.name]`` will **now** be -1. In order to load values
