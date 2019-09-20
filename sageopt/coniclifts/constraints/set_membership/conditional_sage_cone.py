@@ -82,30 +82,34 @@ class PrimalCondSageCone(SetMembership):
         self.c_vars = dict()
         self.relent_epi_vars = dict()
         self.age_vectors = dict()
-        self.lambda_vars = dict()
+        self.eta_vars = dict()
         self._initialize_variables()
         pass
 
     def _initialize_variables(self):
         if self.m > 1:
             for i in self.ech.U_I:
-                nu_len = np.count_nonzero(self.ech.expcovers[i])
-                if nu_len > 0:
+                num_cover = self.ech.expcover_counts[i]
+                if num_cover > 0:
                     var_name = 'nu^{(' + str(i) + ')}_' + self.name
-                    self.nu_vars[i] = Variable(shape=(nu_len,), name=var_name)
+                    self.nu_vars[i] = Variable(shape=(num_cover,), name=var_name)
                     var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
-                    self.relent_epi_vars[i] = Variable(shape=(nu_len,), name=var_name)
-                c_len = nu_len
+                    self.relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
+                    # We assume the conic system is feasible. If num_cover == 0 and this is
+                    # really w.l.o.g. (not some aggressive presolve), then it must be that
+                    # the i-th AGE cone is the nonnegative orthant. Therefore only define
+                    # eta_var[i] when num_cover > 0.
+                    var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
+                    self.eta_vars[i] = Variable(shape=(self.A.shape[0],), name=var_name)
+                c_len = num_cover
                 if i not in self.ech.N_I:
                     c_len += 1
                 var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
                 self.c_vars[i] = Variable(shape=(c_len,), name=var_name)
-                var_name = 'lambda^{(' + str(i) + ')}_{' + self.name + '}'
-                self.lambda_vars[i] = Variable(shape=(self.A.shape[0],), name=var_name)
             self._variables += list(self.nu_vars.values())
             self._variables += list(self.c_vars.values())
             self._variables += list(self.relent_epi_vars.values())
-            self._variables += list(self.lambda_vars.values())
+            self._variables += list(self.eta_vars.values())
         pass
 
     def _build_aligned_age_vectors(self):
@@ -126,60 +130,52 @@ class PrimalCondSageCone(SetMembership):
             x = self.nu_vars[i]
             y = np.exp(1) * self.age_vectors[i][idx_set]
             # ^ # This line consumes a disproportionately large amount of runtime
-            z = -self.age_vectors[i][i] + self.lambda_vars[i] @ self.b
+            z = -self.age_vectors[i][i] + self.eta_vars[i] @ self.b
             epi = self.relent_epi_vars[i]
             A_vals, A_rows, A_cols, b, K, epi = sum_relent(x, y, z, epi)
         else:
-            con = self.lambda_vars[i] @ self.b <= self.age_vectors[i][i]
+            con = 0 <= self.age_vectors[i][i]
             con.epigraph_checked = True
             A_vals, A_rows, A_cols, b, K = con.conic_form()
         return A_vals, A_rows, A_cols, b, K
 
     def _age_lin_eq_cone_data(self, i):
         idx_set = self.ech.expcovers[i]
-        if np.any(idx_set):
-            mat1 = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T
-            mat2 = -self.A.T
-            var1 = self.nu_vars[i]
-            var2 = self.lambda_vars[i]
-            A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_plus_mat_times_vecvar(mat1, var1, mat2, var2)
-            num_rows = mat1.shape[0] + mat2.shape[0]
-        else:
-            mat1 = -self.A.T.copy()
-            var1 = self.lambda_vars[i]
-            A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar(mat1, var1)
-            num_rows = mat1.shape[0]
+        mat1 = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T
+        mat2 = -self.A.T
+        var1 = self.nu_vars[i]
+        var2 = self.eta_vars[i]
+        A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_plus_mat_times_vecvar(mat1, var1, mat2, var2)
+        num_rows = mat1.shape[0] + mat2.shape[0]
         b = np.zeros(num_rows, )
         K = [Cone('0', num_rows)]
         return A_vals, A_rows, A_cols, b, K
 
-    def _age_lambda_var_domain_constraints(self, i):
-        con = DualProductCone(self.lambda_vars[i], self.K)
+    def _age_eta_var_domain_constraints(self, i):
+        con = DualProductCone(self.eta_vars[i], self.K)
         conic_data = con.conic_form()
         A_vals, A_rows, A_cols, b, cur_K = conic_data[0]
         return A_vals, A_rows, A_cols, b, cur_K
 
-    def _age_violation(self, i, norm_ord, c_i, lambda_i):
+    def _age_violation(self, i, norm_ord, c_i, eta_i):
         # This is "rough" only.
-        lambda_viol = DualProductCone.project(lambda_i, self.K)
-        if np.any(self.ech.expcovers[i]):
-            idx_set = self.ech.expcovers[i]
+        idx_set = self.ech.expcovers[i]
+        if np.any(idx_set):
+            eta_viol = DualProductCone.project(eta_i, self.K)
             x_i = self.nu_vars[i].value
             x_i[x_i < 0] = 0
             y_i = np.exp(1) * c_i[idx_set]
-            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + self.b @ lambda_i  # <= 0
+            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + self.b @ eta_i  # <= 0
             relent_viol = abs(max(relent_res, 0))
-            eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - self.A.T @ lambda_i  # == 0
+            eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - self.A.T @ eta_i  # == 0
             eq_res = eq_res.reshape((-1,))
             eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
-            total_viol = relent_viol + eq_viol + lambda_viol
+            total_viol = relent_viol + eq_viol + eta_viol
             return total_viol
         else:
             c_i = float(self.c_vars[i].value)
-            residual = c_i - self.b @ lambda_i  # >= 0
-            relent_viol = abs(min(0, residual))
-            total_viol = relent_viol + lambda_viol
-            return total_viol
+            relent_viol = abs(min(0, c_i))
+            return relent_viol
 
     def _age_vectors_sum_to_c(self):
         nonconst_locs = np.ones(self.m, dtype=bool)
@@ -203,8 +199,9 @@ class PrimalCondSageCone(SetMembership):
             # age cones
             for i in self.ech.U_I:
                 cone_data.append(self._age_rel_ent_cone_data(i))
-                cone_data.append(self._age_lin_eq_cone_data(i))
-                cone_data.append(self._age_lambda_var_domain_constraints(i))
+                if self.ech.expcover_counts[i] > 0:
+                    cone_data.append(self._age_lin_eq_cone_data(i))
+                    cone_data.append(self._age_eta_var_domain_constraints(i))
             # Vectors sum to s.c
             cone_data.append(self._age_vectors_sum_to_c())
             return cone_data
@@ -239,7 +236,7 @@ class PrimalCondSageCone(SetMembership):
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
             #   and so only compute violation for "AGE vectors sum to <= c"
             age_vectors = {i: v.value for i, v in self.age_vectors.items()}
-            lambda_vectors = {i: v.value for i, v in self.lambda_vars.items()}
+            eta_vectors = {i: v.value for i, v in self.eta_vars.items()}
             sum_age_vectors = sum(age_vectors.values())
             residual = c - sum_age_vectors  # want >= 0
             residual[residual < 0] = 0
@@ -247,7 +244,11 @@ class PrimalCondSageCone(SetMembership):
             # compute violations for each AGE cone
             age_viols = np.zeros(shape=(len(self.ech.U_I,)))
             for idx, i in enumerate(self.ech.U_I):
-                age_viols[idx] = self._age_violation(i, norm_ord, age_vectors[i], lambda_vectors[i])
+                if i in eta_vectors:
+                    eta_vec = eta_vectors[i]
+                else:
+                    eta_vec = None
+                age_viols[idx] = self._age_violation(i, norm_ord, age_vectors[i], eta_vec)
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
             if np.any(age_viols == np.inf):
                 total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
@@ -310,8 +311,7 @@ class DualCondSageCone(SetMembership):
                 self.lifted_mu_vars[i] = Variable(shape=(self.lifted_n,), name=var_name)
                 self._variables.append(self.lifted_mu_vars[i])
                 self.mu_vars[i] = self.lifted_mu_vars[i][:self.n]
-
-                num_cover = np.count_nonzero(self.ech.expcovers[i])
+                num_cover = self.ech.expcover_counts[i]
                 if num_cover > 0:
                     var_name = '_relent_epi_[' + str(i) + ']_{' + self.name + '}'
                     epi = Variable(shape=(num_cover,), name=var_name)
@@ -322,12 +322,12 @@ class DualCondSageCone(SetMembership):
     def _dual_age_cone_data(self, i):
         cone_data = []
         selector = self.ech.expcovers[i]
-        len_sel = np.count_nonzero(selector)
-        if len_sel > 0:
+        num_cover = self.ech.expcover_counts[i]
+        if num_cover > 0:
             #
             # relative entropy constraints
             #
-            expr1 = np.tile(self.v[i], len_sel).view(Expression)
+            expr1 = np.tile(self.v[i], num_cover).view(Expression)
             epi = self.relent_epi_vars[i]
             A_vals, A_rows, A_cols, b, K, epi = elementwise_relent(expr1, self.v[selector], epi)
             cone_data.append((A_vals, A_rows, A_cols, b, K))
@@ -357,9 +357,9 @@ class DualCondSageCone(SetMembership):
 
     def _dual_age_cone_violation(self, i, norm_ord, rough, v):
         selector = self.ech.expcovers[i]
-        len_sel = np.count_nonzero(selector)
-        if len_sel > 0:
-            expr1 = np.tile(v[i], len_sel).ravel()
+        num_cover = self.ech.expcover_counts[i]
+        if num_cover > 0:
+            expr1 = np.tile(v[i], num_cover).ravel()
             expr2 = v[selector].ravel()
             lowerbounds = special_functions.rel_entr(expr1, expr2)
             mat = -(self.lifted_alpha[selector, :] - self.lifted_alpha[i, :])
@@ -434,7 +434,8 @@ class ExpCoverHelper(object):
             self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
             # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
             # this AGE cone might not be used in the final solution to the associated
-            # optimization problem.
+            # optimization problem. These AGE cones might also be trivial (i.e. reduce to the nonnegative
+            # orthant) if during presolve we set expcovers[i][:] = False.
             self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
             # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
             # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
@@ -454,6 +455,8 @@ class ExpCoverHelper(object):
         else:
             raise RuntimeError('Argument "expcovers" must be a dict.')
         self.expcovers = expcovers
+        expcover_counts = {i: np.count_nonzero(expcovers[i]) for i in self.U_I}
+        self.expcover_counts = expcover_counts
 
     def _verify_exp_covers(self, expcovers):
         for i in self.U_I:
