@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [unreleased]
 Multiple changes here are API breaking. The next release will be 0.4.0.
 ## Addded
+ - sage_cones.py, which provides an interface to both ordinary and conditional
+ sage cones without exposing different classes for the different cases.
  - Support for automatic elimination of trivial AGE cones from SAGE relaxations. This can be disabled
  by setting the variable ``_EXPENSIVE_REDUCTION_=False`` for both sage_cone.py and conditional_sage_cone.py.
  - An argument to ``conditional_sage_data`` functions, so that they now can check if the system

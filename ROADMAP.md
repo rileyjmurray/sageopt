@@ -107,5 +107,9 @@ problems. Here are some useful extensions:
 SAGE relaxation.
 3. Allow some logging during this reduction phase, so users have a sense
 for how long it's going to take.
-4. Make it easier for users to change the reduction behavior. I.e. have
-a top-level function in the sageopt package which handles this setting.
+
+
+## Remove separate ordinary vs conditional SAGE implementations
+
+Find a way to unify the compilation process in an efficient way.
+Maybe figure out how to do this alongside CVXPY integration.

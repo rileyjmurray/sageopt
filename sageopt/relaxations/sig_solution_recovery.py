@@ -101,10 +101,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
     v = con.v.value
     if np.any(np.isnan(v)):
         return None
-    if not hasattr(con, 'alpha'):
-        alpha = con.lifted_alpha[:, :con.n]
-    else:
-        alpha = con.alpha
+    alpha = con.alpha
     dummy_modulated_lagrangian = Signomial(alpha, np.ones(shape=(alpha.shape[0],)))
     alpha_reduced = lagrangian.alpha
     modulator = metadata['modulator']
@@ -122,7 +119,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
 def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol):
     v_reduced = M @ v
     log_v_reduced = np.log(v_reduced)
-    if isinstance(con, cl.DualCondSageCone):
+    if con.cond is not None:
         mu_ls = _constrained_least_squares(con, alpha_reduced, log_v_reduced)
     else:
         try:
@@ -136,16 +133,18 @@ def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_to
 
 
 def _constrained_least_squares(con, alpha, log_v):
-    A, b, K = con.AbK
-    x = cl.Variable(shape=(A.shape[1],))
+    A, b, K = con.cond
+    lifted_n = A.shape[1]
+    n = con.alpha.shape[1]
+    x = cl.Variable(shape=(lifted_n,))
     t = cl.Variable(shape=(1,))
-    cons = [cl.vector2norm(log_v - alpha @ x[:con.n]) <= t,
+    cons = [cl.vector2norm(log_v - alpha @ x[:n]) <= t,
             cl.PrimalProductCone(A @ x + b, K)]
     prob = cl.Problem(cl.MIN, t, cons)
     cl.clear_variable_indices()
     res = prob.solve(verbose=False)
     if res[0] == cl.SOLVED:
-        mu_ls = x.value[:con.n]
+        mu_ls = x.value[:n]
         return mu_ls
     else:
         return None

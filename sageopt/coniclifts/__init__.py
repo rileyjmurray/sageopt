@@ -6,8 +6,7 @@ from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.compilers import compile_constrained_system, compile_problem
 from sageopt.coniclifts.constraints.constraint import Constraint
 from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone
-from sageopt.coniclifts.constraints.set_membership.ordinary_sage_cone import PrimalOrdinarySageCone, DualOrdinarySageCone
-from sageopt.coniclifts.constraints.set_membership.conditional_sage_cone import PrimalCondSageCone, DualCondSageCone
+from sageopt.coniclifts.constraints.set_membership.sage_cones import PrimalSageCone, DualSageCone
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.coniclifts.problems.solvers.mosek import Mosek
 from sageopt.coniclifts.problems.solvers.ecos import ECOS

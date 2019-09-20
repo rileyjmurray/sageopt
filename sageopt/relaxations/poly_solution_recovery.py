@@ -82,10 +82,7 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     lag_eqs = metadata['eqs']
     lagrangian = _make_dummy_lagrangian(f, lag_gts, lag_eqs)
     con = prob.constraints[0]
-    if isinstance(con, cl.DualCondSageCone):
-        alpha = con.lifted_alpha[:, :con.n]
-    else:
-        alpha = con.alpha
+    alpha = con.alpha
     dummy_modulated_lagrangian = Polynomial(alpha, np.ones(shape=(alpha.shape[0],)))  # coefficients dont matter
     modulator = metadata['modulator']
     v = metadata['v_poly'].value  # possible that v_sig and v are the same
@@ -156,12 +153,12 @@ def _dual_age_cone_magnitude_recovery(con, v_sig, M_sig):
 
 def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
     v_abs = np.abs(v_reduced).ravel()
-    if isinstance(con, cl.DualCondSageCone):
-        n = con.lifted_n
+    if con.cond is not None:
+        n = con.cond[0].shape[1]
     else:
         n = con.n
-    if n > con.n:
-        padding = np.zeros(shape=(alpha_reduced.shape[0], n - con.n))
+    if n > con.alpha.shape[1]:
+        padding = np.zeros(shape=(alpha_reduced.shape[0], n - con.alpha.shape[1].n))
         alpha_reduced = np.hstack((alpha_reduced, padding))
     y = cl.Variable(shape=(n,), name='abs moment mag recovery')
     are_nonzero = v_abs > np.sqrt(zero_tol)
@@ -171,8 +168,8 @@ def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
     if np.any(~are_nonzero):
         tempcon = alpha_reduced[~are_nonzero, :] @ y <= np.log(zero_tol)
         constraints.append(tempcon)
-    if isinstance(con, cl.DualCondSageCone):
-        A, b, K = con.AbK
+    if con.cond is not None:
+        A, b, K = con.cond
         tempcon = cl.PrimalProductCone(A @ y + b, K)
         constraints.append(tempcon)
     prob = cl.Problem(cl.MIN, t, constraints)
