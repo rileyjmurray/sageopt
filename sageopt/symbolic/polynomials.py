@@ -438,3 +438,62 @@ class Polynomial(Signomial):
         """
         f = Signomial(self.alpha_c)
         return f
+
+
+class PolyDomain(object):
+
+    def __init__(self, logspace_constrs, gts, eqs):
+        """
+        Represent a set ``X`` which is sign-symmetric, and where the intersection of ``X``
+        with the positive orthant is log-log convex.
+
+        Parameters
+        ----------
+        logspace_constrs : list of coniclifts.constraints.Constraint
+            Constraints over the variable ``y := log(|x|)``, which define this PolyDomain object.
+        gts : list of callable
+            Represents the inequality constraint functions (``g(x) >= 0``) used to represent ``X``.
+        eqs : list of callable
+            Represents the equality constraint functions (``g(x) == 0``) used to represent ``X``.
+
+        Notes
+        -----
+        The constraint functions in ``gts`` and ``eqs`` should allow arguments where some components
+        equal to zero. These functions can be Polynomial objects, but are not required to be.
+        """
+        self.constraints = logspace_constrs
+        variables = cl.compilers.find_variables_from_constraints(logspace_constrs)
+        if len(variables) != 1:
+            raise RuntimeError('The system of constraints must be defined over a single Variable object.')
+        self.log_abs_x = variables[0]
+        A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(logspace_constrs)
+        self.log_A = A
+        self.log_b = b
+        self.log_K = K
+        self._variables = all_variables
+        self.gts = gts
+        self.eqs = eqs
+        pass
+
+    def check_membership(self, x_val, tol):
+        """
+
+        Parameters
+        ----------
+        x_val : ndarray
+            Check if ``x_val`` belongs in this domain.
+        tol : float
+            Infeasibility tolerance.
+
+        Returns
+        -------
+        res : bool
+            True iff ``x_val`` belongs in the domain represented by ``self``, up
+            to infeasibility tolerance ``tol``.
+
+        """
+        if any([g(x_val) < -tol for g in self.gts]):
+            return False
+        if any([abs(g(x_val)) > tol for g in self.eqs]):
+            return False
+        return True

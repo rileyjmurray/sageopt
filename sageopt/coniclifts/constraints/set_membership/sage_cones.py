@@ -39,15 +39,14 @@ class PrimalSageCone(SetMembership):
 
     cond : tuple or None
 
-        If None, then use an ordinary SAGE cone. If a tuple, then this constraint is a Conditional
-        SAGE cone, and the tuple must be of the form ``cond = (A, b, K)``, specifying a feasible set
-        in the coniclifts standard. The first ``alpha.shape[1]`` columns of ``A`` correspond (in order)
-        to the variables over which the Signomial ``f = Signomial(alpha, c)`` would be defined.
+        If None, then this constraint represents a primal ordinary-SAGE cone. If a tuple, then this
+        constraint represents a primal conditional-SAGE cone, and the tuple must be of the form
+        ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
 
     name : str
 
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
-        for the name of any auxiliary Variable created when compiling to the coniclifts-standard.
+        for the name of any auxiliary Variable created when compiling to the coniclifts standard.
 
 
     Other Parameters
@@ -78,10 +77,9 @@ class PrimalSageCone(SetMembership):
 
     cond : tuple or None
 
-        If None, then use an ordinary SAGE cone. If a tuple, then this constraint is a Conditional
-        SAGE cone, and the tuple must be of the form ``cond = (A, b, K)``, specifying a feasible set
-        in the coniclifts standard. The first ``alpha.shape[1]`` columns of ``A`` correspond (in order)
-        to the variables over which the Signomial ``f = Signomial(alpha, c)`` would be defined.
+        If None, then this constraint represents a primal ordinary-SAGE cone. If a tuple, then this
+        constraint represents a primal conditional-SAGE cone, and the tuple must be of the form
+        ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
 
     ech : ExpCoverHelper
 
@@ -141,15 +139,14 @@ class DualSageCone(SetMembership):
 
     cond : tuple or None
 
-        If None, then use an ordinary SAGE cone. If a tuple, then this constraint is a Conditional
-        SAGE cone, and the tuple must be of the form ``cond = (A, b, K)``, specifying a feasible set
-        in the coniclifts standard. The first ``alpha.shape[1]`` columns of ``A`` correspond (in order)
-        to the variables over which the Signomial ``f = Signomial(alpha, c)`` would be defined.
+        If None, then this constraint represents a dual ordinary-SAGE cone. If a tuple, then
+        this constraint represents a dual conditional-SAGE cone, and the tuple must be of the
+        form ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
 
     name : str
 
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
-        for the name of any auxiliary Variable created when compiling to the coniclifts-standard.
+        for the name of any auxiliary Variable created when compiling to the coniclifts standard.
 
 
     Other Parameters
@@ -182,17 +179,16 @@ class DualSageCone(SetMembership):
 
     cond : tuple or None
 
-        If None, then use an ordinary SAGE cone. If a tuple, then this constraint is a Conditional
-        SAGE cone, and the tuple must be of the form ``cond = (A, b, K)``, specifying a feasible set
-        in the coniclifts standard. The first ``alpha.shape[1]`` columns of ``A`` correspond (in order)
-        to the variables over which the Signomial ``f = Signomial(alpha, c)`` would be defined.
+        If None, then this constraint represents a dual ordinary-SAGE cone. If a tuple, then
+        this constraint represents a dual conditional-SAGE cone, and the tuple must be of the
+        form ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
 
     mu_vars : Dict[int, Variable]
 
         ``mu_vars[i]`` is the auxiliary variable associated with the i-th dual AGE cone.
-        These variables are of shape ``mu_vars[i].size == self.n``. The most basic solution
-        recovery algorithm takes these variables, and considers points ``x`` of the form
-        ``x = mu_vars[i].value / self.v[i].value``.
+        These variables are of shape ``mu_vars[i].size == alpha.shape[1]``. The most basic
+        solution recovery algorithm takes these variables, and considers points ``x`` of
+        the form ``x = mu_vars[i].value / self.v[i].value``.
 
     ech : ExpCoverHelper
 
@@ -202,7 +198,7 @@ class DualSageCone(SetMembership):
     name : str
 
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
-        for the name of any auxiliary Variable created when compiling to the coniclifts-standard.
+        for the name of any auxiliary Variable created when compiling to the coniclifts standard.
     """
 
     def __init__(self, v, alpha, cond, name, **kwargs):

@@ -459,3 +459,75 @@ class Signomial(object):
         from sageopt.symbolic.polynomials import Polynomial
         f = Polynomial(self.alpha, self.c)
         return f
+
+
+class SigDomain(object):
+
+    def __init__(self, constraints, gts=None, eqs=None):
+        """
+        Represent a convex set ``X``, for use in signomial conditional SAGE relaxations.
+
+        Parameters
+        ----------
+        constraints : list of coniclifts.constraints.Constraint
+        gts : list of callable
+        eqs : list of callable
+
+        Notes
+        -----
+        The parameters ``eqs`` and ``gts`` are only ever used to check
+        membership in this domain. Refer to SigDomain.check_membership
+        for more information.
+        """
+        self.constraints = constraints
+        variables = cl.compilers.find_variables_from_constraints(constraints)
+        if len(variables) != 1:
+            raise RuntimeError('The system of constraints must be defined over a single Variable object.')
+        self.x = variables[0]
+        A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(constraints)
+        self.A = A
+        self.b = b
+        self.K = K
+        self._variables = all_variables
+        self.gts = gts
+        self.eqs = eqs
+        pass
+
+    def check_membership(self, x_val, tol):
+        """
+
+        Parameters
+        ----------
+        x_val : ndarray
+            Check if ``x_val`` belongs in this domain.
+        tol : float
+            Infeasibility tolerance.
+
+        Returns
+        -------
+        res : bool
+            True iff ``x_val`` belongs in the domain represented by ``self``, up
+            to infeasibility tolerance ``tol``.
+
+        Notes
+        -----
+
+        If ``self.gts`` or ``self.eqs`` are ``None``, then we check membership in
+        this domain by computing the violations of each Constraint object in the
+        list ``self.constraints``.
+
+        If both ``self.gts`` and ``self.eqs`` are not-None, then we check that
+        ``g(x_val) >= -tol`` for each ``g in gts``, and that ``abs(g(x_val)) <= tol``
+        for each ``g in eqs``.
+        """
+        if self.gts is not None and self.eqs is not None:
+            if any([g(x_val) < -tol for g in self.gts]):
+                return False
+            if any([abs(g(x_val)) > tol for g in self.eqs]):
+                return False
+            return True
+        else:
+            self.x.set_scalar_variables(x_val)
+            viols = np.array([con.violation() for con in self.constraints])
+            res = np.all(viols <= tol)
+            return res

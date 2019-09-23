@@ -177,21 +177,43 @@ ScalarAtoms. For most people, all you need to work with is the Expression class.
 SAGE constraint classes
 -----------------------
 
-Words about primal / dual formulation, and preface about expcovers. Address expcovers in detail in each section.
-Words about how the conditional SAGE cone is similar to ordinary SAGE cone.
+.. _MCW2019: https://arxiv.org/abs/1907.00814
 
-Ordinary SAGE constraints
-~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _MCW2018: https://arxiv.org/abs/1810.01614
+
+
+Coniclifts provides direct implementations of the primal and dual signomial SAGE cones. The implementation details
+between ordinary-SAGE and conditional-SAGE versions of the primal and dual cones are abstracted away by the classes
+
+ - :class:`sageopt.coniclifts.PrimalSageCone`, and
+ - :class:`sageopt.coniclifts.DualSageCone`.
+
+These classes have virtually identical constructors and attributes. In particular, both classes' constructors require
+an argument ``cond``, which can be ``None`` or a tuple of the form ``(A, b, K)``.
+Ordinary SAGE constraints are obtained by setting ``cond=None``.
+Conditional SAGE constraints assume the conic system induced by ``cond=(A, b, K)`` is feasible, and it is the user's
+responsibility to ensure this is the case.
+The main difference in these classes' attributes is
+that ``PrimalSageCone`` instances have a dict called ``age_vectors`` (which represent the certificates of nonnegativity)
+and that ``DualSageCone`` instances have a dict called ``mu_vars`` (which are useful for solution recovery in SAGE
+relaxations of signomial programs).
+
+The ``PrimalSageCone`` class performs a very efficient dimension-reduction procedure by analyzing the signs of
+the provided vector ``c``. The details of the reduction are described in Corollary 5 of MCW2019_.
+At present, coniclifts does not provide a means to track the signs of Variable objects, and so this reduction
+is limited to indices ``i`` where ``c[i]`` is constant. This feature can optionally be carried over to
+``DualSageCone`` objects, if the user provides a keyword argument ``c`` to the ``DualSageCone`` constructor.
+
+The ``PrimalSageCone`` and ``DualSageCone`` classes automatically perform a more extensive presolve phase to
+eliminate trivial AGE cones (i.e. those AGE cones which reduce to the nonnegative orthant).
+The computational cost of this presolve is borne when the constraint is constructed, and scales linearly in the
+dimension of the SAGE constraint (equal to ``constr.alpha.shape[0]``).
+The cost of this presolve can be mitigated by
+recycling ``covers = constr.ech.expcovers`` from one call of a constraint constructor to the next.
+This presolve option can be disabled entirely by calling ``sageopt.coniclifts.presolve_trivial_age_cones(False)``.
 
 .. autoclass:: sageopt.coniclifts.PrimalSageCone
 
 .. autoclass:: sageopt.coniclifts.DualSageCone
 
 
-Conditional SAGE constraints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-.. autoclass:: sageopt.coniclifts.PrimalCondSageCone
-
-.. autoclass:: sageopt.coniclifts.DualCondSageCone
