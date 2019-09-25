@@ -20,7 +20,8 @@ from sageopt.coniclifts.operators.relent import relent
 from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.constraints.set_membership import ordinary_sage_cone, conditional_sage_cone, product_cone, psd_cone
 from sageopt.coniclifts.problems.problem import Problem
-from sageopt.coniclifts import MIN as CL_MIN, clear_variable_indices, compile_constrained_system
+from sageopt.coniclifts import MIN as CL_MIN
+from sageopt.symbolic.signomials import SigDomain
 
 
 class TestConstraints(unittest.TestCase):
@@ -181,15 +182,16 @@ class TestConstraints(unittest.TestCase):
     def test_conditional_sage_primal_1(self):
         n, m = 2, 6
         x = Variable(shape=(n,), name='x')
-        A, b, K, _, _, _ = compile_constrained_system([1 >= vector2norm(x)])
-        clear_variable_indices()
-        del x
+        cons = [1 >= vector2norm(x)]
+        gts = [lambda z: 1 - np.linalg.norm(z, 2)]
+        eqs = []
+        sigdom = SigDomain(cons, gts, eqs)
         np.random.seed(0)
         alpha = 10 * np.random.randn(m, n)
         c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
         c = Variable(shape=(m,), name='projected_c0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = conditional_sage_cone.PrimalCondSageCone(c, alpha, (A, b, K), name='test')
+        sage_constraint = conditional_sage_cone.PrimalCondSageCone(c, alpha, name='test', X=sigdom)
         epi_constraint = vector2norm(c - c0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)
@@ -202,9 +204,10 @@ class TestConstraints(unittest.TestCase):
     def test_conditional_sage_dual_1(self):
         n, m = 2, 6
         x = Variable(shape=(n,), name='x')
-        A, b, K, _, _, _ = compile_constrained_system([1 >= vector2norm(x)])
-        clear_variable_indices()
-        del x
+        cons = [1 >= vector2norm(x)]
+        gts = [lambda z: 1 - np.linalg.norm(z, 2)]
+        eqs = []
+        sigdom = SigDomain(cons, gts, eqs)
         np.random.seed(0)
         x0 = np.random.randn(n)
         x0 /= 2 * np.linalg.norm(x0)
@@ -213,7 +216,7 @@ class TestConstraints(unittest.TestCase):
         v0 = np.exp(alpha @ x0)
         v = Variable(shape=(m,), name='projected_v0')
         t = Variable(shape=(1,), name='epigraph_var')
-        sage_constraint = conditional_sage_cone.DualCondSageCone(v, alpha, (A, b, K), 'test', c)
+        sage_constraint = conditional_sage_cone.DualCondSageCone(v, alpha, X=sigdom, name='test', c=c)
         epi_constraint = vector2norm(v - v0) <= t
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)

@@ -94,8 +94,8 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol, skip_ls)
     signs = variable_sign_patterns(alpha_reduced, v_reduced, hueristic, all_signs)
     # Now we need to build the candidate solutions, and check them for feasibility.
-    gts = lag_gts + [g for g in metadata['X']['gts']]
-    eqs = lag_eqs + [g for g in metadata['X']['eqs']]
+    gts = lag_gts + [g for g in con.X.gts]
+    eqs = lag_eqs + [g for g in con.X.eqs]
     solutions = []
     for mag in mags:
         for sign in signs:
@@ -153,10 +153,10 @@ def _dual_age_cone_magnitude_recovery(con, v_sig, M_sig):
 
 def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
     v_abs = np.abs(v_reduced).ravel()
-    if con.cond is not None:
-        n = con.cond[0].shape[1]
+    if con.X is not None:
+        n = con.X.A.shape[1]
     else:
-        n = con.n
+        n = con.alpha.shape[1]
     if n > con.alpha.shape[1]:
         padding = np.zeros(shape=(alpha_reduced.shape[0], n - con.alpha.shape[1].n))
         alpha_reduced = np.hstack((alpha_reduced, padding))
@@ -168,8 +168,8 @@ def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
     if np.any(~are_nonzero):
         tempcon = alpha_reduced[~are_nonzero, :] @ y <= np.log(zero_tol)
         constraints.append(tempcon)
-    if con.cond is not None:
-        A, b, K = con.cond
+    if con.X is not None:
+        A, b, K = con.X.A, con.X.b, con.X.K
         tempcon = cl.PrimalProductCone(A @ y + b, K)
         constraints.append(tempcon)
     prob = cl.Problem(cl.MIN, t, constraints)

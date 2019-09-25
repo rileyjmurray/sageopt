@@ -17,7 +17,7 @@
 import numpy as np
 import sageopt.coniclifts as cl
 from collections import defaultdict
-from sageopt.symbolic.signomials import Signomial
+from sageopt.symbolic.signomials import Signomial, SigDomain
 
 __NUMERIC_TYPES__ = (int, float, np.int_, np.float_)
 
@@ -441,43 +441,70 @@ class Polynomial(Signomial):
 
 
 class PolyDomain(object):
+    """
+    Represent a sign-symmetric set :math:`X \\subset R^n` satisfying the properties that
+    (1) :math:`X \\cap R^n_{++}` is is log-log convex, and (2) the closure of
+    :math:`X \\cap R^n_{++}` equals :math:`X \\cap R^n_+`. Such sets are used in polynomial
+    conditional SAGE relaxations.
 
-    def __init__(self, logspace_constrs, gts, eqs):
-        """
-        Represent a set ``X`` which is sign-symmetric, and where the intersection of ``X``
-        with the positive orthant is log-log convex.
+    Parameters
+    ----------
+    logspace_constrs : list of coniclifts.constraints.Constraint
+        Constraints over the variable ``y := log(|x|)``, which define this PolyDomain object.
+    gts : list of callable
+        Inequality constraint functions (``g(x) >= 0``) which can be used to represent ``X``.
+    eqs : list of callable
+        Equality constraint functions (``g(x) == 0``) which can be used to represent ``X``.
 
-        Parameters
-        ----------
-        logspace_constrs : list of coniclifts.constraints.Constraint
-            Constraints over the variable ``y := log(|x|)``, which define this PolyDomain object.
-        gts : list of callable
-            Represents the inequality constraint functions (``g(x) >= 0``) used to represent ``X``.
-        eqs : list of callable
-            Represents the equality constraint functions (``g(x) == 0``) used to represent ``X``.
+    Other Parameters
+    ----------------
+    check_feas : bool
+        Whether or not to check if the returned PolyDomain is nonempty. Defaults to True.
 
-        Notes
-        -----
-        The constraint functions in ``gts`` and ``eqs`` should allow arguments where some components
-        equal to zero. These functions can be Polynomial objects, but are not required to be.
-        """
+    Notes
+    -----
+    A sign-symmetric set :math:`X \\subset R^n` is any set which is invariant under reflection
+    about the :math:`n` hyperplanes :math:`H_i = \\{ (x_1,\\ldots,x_n) : x_i = 0 \\}`.
+
+    The constraint functions in ``gts`` and ``eqs`` should allow arguments where some components
+    equal to zero. These functions can be Polynomial objects, but are not required to be.
+    """
+
+    def __init__(self, logspace_constrs, gts, eqs, **kwargs):
+        check_feas = kwargs['check_feas'] if 'check_feas' in kwargs else True
         self.constraints = logspace_constrs
         variables = cl.compilers.find_variables_from_constraints(logspace_constrs)
         if len(variables) != 1:
             raise RuntimeError('The system of constraints must be defined over a single Variable object.')
         self.log_abs_x = variables[0]
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(logspace_constrs)
-        self.log_A = A
-        self.log_b = b
-        self.log_K = K
+        self.A = A.toarray()
+        self.b = b
+        self.K = K
+        if check_feas:
+            self._check_feasibility()
         self._variables = all_variables
         self.gts = gts
         self.eqs = eqs
         pass
 
+    def _check_feasibility(self):
+        A, b, K = self.A, self.b, self.K
+        y = cl.Variable(shape=(A.shape[1],), name='y')
+        cons = [cl.PrimalProductCone(A @ y + b, K)]
+        prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
+        prob.solve(verbose=False, solver='ECOS')
+        if not prob.value < 1e-7:
+            msg1 = 'Inferred constraints could not be verified as feasible.\n'
+            msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'
+            msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
+            msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
+            msg = msg1 + msg2 + msg3 + msg4
+            raise RuntimeError(msg)
+        pass
+
     def check_membership(self, x_val, tol):
         """
-
         Parameters
         ----------
         x_val : ndarray
@@ -488,12 +515,15 @@ class PolyDomain(object):
         Returns
         -------
         res : bool
-            True iff ``x_val`` belongs in the domain represented by ``self``, up
+            True iff ``x_val`` belongs to the domain represented by ``self``, up
             to infeasibility tolerance ``tol``.
-
         """
         if any([g(x_val) < -tol for g in self.gts]):
             return False
         if any([abs(g(x_val)) > tol for g in self.eqs]):
             return False
         return True
+
+
+
+

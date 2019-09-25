@@ -50,20 +50,24 @@ class PrimalCondSageCone(SetMembership):
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, c, alpha, AbK, name, covers=None):
+    def __init__(self, c, alpha, X, name, covers=None):
         """
-        There must be at least as many columns in ``A`` as there are in ``alpha``.
-        If the number of columns in ``A`` is is greater than that of ``alpha``, then the first
-        ``alpha.shape[1]`` columns of ``A`` correspond to variables over which a Signomial
-        would be defined. Any remaining columns are auxiliary variables.
+
+        Parameters
+        ----------
+        c
+        alpha
+        X : SigDomain
+        name
+        covers
         """
         self.name = name
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
-        A = AbK[0].toarray() if issparse(AbK[0]) else AbK[0]
-        K = check_cones(AbK[2])
-        self.AbK = (A, AbK[1], K)
-        self.lifted_n = A.shape[1]
+        K = check_cones(X.K)
+        self.AbK = (X.A, X.b, K)
+        self.X = X
+        self.lifted_n = X.A.shape[1]
         if self.lifted_n > self.n:
             # Then need to zero-pad alpha
             zero_block = np.zeros(shape=(alpha.shape[0], self.lifted_n - self.n))
@@ -197,14 +201,14 @@ class PrimalCondSageCone(SetMembership):
             return cone_data
 
     @staticmethod
-    def project(item, alpha, AbK):
+    def project(item, alpha, X):
         if np.all(item >= 0):
             return 0
         c = Variable(shape=(item.size,))
         t = Variable(shape=(1,))
         cons = [
             vector2norm(item - c) <= t,
-            PrimalCondSageCone(c, alpha, AbK, 'temp_con')
+            PrimalCondSageCone(c, alpha, X=X, name='temp_con')
         ]
         prob = Problem(CL_MIN, t, cons)
         prob.solve(verbose=False)
@@ -214,7 +218,7 @@ class PrimalCondSageCone(SetMembership):
         c = self.c.value
         if self.m > 1:
             if not rough:
-                dist = PrimalCondSageCone.project(c, self.lifted_alpha, self.AbK)
+                dist = PrimalCondSageCone.project(c, self.lifted_alpha, self.X)
                 return dist
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
@@ -236,7 +240,7 @@ class PrimalCondSageCone(SetMembership):
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
             if np.any(age_viols == np.inf):
                 total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
-                total_viol += PrimalCondSageCone.project(c, self.lifted_alpha, self.AbK)
+                total_viol += PrimalCondSageCone.project(c, self.lifted_alpha, self.X)
             else:
                 total_viol = sum_to_c_viol + np.max(age_viols)
             return total_viol
@@ -256,17 +260,17 @@ class DualCondSageCone(SetMembership):
     This class assumes that the conic system {x : A @ x + b \in K } is feasible.
     """
 
-    def __init__(self, v, alpha, AbK, name, c=None, covers=None):
+    def __init__(self, v, alpha, X, name, c=None, covers=None):
         """
         Aggregates constraints on "v" so that "v" can be viewed as a dual variable
         to a constraint of the form "c \in C_{SAGE}(alpha, A, b, K)".
         """
-        A = AbK[0].toarray() if issparse(AbK[0]) else AbK[0]
-        K = check_cones(AbK[2])
-        self.AbK = (A, AbK[1], K)
+        K = check_cones(X.K)
+        self.AbK = (X.A, X.b, K)
+        self.X = X
         self.n = alpha.shape[1]
         self.m = alpha.shape[0]
-        self.lifted_n = A.shape[1]
+        self.lifted_n = X.A.shape[1]
         if self.lifted_n > self.n:
             zero_block = np.zeros(shape=(alpha.shape[0], self.lifted_n - self.n))
             alpha = np.hstack((alpha, zero_block))

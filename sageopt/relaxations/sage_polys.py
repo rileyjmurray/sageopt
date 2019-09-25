@@ -15,7 +15,7 @@
 """
 import numpy as np
 from sageopt import coniclifts as cl
-from sageopt.symbolic.polynomials import Polynomial
+from sageopt.symbolic.polynomials import Polynomial, PolyDomain
 from sageopt.symbolic.signomials import Signomial
 from sageopt.relaxations import sage_sigs
 from sageopt.relaxations import constraint_generators as con_gen
@@ -96,8 +96,6 @@ def poly_relaxation(f, form='dual', poly_ell=0, sigrep_ell=0, X=None):
 
 
 def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
-    if X is None:
-        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     if poly_ell == 0:
         sr, cons = f.sig_rep
         if len(cons) > 0:
@@ -105,10 +103,7 @@ def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
             msg += 'The most likely cause is that a mistake has been made in setting up '
             msg += 'the data for this function.\n Raising a RuntimeError.\n'
             raise RuntimeError(msg)
-        log_X = {'AbK':  X['log_AbK'],
-                 'gts': [log_domain_converter(g) for g in X['gts']],
-                 'eqs': [log_domain_converter(g) for g in X['eqs']]}
-        prob = sage_sigs.sig_dual(sr, sigrep_ell, X=log_X)
+        prob = sage_sigs.sig_dual(sr, sigrep_ell, X=X)
         cl.clear_variable_indices()
         return prob
     elif sigrep_ell == 0:
@@ -117,7 +112,7 @@ def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
         lagrangian = (f - gamma) * modulator
         v = cl.Variable(shape=(lagrangian.m, 1), name='v')
         con_base_name = v.name + ' domain'
-        constraints = relative_dual_sage_poly_cone(lagrangian, v, con_base_name, log_AbK=X['log_AbK'])
+        constraints = relative_dual_sage_poly_cone(lagrangian, v, con_base_name, log_AbK=X)
         a = sym_corr.relative_coeff_vector(modulator, lagrangian.alpha)
         constraints.append(a.T @ v == 1)
         f_mod = Polynomial(f.alpha_c) * modulator
@@ -131,8 +126,6 @@ def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
 
 
 def poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
-    if X is None:
-        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     if poly_ell == 0:
         sr, cons = f.sig_rep
         if len(cons) > 0:
@@ -140,10 +133,7 @@ def poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
             msg += 'The most likely cause is that a mistake has been made in setting up '
             msg += 'the data for this function.\n Raising a RuntimeError.\n'
             raise RuntimeError(msg)
-        log_X = {'AbK':  X['log_AbK'],
-                 'gts': [log_domain_converter(g) for g in X['gts']],
-                 'eqs': [log_domain_converter(g) for g in X['eqs']]}
-        prob = sage_sigs.sig_primal(sr, sigrep_ell, X=log_X, additional_cons=cons)
+        prob = sage_sigs.sig_primal(sr, sigrep_ell, X=X, additional_cons=cons)
         cl.clear_variable_indices()
         return prob
     else:
@@ -155,11 +145,11 @@ def poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
             sig_modulator = Signomial(sr.alpha, np.ones(shape=(sr.m,))) ** sigrep_ell
             sig_under_test = sr * sig_modulator
             con_name = 'Lagrangian modulated sigrep sage'
-            con = sage_sigs.primal_sage_cone(sig_under_test, con_name, AbK=X['log_AbK'])
+            con = sage_sigs.primal_sage_cone(sig_under_test, con_name, X=X)
             constraints = [con] + cons
         else:
             con_name = 'Lagrangian sage poly'
-            constraints = primal_sage_poly_cone(lagrangian, con_name, log_AbK=X['log_AbK'])
+            constraints = primal_sage_poly_cone(lagrangian, con_name, log_AbK=X)
         obj = gamma
         prob = cl.Problem(cl.MAX, obj, constraints)
         cl.clear_variable_indices()
@@ -185,13 +175,8 @@ def sage_feasibility(f, X=None):
         A coniclifts maximization Problem. If ``f`` admits an X-SAGE decomposition, then we should have
         ``prob.value > -np.inf``, once ``prob.solve()`` has been called.
     """
-    if X is None:
-        X = {'log_AbK': None, 'gts': [], 'eqs': []}
-    log_X = {'AbK': X['log_AbK'],
-             'gts': [log_domain_converter(g) for g in X['gts']],
-             'eqs': [log_domain_converter(g) for g in X['eqs']]}
     sr, cons = f.sig_rep
-    prob = sage_sigs.sage_feasibility(sr, X=log_X, additional_cons=cons)
+    prob = sage_sigs.sage_feasibility(sr, X=X, additional_cons=cons)
     cl.clear_variable_indices()
     return prob
 
@@ -228,19 +213,17 @@ def sage_multiplier_search(f, level=1, X=None):
     is a coniclifts Variable defining a nonzero SAGE polynomial. Then we can check if
     ``f_mod = f * mult`` is SAGE for any choice of ``c_tilde``.
     """
-    if X is None:
-        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     constraints = []
     # Make the multiplier polynomial (and require that it be SAGE)
     mult_alpha = hierarchy_e_k([f], k=level)
     c_tilde = cl.Variable(shape=(mult_alpha.shape[0],), name='c_tilde')
     mult = Polynomial(mult_alpha, c_tilde)
-    temp_cons = primal_sage_poly_cone(mult, name=(c_tilde.name + ' domain'), log_AbK=X['log_AbK'])
+    temp_cons = primal_sage_poly_cone(mult, name=(c_tilde.name + ' domain'), log_AbK=X)
     constraints += temp_cons
     constraints.append(cl.sum(c_tilde) >= 1)
     # Make "f_mod := f * mult", and require that it be SAGE.
     f_mod = mult * f
-    temp_cons = primal_sage_poly_cone(f_mod, name='f_mod sage poly', log_AbK=X['log_AbK'])
+    temp_cons = primal_sage_poly_cone(f_mod, name='f_mod sage poly', log_AbK=X)
     constraints += temp_cons
     # noinspection PyTypeChecker
     prob = cl.Problem(cl.MAX, 0, constraints)
@@ -329,8 +312,6 @@ def poly_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
 
     :return: The primal form SAGE-(p, q, ell) relaxation for the given polynomial optimization problem.
     """
-    if X is None:
-        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     lagrangian, ineq_lag_mults, _, gamma = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian}
     if ell > 0:
@@ -340,11 +321,11 @@ def poly_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
         metadata['modulator'] = modulator
     # The Lagrangian (after possible multiplication, as above) must be a SAGE polynomial.
     con_name = 'Lagrangian sage poly'
-    constrs = primal_sage_poly_cone(lagrangian, con_name, log_AbK=X['log_AbK'])
+    constrs = primal_sage_poly_cone(lagrangian, con_name, log_AbK=X)
     #  Lagrange multipliers (for inequality constraints) must be SAGE polynomials.
     for s_h, _ in ineq_lag_mults:
         con_name = str(s_h) + ' domain'
-        cons = primal_sage_poly_cone(s_h, con_name, log_AbK=X['log_AbK'])
+        cons = primal_sage_poly_cone(s_h, con_name, log_AbK=X)
         constrs += cons
     # Construct the coniclifts problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
@@ -378,8 +359,6 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
 
     :return: The dual SAGE-(p, q, ell) relaxation for the given polynomial optimization problem.
     """
-    if X is None:
-        X = {'log_AbK': None, 'gts': [], 'eqs': []}
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'X': X}
     if ell > 0:
@@ -394,13 +373,13 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     # Introduce a dual variable "v" for this constraint.
     v = cl.Variable(shape=(lagrangian.m, 1), name='v')
     metadata['v_poly'] = v
-    constraints = relative_dual_sage_poly_cone(lagrangian, v, 'Lagrangian', log_AbK=X['log_AbK'])
+    constraints = relative_dual_sage_poly_cone(lagrangian, v, 'Lagrangian', log_AbK=X)
     for s_g, g in ineq_lag_mults:
         # These generalized Lagrange multipliers "s_g" are SAGE polynomials.
         # For each such multiplier, introduce an appropriate dual variable "v_g", along
         # with constraints over that dual variable.
         v_g = cl.Variable(name='v_' + str(g), shape=(s_g.m, 1))
-        constraints += relative_dual_sage_poly_cone(s_g, v_g, name_base=(v_g.name + ' domain'), log_AbK=X['log_AbK'])
+        constraints += relative_dual_sage_poly_cone(s_g, v_g, name_base=(v_g.name + ' domain'), log_AbK=X)
         g = g * modulator
         c_g = sym_corr.moment_reduction_array(s_g, g, lagrangian)
         con = c_g @ v == v_g
@@ -574,11 +553,33 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     # GP-representable equality constraints (recast as "Signomial == 0")
     gp_eqs = con_gen.valid_gp_representable_poly_eqs(eqs)
     gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]
-    # Fall back on conditional SAGE data implementation for signomials
-    dummy_f = Signomial({(0,) * f.n: 1})
-    logX = sage_sigs.conditional_sage_data(dummy_f, gp_gts_sigreps, gp_eqs_sigreps, check_feas)
-    X = {'log_AbK': logX['AbK'], 'gts': gp_gts, 'eqs': gp_eqs}
-    return X
+    # Mirror the conditional SAGE data implementation for signomials
+    y = cl.Variable(shape=(f.n,), name='log_abs_x')
+    coniclift_cons = []
+    for g in gp_gts_sigreps:
+        nonconst_selector = np.ones(shape=(g.m,), dtype=bool)
+        nonconst_selector[g.constant_location()] = False
+        if g.m > 2:
+            cst = g.c[~nonconst_selector]
+            alpha = g.alpha[nonconst_selector, :]
+            c = -g.c[nonconst_selector]
+            expr = cl.weighted_sum_exp(c, alpha @ y)
+            coniclift_cons.append(expr <= cst)
+        elif g.m == 2:
+            expr = g.alpha[nonconst_selector, :] @ y
+            cst = np.log(g.c[~nonconst_selector] / abs(g.c[nonconst_selector]))
+            coniclift_cons.append(expr <= cst)
+    for g in gp_eqs_sigreps:
+        # g is of the form c1 - c2 * exp(a.T @ x) == 0, where c1, c2 > 0
+        cst_loc = g.constant_location()
+        non_cst_loc = 1 - cst_loc
+        rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
+        coniclift_cons.append(g.alpha[non_cst_loc, :] @ y == rhs)
+    if len(coniclift_cons) > 0:
+        polydom = PolyDomain(coniclift_cons, gts=gp_gts, eqs=gp_eqs, check_feas=check_feas)
+        return polydom
+    else:
+        return None
 
 
 def hierarchy_e_k(polys, k):

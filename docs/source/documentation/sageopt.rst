@@ -13,8 +13,8 @@ nonnegativity problems.
 .. toctree::
    :maxdepth: 2
 
-   Signomials <sageopt.symbolic_signomials>
-   Polynomials <sageopt.symbolic_polynomials>
+   Signomials and SigDomains <sageopt.symbolic_signomials>
+   Polynomials and PolyDomains <sageopt.symbolic_polynomials>
 
 Once you know how to instantiate ``Signomial`` and ``Polynomial`` objects, you will want to use the
 ``sageopt.relaxations`` subpackage to manage building a SAGE relaxation, solving that SAGE relaxation, and

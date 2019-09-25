@@ -462,35 +462,55 @@ class Signomial(object):
 
 
 class SigDomain(object):
+    """
+    Represent a convex set ``X``, for use in signomial conditional SAGE relaxations.
 
-    def __init__(self, constraints, gts=None, eqs=None):
-        """
-        Represent a convex set ``X``, for use in signomial conditional SAGE relaxations.
+    Parameters
+    ----------
+    constraints : list of coniclifts.constraints.Constraint
+        Constraints over a single coniclifts Variable, which define this SigDomain.
+    gts : list of callable
+        Inequality constraint functions (``g(x) >= 0``) which can be used to represent ``X``.
+    eqs : list of callable
+        Equality constraint functions (``g(x) == 0``) which can be used to represent ``X``.
 
-        Parameters
-        ----------
-        constraints : list of coniclifts.constraints.Constraint
-        gts : list of callable
-        eqs : list of callable
+    Other Parameters
+    ----------------
+    check_feas : bool
+        Whether or not to check that ``X`` is nonempty. Defaults to True.
+    """
 
-        Notes
-        -----
-        The parameters ``eqs`` and ``gts`` are only ever used to check
-        membership in this domain. Refer to SigDomain.check_membership
-        for more information.
-        """
+    def __init__(self, constraints, gts, eqs, **kwargs):
+        check_feas = kwargs['check_feas'] if 'check_feas' in kwargs else True
         self.constraints = constraints
         variables = cl.compilers.find_variables_from_constraints(constraints)
         if len(variables) != 1:
             raise RuntimeError('The system of constraints must be defined over a single Variable object.')
         self.x = variables[0]
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(constraints)
-        self.A = A
+        self.A = A.toarray()
         self.b = b
         self.K = K
+        if check_feas:
+            self._check_feasibility()
         self._variables = all_variables
         self.gts = gts
         self.eqs = eqs
+        pass
+
+    def _check_feasibility(self):
+        A, b, K = self.A, self.b, self.K
+        temp_x = cl.Variable(shape=(A.shape[1],), name='temp_x')
+        cons = [cl.PrimalProductCone(A @ temp_x + b, K)]
+        prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
+        prob.solve(verbose=False, solver='ECOS')
+        if not prob.value < 1e-7:
+            msg1 = 'Inferred constraints could not be verified as feasible.\n'
+            msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'
+            msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
+            msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
+            msg = msg1 + msg2 + msg3 + msg4
+            raise RuntimeError(msg)
         pass
 
     def check_membership(self, x_val, tol):
@@ -509,25 +529,9 @@ class SigDomain(object):
             True iff ``x_val`` belongs in the domain represented by ``self``, up
             to infeasibility tolerance ``tol``.
 
-        Notes
-        -----
-
-        If ``self.gts`` or ``self.eqs`` are ``None``, then we check membership in
-        this domain by computing the violations of each Constraint object in the
-        list ``self.constraints``.
-
-        If both ``self.gts`` and ``self.eqs`` are not-None, then we check that
-        ``g(x_val) >= -tol`` for each ``g in gts``, and that ``abs(g(x_val)) <= tol``
-        for each ``g in eqs``.
         """
-        if self.gts is not None and self.eqs is not None:
-            if any([g(x_val) < -tol for g in self.gts]):
-                return False
-            if any([abs(g(x_val)) > tol for g in self.eqs]):
-                return False
-            return True
-        else:
-            self.x.set_scalar_variables(x_val)
-            viols = np.array([con.violation() for con in self.constraints])
-            res = np.all(viols <= tol)
-            return res
+        if any([g(x_val) < -tol for g in self.gts]):
+            return False
+        if any([abs(g(x_val)) > tol for g in self.eqs]):
+            return False
+        return True

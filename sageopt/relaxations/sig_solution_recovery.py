@@ -49,6 +49,7 @@ def local_refine(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000):
         Termination criteria, controlling the size of COBYLA's smallest search space.
     maxfun : int
         Termination criteria, bounding the number of COBYLA's iterations.
+
     Returns
     -------
     x : ndarray
@@ -95,8 +96,12 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
         lag_gts = metadata['gts']
         lag_eqs = metadata['eqs']
     lagrangian = _make_dummy_lagrangian(f, lag_gts, lag_eqs)
-    gts = lag_gts + metadata['X']['gts']
-    eqs = lag_eqs + metadata['X']['eqs']
+    if con.X is None:
+        X_gts, X_eqs = [], []
+    else:
+        X_gts, X_eqs = con.X.gts, con.X.eqs
+    gts = lag_gts + X_gts
+    eqs = lag_eqs + X_eqs
     # Search for solutions which meet the feasibility criteria
     v = con.v.value
     if np.any(np.isnan(v)):
@@ -119,7 +124,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
 def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol):
     v_reduced = M @ v
     log_v_reduced = np.log(v_reduced)
-    if con.cond is not None:
+    if con.X is not None:
         mu_ls = _constrained_least_squares(con, alpha_reduced, log_v_reduced)
     else:
         try:
@@ -133,7 +138,7 @@ def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_to
 
 
 def _constrained_least_squares(con, alpha, log_v):
-    A, b, K = con.cond
+    A, b, K = con.X.A, con.X.b, con.X.K
     lifted_n = A.shape[1]
     n = con.alpha.shape[1]
     x = cl.Variable(shape=(lifted_n,))

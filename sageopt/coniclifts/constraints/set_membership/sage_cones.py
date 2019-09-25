@@ -21,6 +21,7 @@ from sageopt.coniclifts.constraints.set_membership.ordinary_sage_cone import Pri
 from sageopt.coniclifts.constraints.set_membership.conditional_sage_cone import DualCondSageCone
 from sageopt.coniclifts.constraints.set_membership.ordinary_sage_cone import DualOrdinarySageCone
 
+#TODO: remove all references to ``cond``, and update references to ``X``.
 
 class PrimalSageCone(SetMembership):
     """
@@ -37,11 +38,9 @@ class PrimalSageCone(SetMembership):
 
         The rows of ``alpha`` are the exponents defining this primal SAGE cone.
 
-    cond : tuple or None
+    X : SigDomain or None
 
-        If None, then this constraint represents a primal ordinary-SAGE cone. If a tuple, then this
-        constraint represents a primal conditional-SAGE cone, and the tuple must be of the form
-        ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
+        If None, then this constraint represents a primal ordinary-SAGE cone.
 
     name : str
 
@@ -75,11 +74,9 @@ class PrimalSageCone(SetMembership):
         values, then we should have ``age_vectors[i].value`` in the i-th AGE cone with
         respect to ``alpha``, and ``c.value == sum([av.value for av in age_vectors.values()])``.
 
-    cond : tuple or None
+    X : SigDomain or None
 
-        If None, then this constraint represents a primal ordinary-SAGE cone. If a tuple, then this
-        constraint represents a primal conditional-SAGE cone, and the tuple must be of the form
-        ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
+        If None, then this constraint represents a primal ordinary-SAGE cone.
 
     ech : ExpCoverHelper
 
@@ -93,14 +90,13 @@ class PrimalSageCone(SetMembership):
 
     """
 
-    def __init__(self, c, alpha, cond, name, **kwargs):
+    def __init__(self, c, alpha, X, name, **kwargs):
         covers = kwargs['covers'] if 'covers' in kwargs else None
-        if cond is not None:
-            raw_con = PrimalCondSageCone(c, alpha, cond, name, covers)
-            self.cond = raw_con.AbK
+        if X is not None:
+            raw_con = PrimalCondSageCone(c, alpha, X, name, covers)
         else:
             raw_con = PrimalOrdinarySageCone(c, alpha, name, covers)
-            self.cond = None
+        self.X = X
         self._raw_con = raw_con
         self.alpha = alpha
         self.c = Expression(c)
@@ -137,11 +133,9 @@ class DualSageCone(SetMembership):
 
         The matrix of exponent vectors defining the SAGE cone; ``alpha.shape[0] == v.size``.
 
-    cond : tuple or None
+    X : SigDomain or None
 
-        If None, then this constraint represents a dual ordinary-SAGE cone. If a tuple, then
-        this constraint represents a dual conditional-SAGE cone, and the tuple must be of the
-        form ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
+        If None, then this constraint represents a dual ordinary-SAGE cone.
 
     name : str
 
@@ -177,11 +171,9 @@ class DualSageCone(SetMembership):
 
         The vector subject to this dual SAGE cone constraint.
 
-    cond : tuple or None
+    X : SigDomain
 
-        If None, then this constraint represents a dual ordinary-SAGE cone. If a tuple, then
-        this constraint represents a dual conditional-SAGE cone, and the tuple must be of the
-        form ``cond = (A, b, K)``, specifying a feasible set in the coniclifts standard.
+        If None, then this constraint represents a dual ordinary-SAGE cone.
 
     mu_vars : Dict[int, Variable]
 
@@ -201,15 +193,14 @@ class DualSageCone(SetMembership):
         for the name of any auxiliary Variable created when compiling to the coniclifts standard.
     """
 
-    def __init__(self, v, alpha, cond, name, **kwargs):
+    def __init__(self, v, alpha, X, name, **kwargs):
         covers = kwargs['covers'] if 'covers' in kwargs else None
         c = kwargs['c'] if 'c' in kwargs else None
-        if cond is not None:
-            raw_con = DualCondSageCone(v, alpha, cond, name, c, covers)
-            self.cond = raw_con.AbK
+        if X is not None:
+            raw_con = DualCondSageCone(v, alpha, X, name, c, covers)
         else:
             raw_con = DualOrdinarySageCone(v, alpha, name, c, covers)
-            self.cond = None
+        self.X = X
         self._raw_con = raw_con
         self.v = v
         self.alpha = alpha

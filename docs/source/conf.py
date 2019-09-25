@@ -12,6 +12,8 @@
 #
 import os
 import sys
+import inspect
+
 sys.path.insert(0, os.path.abspath('~/documents/research/software/sageopt'))
 
 
@@ -35,6 +37,27 @@ extensions = [
     'sphinx.ext.napoleon'
     # 'sphinx.ext.imgmath'
 ]
+
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    exclusions = ('__weakref__',  # special-members
+                  '__doc__', '__module__', '__dict__',  # undoc-members
+                  )
+    if inspect.ismethod(obj) or inspect.isfunction(obj):
+        func_name = obj.__qualname__
+        # exclusions for Variable objects
+        if func_name in {'Variable.is_constant', 'Variable.is_affine'}:
+            return True
+        if func_name in {'Expression.as_expr'}:
+            return True
+
+    exclude = name in exclusions
+    return skip or exclude
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

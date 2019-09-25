@@ -111,7 +111,7 @@ def unconstrained_cut(v, alpha, ell=1, AbK=None, solver='MOSEK'):
     s_x = Signomial(alpha, c_x)
     modulator = Signomial(alpha, np.ones(shape=(alpha.shape[0],))) ** ell
     modded_s_x = s_x * modulator
-    constraints = [primal_sage_cone(modded_s_x, name='sig_is_nonneg', AbK=AbK),
+    constraints = [primal_sage_cone(modded_s_x, name='sig_is_nonneg', X=AbK),
                    vector2norm(c_x) <= np.linalg.norm(v)]
     objective_expr = c_x @ v
     prob = cl.Problem(cl.MIN, objective_expr, constraints)
@@ -139,7 +139,7 @@ def constrained_cut(v, alpha, gts, eqs, ell=1, solver='MOSEK'):
     s_x0 = Signomial(alpha, c_x0)
     modulator = Signomial(alpha, np.ones(shape=(alpha.shape[0],))) ** ell
     modded_s_x0 = s_x0 * modulator
-    constraints = [primal_sage_cone(modded_s_x0, name='sig_is_nonneg', AbK=None)]
+    constraints = [primal_sage_cone(modded_s_x0, name='sig_is_nonneg', X=None)]
     c_x = c_x0
     if len(gts) > 0:
         lambda_vars = cl.Variable(shape=(len(gts),))

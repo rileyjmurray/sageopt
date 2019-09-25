@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [unreleased]
 Multiple changes here are API breaking. The next release will be 0.4.0.
 ## Addded
+ - SigDomain and PolyDomain classes.
  - sage_cones.py, which provides an interface to both ordinary and conditional
  sage cones without exposing different classes for the different cases.
  - Support for automatic elimination of trivial AGE cones from SAGE relaxations. This can be disabled
