@@ -341,6 +341,7 @@ class DualCondSageCone(SetMembership):
         if self.m > 1:
             nontrivial_I = list(set(self.ech.U_I + self.ech.P_I))
             con = self.v[nontrivial_I] >= 0
+            # TODO: figure out when above constraint is implied by exponential cone constraints.
             con.epigraph_checked = True
             cd = con.conic_form()
             cone_data = [cd]
