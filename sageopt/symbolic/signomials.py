@@ -255,7 +255,7 @@ class Signomial(object):
             c.append(v)
         self.alpha = np.array(alpha)
         self.c = np.array(c)
-        if self.c.dtype is object:
+        if self.c.dtype == np.dtype('O'):
             self.c = cl.Expression(self.c)
 
     def __add__(self, other):
