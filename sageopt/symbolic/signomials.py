@@ -467,35 +467,56 @@ class SigDomain(object):
 
     Parameters
     ----------
-    constraints : list of coniclifts.constraints.Constraint
-        Constraints over a single coniclifts Variable, which define this SigDomain.
-    gts : list of callable
-        Inequality constraint functions (``g(x) >= 0``) which can be used to represent ``X``.
-    eqs : list of callable
-        Equality constraint functions (``g(x) == 0``) which can be used to represent ``X``.
+    n : int
+        Nonnegative. This set lives in :math:`R^n`.
 
     Other Parameters
     ----------------
+    AbK : tuple
+        Specify a convex set in the coniclifts standard. ``AbK[0]`` is a SciPy sparse
+        matrix. The first ``n`` columns of this matrix correspond to the variables over
+        which this set is supposed to be defined. Any remaining columns are for auxiliary
+        variables.
+
+    coniclifts_cons: list of coniclifts.constraints.Constraint
+        Constraints over a single coniclifts Variable, which define this SigDomain.
+
+    gts : list of callable
+        Inequality constraint functions (``g(x) >= 0``) which can be used to represent ``X``.
+
+    eqs : list of callable
+        Equality constraint functions (``g(x) == 0``) which can be used to represent ``X``.
+
     check_feas : bool
         Whether or not to check that ``X`` is nonempty. Defaults to True.
+
+    Notes
+    -----
+    Only one of ``AbK`` and ``coniclifts_cons`` can be provided upon construction.
+    If more than one of these value is provided, the constructor will raise an error.
     """
 
-    def __init__(self, constraints, gts, eqs, **kwargs):
-        check_feas = kwargs['check_feas'] if 'check_feas' in kwargs else True
-        self.constraints = constraints
-        variables = cl.compilers.find_variables_from_constraints(constraints)
-        if len(variables) != 1:
-            raise RuntimeError('The system of constraints must be defined over a single Variable object.')
-        self.x = variables[0]
-        A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(constraints)
-        self.A = A.toarray()
-        self.b = b
-        self.K = K
-        if check_feas:
-            self._check_feasibility()
-        self._variables = all_variables
-        self.gts = gts
-        self.eqs = eqs
+    def __init__(self, n, **kwargs):
+        self.n = n
+        self.A = None
+        self.b = None
+        self.K = None
+        self.gts = kwargs['gts'] if 'gts' in kwargs else None
+        self.eqs = kwargs['eqs'] if 'eqs' in kwargs else None
+        self.check_feas = kwargs['check_feas'] if 'check_feas' in kwargs else True
+        self._constraints = None  # optional
+        self._x = None  # optional
+        self._variables = None  # optional
+        if 'AbK' in kwargs:
+            self.A, self.b, self.K = kwargs['AbK']
+            if self.check_feas:
+                self._check_feasibility()
+        if 'coniclifts_cons' in kwargs:
+            if self.A is not None:
+                msg = 'Keyword arguments "AbK" and "coniclifts_cons" are mutually exclusive.'
+                raise RuntimeError(msg)
+            else:
+                self.parse_coniclifts_constraints(kwargs['coniclifts_cons'])
         pass
 
     def _check_feasibility(self):
@@ -511,6 +532,24 @@ class SigDomain(object):
             msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
             msg = msg1 + msg2 + msg3 + msg4
             raise RuntimeError(msg)
+        pass
+
+    def parse_coniclifts_constraints(self, constraints):
+        variables = cl.compilers.find_variables_from_constraints(constraints)
+        if len(variables) != 1:
+            raise RuntimeError('The system of constraints must be defined over a single Variable object.')
+        self._constraints = constraints
+        self._x = variables[0]
+        if self._x.size != self.n:
+            msg = 'The provided constraints are over a variable of dimension '
+            msg += str(self._x.size) + ', but this SigDomain was declared as dimension ' + str(self.n) + '.'
+            raise RuntimeError(msg)
+        A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(constraints)
+        self.A = A.toarray()
+        self.b = b
+        self.K = K
+        if self.check_feas:
+            self._check_feasibility()
         pass
 
     def check_membership(self, x_val, tol):

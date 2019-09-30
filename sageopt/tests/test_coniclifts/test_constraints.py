@@ -185,7 +185,7 @@ class TestConstraints(unittest.TestCase):
         cons = [1 >= vector2norm(x)]
         gts = [lambda z: 1 - np.linalg.norm(z, 2)]
         eqs = []
-        sigdom = SigDomain(cons, gts, eqs)
+        sigdom = SigDomain(n, coniclifts_cons=cons, gts=gts, eqs=eqs)
         np.random.seed(0)
         alpha = 10 * np.random.randn(m, n)
         c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
@@ -207,7 +207,7 @@ class TestConstraints(unittest.TestCase):
         cons = [1 >= vector2norm(x)]
         gts = [lambda z: 1 - np.linalg.norm(z, 2)]
         eqs = []
-        sigdom = SigDomain(cons, gts, eqs)
+        sigdom = SigDomain(n, coniclifts_cons=cons, gts=gts, eqs=eqs)
         np.random.seed(0)
         x0 = np.random.randn(n)
         x0 /= 2 * np.linalg.norm(x0)
