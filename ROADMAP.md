@@ -113,21 +113,3 @@ for how long it's going to take.
 
 Find a way to unify the compilation process in an efficient way.
 Maybe figure out how to do this alongside CVXPY integration.
-
-
-## Bugfixes
-
-At least in conditional_sage_cone.py, the primal cone can declare
-an AGE vector c_var of length zero. This happens when a component
-of c is constant, and negative, but that component has been identified
-as having a trivial AGE cone (i.e. the AGE cone reduces to the nonnegative
-orthant). Assuming the trivial AGE cone was identified correctly,
-this means the SAGE constraint is feasible. This case should be handled
-gracefully (at least with a descriptive error message). Check both
-primal and dual cases. This might also happen with ordinary SAGE cones.
-
-One way to handle the above issue would be to have a threshold,
-where the user is warned if a constant negative value is sufficiently
-small (e.g. 1e-7), and the negative value is then simply set to zero.
-If the constant negative value was above this threshold, then raise
-an error.

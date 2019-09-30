@@ -213,7 +213,7 @@ class NonlinearScalarAtom(ScalarAtom):
         # construct numeric values for argument expressions
         args_val = np.zeros(shape=(len(self.args),))
         for idx, arg in enumerate(self.args):
-            var_vals = np.array([tup[0].value() for tup in arg[:-1]])
+            var_vals = np.array([tup[0].value for tup in arg[:-1]])
             var_coeffs = np.array([tup[1] for tup in arg[:-1]])
             args_val[idx] = np.dot(var_coeffs, var_vals) + arg[-1][1]
         # evaluate the defining function, and return the result
@@ -402,6 +402,7 @@ class ScalarExpression(object):
         # noinspection PyTypeChecker
         return np.array(self).view(Expression)
 
+    @property
     def value(self):
         atoms_and_coeffs = list(self.atoms_to_coeffs.items())
         atom_vals = np.array([ac[0].value() for ac in atoms_and_coeffs])
@@ -628,7 +629,7 @@ class Expression(np.ndarray):
         """
         val = np.zeros(shape=self.shape)
         for tup in array_index_iterator(self.shape):
-            val[tup] = self[tup].value()
+            val[tup] = self[tup].value
         return val
 
     @staticmethod

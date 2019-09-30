@@ -413,6 +413,8 @@ class Polynomial(Signomial):
             if np.any(row % 2 != 0):
                 if isinstance(self.c[i], __NUMERIC_TYPES__):
                     sigrep_c[i] = -abs(self.c[i])
+                elif self.c[i].is_constant():
+                    sigrep_c[i] = -abs(self.c[i].value)
                 else:
                     need_vars.append(i)
             else:

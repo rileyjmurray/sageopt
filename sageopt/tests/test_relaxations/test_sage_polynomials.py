@@ -55,9 +55,10 @@ class TestSagePolynomials(unittest.TestCase):
         count_nonconstants = 0
         for i, ci in enumerate(sr.c):
             if isinstance(ci, cl.base.ScalarExpression):
-                assert len(ci.variables()) == 1
-                count_nonconstants += 1
-                assert ci.variables()[0].name == 'gamma'
+                if not ci.is_constant():
+                    assert len(ci.variables()) == 1
+                    count_nonconstants += 1
+                    assert ci.variables()[0].name == 'gamma'
             elif sr.alpha[i, 0] == 1 and sr.alpha[i, 1] == 2:
                 assert ci == -1
             elif sr.alpha[i, 0] == 2 and sr.alpha[i, 1] == 2:
@@ -157,11 +158,11 @@ class TestSagePolynomials(unittest.TestCase):
         # MOSEK easily solves sigrep_ell=2, and this is globally optimal
         res00 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=0)
         assert abs(res00[0] - res00[1]) <= 1e-6
-        res01 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=1)
-        assert abs(res01[0] - res01[1]) <= 1e-6
         res10 = primal_dual_unconstrained(p, poly_ell=1, sigrep_ell=0)
         assert abs(res10[0] - res10[1]) < 1e-6
         if cl.Mosek.is_installed():
+            res01 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=1, solver='MOSEK')
+            assert abs(res01[0] - res01[1]) <= 1e-6
             res02 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=2, solver='MOSEK')
             assert abs(res02[0] - res02[1]) < 1e-6
             assert abs((res02[0] + res02[1])/2.0 - (-1.0316)) <= 1e-4

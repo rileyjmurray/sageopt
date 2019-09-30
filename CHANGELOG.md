@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [unreleased]
 Multiple changes here are API breaking. The next release will be 0.4.0.
-## Addded
+## Added
  - SigDomain and PolyDomain classes.
  - sage_cones.py, which provides an interface to both ordinary and conditional
  sage cones without exposing different classes for the different cases.
@@ -19,6 +19,8 @@ Multiple changes here are API breaking. The next release will be 0.4.0.
  - An explicit requirement that ``Constraint.variables`` returns both all variables in its scope,
  and that all returned Variables be "proper".
 ## Changed
+ - primal sage constraints now have age vectors sum to <= c, rather than == c. This
+ is w.l.o.g., and hopefully will help with some solvers.
  - sage_cone.py to ordinary_sage_cone.py
  - The "var_name_to_locs" dict from coniclifts.compilers.compile_constrained_system. If a ScalarVariable
  does not participate in the conic system but its parent Variable object does, then that ScalarVariable's
@@ -42,6 +44,23 @@ Multiple changes here are API breaking. The next release will be 0.4.0.
 ## Removed
  - sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
  as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.
+## Small TODO
+ - Changing the SAGE from sum-age == c to sum-age <= c actually caused ECOS some trouble.
+ So there should be a compilation option which allows the user to chose which
+ they want.
+ - At least in conditional_sage_cone.py, the primal cone can declare
+an AGE vector c_var of length zero. This happens when a component
+of c is constant, and negative, but that component has been identified
+as having a trivial AGE cone (i.e. the AGE cone reduces to the nonnegative
+orthant). Assuming the trivial AGE cone was identified correctly,
+this means the SAGE constraint is feasible. This case should be handled
+gracefully (at least with a descriptive error message). Check both
+primal and dual cases. This might also happen with ordinary SAGE cones.
+One way to handle the above issue would be to have a threshold,
+where the user is warned if a constant negative value is sufficiently
+small (e.g. 1e-7), and the negative value is then simply set to zero.
+If the constant negative value was above this threshold, then raise
+an error.
 
 # [0.3.4] - 2019-09-09
 ## Added

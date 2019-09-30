@@ -204,8 +204,8 @@ class PrimalOrdinarySageCone(SetMembership):
         aux_c_vars = aff.vstack(aux_c_vars).T
         aux_c_vars = aux_c_vars[nonconst_locs, :]
         main_c_var = self.c[nonconst_locs]
-        A_vals, A_rows, A_cols, b = compiled_aff.columns_sum_to_vec(mat=aux_c_vars, vec=main_c_var)
-        K = [Cone('0', b.size)]
+        A_vals, A_rows, A_cols, b = compiled_aff.columns_sum_leq_vec(mat=aux_c_vars, vec=main_c_var)
+        K = [Cone('+', b.size)]
         return A_vals, np.array(A_rows), A_cols, b, K
 
     def variables(self):
@@ -258,7 +258,7 @@ class PrimalOrdinarySageCone(SetMembership):
             age_vectors = {i: v.value for i, v in self.age_vectors.items()}
             sum_age_vectors = sum(age_vectors.values())
             residual = c - sum_age_vectors  # want >= 0
-            residual[residual < 0] = 0
+            residual[residual > 0] = 0
             sum_to_c_viol = np.linalg.norm(residual, ord=norm_ord)
             # compute violations for each AGE cone
             age_viols = np.zeros(shape=(len(self.ech.U_I,)))

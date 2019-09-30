@@ -97,7 +97,7 @@ class RelEnt(NonlinearScalarAtom):
             arg_as_list = self.args[i]
             d = dict(arg_as_list[:-1])
             arg_se = ScalarExpression(d, arg_as_list[-1][1], verify=False)
-            arg_val = arg_se.value()
+            arg_val = arg_se.value
             vals.append(arg_val)
         val = special_functions.rel_entr(vals[0], vals[1])
         return val

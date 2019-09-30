@@ -103,6 +103,6 @@ class Exponential(NonlinearScalarAtom):
         x_list = self.args[0]
         d = dict(x_list[:-1])
         x_se = ScalarExpression(d, x_list[-1][1], verify=False)
-        x_val = x_se.value()
+        x_val = x_se.value
         val = np.exp(x_val)
         return val
