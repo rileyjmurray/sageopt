@@ -72,7 +72,7 @@ class PrimalSageCone(SetMembership):
 
         If all Variable objects in the scope of this constraint are assigned feasible,
         values, then we should have ``age_vectors[i].value`` in the i-th AGE cone with
-        respect to ``alpha``, and ``c.value == sum([av.value for av in age_vectors.values()])``.
+        respect to ``alpha``, and ``c.value == sum([av.value for av in age_vectors.values()], axis=0)``.
 
     X : SigDomain or None
 
