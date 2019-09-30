@@ -125,3 +125,9 @@ orthant). Assuming the trivial AGE cone was identified correctly,
 this means the SAGE constraint is feasible. This case should be handled
 gracefully (at least with a descriptive error message). Check both
 primal and dual cases. This might also happen with ordinary SAGE cones.
+
+One way to handle the above issue would be to have a threshold,
+where the user is warned if a constant negative value is sufficiently
+small (e.g. 1e-7), and the negative value is then simply set to zero.
+If the constant negative value was above this threshold, then raise
+an error.
