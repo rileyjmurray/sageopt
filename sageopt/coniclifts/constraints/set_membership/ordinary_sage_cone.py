@@ -153,33 +153,6 @@ class PrimalOrdinarySageCone(SetMembership):
             self.age_vectors[i] = ci_expr
         pass
 
-    def _age_rel_ent_cone_data(self, i):
-        idx_set = self.ech.expcovers[i]
-        if np.any(idx_set):
-            x = self.nu_vars[i]
-            y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
-            z = -self.age_vectors[i][i]
-            epi = self.relent_epi_vars[i]
-            A_vals, A_rows, A_cols, b, K = sum_relent(x, y, z, epi)
-        else:
-            # just constrain -age_vectors[i][i] <= 0.
-            A_vals, A_rows, A_cols = [1], np.array([0]), [self.age_vectors[i][i].scalar_variables()[0].id]
-            b = np.array([0])
-            K = [Cone('+', 1)]
-        return A_vals, A_rows, A_cols, b, K
-
-    def _age_lin_eq_cone_data(self, i):
-        # TODO: use the precompiled operator
-        idx_set = self.ech.expcovers[i]
-        matrix = (self.alpha[idx_set, :] - self.alpha[i, :]).T
-        A_rows = np.tile(np.arange(matrix.shape[0]), reps=matrix.shape[1])
-        ids = np.array(self.nu_vars[i].scalar_variable_ids)
-        A_cols = np.repeat(ids, matrix.shape[0]).tolist()
-        A_vals = matrix.ravel(order='F').tolist()  # stack columns, then tolist
-        b = np.zeros(matrix.shape[0], )
-        K = [Cone('0', matrix.shape[0])]
-        return A_vals, A_rows, A_cols, b, K
-
     def _age_violation(self, i, norm_ord, c_i):
         if np.any(self.ech.expcovers[i]):
             idx_set = self.ech.expcovers[i]
@@ -208,20 +181,34 @@ class PrimalOrdinarySageCone(SetMembership):
         K = [Cone('+', b.size)]
         return A_vals, np.array(A_rows), A_cols, b, K
 
-    def variables(self):
-        return self._variables
-
     def conic_form(self):
         if self.m > 2:
             # Lift c_vars and nu_vars into Expressions of length self.m
             self._build_aligned_age_vectors()
-            # Record all relative entropy constraints
             cone_data = []
             # age cones
             for i in self.ech.U_I:
-                cone_data.append(self._age_rel_ent_cone_data(i))
-                if np.any(self.ech.expcovers[i]):
-                    cone_data.append(self._age_lin_eq_cone_data(i))
+                idx_set = self.ech.expcovers[i]
+                if np.any(idx_set):
+                    # relative entropy inequality constraint
+                    x = self.nu_vars[i]
+                    y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
+                    z = -self.age_vectors[i][i]
+                    epi = self.relent_epi_vars[i]
+                    cd = sum_relent(x, y, z, epi)
+                    cone_data.append(cd)
+                    # linear equality constraints
+                    mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
+                    av, ar, ac = compiled_aff.mat_times_vecvar(mat, self.nu_vars[i])
+                    num_rows = mat.shape[0]
+                    curr_b = np.zeros(num_rows, )
+                    curr_k = [Cone('0', num_rows)]
+                    cone_data.append((av, ar, ac, curr_b, curr_k))
+                else:
+                    con = 0 <= self.age_vectors[i][i]
+                    con.epigraph_checked = True
+                    cd = con.conic_form()
+                    cone_data.append(cd)
             # Vectors sum to s.c
             cone_data.append(self._age_vectors_sum_to_c())
             return cone_data
@@ -231,6 +218,9 @@ class PrimalOrdinarySageCone(SetMembership):
             A_vals, A_rows, A_cols, b, K = con.conic_form()
             cone_data = [(A_vals, A_rows, A_cols, b, K)]
             return cone_data
+
+    def variables(self):
+        return self._variables
 
     @staticmethod
     def project(item, alpha):
@@ -405,31 +395,25 @@ class DualOrdinarySageCone(SetMembership):
                 num_cover = np.count_nonzero(self.ech.expcovers[i])
                 if num_cover == 0:
                     continue
-                curr_age = self._dual_age_cone_data(i)
-                cone_data += curr_age
-        return cone_data
-
-    def _dual_age_cone_data(self, i):
-        cone_data = []
-        selector = self.ech.expcovers[i]
-        len_sel = np.count_nonzero(selector)
-        #
-        # relative entropy constraints
-        #
-        expr1 = np.tile(self.v[i], len_sel).view(Expression)
-        epi = self.relent_epi_vars[i]
-        A_vals, A_rows, A_cols, b, K = elementwise_relent(expr1, self.v[selector], epi)
-        cone_data.append((A_vals, A_rows, A_cols, b, K))
-        #
-        # Linear inequalities
-        #
-        mat = self.alpha[selector, :] - self.alpha[i, :]
-        A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(-mat, self.mu_vars[i], epi)
-        num_rows = mat.shape[0]
-        b = np.zeros(num_rows)
-        K = [Cone('+', num_rows)]
-        A_rows = np.array(A_rows)
-        cone_data.append((A_vals, A_rows, A_cols, b, K))
+                selector = self.ech.expcovers[i]
+                len_sel = np.count_nonzero(selector)
+                #
+                # relative entropy constraints
+                #
+                expr1 = np.tile(self.v[i], len_sel).view(Expression)
+                epi = self.relent_epi_vars[i]
+                A_vals, A_rows, A_cols, b, K = elementwise_relent(expr1, self.v[selector], epi)
+                cone_data.append((A_vals, A_rows, A_cols, b, K))
+                #
+                # Linear inequalities
+                #
+                mat = self.alpha[selector, :] - self.alpha[i, :]
+                A_vals, A_rows, A_cols = compiled_aff.mat_times_vecvar_minus_vecvar(-mat, self.mu_vars[i], epi)
+                num_rows = mat.shape[0]
+                b = np.zeros(num_rows)
+                K = [Cone('+', num_rows)]
+                A_rows = np.array(A_rows)
+                cone_data.append((A_vals, A_rows, A_cols, b, K))
         return cone_data
 
     def _dual_age_cone_violation(self, i, norm_ord, rough, v):

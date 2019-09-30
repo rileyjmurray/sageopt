@@ -348,28 +348,29 @@ class DualCondSageCone(SetMembership):
             for i in self.ech.U_I:
                 idx_set = self.ech.expcovers[i]
                 num_cover = self.ech.expcover_counts[i]
-                if num_cover > 0:
-                    # relative entropy constraints
-                    expr = np.tile(self.v[i], num_cover).view(Expression)
-                    epi = self.relent_epi_vars[i]
-                    cd = elementwise_relent(expr, self.v[idx_set], epi)
-                    cone_data.append(cd)
-                    # Linear inequalities
-                    mat = self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]
-                    vecvar = self.lifted_mu_vars[i]
-                    av, ar, ac = comp_aff.mat_times_vecvar_minus_vecvar(-mat, vecvar, epi)
-                    num_rows = mat.shape[0]
-                    curr_b = np.zeros(num_rows)
-                    curr_k = [Cone('+', num_rows)]
-                    cone_data.append((av, ar, ac, curr_b, curr_k))
-                    # membership in cone induced by self.AbK
-                    A, b, K = self.AbK
-                    vecvar = self.lifted_mu_vars[i]
-                    singlevar = self.v[i]
-                    av, ar, ac = comp_aff.mat_times_vecvar_plus_vec_times_singlevar(A, vecvar, b, singlevar)
-                    curr_b = np.zeros(b.size, )
-                    curr_k = [Cone(co.type, co.len) for co in K]
-                    cone_data.append((av, ar, ac, curr_b, curr_k))
+                if num_cover == 0:
+                    continue
+                # relative entropy constraints
+                expr = np.tile(self.v[i], num_cover).view(Expression)
+                epi = self.relent_epi_vars[i]
+                cd = elementwise_relent(expr, self.v[idx_set], epi)
+                cone_data.append(cd)
+                # Linear inequalities
+                mat = self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]
+                vecvar = self.lifted_mu_vars[i]
+                av, ar, ac = comp_aff.mat_times_vecvar_minus_vecvar(-mat, vecvar, epi)
+                num_rows = mat.shape[0]
+                curr_b = np.zeros(num_rows)
+                curr_k = [Cone('+', num_rows)]
+                cone_data.append((av, ar, ac, curr_b, curr_k))
+                # membership in cone induced by self.AbK
+                A, b, K = self.AbK
+                vecvar = self.lifted_mu_vars[i]
+                singlevar = self.v[i]
+                av, ar, ac = comp_aff.mat_times_vecvar_plus_vec_times_singlevar(A, vecvar, b, singlevar)
+                curr_b = np.zeros(b.size, )
+                curr_k = [Cone(co.type, co.len) for co in K]
+                cone_data.append((av, ar, ac, curr_b, curr_k))
             return cone_data
         else:
             con = self.v >= 0
