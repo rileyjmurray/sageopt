@@ -92,7 +92,7 @@ operators are not allowed in the objective function. So if you want to minimize 
 <= t``, and set the objective to minimize ``t``. Here is an example of a constrained least-squares problem we solve
 for solution recovery in dual SAGE relaxations ::
 
-   A, b, K = con.A, con.b, con.K  # con is a DualCondSageCone instance
+   A, b, K = con.X.A, con.X.b, con.X.K  # con is a DualSageCone instance
    log_v = np.log(con.v.value)
    A = np.asarray(A)
    x = cl.Variable(shape=(A.shape[1],))
