@@ -22,17 +22,21 @@ from sageopt import coniclifts as cl
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
-    prim = sage_polys.poly_relaxation(p, 'primal', poly_ell, sigrep_ell, X)
+    prim = sage_polys.poly_relaxation(p, form='primal', X=X,
+                                      poly_ell=poly_ell, sigrep_ell=sigrep_ell)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage_polys.poly_relaxation(p, 'dual', poly_ell, sigrep_ell, X)
+    dual = sage_polys.poly_relaxation(p, form='dual', X=X,
+                                      poly_ell=poly_ell, sigrep_ell=sigrep_ell)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
 
 def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
-    prim = sage_polys.poly_constrained_relaxation(f, gt, eq, 'primal', p, q, ell, X)
+    prim = sage_polys.poly_constrained_relaxation(f, gt, eq, form='primal',
+                                                  p=p, q=q, ell=ell, X=X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage_polys.poly_constrained_relaxation(f, gt, eq, 'dual', p, q, ell, X)
+    dual = sage_polys.poly_constrained_relaxation(f, gt, eq, form='dual',
+                                                  p=p, q=q, ell=ell, X=X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]], dual
 

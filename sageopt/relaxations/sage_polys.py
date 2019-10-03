@@ -53,7 +53,7 @@ def relative_dual_sage_poly_cone(primal_poly, dual_var, name_base, log_AbK):
     return constrs
 
 
-def poly_relaxation(f, form='dual', poly_ell=0, sigrep_ell=0, X=None):
+def poly_relaxation(f, X=None, form='dual', **kwargs):
     """
     Construct a coniclifts Problem instance for producing a lower bound on
 
@@ -69,22 +69,31 @@ def poly_relaxation(f, form='dual', poly_ell=0, sigrep_ell=0, X=None):
     ----------
     f : Polynomial
         The objective function to be minimized.
+    X : PolyDomain or None
+        If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
     form : str
         Either ``form='primal'`` or ``form='dual'``.
-    poly_ell : int
-        Controls the complexity of a polynomial modulating function. Must be nonnegative.
-    sigrep_ell : int
-        Controls the complexity of the SAGE certificate applied to the Lagrangian's signomial representative.
-    X : dict
-        If ``X`` is None, then we produce a bound on ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'log_AbK'``, ``'gts'``, and ``'eqs'``.
-        For most situations, the appropriate dict ``X`` can be generated with ``conditional_sage_data(...)``.
 
     Returns
     -------
     prob : sageopt.coniclifts.Problem
 
+    Notes
+    -----
+
+    This function also accepts the following keyword arguments:
+
+    poly_ell : int
+        Controls the complexity of a polynomial modulating function. Must be nonnegative.
+
+    sigrep_ell : int
+        Controls the complexity of the SAGE certificate applied to the Lagrangian's signomial representative.
+
+    The dual formulation does not allow that both ``poly_ell`` and ``sigrep_ell`` are greater than
+    zero (such functionality is not implemented at this time).
     """
+    poly_ell = kwargs['poly_ell'] if 'poly_ell' in kwargs else 0
+    sigrep_ell = kwargs['sigrep_ell'] if 'sigrep_ell' in kwargs else 0
     form = form.lower()
     if form[0] == 'd':
         prob = poly_dual(f, poly_ell, sigrep_ell, X)
@@ -164,10 +173,8 @@ def sage_feasibility(f, X=None):
     ----------
     f : Polynomial
         We want to test if this function admits an X-SAGE decomposition.
-    X : dict
+    X : PolyDomain or None
         If ``X`` is None, then we test nonnegativity of ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'log_AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
 
     Returns
     -------
@@ -192,10 +199,8 @@ def sage_multiplier_search(f, level=1, X=None):
         We want to test if ``f`` is nonnegative over ``X``.
     level : int
         Controls the complexity of the X-SAGE modulating function. Must be a positive integer.
-    X : dict
+    X : PolyDomain or None
         If ``X`` is None, then we test nonnegativity of ``f`` over :math:`R^{\\texttt{f.n}}`.
-        If ``X`` is a dict, then it must contain three fields: ``'log_AbK'``, ``'gts'``, and ``'eqs'``. For almost all
-        applications, the appropriate dict ``X`` can be generated for you by calling ``conditional_sage_data(...)``.
 
     Returns
     -------
@@ -204,7 +209,7 @@ def sage_multiplier_search(f, level=1, X=None):
     Notes
     -----
     This function provides an alternative to moving up the SAGE hierarchy, for the goal of certifying
-    nonnegativity of a polynomial ``f`` over some set ``X`` where ``|X|`` is log-log convex.
+    nonnegativity of a polynomial ``f`` over some set ``X`` where ``|X|`` is log-convex.
     In general, the approach is to introduce a polynomial
 
         ``mult = Polynomial(alpha_hat, c_tilde)``
@@ -231,10 +236,10 @@ def sage_multiplier_search(f, level=1, X=None):
     return prob
 
 
-def poly_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=None):
+def poly_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
     """
-    Construct a coniclifts Problem instance representing a level-``(p, q, ell)`` SAGE relaxation
-    for the polynomial optimization problem
+    Construct a coniclifts Problem representing a SAGE relaxation for the polynomial optimization
+    problem
 
     .. math::
 
@@ -257,27 +262,35 @@ def poly_constrained_relaxation(f, gts, eqs, form='dual', p=0, q=1, ell=0, X=Non
         For every ``g in gts``, there is a desired constraint that variables ``x`` satisfy ``g(x) >= 0``.
     eqs : list of Polynomials
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
+    X : PolyDomain
+        If ``X`` is None, then we produce a bound on ``f`` subject only to the inequality constraints
+        in ``gts`` and the equality constraints in ``eqs``.
     form : str
         Either ``form='primal'`` or ``form='dual'``.
-    p : int
-        Controls the complexity of Lagrange multipliers in the primal formulation, and (equivalently) constraints in
-        the dual formulation. The smallest value is ``p=0``, which corresponds to scalar Lagrange multipliers.
-    q : int
-        The number of folds applied to the constraints ``gts`` and ``eqs``. The smallest value is ``q=1``, which
-        means "leave ``gts`` and ``eqs`` as-is."
-    ell : int
-        Controls the complexity of any modulator applied to the Lagrangian in the primal formulation, and
-        (equivalently) constraints in the dual formulation. The smallest value is ``ell=0``, which means
-        the primal Lagrangian must be a SAGE polynomial.
-    X : dict
-        If not-None, then ``X`` must be dictionary with three keys ``'log_AbK'``, ``'gts'``, ``'eqs'`` such as that
-        generated by the function ``conditional_sage_data(...)``.
 
     Returns
     -------
     prob : sageopt.coniclifts.Problem
+
+    Notes
+    -----
+
+    This function also accepts the following keyword arguments:
+
+    p : int
+        Controls the complexity of Lagrange multipliers on explicit polynomial constraints ``gts`` and ``eqs``.
+        Defaults to ``p=0``, which corresponds to scalar Lagrange multipliers.
+    q : int
+        The lists ``gts`` and ``eqs`` are replaced by lists of polynomials formed by all products of ``<= q``
+        elements from ``gts`` and ``eqs`` respectively. Defaults to ``q = 1``.
+    ell : int
+        Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
+        ``ell=0``, which means the primal Lagrangian must be an X-SAGE polynomial.
     """
     form = form.lower()
+    p = kwargs['p'] if 'p' in kwargs else 0
+    q = kwargs['q'] if 'q' in kwargs else 1
+    ell = kwargs['ell'] if 'ell' in kwargs else 0
     if form[0] == 'd':
         prob = poly_constrained_dual(f, gts, eqs, p, q, ell, X)
     elif form[0] == 'p':
@@ -296,21 +309,6 @@ def poly_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
                     and x in X }
 
     where :math:`X = R^{\\texttt{f.n}}` by default.
-
-    :param f: a Polynomial.
-    :param gts: a list of Polynomials.
-    :param eqs: a list of Polynomials.
-    :param p: a nonnegative integer.
-        Controls the complexity of Lagrange multipliers. p=0 corresponds to scalars.
-    :param q: a positive integer.
-        The number of folds applied to the constraints "gts" and "eqs". p=1 means "leave gts and eqs as-is."
-    :param ell: a nonnegative integer.
-        Controls the complexity of any modulator applied to the Lagrangian. ell=0 means that
-        the Lagrangian must be SAGE. ell=1 means "tilde_L := modulator * Lagrangian" must be SAGE.
-    :param X: None, or a dictionary with three keys 'log_AbK', 'gts', 'eqs' such as that generated by
-     the function "conditional_sage_data(...)".
-
-    :return: The primal form SAGE-(p, q, ell) relaxation for the given polynomial optimization problem.
     """
     lagrangian, ineq_lag_mults, _, gamma = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian}
@@ -343,21 +341,6 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
                     and x in X }
 
     where :math:`X = R^{\\texttt{f.n}}` by default.
-
-    :param f: a Polynomial.
-    :param gts: a list of Polynomials.
-    :param eqs: a list of Polynomials.
-    :param p: a nonnegative integer.
-        Controls the complexity of Lagrange multipliers. p=0 corresponds to scalars.
-    :param q: a positive integer.
-        The number of folds applied to the constraints "gts" and "eqs". p=1 means "leave gts and eqs as-is."
-    :param ell: a nonnegative integer.
-        Controls the complexity of any modulator applied to the Lagrangian. ell=0 means that
-        the Lagrangian must be SAGE. ell=1 means "tilde_L := modulator * Lagrangian" must be SAGE.
-    :param X: None, or a dictionary with three keys 'log_AbK', 'gts', 'eqs' such as that generated by
-     the function "conditional_sage_data(...)".
-
-    :return: The dual SAGE-(p, q, ell) relaxation for the given polynomial optimization problem.
     """
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'X': X}
@@ -418,7 +401,8 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
                        & \\text{and } x \\in X \}
         \\end{align*}
 
-    construct the q-fold constraints ``q-gts`` and ``q-eqs,`` and the Lagrangian
+    construct the q-fold constraints ``q-gts`` and ``q-eqs``, by taking all products
+    of ``<= q`` elements from ``gts`` and ``eqs`` respectively. Then form the Lagrangian
 
     .. math::
 
@@ -426,9 +410,9 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
             - \sum_{g \, \\in  \, \\text{q-gts}} s_g \cdot g
             - \sum_{g \, \\in  \, \\text{q-eqs}} z_g \cdot g
 
-    where :math:`\\gamma` and the coefficients on Polynomials :math:`s_g` and :math:`z_g`
-    are coniclifts Variables.
-
+    where :math:`\\gamma` is a coniclifts Variable of dimension 1, and the coefficients
+    on Polynomials  :math:`s_g` and :math:`z_g` are coniclifts Variables of a dimension
+    determined by ``p``.
 
     Parameters
     ----------
@@ -450,24 +434,33 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
         ``L.c`` is an affine expression of coniclifts Variables.
 
     ineq_dual_polys : a list of pairs of Polynomials.
-        If the pair ``(s1, s2)`` is in this list, then ``s1`` is a generalized Lagrange multiplier
-        to the constraint ``s2(x) >= 0``.
+        If the pair ``(s_g, g)`` is in this list, then ``s_g`` is a generalized Lagrange multiplier
+        to the constraint ``g(x) >= 0``.
 
     eq_dual_polys : a list of pairs of Polynomials.
-        If the pair ``(s1, s2)`` is in this list, then ``s1`` is a generalized Lagrange multiplier to the
-        constraint ``s2(x) == 0``. This return value is not accessed for primal-form SAGE relaxations.
+        If the pair ``(z_g, g)`` is in this list, then ``z_g`` is a generalized Lagrange multiplier to the
+        constraint ``g(x) == 0``.
 
     gamma : coniclifts.Variable.
         In primal-form SAGE relaxations, we want to maximize ``gamma``. In dual form SAGE relaxations,
-        ``gamma`` induces a normalizing equality constraint. This return value is not accessed for
-        dual-form SAGE relaxations.
+        ``gamma`` induces a normalizing equality constraint.
 
     Notes
     -----
-    The values returned by this function are used to construct constrained SAGE relaxations.
-    The basic primal SAGE relaxation is obtained by maximizing gamma, subject to the constraint
-    that L and each s_g are SAGE polynomials. The dual SAGE relaxation is obtained by symbolically
-    applying conic duality to the primal.
+    The Lagrange multipliers ``s_g`` and ``z_g`` share a common matrix of exponent vectors,
+    which we call ``alpha_hat``.
+
+    When ``p = 0``, ``alpha_hat`` consists of a single row, of all zeros. In this case,
+    ``s_g`` and ``z_g`` are constant Polynomials, and the coefficient vectors ``s_g.c``
+    and ``z_g.c`` are effectively scalars. When ``p > 0``, the rows of ``alpha_hat`` are
+    INITIALLY set set to all ``p``-wise sums  of exponent vectors appearing in either ``f``,
+    or some ``g in gts``,  or some ``g in eqs``. Then we replace ..
+
+        alpha_hat = np.vstack([2 * alpha_hat, alpha_hat])
+        alpha_multiplier = np.unique(alpha_hat, axis=0)
+
+    This has the effect of improving performance for problems where alpha_hat would otherwise
+    contain very few rows in the even integer lattice.
     """
     folded_gt = con_gen.up_to_q_fold_cons(gts, q)
     gamma = cl.Variable(name='gamma')
@@ -493,6 +486,9 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
 
 def conditional_sage_data(f, gts, eqs, check_feas=True):
     """
+    Identify a subset of the constraints in ``gts`` and ``eqs`` which can be incorporated into
+    conditional SAGE relaxations for polynomials. Construct a PolyDomain object from the inferred
+    constraints.
 
     Parameters
     ----------
@@ -504,11 +500,14 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     eqs : list of Polynomials
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
     check_feas : bool
-        Indicates whether or not to verify that the returned conic system is feasible.
+        Indicates whether or not to verify that the returned PolyDomain is nonempty.
 
     Returns
     -------
-    X : dict
+    X : PolyDomain or None
+
+    """
+    """
 
         ``X`` will be keyed by three strings: ``'log_AbK'``, ``'gts'``, and ``'eqs'``.
 

@@ -179,7 +179,7 @@ over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
        # ^ use simple NumPy functions to construct Polynomials!
    gts = [0.25 - x[i]**2 for i in range(7)]  # -.5 <= x[i] <= .5
    X = so.conditional_sage_data(f, gts, [])
-   dual = so.poly_constrained_relaxation(f, [], [], 'dual', X=X)
+   dual = so.poly_constrained_relaxation(f, [], [], form='dual', X=X)
    dual.solve(verbose=False, solver='MOSEK')
    print()
    solns = so.poly_solrec(dual)
