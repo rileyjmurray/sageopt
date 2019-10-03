@@ -576,7 +576,9 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
         rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
         coniclift_cons.append(g.alpha[non_cst_loc, :] @ y == rhs)
     if len(coniclift_cons) > 0:
-        polydom = PolyDomain(coniclift_cons, gts=gp_gts, eqs=gp_eqs, check_feas=check_feas)
+        polydom = PolyDomain(f.n, logspace_cons=coniclift_cons,
+                             gts=gp_gts, eqs=gp_eqs,
+                             check_feas=check_feas)
         return polydom
     else:
         return None
