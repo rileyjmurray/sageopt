@@ -454,7 +454,7 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     ``s_g`` and ``z_g`` are constant Polynomials, and the coefficient vectors ``s_g.c``
     and ``z_g.c`` are effectively scalars. When ``p > 0``, the rows of ``alpha_hat`` are
     INITIALLY set set to all ``p``-wise sums  of exponent vectors appearing in either ``f``,
-    or some ``g in gts``,  or some ``g in eqs``. Then we replace ..
+    or some ``g in gts``,  or some ``g in eqs``. Then we replace ::
 
         alpha_hat = np.vstack([2 * alpha_hat, alpha_hat])
         alpha_multiplier = np.unique(alpha_hat, axis=0)
