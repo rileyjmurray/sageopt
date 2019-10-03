@@ -25,6 +25,7 @@ from sageopt.coniclifts.standards.constants import maximize as CL_MAX, solved as
 import numpy as np
 import scipy.special as special_functions
 import warnings
+from sageopt.coniclifts.constraints.set_membership.conditional_sage_cone import ExpCoverHelper
 
 
 _ELIMINATE_TRIVIAL_AGE_CONES_ = True
@@ -114,7 +115,7 @@ class PrimalOrdinarySageCone(SetMembership):
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
         self.c = Expression(c)  # self.c is now definitely an ndarray of ScalarExpressions.
-        self.ech = ExpCoverHelper(self.alpha, self.c, covers)
+        self.ech = ExpCoverHelper(self.alpha, self.c, None, covers)
         self.nu_vars = dict()
         self.c_vars = dict()
         self.relent_epi_vars = dict()
@@ -353,7 +354,7 @@ class DualOrdinarySageCone(SetMembership):
         else:
             self.c = Expression(c)
         self.alpha = alpha
-        self.ech = ExpCoverHelper(self.alpha, self.c, covers)
+        self.ech = ExpCoverHelper(self.alpha, self.c, None, covers)
         self.m = alpha.shape[0]
         self.n = alpha.shape[1]
         self.v = v
@@ -452,90 +453,3 @@ class DualOrdinarySageCone(SetMembership):
             viols.append(curr_viol)
         viol = max(viols)
         return viol
-
-
-class ExpCoverHelper(object):
-
-    def __init__(self, alpha, c, expcovers=None):
-        if c is not None and not isinstance(c, Expression):
-            raise RuntimeError()
-        self.alpha = alpha
-        self.m = alpha.shape[0]
-        self.c = c
-        if self.c is not None:
-            self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
-            # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
-            # this AGE cone might not be used in the final solution to the associated
-            # optimization problem.
-            self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
-            # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
-            # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
-            # be used in any solution to the associated optimization problem, and we can be
-            # certain that c^{(i)}_i == c_i.
-            self.P_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset > 0)]
-            # ^ indices of positive sign.
-            # Together, union(self.P_I, self.U_I) comprise all indices "i" where c[i] is not identically zero.
-        else:
-            self.U_I = [i for i in range(self.m)]
-            self.N_I = []
-            self.P_I = []
-        if isinstance(expcovers, dict):
-            self._verify_exp_covers(expcovers)
-        elif expcovers is None:
-            expcovers = self._default_exp_covers()
-        else:
-            raise RuntimeError('Argument "expcovers" must be a dict.')
-        self.expcovers = expcovers
-
-    def _verify_exp_covers(self, expcovers):
-        for i in self.U_I:
-            if i not in expcovers:
-                raise RuntimeError('Required key missing from "expcovers".')
-            if (not isinstance(expcovers[i], np.ndarray)) or (expcovers[i].dtype != bool):
-                raise RuntimeError('A value in "expcovers" was the wrong datatype.')
-            if expcovers[i][i]:
-                warnings.warn('Nonsensical value in "expcovers"; correcting.')
-                expcovers[i][i] = False
-        pass
-
-    def _default_exp_covers(self):
-        expcovers = dict()
-        for i in self.U_I:
-            cov = np.ones(shape=(self.m,), dtype=bool)
-            cov[self.N_I] = False
-            cov[i] = False
-            expcovers[i] = cov
-        # Check if we are likely working with polynomials
-        # (if so, go through the trouble of a reduction that
-        #  applies to both polynomials and signomials, but
-        #  is more likely to be useful in the former case.)
-        row_sums = np.sum(self.alpha, 1)
-        if np.all(self.alpha >= 0) and np.min(row_sums) == 0:
-            # Then apply the reduction.
-            zero_loc = np.nonzero(row_sums == 0)[0][0]
-            for i in self.U_I:
-                if i == zero_loc:
-                    continue
-                curr_cover = expcovers[i]
-                curr_row = self.alpha[i, :]
-                for j in range(self.m):
-                    if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
-                        curr_cover[j] = False
-        for i in self.U_I:
-            if np.count_nonzero(expcovers[i]) == 1:
-                expcovers[i][:] = False
-        if _ELIMINATE_TRIVIAL_AGE_CONES_:
-            for i in self.U_I:
-                if np.any(expcovers[i]):
-                    mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
-                    x = Variable(shape=(mat.shape[1],), name='temp_x')
-                    objective = Expression([0])
-                    cons = [mat @ x <= -1]
-                    prob = Problem(CL_MIN, objective, cons)
-                    prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
-                    if prob.status == CL_SOLVED and abs(prob.value) < 1e-7:
-                        expcovers[i][:] = False
-        for i in self.N_I:
-            if np.count_nonzero(expcovers[i]) == 0:
-                raise RuntimeError('This SAGE cone constraint is infeasible.')
-        return expcovers

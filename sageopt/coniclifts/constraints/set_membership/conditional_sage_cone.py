@@ -372,13 +372,14 @@ class ExpCoverHelper(object):
     def __init__(self, alpha, c, AbK, expcovers=None):
         if c is not None and not isinstance(c, Expression):
             raise RuntimeError()
-        lifted_n = AbK[0].shape[1]
-        n = alpha.shape[1]
         self.m = alpha.shape[0]
-        if lifted_n > n:
-            # Then need to zero-pad alpha
-            zero_block = np.zeros(shape=(self.m, lifted_n - n))
-            alpha = np.hstack((alpha, zero_block))
+        if AbK is not None:
+            lifted_n = AbK[0].shape[1]
+            n = alpha.shape[1]
+            if lifted_n > n:
+                # Then need to zero-pad alpha
+                zero_block = np.zeros(shape=(self.m, lifted_n - n))
+                alpha = np.hstack((alpha, zero_block))
         self.alpha = alpha
         self.AbK = AbK
         self.c = c
