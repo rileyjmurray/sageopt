@@ -115,32 +115,6 @@ class PrimalCondSageCone(SetMembership):
             self.age_vectors[i] = ci_expr
         pass
 
-    def _age_violation(self, i, norm_ord, c_i, eta_i):
-        # This is "rough" only.
-        if self.ech.expcover_counts[i] > 0:
-            A, b, K = self.X.A, self.X.b, self.X.K
-            eta_viol = DualProductCone.project(eta_i, K)
-            x_i = self._nu_vars[i].value
-            x_i[x_i < 0] = 0
-            idx_set = self.ech.expcovers[i]
-            y_i = np.exp(1) * c_i[idx_set]
-            relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + b @ eta_i  # <= 0
-            relent_viol = abs(max(relent_res, 0))
-            alpha = self.alpha
-            if self._lifted_n > self._n:
-                # Then need to zero-pad alpha
-                zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
-                alpha = np.hstack((alpha, zero_block))
-            eq_res = (alpha[idx_set, :] - alpha[i, :]).T @ x_i - A.T @ eta_i  # == 0
-            eq_res = eq_res.reshape((-1,))
-            eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
-            total_viol = relent_viol + eq_viol + eta_viol
-            return total_viol
-        else:
-            c_i = float(self._c_vars[i].value)
-            relent_viol = abs(min(0, c_i))
-            return relent_viol
-
     def _age_vectors_sum_to_c(self):
         nonconst_locs = np.ones(self._m, dtype=bool)
         nonconst_locs[self.ech.N_I] = False
@@ -233,13 +207,33 @@ class PrimalCondSageCone(SetMembership):
             residual[residual > 0] = 0
             sum_to_c_viol = np.linalg.norm(residual, ord=norm_ord)
             # compute violations for each AGE cone
-            age_viols = np.zeros(shape=(len(self.ech.U_I,)))
-            for idx, i in enumerate(self.ech.U_I):
+            alpha = self.alpha
+            if self._lifted_n > self._n:
+                # Then need to zero-pad alpha
+                zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
+                alpha = np.hstack((alpha, zero_block))
+            age_viols = []
+            for i in self.ech.U_I:
                 if i in eta_vectors:
                     eta_vec = eta_vectors[i]
+                    eta_viol = DualProductCone.project(eta_vec, self.X.K)
+                    c_i = self._c_vars[i].value
+                    x_i = self._nu_vars[i].value
+                    x_i[x_i < 0] = 0
+                    idx_set = self.ech.expcovers[i]
+                    y_i = np.exp(1) * c_i[idx_set]
+                    relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + self.X.b @ eta_vec  # <= 0
+                    relent_viol = 0 if relent_res < 0 else relent_res
+                    eq_res = (alpha[idx_set, :] - alpha[i, :]).T @ x_i - self.X.A.T @ eta_vec  # == 0
+                    eq_res = eq_res.reshape((-1,))
+                    eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
+                    total_viol = relent_viol + eq_viol + eta_viol
+                    age_viols.append(total_viol)
                 else:
-                    eta_vec = None
-                age_viols[idx] = self._age_violation(i, norm_ord, age_vectors[i], eta_vec)
+                    c_i = float(self._c_vars[i].value)
+                    relent_viol = 0 if c_i >= 0 else -c_i
+                    age_viols.append(relent_viol)
+            age_viols = np.array(age_viols)
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
             if np.any(age_viols == np.inf):
                 total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
@@ -296,36 +290,6 @@ class DualCondSageCone(SetMembership):
                     self._variables.append(epi)
         pass
 
-    def _dual_age_cone_violation(self, i, norm_ord, rough, v):
-        selector = self.ech.expcovers[i]
-        num_cover = self.ech.expcover_counts[i]
-        if num_cover > 0:
-            expr1 = np.tile(v[i], num_cover).ravel()
-            expr2 = v[selector].ravel()
-            lowerbounds = special_functions.rel_entr(expr1, expr2)
-            mat = -(self.alpha[selector, :] - self.alpha[i, :])
-            mu_i = self._lifted_mu_vars[i].value
-            # compute rough violation for this dual AGE cone
-            residual = mat @ mu_i[:self._n] - lowerbounds
-            residual[residual >= 0] = 0
-            relent_viol = np.linalg.norm(residual, ord=norm_ord)
-            A, b, K = self.X.A, self.X.b, self.X.K
-            AbK_val = A @ mu_i + v[i] * b
-            AbK_viol = PrimalProductCone.project(AbK_val, K)
-            curr_viol = relent_viol + AbK_viol
-            # as applicable, solve an optimization problem to compute the violation.
-            if curr_viol > 0 and not rough:
-                temp_var = Variable(shape=(self._lifted_n,), name='temp_var')
-                cons = [mat @ temp_var[:self._n] >= lowerbounds,
-                        PrimalProductCone(A @ temp_var + v[i] * b, K)]
-                prob = Problem(CL_MIN, Expression([0]), cons)
-                status, value = prob.solve(verbose=False)
-                if status == CL_SOLVED and abs(value) < 1e-7:
-                    curr_viol = 0
-            return curr_viol
-        else:
-            return 0
-
     def variables(self):
         return self._variables
 
@@ -375,8 +339,34 @@ class DualCondSageCone(SetMembership):
         v = self.v.value
         viols = []
         for i in self.ech.U_I:
-            curr_viol = self._dual_age_cone_violation(i, norm_ord, rough, v)
-            viols.append(curr_viol)
+            selector = self.ech.expcovers[i]
+            num_cover = self.ech.expcover_counts[i]
+            if num_cover > 0:
+                expr1 = np.tile(v[i], num_cover).ravel()
+                expr2 = v[selector].ravel()
+                lowerbounds = special_functions.rel_entr(expr1, expr2)
+                mat = -(self.alpha[selector, :] - self.alpha[i, :])
+                mu_i = self._lifted_mu_vars[i].value
+                # compute rough violation for this dual AGE cone
+                residual = mat @ mu_i[:self._n] - lowerbounds
+                residual[residual >= 0] = 0
+                relent_viol = np.linalg.norm(residual, ord=norm_ord)
+                A, b, K = self.X.A, self.X.b, self.X.K
+                AbK_val = A @ mu_i + v[i] * b
+                AbK_viol = PrimalProductCone.project(AbK_val, K)
+                curr_viol = relent_viol + AbK_viol
+                # as applicable, solve an optimization problem to compute the violation.
+                if curr_viol > 0 and not rough:
+                    temp_var = Variable(shape=(self._lifted_n,), name='temp_var')
+                    cons = [mat @ temp_var[:self._n] >= lowerbounds,
+                            PrimalProductCone(A @ temp_var + v[i] * b, K)]
+                    prob = Problem(CL_MIN, Expression([0]), cons)
+                    status, value = prob.solve(verbose=False)
+                    if status == CL_SOLVED and abs(value) < 1e-7:
+                        curr_viol = 0
+                viols.append(curr_viol)
+            else:
+                viols.append(0)
         viol = max(viols)
         return viol
 
