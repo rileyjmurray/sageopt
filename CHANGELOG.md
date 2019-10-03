@@ -8,17 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Multiple changes here are API breaking. The next release will be 0.4.0.
 ## Added
  - SigDomain and PolyDomain classes.
- - sage_cones.py, which provides an interface to both ordinary and conditional
- sage cones without exposing different classes for the different cases.
+ - sage_cones.py, which handles the ordinary and conditional SAGE cases.
  - Support for automatic elimination of trivial AGE cones from SAGE relaxations. This can be disabled
- by setting the variable ``_EXPENSIVE_REDUCTION_=False`` for both sage_cone.py and conditional_sage_cone.py.
+ by setting the variable ``_EXPENSIVE_REDUCTION_=False``.
  - An argument to ``conditional_sage_data`` functions, so that they now can check if the system
- defined by the inferred constraints is feasible. Adding this allowed me to make it an assumption
- in conditional_sage_cone.py that the conic system is feasible, which resolved a standing issue
- in computing constraint violations for conditional SAGE cones.
+ defined by the inferred constraints is feasible. The default is to perform the feasibility check.
  - An explicit requirement that ``Constraint.variables`` returns both all variables in its scope,
  and that all returned Variables be "proper".
 ## Changed
+ - Conditional SAGE constraints now assume that "conditioning" is feasible.
  - primal sage constraints now have age vectors sum to <= c, rather than == c. This
  is w.l.o.g., and hopefully will help with some solvers.
  - sage_cone.py to ordinary_sage_cone.py
@@ -42,25 +40,28 @@ Multiple changes here are API breaking. The next release will be 0.4.0.
  The bug only meant that SAGE relaxations solved in the past were weaker than they should have been.
  - The signature of PrimalCondSageCone and DualCondSageCone
 ## Removed
+ - conditional_sage_cone.py, ordinary_sage_cone.py.
  - sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
  as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.
 ## Small TODO
- - Changing the SAGE from sum-age == c to sum-age <= c actually caused ECOS some trouble.
+ - Changing the SAGE constraint from sum-age == c to sum-age <= c actually caused ECOS some trouble.
  So there should be a compilation option which allows the user to chose which
  they want.
- - At least in conditional_sage_cone.py, the primal cone can declare
+ - In PrimalSageCone._initialize_variables, it sometimes happens that we declare
 an AGE vector c_var of length zero. This happens when a component
 of c is constant, and negative, but that component has been identified
 as having a trivial AGE cone (i.e. the AGE cone reduces to the nonnegative
 orthant). Assuming the trivial AGE cone was identified correctly,
 this means the SAGE constraint is feasible. This case should be handled
 gracefully (at least with a descriptive error message). Check both
-primal and dual cases. This might also happen with ordinary SAGE cones.
+primal and dual cases.
 One way to handle the above issue would be to have a threshold,
 where the user is warned if a constant negative value is sufficiently
 small (e.g. 1e-7), and the negative value is then simply set to zero.
 If the constant negative value was above this threshold, then raise
 an error.
+## Big TODO
+ - Fix the PolyDomain class to match the SigDomain class.
 
 # [0.3.4] - 2019-09-09
 ## Added
