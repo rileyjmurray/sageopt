@@ -463,20 +463,41 @@ class Signomial(object):
 
 class SigDomain(object):
     """
-    Represent a convex set ``X``, for use in signomial conditional SAGE relaxations.
+    Represent a convex set :math:`X \\subset R^n`, for use in signomial conditional SAGE relaxations.
 
     Parameters
     ----------
     n : int
-        Nonnegative. This set lives in :math:`R^n`.
+        The dimension of the space in which this set lives.
 
-    Other Parameters
-    ----------------
-    AbK : tuple
-        Specify a convex set in the coniclifts standard. ``AbK[0]`` is a SciPy sparse
-        matrix. The first ``n`` columns of this matrix correspond to the variables over
-        which this set is supposed to be defined. Any remaining columns are for auxiliary
-        variables.
+    Example
+    -------
+    Suppose you want to represent the :math:`\\ell_2` unit ball in :math:`R^{5}`.
+    This can be done as follows, ::
+
+        import sageopt as so
+        import sageopt.coniclifts as cl
+        x_var = cl.Variable(shape=(5,), name='temp')
+        cons = [cl.vector2norm(x_var) <= 1]
+        X = so.SigDomain(5)
+        X.parse_coniclifts_constraints(cons)
+
+    As written, that SigDomain cannot be used for solution recovery from SAGE relaxations.
+    To fully specify a SigDomain, you need to set attributes ``gts`` and ``eqs``, which
+    are lists of inequality constraints (``g(x) >= 0``) and equality constraints
+    (``g(x) == 0``) respectively. The following code completes the example above ::
+
+        import numpy as np
+        my_gts = [lambda dummy_x: 1 - np.linalg.norm(dummy_x, ord=2)]
+        X.gts = my_gts
+        X.eqs = []
+
+    This class does not check for correctness of ``eqs`` and ``gts``. It is up to the user
+    to ensure these values represent this SigDomain in the intended way.
+
+    Notes
+    -----
+    The constructor accepts the following keyword arguments:
 
     coniclifts_cons: list of coniclifts.constraints.Constraint
         Constraints over a single coniclifts Variable, which define this SigDomain.
@@ -490,8 +511,12 @@ class SigDomain(object):
     check_feas : bool
         Whether or not to check that ``X`` is nonempty. Defaults to True.
 
-    Notes
-    -----
+    AbK : tuple
+        Specify a convex set in the coniclifts standard. ``AbK[0]`` is a SciPy sparse
+        matrix. The first ``n`` columns of this matrix correspond to the variables over
+        which this set is supposed to be defined. Any remaining columns are for auxiliary
+        variables.
+
     Only one of ``AbK`` and ``coniclifts_cons`` can be provided upon construction.
     If more than one of these value is provided, the constructor will raise an error.
     """
@@ -535,6 +560,16 @@ class SigDomain(object):
         pass
 
     def parse_coniclifts_constraints(self, constraints):
+        """
+        Modify this SigDomain object, so that it represents the set of values
+        which satisfy the provided constraints.
+
+        Parameters
+        ----------
+        constraints : list of coniclifts.Constraint
+            The provided constraints must be defined over a single coniclifts Variable.
+
+        """
         variables = cl.compilers.find_variables_from_constraints(constraints)
         if len(variables) != 1:
             raise RuntimeError('The system of constraints must be defined over a single Variable object.')
@@ -554,6 +589,8 @@ class SigDomain(object):
 
     def check_membership(self, x_val, tol):
         """
+        Evaluate ``self.gts`` and ``self.eqs`` at ``x_val``,
+        to check if ``x_val`` belongs to this SigDomain.
 
         Parameters
         ----------

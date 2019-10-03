@@ -28,7 +28,7 @@ def is_feasible(x, greater_than_zero, equal_zero, ineq_tol=1e-8, eq_tol=1e-8):
     return True
 
 
-def local_refine(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000):
+def local_refine(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=1e4):
     """
     Use SciPy's COBYLA solver in an attempt to find a minimizer of ``f`` subject to
     inequality constraints in ``gts`` and equality constraints in ``eqs``.
@@ -56,6 +56,7 @@ def local_refine(f, gts, eqs, x0, rhobeg=1, rhoend=1e-7, maxfun=10000):
         The solution returned by COBYLA.
 
     """
+    maxfun = int(maxfun)
     x = fmin_cobyla(f, x0, gts + eqs + [-g for g in eqs],
                       rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun)
     return x

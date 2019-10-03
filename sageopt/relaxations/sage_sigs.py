@@ -229,8 +229,8 @@ def sig_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
     eqs : list of Signomial
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
     X : SigDomain
-        If ``X`` is None, then we produce a bound on ``f`` subject only to the inequality constraints
-        in ``gts`` and the equality constraints in ``eqs``.
+        If ``X`` is None, then we produce a bound on ``f`` subject only to the constraints in
+        ``gts`` and ``eqs``.
     form : str
         Either ``form='primal'`` or ``form='dual'``.
 

@@ -1,5 +1,7 @@
 .. _MCW2019: https://arxiv.org/abs/1907.00814
 
+.. _MCW2018: https://arxiv.org/abs/1810.01614
+
 .. _workwithsagesigs:
 
 Working with SAGE signomials.
@@ -12,7 +14,6 @@ This page describes core functions which can assist in these goals. These functi
  - :func:`sageopt.sig_constrained_relaxation`,
  - :func:`sageopt.sig_solrec`,
  - :func:`sageopt.local_refine`,
- - :func:`sageopt.relaxations.sage_sigs.conditional_sage_data`,
  - :func:`sageopt.relaxations.sage_sigs.sage_feasibility`, and
  - :func:`sageopt.relaxations.sage_sigs.sage_multiplier_search`.
 
@@ -29,8 +30,9 @@ Optimization
 
 There are two main functions for generating SAGE relaxations of signomial programs: ``sig_relaxation`` and
 ``sig_constrained_relaxation``. Both of these functions can handle constraints, but they differ in
-which constraints they allow. Tractable convex constraints are allowed by both functions, and are discussed
-more in :ref:`condsagesigs`. Solution recovery is addressed after these functions have been described.
+which constraints they allow. Tractable convex constraints are allowed by both functions, and are
+discussed in prerequisite documentation :ref:`condsagesigs`. Solution recovery is addressed after
+these functions have been described.
 
 No constraints, or convex constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,52 +112,6 @@ Users can replicate "Algorithm 1L" from MCW2019_ by running ``sig_solrec``, and 
 to its output.
 
 .. autofunction:: sageopt.local_refine
-
-.. _condsagesigs:
-
-"Conditioning"
---------------
-
-The primary contribution of MCW2019_ was to show that convex sets ":math:`X`" have a special place
-in the theory of SAGE relaxations.
-In particular, SAGE can incorporate convex constraints into a problem by a lossless process
-known as *partial dualization*.
-You can think of partial dualization as a type of "conditioning", in the sense of "conditional
-probability".
-
-We designed sageopt so users can leverage the full power of partial dualization without being
-experts on the subject.
-If you want to optimize a signomial over the set
-
-.. math::
-
-    \Omega = \{ x \,:\, g(x) \geq 0 \text{ for }g \in \mathtt{gts}, ~~ \phi(x)=0 \text{ for } \phi \in \mathtt{eqs}\}
-
-then all you need to worry about is constructing the lists of signomials ``gts`` and ``eqs``.
-Once these lists are constructed, you can call the following function to obtain
-a convex set :math:`X \supset \Omega` which is implied by the constraint signomials.
-
-.. autofunction:: sageopt.relaxations.sage_sigs.conditional_sage_data
-
-
-It is possible that the function above cannot capture a convex set of interest. This is
-particularly likely if the desired convex set is not naturally described
-by signomial inequality and equality constraints.
-Suppose for example that you want ``X`` to represent the :math:`\ell_2` unit ball in :math:`R^{\texttt{f.n}}`.
-This can easily be accomplished by leveraging ``sageopt.coniclifts``' compilation features. ::
-
-    import sageopt.coniclifts as cl
-    import numpy as np
-    x = cl.Variable(shape=(f.n,), name='x')
-    constraints = [1 >= cl.vector2norm(x)]
-    A, b, K, _, _, _ = cl.compile_constrained_system(constraints)
-    my_gts = [lambda dummy_x: 1 - np.linalg.norm(dummy_x, ord=2)]
-    my_eqs = []
-    X = {'AbK': (A, b, K), 'gts': my_gts, 'eqs': my_eqs}
-
-One message of this example is that ``X['gts']`` and ``X['eqs']`` don't need to be lists
-of Signomials. They just need to be callable functions which define membership in ``X['AbK']``.
-
 
 Nonnegativity
 -------------

@@ -444,22 +444,24 @@ class Polynomial(Signomial):
 
 class PolyDomain(object):
     """
-    Represent a sign-symmetric set :math:`X \\subset R^n` satisfying the properties that
-    (1) :math:`X \\cap R^n_{++}` is is log convex, and (2) the closure of :math:`X \\cap R^n_{++}`
-    equals :math:`X \\cap R^n_+`. Such sets are used in polynomial conditional SAGE relaxations.
+    Represent a set :math:`X \\subset R^n` satisfying the following properties:
+
+     1. invariance under reflection about the :math:`n`
+        hyperplanes :math:`H_i = \\{ (x_1,\\ldots,x_n) : x_i = 0 \\}`.
+
+     2. the set :math:`X \\cap R^n_{++}` is is log convex, and
+
+     3. the closure of :math:`X \\cap R^n_{++}` equals :math:`X \\cap R^n_+`
+
+    Such sets are used in polynomial conditional SAGE relaxations.
 
     Parameters
     ----------
     n : int
-        Nonnegative. This set lives in :math:`R^n`.
+        The dimension of the space in which this set lives.
 
     Other Parameters
     ----------------
-    log_AbK : tuple
-        Specify a convex set in the coniclifts standard. ``log_AbK[0]`` is a SciPy sparse
-        matrix. The first ``n`` columns of this matrix correspond to the variables over
-        which this set is supposed to be defined. Any remaining columns are for auxiliary
-        variables.
 
     logspace_cons: list of coniclifts.constraints.Constraint
         Constraints over the variable ``y := log(|x|)``, which define this PolyDomain.
@@ -473,11 +475,14 @@ class PolyDomain(object):
     check_feas : bool
         Whether or not to check that ``X`` is nonempty. Defaults to True.
 
+    log_AbK : tuple
+        Specify a convex set in the coniclifts standard. ``log_AbK[0]`` is a SciPy sparse
+        matrix. The first ``n`` columns of this matrix correspond to the variables over
+        which this set is supposed to be defined. Any remaining columns are for auxiliary
+        variables.
+
     Notes
     -----
-    A sign-symmetric set :math:`X \\subset R^n` is any set which is invariant under reflection
-    about the :math:`n` hyperplanes :math:`H_i = \\{ (x_1,\\ldots,x_n) : x_i = 0 \\}`.
-
     The constraint functions in ``gts`` and ``eqs`` should allow arguments where some components
     equal to zero. These functions can be Polynomial objects, but are not required to be.
 
@@ -525,6 +530,9 @@ class PolyDomain(object):
 
     def check_membership(self, x_val, tol):
         """
+        Evaluate ``self.gts`` and ``self.eqs`` at ``x_val``,
+        to check if ``x_val`` belongs to this PolyDomain.
+
         Parameters
         ----------
         x_val : ndarray
@@ -545,6 +553,17 @@ class PolyDomain(object):
         return True
 
     def parse_coniclifts_constraints(self, logspace_cons):
+        """
+        Modify this PolyDomain object, so that it the log of its intersection
+        with the positive orthant is the set of values satisfying constraints
+        in logspace_cons.
+
+        Parameters
+        ----------
+        logspace_cons : list of coniclifts.Constraint
+            The provided constraints must be defined over a single coniclifts Variable.
+
+        """
         variables = cl.compilers.find_variables_from_constraints(logspace_cons)
         if len(variables) != 1:
             raise RuntimeError('The system of constraints must be defined over a single Variable object.')

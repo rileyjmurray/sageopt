@@ -21,11 +21,11 @@ from sageopt.relaxations import local_refine, local_refine_polys_from_sigs
 from sageopt.relaxations import conditional_sage_data
 from sageopt.relaxations import sage_feasibility, sage_multiplier_search
 
-from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
+from sageopt.symbolic.signomials import Signomial, standard_sig_monomials, SigDomain
 from sageopt.relaxations import sig_relaxation, sig_constrained_relaxation
 from sageopt.relaxations import sig_solrec
 
-from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
+from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials, PolyDomain
 from sageopt.relaxations import poly_relaxation, poly_constrained_relaxation
 from sageopt.relaxations import poly_solrec
 

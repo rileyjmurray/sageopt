@@ -22,60 +22,115 @@ from scipy.optimize import fmin_cobyla
 import itertools
 
 
-def local_refine_polys_from_sigs(f, gts, eqs, x0, rhobeg=1.0, rhoend=1e-7, maxfun=10000):
+def local_refine_polys_from_sigs(f, gts, eqs, x0, **kwargs):
     """
-    When faced with a polynomial optimization problem over nonnegative variables, one should
-    formulate the problem in terms of signomials. This reformulation is without loss of generality
-    from the perspective of solving a SAGE relaxation, but the local-refinement stage of solution
-    recovery is somewhat different.
-
     This is a helper function which ...
         (1) accepts signomial problem data (representative of a desired polynomial optimization problem),
         (2) transforms the signomial data into equivalent polynomial data, and
         (3) performs local refinement on the polynomial data, via the COBYLA solver.
 
-    This function may be important if a polynomial optimization problem has some variable equal to zero
-    in an optimal solution.
+    Parameters
+    ----------
 
-    :param f: a Signomial, defining the objective function to be minimized. From "f" we will construct
-    a polynomial "p" where p(y) = f(log(y)) for all elementwise positive vectors y.
+    f: Signomial
+        Defines the objective function to be minimized. From "f" we will construct
+        a polynomial "p" where ``p(y) = f(np.log(y))`` for all positive vectors y.
 
-    :param gts: a list of Signomials, each defining an inequality constraint g(x) >= 0.
-    From this list, we will construct a list of polynomials gts_poly, so that every g0 in gts has a
-    polynomial representative g1 in gts_poly, satisfying g1(y) = g0(log(y)) for all elementwise
-    positive vectors y.
+    gts : list of Signomial
+        Each defining an inequality constraint ``g(x) >= 0``. From this list, we will construct a
+        list of polynomials gts_poly, so that every ``g0 in gts`` has a polynomial representative
+        ``g1 in gts_poly``, satisfying ``g1(y) = g0(np.log(y))`` for all positive vectors y.
 
-    :param eqs: a list of Signomials, each defining an equality constraint g(x) == 0.
-    From this list, we will construct a list of polynomials gts_poly, so that every g0 in eqs has a
-    polynomial representative g1 in eqs_poly, satisfying g1(y) = g0(log(y)) for all elementwise
-    positive vectors y.
+    eqs : list of Signomial
+        Each defining an equality constraint ``g(x) == 0``. From this list, we will construct a
+        list of polynomials ``eqs_poly``, so that every ``g0 in gts`` has a polynomial representative
+        ``g1 in eqs_poly``, satisfying ``g1(y) = g0(np.log(y))`` for all positive vectors y.
 
-    :param x0: an initial condition for the signomial optimization problem
-        min{ f(x) |  g(x) >= 0 for g in gts, g(x) == 0 for g in eqs }.
+    x0 : ndarray
+        An initial condition for the *signomial* optimization problem
+        ``min{ f(x) |  g(x) >= 0 for g in gts, g(x) == 0 for g in eqs }``.
 
-    :param rhobeg: COBYLA's initial radius of the search space around y0 = exp(x0).
+    Other Parameters
+    ----------------
 
-    :param rhoend: COBYLA terminates once the radius of the search space reaches this value.
+    rhobeg : float
+        Controls the size of COBYLA's initial search space around ``y0 = exp(x0)``.
 
-    :param maxfun: The maximum number of iterations used by the COBYLA solver.
+    rhoend : float
+        Termination criteria, controlling the size of COBYLA's smallest search space.
 
-    :return: The output of COBYLA for the polynomial optimization problem
-        min{ p(y) | g(y) >= 0 for g in gts_poly, g(y) == 0 for g in eqs_poly, y >= 0 }
-    with initial condition y0 = exp(x0).
+    maxfun : int
+        Termination criteria, bounding the number of COBYLA's iterations.
+
+    Returns
+    -------
+    y : ndarray
+
+        The output of COBYLA for the polynomial optimization problem
+        ``min{ p(y) | g(y) >= 0 for g in gts_poly, g(y) == 0 for g in eqs_poly, y >= 0 }``
+        with initial condition ``y0 = exp(x0)``.
+
     """
-    x0 = np.exp(x0)
+    rhobeg = kwargs['rhobeg'] if 'rhobeg' in kwargs else 1.0
+    rhoend = kwargs['rhoend'] if 'rhoend' in kwargs else 1e-7
+    maxfun = int(kwargs['maxfun']) if 'maxfun' in kwargs else 10000
+    y0 = np.exp(x0)
     gts = [g.as_polynomial() for g in gts]
-    x = standard_poly_monomials(x0.size)
-    gts += [x[i] for i in range(x0.size)]  # Decision variables must be nonnegative.
+    x = standard_poly_monomials(y0.size)
+    gts += [x[i] for i in range(y0.size)]  # Decision variables must be nonnegative.
     eqs = [g.as_polynomial() for g in eqs]
     f = f.as_polynomial()
-    res = fmin_cobyla(f, x0, gts + eqs + [-g for g in eqs],
-                      rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun)
-    return res
+    y = fmin_cobyla(f, y0, gts + eqs + [-g for g in eqs],
+                    rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun)
+    return y
 
 
-def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=False, all_signs=True, skip_ls=False):
-    # implemented only for poly_constrained_dual (not yet implemented for sage_poly_dual).
+def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False, **kwargs):
+    """
+    Recover a list of candidate solutions from a dual SAGE relaxation. Solutions are
+    guaranteed to be feasible up to specified tolerances, but not necessarily optimal.
+
+    Parameters
+    ----------
+    prob : coniclifts.Problem
+        A dual-form SAGE relaxation, from ``poly_constrained_relaxation``.
+
+    ineq_tol : float
+        The amount by which recovered solutions can violate inequality constraints.
+
+    eq_tol : float
+        The amount by which recovered solutions can violate equality constraints.
+
+    skip_ls : bool
+        Whether or not to skip least-squares solution recovery.
+
+    Returns
+    -------
+    sols : list of ndarrays
+        A list of feasible solutions, sorted in increasing order of objective function value.
+        It is possible that this list is empty, in which case no feasible solutions were recovered.
+
+    Notes
+    -----
+    This function accepts the following keyword arguments:
+
+    zero_tol : float
+        Used in magnitude recovery. If a component of the Lagrangian's moment vector is smaller
+        than this (in absolute value), pretend it's zero in the least-squares step. Defaults to 1e-20.
+
+    heuristic_signs : bool
+        Used in sign recovery. If True, then attempts to infer variable signs from the Lagrangian's
+        moment vector even when a completely consistent set of signs does not exist. Defaults to True.
+
+    all_signs : bool
+        Used in sign recovery. If True, then consider returning solutions which differ only by sign.
+        Defaults to True.
+
+    This function is implemented only for poly_constrained_relaxation (not poly_relaxation).
+    """
+    zero_tol = kwargs['zero_tol'] if 'zero_tol' in kwargs else 1e-20
+    heuristic = kwargs['heuristic_signs'] if 'heuristic_signs' in kwargs else False
+    all_signs = kwargs['all_signs'] if 'all_signs' in kwargs else True
     metadata = prob.metadata
     f = metadata['f']
     lag_gts = metadata['gts']
@@ -92,7 +147,7 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, zero_tol=1e-20, hueristic=Fals
     v_reduced = M @ v
     alpha_reduced = lagrangian.alpha
     mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol, skip_ls)
-    signs = variable_sign_patterns(alpha_reduced, v_reduced, hueristic, all_signs)
+    signs = variable_sign_patterns(alpha_reduced, v_reduced, heuristic, all_signs)
     # Now we need to build the candidate solutions, and check them for feasibility.
     gts = lag_gts + [g for g in con.X.gts]
     eqs = lag_eqs + [g for g in con.X.eqs]

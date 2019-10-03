@@ -263,8 +263,8 @@ def poly_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
     eqs : list of Polynomials
         For every ``g in eqs``, there is a desired constraint that variables ``x`` satisfy ``g(x) == 0``.
     X : PolyDomain
-        If ``X`` is None, then we produce a bound on ``f`` subject only to the inequality constraints
-        in ``gts`` and the equality constraints in ``eqs``.
+        If ``X`` is None, then we produce a bound on ``f`` subject only to the constraints in
+        ``gts`` and ``eqs``.
     form : str
         Either ``form='primal'`` or ``form='dual'``.
 
@@ -453,13 +453,13 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     When ``p = 0``, ``alpha_hat`` consists of a single row, of all zeros. In this case,
     ``s_g`` and ``z_g`` are constant Polynomials, and the coefficient vectors ``s_g.c``
     and ``z_g.c`` are effectively scalars. When ``p > 0``, the rows of ``alpha_hat`` are
-    INITIALLY set set to all ``p``-wise sums  of exponent vectors appearing in either ``f``,
+    *initially* set set to all ``p``-wise sums  of exponent vectors appearing in either ``f``,
     or some ``g in gts``,  or some ``g in eqs``. Then we replace ::
 
         alpha_hat = np.vstack([2 * alpha_hat, alpha_hat])
         alpha_multiplier = np.unique(alpha_hat, axis=0)
 
-    This has the effect of improving performance for problems where alpha_hat would otherwise
+    This has the effect of improving performance for problems where ``alpha_hat`` would otherwise
     contain very few rows in the even integer lattice.
     """
     folded_gt = con_gen.up_to_q_fold_cons(gts, q)

@@ -6,10 +6,10 @@ ECOS or MOSEK. These solvers require input in very specific standard-forms. *Con
 provides abstractions that allow us to state SAGE relaxations in high-level syntax, and manage
 interactions with these low-level solvers.
 
-Optimization interface
-----------------------
+Overview
+--------
 
-The optimization abstractions used in coniclifts are similar to those in `CVXPY <cvxpy.org>`_.
+Coniclifts employs abstractions that are similar to those in `CVXPY <cvxpy.org>`_.
 For example, it is possible to construct and solve a linear program using coniclifts::
 
    import sageopt.coniclifts as cl
@@ -34,7 +34,7 @@ would find that ``y`` is a coniclifts *Expression*. Expression objects track fun
 Coniclifts has support for nonlinear convex constraints. The most important of these constraints are specified as
 "set membership", rather than elementwise inequalities.
 For example, we have a *PrimalSageCone* class, which is used to construct some of the SAGE
-relaxations in the ``sageopt.relaxations`` package. Here is a concrete example ::
+relaxations in the ``sageopt.relaxations`` package. Here is a concrete demonstration ::
 
    alpha = np.array([[0, 0],
                      [1, 0],
@@ -105,31 +105,6 @@ The example above also alludes to a useful set-membership constraint, called ``P
 `this link <https://github.com/rileyjmurray/sageopt/tree/master/sageopt/coniclifts/constraints/set_membership>`_
 for source code of set-membership constraints available in coniclifts.
 
-Compiler interface
-------------------
-
-Up until now we have only described coniclifts as a tool for creating optimization problems. However, coniclifts'
-more fundamental use is to exploit the following fact: for every convex set :math:`X \subset R^n`, there exists a
-matrix :math:`A \in R^{k \times m}` , a vector :math:`b \in R^k`, and a convex cone :math:`K \subset R^k` so that
-:math:`X = \{ (x_1,\ldots,x_n) \,:\, A x + b \in K, x \in R^m \}`. Coniclifts compiles all optimization problems into
-this standard form, where :math:`K` is a product of elementary convex cones
-
-#. The zero cone.
-#. The nonnegative orthant.
-#. The exponential cone.
-#. The second-order cone.
-#. The vectorized positive semidefinite cone.
-
-
-Crucially, coniclifts provides a means to map back and forth
-between models specified in high-level syntax, and models which exist in a flattened conic form using only primitives
-above.
-
-The most important function in coniclifts' compilation process is given below.
-The final return argument mentions "ScalarVariable" objects, which users of coniclifts need not interact with directly.
-
-.. autofunction:: sageopt.coniclifts.compilers.compile_constrained_system
-
 The Variable class
 ------------------
 
@@ -139,8 +114,15 @@ The Variable class
 The Problem class
 -----------------
 
+Detailed documentation for the Problem class is given below. Most users will only interact with
+a few aspects of Problem objects. On a first read, it should be enough just to skim the documentation
+for this class. If you want to understand all the attributes of a Problem object,
+you will need to read :ref:`cl_expression_system` and :ref:`cl_compilerinterface`.
+
 .. autoclass:: sageopt.coniclifts.Problem
     :members:
+
+.. _cl_expression_system:
 
 The Expression system
 ---------------------
@@ -188,7 +170,8 @@ between ordinary-SAGE and conditional-SAGE versions of the primal and dual cones
  - :class:`sageopt.coniclifts.PrimalSageCone`, and
  - :class:`sageopt.coniclifts.DualSageCone`.
 
-These classes have virtually identical constructors and attributes. In particular, both classes' constructors require
+These classes have virtually identical constructors and public attributes. In particular, both classes' constructors
+require
 an argument ``X``, which can be ``None`` or a ``SigDomain``.
 Ordinary SAGE constraints are obtained by setting ``X=None``.
 Conditional SAGE constraints assume the feasible set represented by induced by ``X`` is feasible, and it is the user's
@@ -217,3 +200,29 @@ This presolve option can be disabled entirely by calling ``sageopt.coniclifts.pr
 .. autoclass:: sageopt.coniclifts.DualSageCone
 
 
+.. _cl_compilerinterface:
+
+The compiler interface
+----------------------
+
+Up until now we have only described coniclifts as a tool for creating optimization problems. However, coniclifts'
+more fundamental use is to exploit the following fact: for every convex set :math:`X \subset R^n`, there exists a
+matrix :math:`A \in R^{k \times m}` , a vector :math:`b \in R^k`, and a convex cone :math:`K \subset R^k` so that
+:math:`X = \{ (x_1,\ldots,x_n) \,:\, A x + b \in K, x \in R^m \}`. Coniclifts compiles all optimization problems into
+this standard form, where :math:`K` is a product of elementary convex cones
+
+#. The zero cone.
+#. The nonnegative orthant.
+#. The exponential cone.
+#. The second-order cone.
+#. The vectorized positive semidefinite cone.
+
+
+Crucially, coniclifts provides a means to map back and forth
+between models specified in high-level syntax, and models which exist in a flattened conic form using only primitives
+above.
+
+The most important function in coniclifts' compilation process is given below.
+The final return argument mentions "ScalarVariable" objects, which users of coniclifts need not interact with directly.
+
+.. autofunction:: sageopt.coniclifts.compilers.compile_constrained_system
