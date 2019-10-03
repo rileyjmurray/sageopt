@@ -33,10 +33,8 @@ which constraints they allow. This section presents these functions and then add
 Structured constraints only
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``poly_relaxation`` requires that all constraints are incorporated into
-a set :math:`X` , where the pointwise elementwise absolute value :math:`|X|` is a `log-convex set
-<https://arxiv.org/abs/1812.04074>`_. For details on what sets :math:`X` are allowed, refer to Section 4.1 of
-`MCW2019 <https://arxiv.org/abs/1907.00814>`_ and this website's discussion on polynomial :ref:`condsagepolys`.
+``poly_relaxation`` requires that any and all constraints are incorporated into
+a set :math:`X` , which satisfies the properties for polynomial :ref:`condsagepolys`.
 
 .. autofunction:: sageopt.poly_relaxation
 
