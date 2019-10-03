@@ -108,8 +108,3 @@ SAGE relaxation.
 3. Allow some logging during this reduction phase, so users have a sense
 for how long it's going to take.
 
-
-## Remove separate ordinary vs conditional SAGE implementations
-
-Find a way to unify the compilation process in an efficient way.
-Maybe figure out how to do this alongside CVXPY integration.
