@@ -47,7 +47,7 @@ relaxations in the ``sageopt.relaxations`` package. Here is a concrete example :
    gamma = cl.Variable(shape=(), name='gamma')
    c_expr = c.copy()
    c_expr[0] -= gamma   # shift the constant term by -gamma
-   constr = cl.PrimalSageCone(c_expr, alpha, name='example_constraint')
+   constr = cl.PrimalSageCone(c_expr, alpha, X=None, name='example_constraint')
    prob = Problem(cl.MAX, gamma, [constr])
    # find largest gamma so shifted signomial is nonnegative
    status, val = prob.solve()
@@ -189,9 +189,9 @@ between ordinary-SAGE and conditional-SAGE versions of the primal and dual cones
  - :class:`sageopt.coniclifts.DualSageCone`.
 
 These classes have virtually identical constructors and attributes. In particular, both classes' constructors require
-an argument ``cond``, which can be ``None`` or a tuple of the form ``(A, b, K)``.
-Ordinary SAGE constraints are obtained by setting ``cond=None``.
-Conditional SAGE constraints assume the conic system induced by ``cond=(A, b, K)`` is feasible, and it is the user's
+an argument ``X``, which can be ``None`` or a ``SigDomain``.
+Ordinary SAGE constraints are obtained by setting ``X=None``.
+Conditional SAGE constraints assume the feasible set represented by induced by ``X`` is feasible, and it is the user's
 responsibility to ensure this is the case.
 The main difference in these classes' attributes is
 that ``PrimalSageCone`` instances have a dict called ``age_vectors`` (which represent the certificates of nonnegativity)
@@ -205,7 +205,7 @@ is limited to indices ``i`` where ``c[i]`` is constant. This feature can optiona
 ``DualSageCone`` objects, if the user provides a keyword argument ``c`` to the ``DualSageCone`` constructor.
 
 The ``PrimalSageCone`` and ``DualSageCone`` classes automatically perform a more extensive presolve phase to
-eliminate trivial AGE cones (i.e. those AGE cones which reduce to the nonnegative orthant).
+eliminate trivial AGE cones (those which reduce to the nonnegative orthant).
 The computational cost of this presolve is borne when the constraint is constructed, and scales linearly in the
 dimension of the SAGE constraint (equal to ``constr.alpha.shape[0]``).
 The cost of this presolve can be mitigated by

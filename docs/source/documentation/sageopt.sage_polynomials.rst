@@ -8,7 +8,7 @@ and ``poly_constrained_relaxation``. Both of these functions can handle constrai
 which constraints they allow.
 
 ``poly_relaxation`` requires that all constraints are incorporated into
-a set :math:`X` , where the pointwise elementwise absolute value :math:`|X|` is a `log-log convex set
+a set :math:`X` , where the pointwise elementwise absolute value :math:`|X|` is a `log-convex set
 <https://arxiv.org/abs/1812.04074>`_. For details on what sets :math:`X` are allowed, refer to Section 4.1 of
 `MCW2019 <https://arxiv.org/abs/1907.00814>`_.
 In more general settings, you can use ``poly_constrained_relaxation``. In

@@ -591,32 +591,6 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     X : SigDomain
 
     """
-    """
-
-    Notes
-    -----
-
-    This function comes with the following minimum specification for ``X``:
-
-    (1) ``X['gts']`` is a list of callables. Every ``g in X['gts']`` induces a convex
-    set ``{x : g(x) >= 0}`` which contains ``{x : g(x) >= 0 for all g in gts}``.
-
-    (2) ``X['eqs']`` is a list of callables. Every ``g in X['eqs']`` induces a convex
-    set ``{x : g(x) == 0}`` which contains ``{x : g(x) == 0 for all g in eqs}``.
-
-    (3) ``X['AbK']`` is a coniclifts-standard representation of the feasible set cut out by
-    ``X['gts']`` and ``X['eqs']``. We can check membership in ``X['AbK']`` by evaluating
-    the functions in ``X['gts']`` and ``X['eqs']``, and checking that the results are
-    nonnegative and zero respectively.
-
-    The implementation of this function acts as follows:
-
-    Elements of ``X['gts']`` and ``X['eqs']`` are Signomials. There is one signomial
-    ``g in X['gts']`` for every ``g in gts`` which has one positive coefficient, and
-    there is one signomial ``g in X['eqs']`` for every ``g in eqs`` which has exactly
-    two coefficients (one positive, one negative).
-
-    """
     x = cl.Variable(shape=(f.n,), name='x')
     cl_cons = []
     conv_gt = con_gen.valid_posynomial_inequalities(gts)
