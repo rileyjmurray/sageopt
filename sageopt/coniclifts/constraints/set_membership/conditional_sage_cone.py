@@ -59,24 +59,19 @@ class PrimalCondSageCone(SetMembership):
         name
         covers
         """
-        self.age_vectors = dict()
-        self.name = name
-        self._m = alpha.shape[0]
-        self._n = alpha.shape[1]
+        self.c = Expression(c)
+        self.alpha = alpha
         check_cones(X.K)
         self.X = X
-        self._lifted_n = X.A.shape[1]
-        if self._lifted_n > self._n:
-            # Then need to zero-pad alpha
-            zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
-            alpha = np.hstack((alpha, zero_block))
-        self.lifted_alpha = alpha
-        self.c = Expression(c)
+        self.age_vectors = dict()
+        self.name = name
         self.ech = ExpCoverHelper(self.alpha, self.c, (X.A, X.b, X.K), covers)
+        self._m = alpha.shape[0]
+        self._n = alpha.shape[1]
+        self._lifted_n = X.A.shape[1]
         self._nu_vars = dict()
         self._c_vars = dict()
         self._relent_epi_vars = dict()
-        self.age_vectors = dict()
         self._eta_vars = dict()
         self._variables = self.c.variables()
         self._initialize_variables()
@@ -131,7 +126,12 @@ class PrimalCondSageCone(SetMembership):
             y_i = np.exp(1) * c_i[idx_set]
             relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + b @ eta_i  # <= 0
             relent_viol = abs(max(relent_res, 0))
-            eq_res = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T @ x_i - A.T @ eta_i  # == 0
+            alpha = self.alpha
+            if self._lifted_n > self._n:
+                # Then need to zero-pad alpha
+                zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
+                alpha = np.hstack((alpha, zero_block))
+            eq_res = (alpha[idx_set, :] - alpha[i, :]).T @ x_i - A.T @ eta_i  # == 0
             eq_res = eq_res.reshape((-1,))
             eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
             total_viol = relent_viol + eq_viol + eta_viol
@@ -171,7 +171,12 @@ class PrimalCondSageCone(SetMembership):
                     cd = sum_relent(x, y, z, epi)
                     cone_data.append(cd)
                     # linear equality constraints
-                    mat1 = (self.lifted_alpha[idx_set, :] - self.lifted_alpha[i, :]).T
+                    alpha = self.alpha
+                    if self._lifted_n > self._n:
+                        # Then need to zero-pad alpha
+                        zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
+                        alpha = np.hstack((alpha, zero_block))
+                    mat1 = (alpha[idx_set, :] - alpha[i, :]).T
                     mat2 = -self.X.A.T
                     var1 = self._nu_vars[i]
                     var2 = self._eta_vars[i]
@@ -216,7 +221,7 @@ class PrimalCondSageCone(SetMembership):
         c = self.c.value
         if self._m > 1:
             if not rough:
-                dist = PrimalCondSageCone.project(c, self.lifted_alpha, self.X)
+                dist = PrimalCondSageCone.project(c, self.alpha, self.X)
                 return dist
             # compute violation for "AGE vectors sum to c"
             #   Although, we can use the fact that the SAGE cone contains R^m_++.
@@ -238,7 +243,7 @@ class PrimalCondSageCone(SetMembership):
             # add the max "AGE violation" to the violation for "AGE vectors sum to c".
             if np.any(age_viols == np.inf):
                 total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
-                total_viol += PrimalCondSageCone.project(c, self.lifted_alpha, self.X)
+                total_viol += PrimalCondSageCone.project(c, self.alpha, self.X)
             else:
                 total_viol = sum_to_c_viol + np.max(age_viols)
             return total_viol
@@ -247,10 +252,6 @@ class PrimalCondSageCone(SetMembership):
             residual[residual >= 0] = 0
             return np.linalg.norm(c, ord=norm_ord)
         pass
-
-    @property
-    def alpha(self):
-        return self.lifted_alpha[:, :self._n]
 
 
 class DualCondSageCone(SetMembership):
