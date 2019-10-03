@@ -14,7 +14,6 @@
    limitations under the License.
 """
 import numpy as np
-from sageopt.coniclifts.base import Expression
 from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
 from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone, DualProductCone
 from sageopt.coniclifts.base import Variable, Expression
@@ -26,7 +25,6 @@ from sageopt.coniclifts.operators.precompiled import affine as comp_aff
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.coniclifts.standards.constants import minimize as CL_MIN, solved as CL_SOLVED
 import warnings
-from scipy.sparse import issparse
 import scipy.special as special_functions
 
 
@@ -193,92 +191,85 @@ class PrimalSageCone(SetMembership):
         return self._variables
 
     def conic_form(self):
-        if self.X is None:
-            cd = self._ordsage_conic_form()
+        if len(self._nu_vars) == 0:
+            cd = self._trivial_conic_form()
         else:
-            cd = self._condsage_conic_form()
+            if self.X is None:
+                cd = self._ordsage_conic_form()
+            else:
+                cd = self._condsage_conic_form()
         return cd
 
+    def _trivial_conic_form(self):
+        con = self.c >= 0
+        con.epigraph_checked = True
+        av, ar, ac, curr_b, curr_k = con.conic_form()
+        cone_data = [(av, ar, ac, curr_b, curr_k)]
+        return cone_data
+
     def _ordsage_conic_form(self):
-        if self._m <= 2:
-            con = self.c >= 0
-            con.epigraph_checked = True
-            A_vals, A_rows, A_cols, b, K = con.conic_form()
-            cone_data = [(A_vals, A_rows, A_cols, b, K)]
-            return cone_data
-        else:
-            cone_data = []
-            # age cones
-            for i in self.ech.U_I:
+        cone_data = []
+        for i in self.ech.U_I:
+            if i in self._nu_vars:
                 idx_set = self.ech.expcovers[i]
-                if np.any(idx_set):
-                    # relative entropy inequality constraint
-                    x = self._nu_vars[i]
-                    y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
-                    z = -self.age_vectors[i][i]
-                    epi = self._relent_epi_vars[i]
-                    cd = sum_relent(x, y, z, epi)
-                    cone_data.append(cd)
-                    # linear equality constraints
-                    mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
-                    av, ar, ac = comp_aff.mat_times_vecvar(mat, self._nu_vars[i])
-                    num_rows = mat.shape[0]
-                    curr_b = np.zeros(num_rows, )
-                    curr_k = [Cone('0', num_rows)]
-                    cone_data.append((av, ar, ac, curr_b, curr_k))
-                else:
-                    con = 0 <= self.age_vectors[i][i]
-                    con.epigraph_checked = True
-                    cd = con.conic_form()
-                    cone_data.append(cd)
-            # Vectors sum to s.c
-            cone_data.append(self._age_vectors_sum_to_c())
-            return cone_data
+                # relative entropy inequality constraint
+                x = self._nu_vars[i]
+                y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
+                z = -self.age_vectors[i][i]
+                epi = self._relent_epi_vars[i]
+                cd = sum_relent(x, y, z, epi)
+                cone_data.append(cd)
+                # linear equality constraints
+                mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
+                av, ar, ac = comp_aff.mat_times_vecvar(mat, self._nu_vars[i])
+                num_rows = mat.shape[0]
+                curr_b = np.zeros(num_rows, )
+                curr_k = [Cone('0', num_rows)]
+                cone_data.append((av, ar, ac, curr_b, curr_k))
+            else:
+                con = 0 <= self.age_vectors[i][i]
+                con.epigraph_checked = True
+                cd = con.conic_form()
+                cone_data.append(cd)
+        cone_data.append(self._age_vectors_sum_to_c())
+        return cone_data
 
     def _condsage_conic_form(self):
-        if self._m == 1:
-            con = self.c >= 0
-            con.epigraph_checked = True
-            cd = con.conic_form()
-            cone_data = [cd]
-            return cone_data
-        else:
-            cone_data = []
-            lifted_alpha = self.alpha
-            if self._lifted_n > self._n:
-                zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
-                lifted_alpha = np.hstack((lifted_alpha, zero_block))
-            for i in self.ech.U_I:
+        cone_data = []
+        lifted_alpha = self.alpha
+        if self._lifted_n > self._n:
+            zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
+            lifted_alpha = np.hstack((lifted_alpha, zero_block))
+        for i in self.ech.U_I:
+            if i in self._nu_vars:
                 idx_set = self.ech.expcovers[i]
-                if np.any(idx_set):
-                    # relative entropy inequality constraint
-                    x = self._nu_vars[i]
-                    y = np.exp(1) * self.age_vectors[i][idx_set]  # takes weirdly long amount of time.
-                    z = -self.age_vectors[i][i] + self._eta_vars[i] @ self.X.b
-                    epi = self._relent_epi_vars[i]
-                    cd = sum_relent(x, y, z, epi)
-                    cone_data.append(cd)
-                    # linear equality constraints
-                    mat1 = (lifted_alpha[idx_set, :] - lifted_alpha[i, :]).T
-                    mat2 = -self.X.A.T
-                    var1 = self._nu_vars[i]
-                    var2 = self._eta_vars[i]
-                    av, ar, ac = comp_aff.mat_times_vecvar_plus_mat_times_vecvar(mat1, var1, mat2, var2)
-                    num_rows = mat1.shape[0]
-                    curr_b = np.zeros(num_rows, )
-                    curr_k = [Cone('0', num_rows)]
-                    cone_data.append((av, ar, ac, curr_b, curr_k))
-                    # domain for "eta"
-                    con = DualProductCone(self._eta_vars[i], self.X.K)
-                    cone_data.extend(con.conic_form())
-                else:
-                    con = 0 <= self.age_vectors[i][i]
-                    con.epigraph_checked = True
-                    cd = con.conic_form()
-                    cone_data.append(cd)
-            # Vectors sum to s.c
-            cone_data.append(self._age_vectors_sum_to_c())
-            return cone_data
+                # relative entropy inequality constraint
+                x = self._nu_vars[i]
+                y = np.exp(1) * self.age_vectors[i][idx_set]  # takes weirdly long amount of time.
+                z = -self.age_vectors[i][i] + self._eta_vars[i] @ self.X.b
+                epi = self._relent_epi_vars[i]
+                cd = sum_relent(x, y, z, epi)
+                cone_data.append(cd)
+                # linear equality constraints
+                mat1 = (lifted_alpha[idx_set, :] - lifted_alpha[i, :]).T
+                mat2 = -self.X.A.T
+                var1 = self._nu_vars[i]
+                var2 = self._eta_vars[i]
+                av, ar, ac = comp_aff.mat_times_vecvar_plus_mat_times_vecvar(mat1, var1, mat2, var2)
+                num_rows = mat1.shape[0]
+                curr_b = np.zeros(num_rows, )
+                curr_k = [Cone('0', num_rows)]
+                cone_data.append((av, ar, ac, curr_b, curr_k))
+                # domain for "eta"
+                con = DualProductCone(self._eta_vars[i], self.X.K)
+                cone_data.extend(con.conic_form())
+            else:
+                con = 0 <= self.age_vectors[i][i]
+                con.epigraph_checked = True
+                cd = con.conic_form()
+                cone_data.append(cd)
+        cone_data.append(self._age_vectors_sum_to_c())
+        return cone_data
 
     @staticmethod
     def project(item, alpha, X):
@@ -654,8 +645,4 @@ class ExpCoverHelper(object):
                         if prob.status == CL_SOLVED and prob.value < -100:
                             expcovers[i][:] = False
         return expcovers
-
-
-
-
 
