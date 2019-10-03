@@ -276,8 +276,8 @@ As long as the solver (here, ECOS) succeeds in solving the problem, the function
 nonnegative over the set represented by ``X``. The intended proof that ``f - prim.value`` is nonnegative comes from
 the AGE functions participating in its decomposition. We can recover those functions as follows ::
 
-   sage_constraint = prim.user_cons[0]  # a PrimalCondSageCone object
-   alpha = sagecon.lifted_alpha[:, :f.n]
+   sage_constraint = prim.user_cons[0]  # a PrimalSageCone object
+   alpha = sagecon.alpha
    agefunctions = []
    for ci in sagecon.age_vectors.values():
        s = so.Signomial(alpha, ci.value)
