@@ -86,10 +86,6 @@ class PrimalCondSageCone(SetMembership):
                     self._nu_vars[i] = Variable(shape=(num_cover,), name=var_name)
                     var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
                     self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
-                    # We assume the conic system is feasible. If num_cover == 0 and this is
-                    # really w.l.o.g. (not some aggressive presolve), then it must be that
-                    # the i-th AGE cone is the nonnegative orthant. Therefore only define
-                    # eta_var[i] when num_cover > 0.
                     var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
                     self._eta_vars[i] = Variable(shape=(self.X.b.size,), name=var_name)
                 c_len = num_cover
@@ -323,9 +319,9 @@ class DualCondSageCone(SetMembership):
                 A, b, K = self.X.A, self.X.b, self.X.K
                 vecvar = self._lifted_mu_vars[i]
                 singlevar = self.v[i]
-                av, ar, ac = comp_aff.mat_times_vecvar_plus_vec_times_singlevar(self.X.A, vecvar, self.X.b, singlevar)
+                av, ar, ac = comp_aff.mat_times_vecvar_plus_vec_times_singlevar(A, vecvar, b, singlevar)
                 curr_b = np.zeros(b.size, )
-                curr_k = [Cone(co.type, co.len) for co in self.X.K]
+                curr_k = [Cone(co.type, co.len) for co in K]
                 cone_data.append((av, ar, ac, curr_b, curr_k))
             return cone_data
         else:
@@ -432,7 +428,7 @@ class ExpCoverHelper(object):
             cov[self.N_I] = False
             cov[i] = False
             expcovers[i] = cov
-        if _AGGRESSIVE_REDUCTION_:
+        if self.AbK is None or _AGGRESSIVE_REDUCTION_:
             row_sums = np.sum(self.alpha, 1)
             if np.all(self.alpha >= 0) and np.min(row_sums) == 0:
                 # Then apply the reduction.
@@ -445,17 +441,33 @@ class ExpCoverHelper(object):
                     for j in range(self.m):
                         if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
                             curr_cover[j] = False
-        if _ELIMINATE_TRIVIAL_AGE_CONES_:
+        if self.AbK is None:
             for i in self.U_I:
-                if np.any(expcovers[i]):
-                    mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
-                    x = Variable(shape=(mat.shape[1],), name='temp_x')
-                    t = Variable(shape=(1,), name='temp_t')
-                    objective = t
-                    A, b, K = self.AbK
-                    cons = [mat @ x <= t, PrimalProductCone(A @ x + b, K)]
-                    prob = Problem(CL_MIN, objective, cons)
-                    prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
-                    if prob.status == CL_SOLVED and prob.value < -100:
-                        expcovers[i][:] = False
+                if np.count_nonzero(expcovers[i]) == 1:
+                    expcovers[i][:] = False
+        if _ELIMINATE_TRIVIAL_AGE_CONES_:
+            if self.AbK is None:
+                for i in self.U_I:
+                    if np.any(expcovers[i]):
+                        mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
+                        x = Variable(shape=(mat.shape[1],), name='temp_x')
+                        objective = Expression([0])
+                        cons = [mat @ x <= -1]
+                        prob = Problem(CL_MIN, objective, cons)
+                        prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
+                        if prob.status == CL_SOLVED and abs(prob.value) < 1e-7:
+                            expcovers[i][:] = False
+            else:
+                for i in self.U_I:
+                    if np.any(expcovers[i]):
+                        mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
+                        x = Variable(shape=(mat.shape[1],), name='temp_x')
+                        t = Variable(shape=(1,), name='temp_t')
+                        objective = t
+                        A, b, K = self.AbK
+                        cons = [mat @ x <= t, PrimalProductCone(A @ x + b, K)]
+                        prob = Problem(CL_MIN, objective, cons)
+                        prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
+                        if prob.status == CL_SOLVED and prob.value < -100:
+                            expcovers[i][:] = False
         return expcovers
