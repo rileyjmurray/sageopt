@@ -17,27 +17,30 @@ You can also use sageopt as part of a broader effort to find locally-optimal sol
 (with bounds on possible optimality gaps).
 
 These underlying convex relaxations are built upon the idea of "SAGE certificates" for signomial and
-polynomial nonnegativity. Refer to the paper `Signomial and Polynomial Optimization via Relative Entropy
-and Partial Dualization <https://arxiv.org/abs/1907.00814>`_ for a mathematical description of the functionality
-implemented by this python package.
+polynomial nonnegativity. The paper `Signomial and Polynomial Optimization via Relative Entropy
+and Partial Dualization <https://arxiv.org/abs/1907.00814>`_ provides a mathematical description of the functionality
+implemented by this python package. That paper however is a bit long, and
+so we hope that the "Examples" and "Documentation" links in the sidebar are
+at least enough to get people rolling.
 
 
-The state of sageopt's web documentation
-----------------------------------------
+.. toctree::
+   :maxdepth: 3
 
-Sageopt has extensive source code documentation, both in the usual function docstrings, and in-line comments.
-It has proven a little difficult to get that documentation on this website (at least in a clean, readable way).
+   Installation <install>
 
-The web documentation for ``Signomial`` and ``Polynomial`` objects is in a decent state. Check it out for yourself by
-following the Web Documentation link on the left sidebar. Web documentation for functions which generate SAGE
-relaxations themselves is in-progress.
+   Examples <examples/examples>
 
-Sageopt contains a subpackage called ``coniclifts``. This is a backend package that most users will not need to
-interact with, beyond some very basic commands. Those basic commands will have web documentation soon.
+   Documentation <documentation/sageopt>
+
+   File a Bug Report <https://github.com/rileyjmurray/sageopt/issues>
+
+   Source Code <https://github.com/rileyjmurray/sageopt>
 
 
-Mathematical background
------------------------
+
+Some mathematical background
+----------------------------
 
 SAGE certificates were originally developed for signomials
 (`Chandrasekaran and Shah, 2016 <https://arxiv.org/abs/1409.7640>`_).
@@ -59,18 +62,3 @@ generalizations are *conditional SAGE signomials* and *conditional SAGE polynomi
 and Partial Dualization <https://arxiv.org/abs/1907.00814>`_.
 Because the generalization follows so transparently from the original idea of SAGE certificates, we say simply say
 "SAGE certificates" in reference to the most general idea.
-
-.. toctree::
-   :maxdepth: 3
-
-   Installation <install>
-
-   Examples <examples/examples>
-
-   Documentation <documentation/sageopt>
-
-   File a Bug Report <https://github.com/rileyjmurray/sageopt/issues>
-
-   Source Code <https://github.com/rileyjmurray/sageopt>
-
-
