@@ -25,16 +25,17 @@ __EXPONENT_VECTOR_DECIMAL_POINTS__ = 7
 
 def standard_sig_monomials(n):
     """
+    Return ``y`` where ``y[i](x) = np.exp(x[i])`` for every numeric ``x`` of length ``n``.
+
     Parameters
     ----------
     n : int
-        The dimension of the space over which the constituent Signomials will be defined.
+        The signomials will be defined on :math:`R^n`.
 
     Returns
     -------
-    y : NumPy ndarray
-        An array  of length ``n``, with ``y[i]`` as a Signomial with one term,
-        corresponding to the (``i+1``)-th standard basis vector in ``n`` dimensional real space.
+    y : ndarray
+        An array  of length ``n``, containing Signomial objects.
 
     Example
     -------
@@ -54,31 +55,26 @@ def standard_sig_monomials(n):
 
 class Signomial(object):
     """
-    This class provides a symbolic representation for linear combinations of exponentials,
-    composed with linear functions. These functions look like the following.
-
-    .. math::
-
-       x \mapsto \sum_{i=1}^m c_i \exp({\\alpha}_i \cdot x)
-
-    The constructor for this class can be called in two different ways. The arguments
-    to the constructor have names which reflect the different possibilities.
+    A symbolic representation for linear combinations of exponentials, composed with
+    linear functions. The constructor for this class can be called in two different ways, and
+    the arguments to the constructor have names which reflect the different possibilities.
+    Refer to the Examples if you find the description of the constructor arguments unclear.
 
     Parameters
     ----------
 
-    alpha_maybe_c : dict or NumPy ndarray
+    alpha_maybe_c : dict or ndarray
 
          If ``alpha_maybe_c`` is a dict, then it must be a dictionary from tuples-of-numbers to
          scalars. The keys will be converted to rows of a matrix which we call ``alpha``, and
          the values will be assembled into a vector which we call ``c``.
 
-         If ``alpha_maybe_c`` is a NumPy ndarray, then the argument ``c`` must also be an ndarray,
-         and ``c.size`` must equal ``alpha_maybe_c.shape[0]``.
+         If ``alpha_maybe_c`` is an ndarray, then the argument ``c`` must also be an ndarray,
+         and ``c.size`` must equal the number of rows in ``alpha_maybe_c``.
 
-    c : None or NumPy ndarray
+    c : None or ndarray
 
-        This value is only used when ``alpha_maybe_c`` is a NumPy ndarray. If that is the case, then
+        This value is only used when ``alpha_maybe_c`` is an ndarray. If that is the case, then
         this Signomial will represent the function ``lambda x: c @ np.exp(alpha_maybe_c @ x)``.
 
     Examples
@@ -94,7 +90,7 @@ class Signomial(object):
         print(f(1))  # equal to 2 * np.exp(1).
         print(f(0))  # equal to 2.
 
-    The second way is to specify two arguments. In this case the first argument is a NumPy array
+    The second way is to specify two arguments. In this case the first argument is an ndarray
     where the rows represent linear functionals, and the second argument is a vector of corresponding
     coefficients.::
 
@@ -115,11 +111,11 @@ class Signomial(object):
         The number of terms needed to express this Signomial in a basis of monomial functions
         ``lambda x: exp(a @ x)`` for row vectors ``a``. The signomial is presumed to include a constant term.
 
-    alpha : NumPy ndarray
+    alpha : ndarray
         Has shape ``(m, n)``. Each row specifies a vector appearing in an exponential function which
         defines this Signomial. The rows are ordered for consistency with the property ``c``.
 
-    c : NumPy ndarray
+    c : ndarray
         Has shape ``(m,)``. The scalar ``c[i]`` is this Signomial's coefficient on the basis function
         ``lambda x: exp(alpha[i, :] @ x)``. It is possible to have ``c.dtype == object``.
 
@@ -141,7 +137,7 @@ class Signomial(object):
         but if ``s2`` is a Signomial, then its coefficient vector ``s2.c`` can only contain one nonzero entry.
 
         You can also use ``+``, ``-``, and ``*`` for pairs involving one Signomial and one non-Signomial.
-        If ``s3`` is the result of such an operation, then ``s3.c`` will be a NumPy array with ``s3.dtype == object``.
+        If ``s3`` is the result of such an operation, then ``s3.c`` will be an ndarray with ``s3.dtype == object``.
 
     Function evaluations.
 
@@ -425,7 +421,7 @@ class Signomial(object):
 
     def grad_val(self, x):
         """
-        Return the gradient of this Signomial (as a NumPy ndarray) at the point ``x``.
+        Return the gradient of this Signomial (as an ndarray) at the point ``x``.
         """
         _ = self.grad  # construct the function handles.
         g = np.zeros(self.n)
@@ -435,7 +431,7 @@ class Signomial(object):
 
     def hess_val(self, x):
         """
-        Return the Hessian of this Signomial (as a NumPy ndarray) at the point ``x``.
+        Return the Hessian of this Signomial (as an ndarray) at the point ``x``.
         """
         if self._hess is None:
             _ = self.hess  # ignore the return value

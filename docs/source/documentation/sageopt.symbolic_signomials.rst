@@ -3,36 +3,36 @@
 Signomials
 ==========
 
-This page describes two classes, and two helper functions
+A signomial is a linear combination of exponentials, composed with linear functions.
+Signomials look like the following:
 
- - :class:`sageopt.Signomial`,
- - :class:`sageopt.SigDomain`,
- - :func:`sageopt.symbolic.signomials.standard_sig_monomials`, and
- - :func:`sageopt.relaxations.sage_sigs.conditional_sage_data`.
+.. math::
 
-It is possible to access simplest, bare-bones functionality of sageopt by only knowing
-how to use the helper function ``standard_sig_monomials``. If you plan on solving problems
-in a programmatic way (i.e. not typing out every signomial by hand), then you will
-need to know the basics of the ``Signomial`` class. The Signomial class is pretty simple,
-so we actually recommend all users read the associated documentation at least once.
+   x \mapsto \sum_{i=1}^m c_i \exp({\alpha}_i \cdot x)
 
+The class :class:`sageopt.Signomial` implements a symbolic representation of such functions.
+The section :ref:`sigobj` covers this class, and an extra helper function
+for constructing signomials.
 
-The ``SigDomain`` class provides an abstraction needed for "conditional SAGE relaxations",
-which are very important for constrained optimization.
-The helper function ``conditional_sage_data`` is the primary way to get your hands on
-a SigDomain.
-There is a good chance you will never need to declare a SigDomain object on your own,
-although this page does discuss such advanced usage.
+When signomials are considered in exponential form -- as is *always* done in sageopt --
+they have a powerful connection to convexity. This connection is very important for
+constrained optimization, and is described in the section :ref:`condsagesigs`.
 
-.. automethod:: sageopt.symbolic.signomials.standard_sig_monomials
-
+.. _sigobj:
 
 Signomial objects
 -----------------
 
+This section covers the Signomial class, and the function
+:func:`sageopt.standard_sig_monomials`. The helper function
+is very convenient for constructing Signomial objects; you
+might even use it more than the Signomial constructor itself.
+Nevertheless, it is a good idea to review the Signomial class first.
+
 .. autoclass:: sageopt.Signomial
     :members:
 
+.. automethod:: sageopt.symbolic.signomials.standard_sig_monomials
 
 .. _condsagesigs:
 
@@ -43,8 +43,8 @@ The primary contribution of MCW2019_ was to show that convex sets have a special
 in the theory of SAGE relaxations.
 In particular, SAGE can incorporate convex constraints into a problem by a lossless process
 known as *partial dualization*.
-You can think of partial dualization as a type of "conditioning", in the sense of "conditional
-probability".
+You can think of partial dualization as a type of "conditioning", in the sense of conditional
+probability.
 
 We designed sageopt so users can leverage the full power of partial dualization without being
 experts on the subject.

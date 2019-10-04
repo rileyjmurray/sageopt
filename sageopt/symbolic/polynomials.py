@@ -24,20 +24,21 @@ __NUMERIC_TYPES__ = (int, float, np.int_, np.float_)
 
 def standard_poly_monomials(n):
     """
+    Return ``x`` where ``x[i](z) = z[i]`` for all numeric ``z`` of length ``n``.
+
     Parameters
     ----------
     n : int
-        The dimension of the space over which the constituent Polynomials will be defined.
+        The polynomials will be defined on :math:`R^n`.
 
     Returns
     -------
-    x : NumPy ndarray
-        An array  of length ``n``. ``x[i]`` is the Polynomial that evaluates to ``x[i](z) = z[i]`` for all numpy
-        ndarrays ``z`` of length ``n``.
+    x : ndarray
+        An array  of length ``n``, containing Polynomial objects.
 
     Example
     -------
-    This function is useful for constructing Polynomials in an algebraic form. ::
+    This function is useful for constructing Polynomials using algebraic syntax. ::
 
         x = standard_poly_monomials(3)
         f = (x[0] ** 2) * x[2] - 4 * x[1] * x[2] * x[0]
@@ -53,32 +54,26 @@ def standard_poly_monomials(n):
 
 class Polynomial(Signomial):
     """
-    This class provides a symbolic representation for polynomials which are sparse in the monomial basis.
-    These functions look like the following.
-
-    .. math::
-
-       x \mapsto \sum_{i=1}^m c_i \prod_{j=1}^n {x_j}^{\\alpha_{ij}}
-
-    The constructor for this class can be called in two different ways. The arguments
+    A symbolic representation for polynomials which are sparse in the monomial basis.
+    The constructor for this class can be called in two different ways, and the arguments
     to the constructor have names which reflect the different possibilities.
 
     Parameters
     ----------
 
-    alpha_maybe_c : dict or NumPy ndarray
+    alpha_maybe_c : dict or ndarray
 
          If ``alpha_maybe_c`` is a dict, then it must be a dictionary from tuples-of-numbers to
          scalars. The keys will be converted to rows of a matrix which we call ``alpha``, and
          the values will be assembled into a vector which we call ``c``.
 
-         If ``alpha_maybe_c`` is a NumPy ndarray, then the argument ``c`` must also be an ndarray,
-         and ``c.size`` must equal ``alpha_maybe_c.shape[0]``.
+         If ``alpha_maybe_c`` is an ndarray, then the argument ``c`` must also be an ndarray,
+         and ``c.size`` must equal the number of rows in ``alpha_maybe_c``.
 
-    c : None or NumPy ndarray
+    c : None or ndarray
 
-        This value is only used when ``alpha_maybe_c`` is a NumPy ndarray. If that is the case, then
-        this Polynomial will represent the function ``lambda x: c @ np.prod(np.power(alpha_maybe_c, x))``.
+        This value is only used when ``alpha_maybe_c`` is an ndarray. In that case, this
+        Polynomial represents ``lambda x: c @ np.prod(np.power(alpha_maybe_c, x))``.
 
     Examples
     --------
@@ -95,7 +90,7 @@ class Polynomial(Signomial):
         print(f(1))  # equal to 2.
         print(f(-3))  # equal to -6.
 
-    The second way is to specify two arguments. In this case the first argument ``alpha`` is a NumPy array of
+    The second way is to specify two arguments. In this case the first argument ``alpha`` is an ncarray of
     exponent vectors, where ``alpha[i, j]`` is the power of variable ``j`` in monomial ``i``. The second argument
     is a numpy array ``c``, where ``c[i]`` is the coefficient on the i-th monomial defined by ``alpha``. ::
 
@@ -117,11 +112,11 @@ class Polynomial(Signomial):
         The number of terms needed to express this Polynomial in the standard monomial basis.
         The number of rows in  ``alpha``.  The length of the dictionary ``alpha_c``.
 
-    alpha : NumPy ndarray
+    alpha : ndarray
         Has shape ``(m, n)``. Entry ``alpha[i,j]`` is the power of an implicit variable ``x[j]``
         appearing in the i-th monomial for this Polynomial. The i-th monomial, in turn, has coefficient ``c[i]``.
 
-    c : NumPy ndarray
+    c : ndarray
         Has shape ``(m,)``. The scalar ``c[i]`` is this Polynomial's coefficient on the basis function
         ``lambda x: np.prod(np.power(alpha[i, :], x))``. It is possible to have ``c.dtype == object``, to allow for
         coniclifts Variables.
@@ -235,7 +230,7 @@ class Polynomial(Signomial):
         """
         Parameters
         ----------
-        x : NumPy ndarray
+        x : ndarray
             This vector can contain real numeric types and Polynomial objects.
 
         Returns

@@ -6,8 +6,19 @@
 Polynomials
 ===========
 
-.. automethod:: sageopt.symbolic.polynomials.standard_poly_monomials
+SAGE relaxations are especially well-suited to sparse polynomials, or polynomials of high
+degree. Sageopt provides a symbolic representation for such functions with the
+:class:`sageopt.Polynomial` class. The Polynomial class thinks in terms of the following expression:
 
+.. math::
+
+   x \mapsto \sum_{i=1}^m c_i \prod_{j=1}^n {x_j}^{\alpha_{ij}}
+
+i.e. with parameters :math:`\alpha \in R^{m \times n}`, and :math:`c \in R^m`. This
+page contains the documentation for this class, as well as discussion on the concept of
+:ref:`condsagepolys`.
+
+.. _polyobj:
 
 Polynomial objects
 ------------------
@@ -15,6 +26,7 @@ Polynomial objects
 .. autoclass:: sageopt.symbolic.polynomials.Polynomial
     :members:
 
+.. automethod:: sageopt.symbolic.polynomials.standard_poly_monomials
 
 .. _condsagepolys:
 
@@ -26,6 +38,7 @@ structured constraints in optimization problems.
 The process by which these constraints are handled is known as *partial dualization*.
 You can think of partial dualization as a type of "conditioning", in the sense of conditional
 probability.
+
 In the polynomial case, the "nice" sets :math:`X` are those satisfying three properties
 
  1. invariance under reflection about the :math:`n`
