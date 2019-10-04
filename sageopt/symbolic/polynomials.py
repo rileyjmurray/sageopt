@@ -90,7 +90,7 @@ class Polynomial(Signomial):
         print(f(1))  # equal to 2.
         print(f(-3))  # equal to -6.
 
-    The second way is to specify two arguments. In this case the first argument ``alpha`` is an ncarray of
+    The second way is to specify two arguments. In this case the first argument ``alpha`` is an ndarray of
     exponent vectors, where ``alpha[i, j]`` is the power of variable ``j`` in monomial ``i``. The second argument
     is a numpy array ``c``, where ``c[i]`` is the coefficient on the i-th monomial defined by ``alpha``. ::
 
