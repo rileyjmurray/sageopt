@@ -30,32 +30,24 @@ from sageopt.relaxations.sage_polys import conditional_sage_data as _poly_cond_s
 
 def sage_feasibility(f, X=None):
     """
-    Return a coniclifts Problem ``prob`` with ``prob.value > -np.inf`` iff
-    ``f`` admits an  X-SAGE decomposition.
+    Construct a Problem for checking if ``f`` admits an  X-SAGE decomposition.
 
     Parameters
     ----------
     f : Signomial or Polynomial
         We want to know if this function admits an X-SAGE decomposition
-    X : dict or None
-        If ``X`` is a dict, then it must be generated in accordance with the
-        function ``conditional_sage_data``.
+    X : SigDomain or PolyDomain
+        Default to :math:`X = \\mathbb{R}^{\\texttt{f.n}}`.
 
     Returns
     -------
-    A coniclifts Problem object, with objective "maximize 0", and constraints
-    requiring that ``f`` is X-SAGE. If the argument ``X`` is ``None``, then
-    we test if ``f`` is R^n-SAGE.
+    prob : coniclifts.Problem
+        Has objective "maximize 0", and constraints that ``f`` is X-SAGE.
 
     Notes
     -----
     This function is simply a wrapper around two functions of the same name,
     which were written for cases where ``f`` is a Signomial or Polynomial.
-
-    The signomial and polynomial cases are implemented in
-    ``sageopt.relaxations.sage_sigs.sage_feasibility`` and
-    ``sageopt.relaxations.sage_polys.sage_feasibility`` respectively.
-
     """
     if isinstance(f, Polynomial):
         prob = _poly_sage_feasibility(f, X)
@@ -69,9 +61,7 @@ def sage_feasibility(f, X=None):
 
 def sage_multiplier_search(f, level=1, X=None):
     """
-    Return a coniclifts Problem ``prob``, where ``prob.value > -np.inf`` iff ``f``
-    can be certified as nonnegative over ``X`` (using a modulator of complexity
-    determined by ``level``).
+    Construct a Problem for an attempt to certify that ``f`` is X-nonnegative.
 
     Parameters
     ----------
@@ -80,10 +70,8 @@ def sage_multiplier_search(f, level=1, X=None):
     level : int
         A positive integer. This determines the complexity of a modulator ``g``
         which is positive over ``X``.
-    X : dict or None
-        If ``X`` is a dict, then it must be generated in accordance with the
-        function ``conditional_sage_data``. If ``X`` is None, then we certify
-        nonnegativity over R^n.
+    X : SigDomain or PolyDomain
+        Default to :math:`X = \\mathbb{R}^{\\texttt{f.n}}`.
 
     Returns
     -------
@@ -96,11 +84,6 @@ def sage_multiplier_search(f, level=1, X=None):
     -----
     This function is simply a wrapper around two functions of the same name,
     which were written for cases where ``f`` is a Signomial or Polynomial.
-
-    The signomial and polynomial cases are implemented in
-    ``sageopt.relaxations.sage_sigs.sage_multiplier_search`` and
-    ``sageopt.relaxations.sage_polys.sage_multiplier_search`` respectively.
-
     """
     if isinstance(f, Polynomial):
         prob = _poly_sage_mult_search(f, level, X)
