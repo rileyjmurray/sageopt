@@ -55,7 +55,7 @@ For this problem, it just so happens that all constraints can be written in a co
 the function ``sig_relaxation``
 for the resulting problem. The dual formulation is used because we want to recover a solution. ::
 
-    dual = so.sig_relaxation(f, 'dual', X=X)
+    dual = so.sig_relaxation(f, X=X, form='dual')
     dual.solve(verbose=False)
     solutions = so.sig_solrec(dual)
     best_soln = solutions[0]
@@ -76,7 +76,7 @@ We can certify that the solution is actually much closer to optimality than the 
 easily construct and solve a level ``ell=3`` SAGE relaxation to produce a stronger lower bound on this minimization
 problem. ::
 
-    dual = so.sig_relaxation(f, 'dual', ell=3, X=X)
+    dual = so.sig_relaxation(f, X=X, form='dual', ell=3)
     dual.solve(verbose=False)
     print('The level 3 SAGE bound is ... ')
     print('\t' + str(dual.value))  # about  -147.6666
@@ -122,8 +122,8 @@ First we show the case with the equality constraint. ::
    gts = main_gts + bounds
    eqs = [70.7107 / A[0] + P / A[0] - P / A[2]]
    X = so.conditional_sage_data(f, bounds, [])
-   prim = so.sig_constrained_relaxation(f, main_gts, eqs, 'primal', X=X)
-   dual = so.sig_constrained_relaxation(f, main_gts, eqs, 'dual', X=X)
+   prim = so.sig_constrained_relaxation(f, main_gts, eqs, form='primal', X=X)
+   dual = so.sig_constrained_relaxation(f, main_gts, eqs, form='dual', X=X)
    prim.solve(verbose=False)
    dual.solve(verbose=False)
    print('\n')
@@ -149,7 +149,7 @@ to recover optimal solutions, we reformulate the problem by substituting :math:`
    ]
    gts = main_gts + bounds
    X = so.conditional_sage_data(f, gts, [])
-   dual = so.sig_constrained_relaxation(f, main_gts, [], 'dual', X=X)
+   dual = so.sig_constrained_relaxation(f, main_gts, [], form='dual', X=X)
    dual.solve()
    print('\n')
    print(dual.value)
@@ -224,10 +224,10 @@ The ``sageopt`` approach to this problem is to write it first as a signomial pro
    gts = [expr3, expr4, expr5, 1 - expr1, 1 - expr2, 1 - expr3, 1 - expr4, 1 - expr5]
    eqs = []
 
-   dual = so.sig_constrained_relaxation(f, gts, eqs, 'dual', p=1, q=1, ell=0)
+   dual = so.sig_constrained_relaxation(f, gts, eqs, form='dual', p=1, q=1, ell=0)
    dual.solve(verbose=False, solver='MOSEK')  # ECOS fails
-   x0 = so.sig_solrec(dual)[0]
-   x_star = so.local_refine_polys_from_sigs(f, gts, eqs, x0)
+   y0 = so.sig_solrec(dual)[0]
+   x_star = so.local_refine_polys_from_sigs(f, gts, eqs, y0)
 
    print()
    print(dual.value)

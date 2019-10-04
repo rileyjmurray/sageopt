@@ -10,16 +10,17 @@ Signomials look like the following:
 
    x \mapsto \sum_{i=1}^m c_i \exp({\alpha}_i \cdot x)
 
-The section :ref:`sigobj` covers the sageopt's Signomial class, plus one extra helper function.
-Signomials have a powerful connection to convexity, which is described in the section on
-:ref:`condsagesigs`.
-Sageopt includes pre-built functions for constructing and using convex relaxations of signomial
+The section ":ref:`sigobj`" covers sageopt's Signomial class, plus one extra helper function.
+The section on :ref:`condsagesigs` covers the basics of a powerful connection between
+signomials and convexity.
+Sageopt has pre-built functions for constructing and working with convex relaxations of signomial
 minimization problems (both constrained, and unconstrained).
 Those pre-built functions are described in the section on :ref:`workwithsagesigs`.
+We also address some :ref:`advancedsigs`.
 
 .. _sigobj:
 
-Signomial objects
+signomial objects
 -----------------
 
 Here we cover the :class:`sageopt.Signomial` class, and the helper function
@@ -35,8 +36,8 @@ Nevertheless, it is a good idea to review the Signomial class first.
 
 .. _condsagesigs:
 
-"Conditioning"
---------------
+conditioning
+------------
 
 The primary contribution of MCW2019_ was to show that convex sets have a special place
 in the theory of SAGE relaxations.
@@ -65,7 +66,7 @@ by signomials. If your find yourself in this situation, refer to the :ref:`advan
 
 .. _workwithsagesigs:
 
-Optimization
+optimization
 ------------
 
 Here are sageopt's core functions which can assist with signomial optimization:
@@ -85,7 +86,7 @@ A remark: The functions described here are largely reference
 implementations. Depending on the specifics of your problem, it may be beneficial to implement variants of these
 functions by directly working with sageopt's backend: coniclifts.
 
-Convex constraints
+convex constraints
 ~~~~~~~~~~~~~~~~~~
 
 
@@ -115,7 +116,7 @@ improve the quality the bound produced on :math:`f_X^\star`.
 The improved bound comes at the expense of solving a larger optimization problem.
 For more discussion, refer to Section 2.3 of MCW2019_.
 
-Arbitrary constraints
+arbitrary constraints
 ~~~~~~~~~~~~~~~~~~~~~
 
 The next function allows the user to specify their problem not only with convex constraints via a set
@@ -130,7 +131,7 @@ For further explanation of the parameters ``p``, ``q``, and ``ell`` in the funct
 to the :ref:`advancedsigs` section.
 
 
-Solution recovery
+solution recovery
 ~~~~~~~~~~~~~~~~~
 
 Section 3.2 of MCW2019_ introduces two solution recovery algorithms for dual SAGE relaxations.
@@ -153,7 +154,7 @@ to its output.
 
 .. _advancedsigs:
 
-Advanced topics
+advanced topics
 ---------------
 
 SigDomain objects
@@ -162,7 +163,7 @@ SigDomain objects
 .. autoclass:: sageopt.SigDomain
     :members:
 
-Hierarchy parameters
+hierarchy parameters
 ~~~~~~~~~~~~~~~~~~~~
 
 Here we describe the precise meanings of parameters

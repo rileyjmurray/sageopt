@@ -9,8 +9,8 @@ signomials *or* polynomials, and so the documentation in these cases is given se
 .. toctree::
    :maxdepth: 3
 
-   Signomials <sageopt.symbolic_signomials>
-   Polynomials <sageopt.symbolic_polynomials>
+   Signomials <sageopt.signomials>
+   Polynomials <sageopt.polynomials>
 
 
 If the ``relaxations`` subpackage does not contain some functionality which you need, then it should be possible to

@@ -6,7 +6,7 @@
 Polynomials
 ===========
 
-SAGE relaxations are especially well-suited to sparse polynomials, or polynomials of high
+SAGE relaxations are well-suited to sparse polynomials, or polynomials of high
 degree. Sageopt provides a symbolic representation for such functions with the
 :class:`sageopt.Polynomial` class. The Polynomial class thinks in terms of the following expression:
 
@@ -14,13 +14,14 @@ degree. Sageopt provides a symbolic representation for such functions with the
 
    x \mapsto \sum_{i=1}^m c_i \prod_{j=1}^n {x_j}^{\alpha_{ij}}
 
-i.e. with parameters :math:`\alpha \in \mathbb{N}^{m \times n}`, and :math:`c \in \mathbb{R}^m`. This
-page contains the documentation for this class, as well as discussion on the concept of
-:ref:`condsagepolys`.
+i.e. with parameters :math:`\alpha \in \mathbb{N}^{m \times n}`, and :math:`c \in \mathbb{R}^m`.
+This page contains (1) the documentation for this class, (2) discussion on the concept of
+:ref:`condsagepolys`, (3) documentation for pre-built functions which assist in polynomial
+:ref:`workwithsagepolys`, and (4) some :ref:`advancedpolys`.
 
 .. _polyobj:
 
-Polynomial objects
+polynomial objects
 ------------------
 
 .. autoclass:: sageopt.symbolic.polynomials.Polynomial
@@ -30,8 +31,8 @@ Polynomial objects
 
 .. _condsagepolys:
 
-"Conditioning"
---------------
+conditioning
+------------
 
 SAGE can naturally handle certain
 structured constraints in optimization problems, or nonnegativity problems.
@@ -64,7 +65,7 @@ for more information.
 
 .. _workwithsagepolys:
 
-Optimization
+optimization
 ------------
 
 Here are sageopt's core functions which can assist in polynomial optimization:
@@ -78,14 +79,14 @@ We assume the user has already read the section on polynomial :ref:`condsagepoly
 Newcomers to sageopt might benefit from reading this page in
 one browser window, and keeping our page of :ref:`allexamples` open in an adjacent window.
 It might also be useful to have a copy of MCW2019_ at hand, since that article is
-referenced throughout this page.
+referenced throughout this section.
 
 A remark: The functions described here are largely reference
 implementations. Depending on the specifics of your problem, it may be beneficial to implement variants of these
 functions by directly working with sageopt's backend: coniclifts.
 
 
-Structured constraints
+structured constraints
 ~~~~~~~~~~~~~~~~~~~~~~
 
 ``poly_relaxation`` requires that any and all constraints are incorporated into
@@ -93,7 +94,7 @@ a set :math:`X` , which satisfies the properties for polynomial :ref:`condsagepo
 
 .. autofunction:: sageopt.poly_relaxation
 
-Arbitrary constraints
+arbitrary constraints
 ~~~~~~~~~~~~~~~~~~~~~
 
 In more general settings, you can use ``poly_constrained_relaxation``. In
@@ -106,7 +107,7 @@ allows explicit polynomial inequality constraints
 For further explanation of the parameters ``p``, ``q``, and ``ell`` in the function above, we refer the user
 to the :ref:`advancedpolys` section.
 
-Solution recovery
+solution recovery
 ~~~~~~~~~~~~~~~~~
 
 Section 4.2 of MCW2019_ introduces two solution recovery algorithms for dual SAGE relaxations.
@@ -130,7 +131,7 @@ some variable equal to zero in an optimal solution.
 
 .. _advancedpolys:
 
-Advanced topics
+advanced topics
 ---------------
 
 PolyDomain objects
@@ -139,7 +140,7 @@ PolyDomain objects
 .. autoclass:: sageopt.symbolic.polynomials.PolyDomain
     :members:
 
-Hierarchy parameters
+hierarchy parameters
 ~~~~~~~~~~~~~~~~~~~~
 
 Here we describe the precise meanings of parameters
