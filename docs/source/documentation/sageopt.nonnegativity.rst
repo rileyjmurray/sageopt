@@ -20,18 +20,3 @@ Sageopt offers two pre-made functions for certifying nonnegativity and finding S
 .. autofunction:: sageopt.sage_feasibility
 
 .. autofunction:: sageopt.sage_multiplier_search
-
-signomial implementations
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: sageopt.relaxations.sage_sigs.sage_feasibility
-
-.. autofunction:: sageopt.relaxations.sage_sigs.sage_multiplier_search
-
-polynomial implementations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: sageopt.relaxations.sage_polys.sage_feasibility
-
-.. autofunction:: sageopt.relaxations.sage_polys.sage_multiplier_search
-
