@@ -5,7 +5,7 @@ python:
   - "3.7"
 # command to install dependencies
 install:
-  - pip install scipy>=1.1 numpy>=1.14 ecos>=2 nose coverage
+  - pip install scipy>=1.1 numpy>=1.14 ecos>=2 nose coverage coveralls
   - python setup.py install
 # command to run tests
 script:
