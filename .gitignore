@@ -4,6 +4,7 @@ sageopt.egg-info/*
 .idea/*
 
 .DS_STORE
+.coverage
 
 ignore_scripts/*
 ignore_scripts
