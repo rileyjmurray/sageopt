@@ -209,7 +209,7 @@ class Problem(object):
                                              options['compilation_options'])
         self.timings[solver]['apply'] = time.time() - t0
         if options['cache_apply_data']:
-            self.solver_apply_data[solver] = data
+            self.solver_apply_data[solver] = (data, inv_data)
 
         # Solve the problem
         t1 = time.time()

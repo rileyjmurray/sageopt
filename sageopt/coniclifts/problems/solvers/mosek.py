@@ -60,7 +60,7 @@ class Mosek(Solver):
             avoid_slacks = False
         A, b, K, sep_K, scale, trans = separate_cone_constraints(A, b, K,
                                                                  destructive=True,
-                                                                 dont_sep={'0', '+', 'P'},
+                                                                 dont_sep={'0', '+'},
                                                                  avoid_slacks=avoid_slacks)
         # A,b,K now reflect a conic system where "x" has been replaced by "np.diag(scale) @ (x + trans)"
         c = np.hstack([c, np.zeros(shape=(A.shape[1] - len(c)))])
@@ -237,7 +237,14 @@ class Mosek(Solver):
 
     @staticmethod
     def load_variable_values(x0, inv_data, var_mapping):
-        x = np.power(inv_data['scaling'], -1) * x0 - inv_data['translation']
+        x = inv_data['scaling'] * x0 + inv_data['translation']
+        # ^ That produces the correct result for a test, but isn't consistent with
+        # comments written in the reformulators.py file.
+        #
+        # x = np.power(inv_data['scaling'], -1) * x0 - inv_data['translation']
+        # ^ That's consistent with comments in reformulators.py, but doesn't produce
+        # correct results for tests.
+        #TODO: figure out what's going on, and update in reformulators.py.
         x = np.hstack([x, 0])
         # The final coordinate is a dummy value, which is loaded into ScalarVariables
         # which (1) did not participate in the problem, but (2) whose parent Variable
