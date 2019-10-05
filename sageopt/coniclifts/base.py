@@ -871,8 +871,9 @@ class Variable(Expression):
         # Get the parent's __reduce__ tuple
         pickled_state = super(Variable, self).__reduce__()
         # Create our own tuple to pass to __setstate__
-        extra_info = (self._is_proper, self._name, self._var_properties,
-                      self._scalar_variable_ids, self._generation)
+        var_props = getattr(self, '_var_properties', [])
+        extra_info = (self.is_proper(), self.name, var_props,
+                      self.scalar_variable_ids, self.generation)
         new_state = pickled_state[2] + extra_info
         # Return a tuple that replaces the parent's __setstate__ tuple with our own
         desired_reduce = (pickled_state[0], pickled_state[1], new_state)
