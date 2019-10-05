@@ -1,0 +1,10 @@
+[run]
+source = sageopt
+omit =
+    ecos/*
+    numpy/*
+    scipy/*
+    ctypes
+    numbers
+    decimal
+    pathlib
