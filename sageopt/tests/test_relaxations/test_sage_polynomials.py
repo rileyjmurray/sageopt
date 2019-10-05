@@ -16,27 +16,27 @@
 import unittest
 import numpy as np
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
-from sageopt.relaxations import sage_polys
-from sageopt.relaxations import poly_solution_recovery
+from sageopt.relaxations import poly_relaxation, poly_constrained_relaxation, sage_multiplier_search
+from sageopt.relaxations import poly_solution_recovery, conditional_sage_data
 from sageopt import coniclifts as cl
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
-    prim = sage_polys.poly_relaxation(p, form='primal', X=X,
-                                      poly_ell=poly_ell, sigrep_ell=sigrep_ell)
+    prim = poly_relaxation(p, form='primal', X=X,
+                           poly_ell=poly_ell, sigrep_ell=sigrep_ell)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage_polys.poly_relaxation(p, form='dual', X=X,
-                                      poly_ell=poly_ell, sigrep_ell=sigrep_ell)
+    dual = poly_relaxation(p, form='dual', X=X,
+                           poly_ell=poly_ell, sigrep_ell=sigrep_ell)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]]
 
 
 def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
-    prim = sage_polys.poly_constrained_relaxation(f, gt, eq, form='primal',
-                                                  p=p, q=q, ell=ell, X=X)
+    prim = poly_constrained_relaxation(f, gt, eq, form='primal',
+                                       p=p, q=q, ell=ell, X=X)
     res1 = prim.solve(solver=solver, verbose=False)
-    dual = sage_polys.poly_constrained_relaxation(f, gt, eq, form='dual',
-                                                  p=p, q=q, ell=ell, X=X)
+    dual = poly_constrained_relaxation(f, gt, eq, form='dual',
+                                       p=p, q=q, ell=ell, X=X)
     res2 = dual.solve(solver=solver, verbose=False)
     return [res1[1], res2[1]], dual
 
@@ -241,10 +241,10 @@ class TestSagePolynomials(unittest.TestCase):
         #
         x = standard_poly_monomials(3)
         p = (np.sum(x)) ** 2 + 0.35 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res1 = sage_polys.sage_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
+        res1 = sage_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
         assert abs(res1[1]) < 1e-8
         p -= 0.2 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res2 = sage_polys.sage_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
+        res2 = sage_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
         assert abs(res2[1]) < 1e-8
 
     #
@@ -256,7 +256,7 @@ class TestSagePolynomials(unittest.TestCase):
         f = -x**2
         gts = [1 - x**2]
         eqs = []
-        X = sage_polys.conditional_sage_data(f, gts, eqs)
+        X = conditional_sage_data(f, gts, eqs)
         res = primal_dual_unconstrained(f, 0, 0, X)
         assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
         res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
@@ -274,7 +274,7 @@ class TestSagePolynomials(unittest.TestCase):
             sel[i] = False
             f -= 16 * np.prod(x[sel])
         gts = [0.25 - x[i] ** 2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
-        X = sage_polys.conditional_sage_data(f, gts, [])
+        X = conditional_sage_data(f, gts, [])
         res = primal_dual_unconstrained(f, 0, 0, X)
         assert abs(res[0] - (-5)) < 1e-6 and abs(res[1] - (-5)) < 1e-6
         res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)

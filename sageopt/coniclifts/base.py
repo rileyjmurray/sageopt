@@ -40,12 +40,12 @@ class ScalarAtom(object):
         return ScalarExpression({self: 1}, 0) - other
 
     def __mul__(self, other):
-        if not isinstance(other, __REAL_TYPES__):
+        if not isinstance(other, __REAL_TYPES__):  # pragma: no cover
             raise RuntimeError('Can only multiply by scalars.')
         return ScalarExpression({self: other}, 0)
 
     def __truediv__(self, other):
-        if not isinstance(other, __REAL_TYPES__):
+        if not isinstance(other, __REAL_TYPES__):  # pragma: no cover
             raise RuntimeError('Can only divide by scalars.')
         return ScalarExpression({self: (1 / other)}, 0)
 
@@ -112,10 +112,10 @@ class ScalarVariable(ScalarAtom):
     def __lt__(self, other):
         if isinstance(other, ScalarVariable):
             return self._id < other._id
-        else:
+        else:  # pragma: no cover
             raise RuntimeError('Cannot compare ScalarVariable to ' + str(type(other)))
 
-    def __gt__(self, other):
+    def __gt__(self, other):  # pragma: no cover
         if isinstance(other, ScalarVariable):
             return self._id > other._id
         else:
@@ -166,7 +166,7 @@ class NonlinearScalarAtom(ScalarAtom):
             arg.remove_zeros()
             res = sorted(list(arg.atoms_to_coeffs.items()))
             return tuple(res + [('OFFSET', arg.offset)])
-        else:
+        else:  # pragma: no cover
             raise RuntimeError('ScalarAtom arguments must be affine ScalarExpressions.')
 
     @staticmethod
@@ -253,11 +253,11 @@ class ScalarExpression(object):
         if not isinstance(atoms_to_coeffs, defaultdict):
             self.atoms_to_coeffs = defaultdict(int)
             if verify:
-                if not isinstance(offset, __REAL_TYPES__):
+                if not isinstance(offset, __REAL_TYPES__):  # pragma: no cover
                     raise RuntimeError('Coefficients in ScalarExpressions can only be numeric types.')
-                if not all(isinstance(v, __REAL_TYPES__) for v in atoms_to_coeffs.values()):
+                if not all(isinstance(v, __REAL_TYPES__) for v in atoms_to_coeffs.values()):  # pragma: no cover
                     raise RuntimeError('Coefficients in ScalarExpressions can only be numeric types.')
-                if not all(isinstance(v, ScalarAtom) for v in atoms_to_coeffs.keys()):
+                if not all(isinstance(v, ScalarAtom) for v in atoms_to_coeffs.keys()):  # pragma: no cover
                     raise RuntimeError('Keys in ScalarExpressions must be ScalarAtoms.')
             self.atoms_to_coeffs.update(atoms_to_coeffs)
         else:
@@ -310,7 +310,7 @@ class ScalarExpression(object):
             return other.__rmul__(self)
 
     def __truediv__(self, other):
-        if not isinstance(other, __REAL_TYPES__):
+        if not isinstance(other, __REAL_TYPES__):  # pragma: no cover
             print(type(other))
             raise RuntimeError('Can only divide ScalarExpressions by scalars.')
         return self * (1 / other)
@@ -454,7 +454,7 @@ class Expression(np.ndarray):
         :param other: "self" is multiplying "other" on the left.
         :return: self @ other
         """
-        if other.ndim > 2 or self.ndim > 2:
+        if other.ndim > 2 or self.ndim > 2:  # pragma: no cover
             msg = '\n \t Matmul implementation uses "dot", '
             msg += 'which behaves differently for higher dimension arrays.\n'
             raise RuntimeError(msg)
@@ -465,13 +465,13 @@ class Expression(np.ndarray):
         :param other: a constant Expression or nd-array which left-multiplies "self".
         :return: other @ self
         """
-        if other.ndim > 2 or self.ndim > 2:
+        if other.ndim > 2 or self.ndim > 2:  # pragma: no cover
             msg = '\n \t Matmul implementation uses "dot", '
             msg += 'which behaves differently for higher dimension arrays.\n'
             raise RuntimeError(msg)
         (A, x, B) = self.factor()
         if isinstance(other, Expression):
-            if not other.is_constant():
+            if not other.is_constant():  # pragma: no cover
                 raise RuntimeError('Can only multiply by constant Expressions.')
             else:
                 _, _, other = other.factor()
@@ -516,7 +516,7 @@ class Expression(np.ndarray):
             self[key] = np.asscalar(value)
         elif isinstance(value, Expression):
             np.ndarray.__setitem__(self, key, value)
-        else:
+        else:  # pragma: no cover
             raise RuntimeError('Can only initialize with numeric, ScalarExpression, or ScalarAtom types.')
 
     def scalar_atoms(self):
@@ -635,7 +635,7 @@ class Expression(np.ndarray):
     @staticmethod
     def _disjoint_dot(array, list_of_atoms):
         # This is still MUCH SLOWER than adding numbers together.
-        if len(list_of_atoms) != array.shape[-1]:
+        if len(list_of_atoms) != array.shape[-1]:  # pragma: no cover
             raise RuntimeError('Incompatible dimensions to disjoint_dot.')
         expr = np.empty(shape=array.shape[:-1], dtype=object)
         for tup in array_index_iterator(expr.shape):
@@ -645,18 +645,6 @@ class Expression(np.ndarray):
             d = dict(dict_items)
             expr[tup] = ScalarExpression(d, 0, verify=False)
         return expr.view(Expression)
-
-    @staticmethod
-    def _disjoint_add(expr1, expr2):
-        if expr1.shape != expr2.shape:
-            raise RuntimeError('Disjoint add requires operands of the same shape.')
-        expr3 = np.empty(expr1.shape, dtype=object)
-        for tup in array_index_iterator(expr3.shape):
-            d = dict(expr1[tup].atoms_to_coeffs)
-            d.update(expr2[tup].atoms_to_coeffs)
-            offset = expr1[tup].offset + expr2[tup].offset
-            expr3[tup] = ScalarExpression(d, offset)
-        return expr3.view(Expression)
 
     @staticmethod
     def _can_assume_affine(expr):
@@ -796,9 +784,9 @@ class Variable(Expression):
         else:
             Variable.__unstructured_populate__(obj, name)
             raise UserWarning('The variable with name ' + name + ' was declared with an unknown property.')
-        if obj.size == 0:
+        if obj.size == 0:  # pragma: no cover
             raise RuntimeError('Cannot declare Variables with zero components.')
-        if obj._scalar_variable_ids[-1] > np.iinfo(np.int).max:
+        if obj._scalar_variable_ids[-1] > np.iinfo(np.int).max:  # pragma: no cover
             # ScalarVariable objects can no longer be properly tracked
             msg = 'An index used by coniclifts\' backend has overflowed. \n'
             msg += 'Call coniclifts.clear_variable_indices(), and build your model again.'
@@ -822,7 +810,7 @@ class Variable(Expression):
     # noinspection PyProtectedMember
     @staticmethod
     def __symmetric_populate__(obj, name):
-        if obj.ndim != 2 or obj.shape[0] != obj.shape[1]:
+        if obj.ndim != 2 or obj.shape[0] != obj.shape[1]:  # pragma: no cover
             raise RuntimeError('Symmetric variables must be 2d, and square.')
         temp_id_array = np.zeros(shape=obj.shape, dtype=int)
         for i in range(obj.shape[0]):
@@ -839,7 +827,7 @@ class Variable(Expression):
             obj._scalar_variable_ids.append(temp_id_array[tup])
         pass
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value):  # pragma: no cover
         raise RuntimeError('Cannot reassign entries of Variable objects.')
 
     def __add__(self, other):
@@ -911,7 +899,7 @@ class Variable(Expression):
         Assign numeric values to the components of this Variable object.
         We require ``self.shape == value.shape``.
         """
-        if value.shape != self.shape:
+        if value.shape != self.shape:  # pragma: no cover
             raise RuntimeError('Dimension mismatch.')
         for tup in array_index_iterator(self.shape):
             sv = list(self[tup].atoms_to_coeffs)[0]

@@ -15,6 +15,7 @@
 """
 import unittest
 from sageopt.coniclifts.operators import affine
+from sageopt.coniclifts.operators.exp import weighted_sum_exp
 from sageopt.coniclifts.base import *
 from sageopt.coniclifts.compilers import find_variables_from_constraints
 
@@ -118,6 +119,42 @@ class TestBase(unittest.TestCase):
         c = np.array([1, 2, 3, 4])
         y = c @ x
         assert y.shape == tuple()
+
+    def test_curvature(self):
+        x = Variable(shape=(2,))
+        nl_term = weighted_sum_exp(1, x[1])
+        expr = affine.hstack((x[0], nl_term, x[1]))
+        res = expr.is_convex()
+        assert np.all(res)
+        res = expr.is_concave()
+        assert np.all(np.array([True, False, True]) == res)
+        expr = -expr
+        res = expr.is_convex()
+        assert np.all(np.array([True, False, True]) == res)
+
+    def test_expression_equivalence(self):
+        x = Variable(shape=(2,))
+        expr = 1 * x
+        assert Expression.are_equivalent(x, expr)
+        expr[0] = expr[0] + 1e-7
+        assert not Expression.are_equivalent(x, expr)
+        a = np.array([1, 2])
+        b = Expression([1, 2])
+        assert Expression.are_equivalent(a, b)
+        assert Expression.are_equivalent(b, a)
+
+    def test_variable_properties(self):
+        x = Variable(shape=(3,), name='temp')
+        assert x.name == 'temp'
+        assert x.generation == 0
+        y = x[:2]
+        assert y.name == 'temp'
+        assert y.generation == 0
+        yid = y.leading_scalar_variable_id()
+        xid = x.leading_scalar_variable_id()
+        assert yid == xid
+        z = x[1:]
+        assert z.leading_scalar_variable_id() > xid
 
 
 if __name__ == '__main__':

@@ -16,17 +16,18 @@
 import unittest
 import numpy as np
 from sageopt import coniclifts as cl
-from sageopt.relaxations import sage_sigs, sig_solution_recovery as sig_sols
+from sageopt.relaxations import sig_relaxation, sig_constrained_relaxation, sage_multiplier_search
+from sageopt.relaxations import sig_solrec, conditional_sage_data
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 
 
 def primal_dual_vals(f, ell):
     # primal
-    prob = sage_sigs.sig_relaxation(f, form='primal', ell=ell)
+    prob = sig_relaxation(f, form='primal', ell=ell)
     status, value = prob.solve(solver='ECOS', verbose=False)
     prim = value
     # dual
-    prob = sage_sigs.sig_relaxation(f, form='dual', ell=ell)
+    prob = sig_relaxation(f, form='dual', ell=ell)
     status, value = prob.solve(solver='ECOS', verbose=False)
     dual = value
     return [prim, dual], prob
@@ -34,13 +35,13 @@ def primal_dual_vals(f, ell):
 
 def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='ECOS'):
     # primal
-    prob = sage_sigs.sig_constrained_relaxation(f, gts, eqs,
-                                                form='primal', p=p, q=q, ell=ell, X=AbK)
+    prob = sig_constrained_relaxation(f, gts, eqs,
+                                      form='primal', p=p, q=q, ell=ell, X=AbK)
     status, value = prob.solve(solver=solver, verbose=False)
     prim = value
     # dual
-    prob = sage_sigs.sig_constrained_relaxation(f, gts, eqs,
-                                                form='dual', p=p, q=q, ell=ell, X=AbK)
+    prob = sig_constrained_relaxation(f, gts, eqs,
+                                      form='dual', p=p, q=q, ell=ell, X=AbK)
     status, value = prob.solve(solver=solver, verbose=False)
     dual = value
     return [prim, dual], prob
@@ -74,7 +75,7 @@ class TestSAGERelaxations(unittest.TestCase):
         assert abs(pd0[0] - expected[0]) < 1e-4 and abs(pd0[1] - expected[0]) < 1e-4
         pd1, dual = primal_dual_vals(s, 1)
         assert abs(pd1[0] - expected[1]) < 1e-4 and abs(pd1[1] - expected[1]) < 1e-4
-        optsols = sig_sols.sig_solrec(dual)
+        optsols = sig_solrec(dual)
         assert (s(optsols[0]) - dual.value) < 1e-6
 
     def test_unconstrained_sage_2(self):
@@ -104,7 +105,7 @@ class TestSAGERelaxations(unittest.TestCase):
         assert pd0[0] == expected[0] and pd0[1] == expected[0]
         pd1, dual = primal_dual_vals(s, 1)
         assert abs(pd1[0] - expected[1]) < 1e-5 and abs(pd1[1] - expected[1]) < 1e-5
-        solns = sig_sols.sig_solrec(dual)
+        solns = sig_solrec(dual)
         assert s(solns[0]) < 1e-6 + dual.value
 
     def test_unconstrained_sage_3(self):
@@ -157,9 +158,9 @@ class TestSAGERelaxations(unittest.TestCase):
         for ell in range(3):
             assert abs(pds[ell][0] == expected[ell]) < 1e-5
             assert abs(pds[ell][1] == expected[ell]) < 1e-5
-        dual = sage_sigs.sig_relaxation(s, form='dual', ell=3)
+        dual = sig_relaxation(s, form='dual', ell=3)
         dual.solve(solver='ECOS', verbose=False)
-        optsols = sig_sols.sig_solrec(dual)
+        optsols = sig_solrec(dual)
         assert s(optsols[0]) < 1e-6 + dual.value
 
     def test_unconstrained_sage_5(self):
@@ -229,16 +230,16 @@ class TestSAGERelaxations(unittest.TestCase):
         #           appropriate translate of "s".
         #
         s = Signomial({(1,): 1, (-1,): -1}) ** 4
-        prob0 = sage_sigs.sage_multiplier_search(s, level=1)
+        prob0 = sage_multiplier_search(s, level=1)
         res0 = prob0.solve(solver='ECOS', verbose=False)
         val0 = res0[1]
         assert val0 == -np.inf
-        prob1 = sage_sigs.sig_relaxation(s, form='primal', ell=1)
+        prob1 = sig_relaxation(s, form='primal', ell=1)
         res1 = prob1.solve(solver='ECOS', verbose=False)
         s_bound = res1[1]
         assert -np.inf < s_bound < 0
         s_shifted = s - 0.5 * s_bound  # shifted_s is nonnegative, and not-SAGE by construction.
-        prob2 = sage_sigs.sage_multiplier_search(s_shifted, level=1)
+        prob2 = sage_multiplier_search(s_shifted, level=1)
         res2 = prob2.solve(solver='ECOS', verbose=False)
         val2 = res2[1]
         assert val2 == 0.
@@ -270,7 +271,7 @@ class TestSAGERelaxations(unittest.TestCase):
         expected = -0.6147
         actual, dual = constrained_primal_dual_vals(f, gs, [], p=0, q=1, ell=0, AbK=None)
         assert abs(actual[0] - expected) < 1e-4 and abs(actual[1] - expected) < 1e-4
-        solns = sig_sols.sig_solrec(dual, ineq_tol=1e-7)
+        solns = sig_solrec(dual, ineq_tol=1e-7)
         assert (f(solns[0]) - dual.value) / abs(dual.value) < 1e-4
 
     def test_constrained_sage_2(self):
@@ -332,12 +333,12 @@ class TestSAGERelaxations(unittest.TestCase):
                 15 - y[2], y[2] - 8,
                 1 - y[3], y[3] - 0.01]
         eqs = []
-        AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
+        AbK = conditional_sage_data(f, gts, eqs)
         p, q, ell = 0, 1, 0
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK)
         assert abs(vals[0] - vals[1]) < 1e-5
         assert abs(vals[0] - 0.765082) < 1e-4
-        solns = sig_sols.sig_solrec(dual, ineq_tol=0)
+        solns = sig_solrec(dual, ineq_tol=0)
         assert f(solns[0]) < 1e-8 + dual.value
 
     @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS takes too long for this problem.')
@@ -362,12 +363,12 @@ class TestSAGERelaxations(unittest.TestCase):
                5 - y[0],   y[0] - 0.1,
                450 - y[1], y[1] - 380]
         eqs = []
-        AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
+        AbK = conditional_sage_data(f, gts, eqs)
         p, q, ell = 0, 2, 0
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
         assert abs(vals[0] - vals[1]) < 1e-1
         assert abs(vals[0] - 11.95) / vals[0] < 1e-2
-        solns = sig_sols.sig_solrec(dual, ineq_tol=0)
+        solns = sig_solrec(dual, ineq_tol=0)
         assert (f(solns[0]) - dual.value) / dual.value < 1e-2
 
     @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS takes too long for this problem.')
@@ -400,12 +401,12 @@ class TestSAGERelaxations(unittest.TestCase):
                1e2 - x[0], 1e2 - x[1], 1e2 - x[2],
                x[0] - 1, x[1] - 1, x[2] - 1]
         eqs = []
-        AbK = sage_sigs.conditional_sage_data(f, gts, eqs)
+        AbK = conditional_sage_data(f, gts, eqs)
         p, q, ell = 0, 1, 1
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
         assert abs(vals[0] - vals[1]) < 1e-4
         assert abs(vals[0] - (-83.3235)) < 1e-4
-        solns = sig_sols.sig_solrec(dual, ineq_tol=0)
+        solns = sig_solrec(dual, ineq_tol=0)
         assert (f(solns[0]) - dual.value) / abs(dual.value) < 0.007
 
 

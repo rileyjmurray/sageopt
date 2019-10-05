@@ -169,7 +169,7 @@ class Signomial(object):
         else:
             alpha = np.round(alpha_maybe_c, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
             alpha = alpha.tolist()
-            if len(alpha) != c.size:
+            if len(alpha) != c.size:  # pragma: no cover
                 raise RuntimeError('alpha and c specify different numbers of terms')
             self.alpha_c = defaultdict(int)
             for j in range(c.size):
@@ -307,7 +307,8 @@ class Signomial(object):
 
     def __pow__(self, power, modulo=None):
         if self.c.dtype not in __NUMERIC_TYPES__:
-            raise RuntimeError('Cannot exponentiate signomials with symbolic coefficients.')
+            if isinstance(self.c, cl.Expression) and not self.c.is_constant():  # pragma: no cover
+                raise RuntimeError('Cannot exponentiate signomials with symbolic coefficients.')
         if power % 1 == 0 and power >= 0:
             power = int(power)
             if power == 0:
@@ -406,14 +407,13 @@ class Signomial(object):
         p : Signomial
             The function obtained by differentiating this signomial with respect to its i-th argument.
         """
-        if i < 0 or i >= self.n:
+        if i < 0 or i >= self.n:  # pragma: no cover
             raise RuntimeError('This Signomial does not have an input at index ' + str(i) + '.')
         d = defaultdict(int)
         for j in range(self.m):
             c = self.c[j] * self.alpha[j, i]
             if c != 0:
                 vec = self.alpha[j, :].copy()
-                vec[i] -= 1
                 d[tuple(vec.tolist())] = c
         d[self.n * (0,)] += 0
         p = Signomial(d)
@@ -533,7 +533,7 @@ class SigDomain(object):
             if self.check_feas:
                 self._check_feasibility()
         if 'coniclifts_cons' in kwargs:
-            if self.A is not None:
+            if self.A is not None:  # pragma: no cover
                 msg = 'Keyword arguments "AbK" and "coniclifts_cons" are mutually exclusive.'
                 raise RuntimeError(msg)
             else:

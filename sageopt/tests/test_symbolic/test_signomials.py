@@ -15,7 +15,8 @@
 """
 import numpy as np
 import unittest
-from sageopt.symbolic.signomials import Signomial
+from sageopt.symbolic.signomials import Signomial, SigDomain
+from sageopt import coniclifts as cl
 
 
 class TestSignomials(unittest.TestCase):
@@ -92,6 +93,29 @@ class TestSignomials(unittest.TestCase):
         assert s(zero) == 1 and abs(s(one) - np.exp(1)) < 1e-10
         zero_one = np.array([[0, 1]])
         assert np.allclose(s(zero_one), np.exp(zero_one), rtol=0, atol=1e-10)
+
+    def test_signomial_grad_val(self):
+        f = Signomial({(2,): 1, (0,): -1})
+        actual = f.grad_val(np.array([3]))
+        expect = 2*np.exp(2*3)
+        assert abs(actual[0] - expect) < 1e-8
+
+    def test_signomial_hess_val(self):
+        f = Signomial({(-2,): 1, (0,): -1})
+        actual = f.hess_val(np.array([3]))
+        expect = 4*np.exp(-2*3)
+        assert abs(actual[0] - expect) < 1e-8
+
+    def test_infeasible_sig_domain(self):
+        x = cl.Variable()
+        cons = [x <= -1, x >= 1]
+        try:
+            dom = SigDomain(1, coniclifts_cons=cons)
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'could not be verified as feasible' in err_str
+        pass
 
 
 if __name__ == '__main__':
