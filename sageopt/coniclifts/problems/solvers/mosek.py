@@ -54,18 +54,9 @@ class Mosek(Solver):
             b = b.copy()
             K = copy.deepcopy(K)
             c = c.copy()
-        if 'avoid_slacks' in compilation_options:
-            avoid_slacks = compilation_options['avoid_slacks']
-        else:
-            avoid_slacks = False
-        A, b, K, sep_K, scale, trans = separate_cone_constraints(A, b, K,
-                                                                 destructive=True,
-                                                                 dont_sep={'0', '+'},
-                                                                 avoid_slacks=avoid_slacks)
-        # A,b,K now reflect a conic system where "x" has been replaced by "np.diag(scale) @ (x + trans)"
+        inv_data = {'n': A.shape[1]}
+        A, b, K, sep_K = separate_cone_constraints(A, b, K, destructive=True, dont_sep={'0', '+'})
         c = np.hstack([c, np.zeros(shape=(A.shape[1] - len(c)))])
-        objective_offset = c @ trans
-        c = c * scale
         type_selectors = build_cone_type_selectors(K)
         # Below: inequality constraints that the "user" intended to give to MOSEK.
         A_ineq = A[type_selectors['+'], :]
@@ -81,7 +72,6 @@ class Mosek(Solver):
         K = [Cone('+', A_ineq.shape[0]), Cone('0', A_z.shape[0])]
         # Return values
         data = {'A': A, 'b': b, 'K': K, 'sep_K': sep_K, 'c': c}
-        inv_data = {'scaling': scale, 'translation': trans, 'objective_offset': objective_offset, 'n': A.shape[1]}
         return data, inv_data
 
     @staticmethod
@@ -141,11 +131,7 @@ class Mosek(Solver):
         :param solver_output: a dictionary containing the mosek Task and Environment that
         were constructed at solve-time. Also contains any parameters that were passed at solved-time.
 
-        :param inv_data: a dictionary with keys 'scaling' and 'translation'. The primal variable
-        values returned by Mosek should be ...
-            (1) scaled by the inverse of inv_data['scaling'], and
-            (2) translated by the negative of inv_data['translation'].
-        Then the objective value should be reduced by inv_data['objective_offset'].
+        :param inv_data: a dictionary with key 'n'.
 
         :param var_mapping: a dictionary mapping names of coniclifts Variables to arrays
         of indices. The array var_mapping['my_var'] contains the indices in
@@ -164,7 +150,7 @@ class Mosek(Solver):
         if solution_status == mosek.solsta.optimal:
             # optimal
             problem_status = CL_CONSTANTS.solved
-            problem_value = task.getprimalobj(sol) - inv_data['objective_offset']
+            problem_value = task.getprimalobj(sol)
             x0 = [0.] * inv_data['n']
             task.getxxslice(sol, 0, len(x0), x0)
             x0 = np.array(x0)
@@ -237,15 +223,7 @@ class Mosek(Solver):
 
     @staticmethod
     def load_variable_values(x0, inv_data, var_mapping):
-        x = inv_data['scaling'] * x0 + inv_data['translation']
-        # ^ That produces the correct result for a test, but isn't consistent with
-        # comments written in the reformulators.py file.
-        #
-        # x = np.power(inv_data['scaling'], -1) * x0 - inv_data['translation']
-        # ^ That's consistent with comments in reformulators.py, but doesn't produce
-        # correct results for tests.
-        #TODO: figure out what's going on, and update in reformulators.py.
-        x = np.hstack([x, 0])
+        x = np.hstack([x0[:inv_data['n']], 0])
         # The final coordinate is a dummy value, which is loaded into ScalarVariables
         # which (1) did not participate in the problem, but (2) whose parent Variable
         # object did participate in the problem.
