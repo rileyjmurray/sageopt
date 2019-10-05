@@ -1,0 +1,6 @@
+[report]
+omit =
+    sageopt/tests/*
+    sageopt/coniclifts/problems/solvers/mosek.py
+# Run this file locally, with the following command:
+# nosetests --with-coverage --cover-package=sageopt --cover-config-file=.fullcoveragerc

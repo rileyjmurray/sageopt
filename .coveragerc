@@ -1,2 +1,3 @@
 [report]
-omit = sageopt/tests/*
+omit =
+    sageopt/tests/*
