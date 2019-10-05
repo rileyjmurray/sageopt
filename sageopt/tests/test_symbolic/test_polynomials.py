@@ -15,7 +15,8 @@
 """
 import numpy as np
 import unittest
-from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
+from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials, PolyDomain
+from sageopt import coniclifts as cl
 
 
 class TestPolynomials(unittest.TestCase):
@@ -105,6 +106,38 @@ class TestPolynomials(unittest.TestCase):
         y_actual = np.sum(x) ** 2
         y_expect = Polynomial({(2, 0): 1, (1, 1): 2, (0, 2): 1})
         assert TestPolynomials.are_equal(y_actual, y_expect)
+
+    def test_polynomial_grad_val(self):
+        f = Polynomial({(3,): 1, (0,): -1})
+        actual = f.grad_val(np.array([0.5]))
+        expect = 3*0.5**2
+        assert abs(actual[0] - expect) < 1e-8
+
+    def test_polynomial_hess_val(self):
+        f = Polynomial({(3,): 1, (0,): -1})
+        actual = f.hess_val(np.array([0.1234]))
+        expect = 3*2*0.1234
+        assert abs(actual[0] - expect) < 1e-8
+
+    def test_infeasible_poly_domain(self):
+        x = cl.Variable()
+        cons = [x <= -1, x >= 1]
+        try:
+            dom = PolyDomain(1, logspace_cons=cons)
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'could not be verified as feasible' in err_str
+        A = np.ones(shape=(2, 2))
+        b = np.array([0, 1])
+        K = [cl.Cone('0', 2)]
+        try:
+            dom = PolyDomain(2, log_AbK=(A, b, K))
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'could not be verified as feasible' in err_str
+        pass
 
     #
     #   Test construction of [constant] signomial representatives

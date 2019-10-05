@@ -372,7 +372,7 @@ class Signomial(object):
             return False
         for k in self.alpha_c:
             v = self.alpha_c[k]
-            other_v = other.alpha_c[k]
+            other_v = other.query_coeff(np.array(k))
             if not cl.Expression.are_equivalent(other_v, v, rtol=1e-8):
                 return False
         return True
@@ -517,7 +517,14 @@ class SigDomain(object):
     If more than one of these value is provided, the constructor will raise an error.
     """
 
+    __VALID_KWARGS__ = {'gts', 'eqs', 'AbK', 'coniclifts_cons', 'check_feas'}
+
     def __init__(self, n, **kwargs):
+        for kw in kwargs:
+            if kw not in SigDomain.__VALID_KWARGS__:  # pragma: no cover
+                msg = 'Provided keyword argument "' + kw + '" is not in the list'
+                msg += ' of allowed keyword arguments: \n'
+                msg += '\t ' + str(SigDomain.__VALID_KWARGS__)
         self.n = n
         self.A = None
         self.b = None

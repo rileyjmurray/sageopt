@@ -135,9 +135,9 @@ class Polynomial(Signomial):
 
     def __init__(self, alpha_maybe_c, c=None):
         Signomial.__init__(self, alpha_maybe_c, c)
-        if not np.all(self.alpha % 1 == 0):
+        if not np.all(self.alpha % 1 == 0):  # pragma: no cover
             raise RuntimeError('Exponents must belong the the integer lattice.')
-        if not np.all(self.alpha >= 0):
+        if not np.all(self.alpha >= 0):  # pragma: no cover
             raise RuntimeError('Exponents must be nonnegative.')
         self._sig_rep = None
         self._sig_rep_constrs = []
@@ -165,7 +165,7 @@ class Polynomial(Signomial):
 
     def __mul__(self, other):
         if not isinstance(other, Polynomial):
-            if isinstance(other, Signomial):
+            if isinstance(other, Signomial):  # pragma: no cover
                 raise RuntimeError('Cannot multiply signomials and polynomials.')
             # else, we assume that "other" is a scalar type
             tup = (0,) * self.n
@@ -173,20 +173,20 @@ class Polynomial(Signomial):
             other = Polynomial(d)
         self_var_coeffs = (self.c.dtype not in __NUMERIC_TYPES__)
         other_var_coeffs = (other.c.dtype not in __NUMERIC_TYPES__)
-        if self_var_coeffs and other_var_coeffs:
+        if self_var_coeffs and other_var_coeffs:  # pragma: no cover
             raise RuntimeError('Cannot multiply two polynomials that contain non-numeric coefficients.')
         temp = Signomial.__mul__(self, other)
         temp = temp.as_polynomial()
         return temp
 
     def __truediv__(self, other):
-        if not isinstance(other, __NUMERIC_TYPES__):
+        if not isinstance(other, __NUMERIC_TYPES__):  # pragma: no cover
             raise RuntimeError('Cannot divide a polynomial by the non-numeric type: ' + type(other) + '.')
         other_inv = 1 / other
         return self.__mul__(other_inv)
 
     def __add__(self, other):
-        if isinstance(other, Signomial) and not isinstance(other, Polynomial):
+        if isinstance(other, Signomial) and not isinstance(other, Polynomial):  # pragma: no cover
             raise RuntimeError('Cannot add signomials to polynomials.')
         temp = Signomial.__add__(self, other)
         temp = temp.as_polynomial()
@@ -293,14 +293,9 @@ class Polynomial(Signomial):
     def __eq__(self, other):
         if not isinstance(other, Polynomial):
             return False
-        if self.m != other.m:
-            return False
-        for k in self.alpha_c:
-            v = self.alpha_c[k]
-            other_v = other.query_coeff(np.array(k))
-            if not cl.Expression.are_equivalent(other_v, v, rtol=1e-8):
-                return False
-        return True
+        else:
+            res = Signomial.__eq__(self, other)
+            return res
 
     def remove_terms_with_zero_as_coefficient(self):
         """
@@ -370,8 +365,6 @@ class Polynomial(Signomial):
         mult_alpha = self.alpha[evens, :].copy()
         mult_c = np.ones(len(evens))
         mult = Polynomial(mult_alpha, mult_c)
-        if mult.alpha_c[self.n * (0,)] == 0:
-            mult += 1
         return mult
 
     @property
@@ -485,7 +478,14 @@ class PolyDomain(object):
     If more than one of these value is provided, the constructor will raise an error.
     """
 
+    __VALID_KWARGS__ = {'gts', 'eqs', 'log_AbK', 'logspace_cons', 'check_feas'}
+
     def __init__(self, n, **kwargs):
+        for kw in kwargs:
+            if kw not in PolyDomain.__VALID_KWARGS__:  # pragma: no cover
+                msg = 'Provided keyword argument "' + kw + '" is not in the list'
+                msg += ' of allowed keyword arguments: \n'
+                msg += '\t ' + str(PolyDomain.__VALID_KWARGS__)
         self.n = n
         self.A = None
         self.b = None
@@ -496,7 +496,7 @@ class PolyDomain(object):
         self._logspace_cons = None  # optional
         self._y = None  # optional
         self._variables = None  # optional
-        if 'AbK' in kwargs:
+        if 'log_AbK' in kwargs:
             self.A, self.b, self.K = kwargs['log_AbK']
             if self.check_feas:
                 self._check_feasibility()
