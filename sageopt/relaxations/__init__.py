@@ -55,7 +55,7 @@ def sage_feasibility(f, X=None):
     elif isinstance(f, Signomial):
         prob = _sig_sage_feasibility(f, X)
         return prob
-    else:
+    else:  # pragma: no cover
         raise ValueError('"f" must be a Signomial or Polynomial.')
 
 
@@ -91,7 +91,7 @@ def sage_multiplier_search(f, level=1, X=None):
     elif isinstance(f, Signomial):
         prob = _sig_sage_mult_search(f, level, X)
         return prob
-    else:
+    else:  # pragma: no cover
         raise ValueError('"f" must be a Signomial or Polynomial.')
 
 
@@ -120,13 +120,6 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     -----
     This is a wrapper around two functions of the same name,
     which generate ``X`` in the signomial and polynomial cases.
-
-    The signomial and polynomial cases are implemented in
-    ``sageopt.relaxations.sage_sigs.conditional_sage_data`` and
-    ``sageopt.relaxations.sage_polys.conditional_sage_data` respectively.
-
-    Refer to those functions for detailed documentation.
-
     """
     if isinstance(f, Polynomial):
         X = _poly_cond_sage_data(f, gts, eqs, check_feas)
@@ -134,5 +127,5 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     elif isinstance(f, Signomial):
         X = _sig_cond_sage_data(f, gts, eqs, check_feas)
         return X
-    else:
+    else:  # pragma: no cover
         raise ValueError('"f" must be a Signomial or Polynomial.')
