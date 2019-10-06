@@ -141,18 +141,3 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
     sep_K = sep_K0 + sep_K1
     return A1, b0, K1, sep_K
 
-
-def separated_cones_to_matrix_cones(sep_K, num_cols, destructive=False):
-    m = sum(co.len for co in sep_K)
-    A_rows = np.arange(m)
-    A_vals = np.ones(m)
-    A_cols = np.hstack(co.annotations['col mapping'] for co in sep_K)
-    if not destructive:
-        # overwrite the reference to "sep_K" because we no longer need the annotations.
-        sep_K = [Cone(co.type, co.len) for co in sep_K]
-    else:
-        for co in sep_K:
-            co.annotations = dict()
-    b = np.zeros(m)
-    A = sp.csc_matrix((A_vals, (A_rows, A_cols)), shape=(m, num_cols), dtype=float)
-    return A, b, sep_K
