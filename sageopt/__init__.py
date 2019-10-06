@@ -18,7 +18,7 @@ from sageopt import relaxations
 from sageopt import symbolic
 
 from sageopt.relaxations import local_refine, local_refine_polys_from_sigs
-from sageopt.relaxations import conditional_sage_data
+from sageopt.relaxations import infer_domain
 from sageopt.relaxations import sage_feasibility, sage_multiplier_search
 
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials, SigDomain

@@ -17,7 +17,7 @@ import unittest
 import numpy as np
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations import poly_relaxation, poly_constrained_relaxation, sage_multiplier_search
-from sageopt.relaxations import poly_solution_recovery, conditional_sage_data
+from sageopt.relaxations import poly_solution_recovery, infer_domain
 from sageopt import coniclifts as cl
 
 
@@ -256,7 +256,7 @@ class TestSagePolynomials(unittest.TestCase):
         f = -x**2
         gts = [1 - x**2]
         eqs = []
-        X = conditional_sage_data(f, gts, eqs)
+        X = infer_domain(f, gts, eqs)
         res = primal_dual_unconstrained(f, 0, 0, X)
         assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
         res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
@@ -274,7 +274,7 @@ class TestSagePolynomials(unittest.TestCase):
             sel[i] = False
             f -= 16 * np.prod(x[sel])
         gts = [0.25 - x[i] ** 2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
-        X = conditional_sage_data(f, gts, [])
+        X = infer_domain(f, gts, [])
         res = primal_dual_unconstrained(f, 0, 0, X)
         assert abs(res[0] - (-5)) < 1e-6 and abs(res[1] - (-5)) < 1e-6
         res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)

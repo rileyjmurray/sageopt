@@ -474,7 +474,7 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     return L, ineq_dual_polys, eq_dual_polys, gamma
 
 
-def conditional_sage_data(f, gts, eqs, check_feas=True):
+def infer_domain(f, gts, eqs, check_feas=True):
     """
     Identify a subset of the constraints in ``gts`` and ``eqs`` which can be incorporated into
     conditional SAGE relaxations for polynomials. Construct a PolyDomain object from the inferred
@@ -495,45 +495,6 @@ def conditional_sage_data(f, gts, eqs, check_feas=True):
     Returns
     -------
     X : PolyDomain or None
-
-    """
-    """
-
-        ``X`` will be keyed by three strings: ``'log_AbK'``, ``'gts'``, and ``'eqs'``.
-
-        ``X['gts']`` is a list of Polynomials so that every ``g in X['gts']`` has an efficient
-        convex representation for ``{log(|x|) : g(|x|) >= 0, |x| > 0}``. (Where the vertical
-        bars denote elementwise absolute value, and the logarithm is meant elementwise.)
-        The intersection of all of these sets contains
-
-                ``{log(|x|) : g(|x|) >= 0 for g in gts, |x| > 0}``.
-
-        ``X['eqs']`` is defined similarly, but for equality constraints.
-
-        If both ``X['gts']`` and ``X['eqs']`` are empty, then ``X['log_AbK']`` is None.
-        Otherwise, ``X['log_AbK']`` is a conic representation of the pointwise, elementwise
-        log-absolute-values of the feasible sets cut out by ``X['gts']`` and ``X['eqs']``.
-        For details on the conic representation, refer to the Notes.
-
-    Notes
-    -----
-    The conic representation is a triple ``X['log_AbK'] = (A, b, K)``, where ``A`` is a SciPy
-    sparse matrix, ``b`` is a numpy 1d array, and ``K`` is a list of coniclifts Cone objects.
-    The number of columns for ``A`` in ``X['AbK']`` will always be at least ``f.n``.
-    If the number of columns is greater than ``f.n``, then the first f.n columns of ``A``
-    correspond (in order!) to the log-absolute-values of variables over which ``f`` is  defined.
-    Any remaining columns are auxiliary variables needed to represent ``X`` in coniclifts primitives.
-
-    This function essentially defines the requirements for ``X`` which may be passed to
-    conditional SAGE polynomial relaxations defined in this python module.
-
-    It is possible for a user to properly define their own dict ``X`` without calling
-    this function. The  only benefit to such an approach is that ``X['gts']`` and ``X['eqs']``
-    don't need to be Polynomial objects. As long as ``X['gts']`` and ``X['eqs']`` are callable
-    python functions and relate to ``X['log_AbK']`` in the manner described above, then
-    you should be able to pass that dict to SAGE relaxations defined in this module
-    without trouble. Bear in mind that the functions in ``X['gts']`` and ``X['eqs']`` will
-    only be passed elementwise-positive arguments.
 
     """
     # GP-representable inequality constraints (recast as "Signomial >= 0")

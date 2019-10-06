@@ -56,7 +56,7 @@ experts on the subject. Towards this end, sageopt includes a function which can 
 a suitably structured :math:`X` from a given collection of polynomial equations and inequalities.
 That function is described below.
 
-.. autofunction:: sageopt.relaxations.sage_polys.conditional_sage_data
+.. autofunction:: sageopt.relaxations.sage_polys.infer_domain
 
 The function above captures a small portion of what is possible with conditional SAGE
 certificates for polynomials. In order to take more full advantage of the possibilities,

@@ -44,12 +44,12 @@ function ``standard_sig_monomials``, and providing a dimension of your desired v
            21 - y[2]]
     eqs = []
 
-Next we will pass our problem through a function called ``conditional_sage_data``. This function parses the given
+Next we will pass our problem through a function called ``infer_domain``. This function parses the given
 constraint signomials, and infers any which can be written in a tractable convex form with respect to the
 optimization variable ``x``
 . ::
 
-  X = so.conditional_sage_data(f, gts, eqs)
+  X = so.infer_domain(f, gts, eqs)
 
 For this problem, it just so happens that all constraints can be written in a convex form. Taking this as given, we use
 the function ``sig_relaxation``
@@ -121,7 +121,7 @@ First we show the case with the equality constraint. ::
    ]
    gts = main_gts + bounds
    eqs = [70.7107 / A[0] + P / A[0] - P / A[2]]
-   X = so.conditional_sage_data(f, bounds, [])
+   X = so.infer_domain(f, bounds, [])
    prim = so.sig_constrained_relaxation(f, main_gts, eqs, form='primal', X=X)
    dual = so.sig_constrained_relaxation(f, main_gts, eqs, form='dual', X=X)
    prim.solve(verbose=False)
@@ -148,7 +148,7 @@ to recover optimal solutions, we reformulate the problem by substituting :math:`
        A[0] - 69.7107 * A[2], (1e8 * 70.7107 - 1) - A[0] / A[2]
    ]
    gts = main_gts + bounds
-   X = so.conditional_sage_data(f, gts, [])
+   X = so.infer_domain(f, gts, [])
    dual = so.sig_constrained_relaxation(f, main_gts, [], form='dual', X=X)
    dual.solve()
    print('\n')
@@ -178,7 +178,7 @@ over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
        f -= 64 * np.prod(x[sel])
        # ^ use simple NumPy functions to construct Polynomials!
    gts = [0.25 - x[i]**2 for i in range(7)]  # -.5 <= x[i] <= .5
-   X = so.conditional_sage_data(f, gts, [])
+   X = so.infer_domain(f, gts, [])
    dual = so.poly_constrained_relaxation(f, [], [], form='dual', X=X)
    dual.solve(verbose=False, solver='MOSEK')
    print()
@@ -267,7 +267,7 @@ We can produce a bound on this minimum with a primal SAGE relaxation. ::
    gts = [100 -  y[1] * y[2] ** -1 - y[1] - 0.05 * y[0] * y[2],
           y[0] - 70, y[1] - 1, y[2] - 0.5,
           150 - y[0], 30 - y[1], 21 - y[2]]
-   X = so.conditional_sage_data(f, gts, [])
+   X = so.infer_domain(f, gts, [])
    prim = so.sig_relaxation(f, form='primal', ell=0, X=X)
    prim.solve(solver='ECOS')
    print(prim.value)  # about -147.857

@@ -58,7 +58,7 @@ then you just need to focus on constructing the lists of signomials ``gts`` and 
 Once these lists are constructed, you can call the following function to obtain
 a convex set :math:`X \supset \Omega` which is implied by the constraint signomials.
 
-.. autofunction:: sageopt.relaxations.sage_sigs.conditional_sage_data
+.. autofunction:: sageopt.relaxations.sage_sigs.infer_domain
 
 It is possible that the function above cannot capture a convex set of interest. This is
 particularly likely if the desired convex set is not naturally described

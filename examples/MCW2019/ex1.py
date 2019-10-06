@@ -1,4 +1,4 @@
-from sageopt import conditional_sage_data, sig_relaxation, standard_sig_monomials, sig_solrec
+from sageopt import infer_domain, sig_relaxation, standard_sig_monomials, sig_solrec
 
 n = 3
 y = standard_sig_monomials(n)
@@ -11,7 +11,7 @@ gts = [100 -  y[1] * y[2] ** -1 - y[1] - 0.05 * y[0] * y[2],
        30 - y[1],
        21 - y[2]]
 eqs = []
-X = conditional_sage_data(f, gts, eqs)
+X = infer_domain(f, gts, eqs)
 dual = sig_relaxation(f, form='dual', ell=0, X=X)
 dual.solve(verbose=False)
 solutions = sig_solrec(dual)

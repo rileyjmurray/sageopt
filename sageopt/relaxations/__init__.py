@@ -24,8 +24,8 @@ from sageopt.relaxations.sage_sigs import sage_feasibility as _sig_sage_feasibil
 from sageopt.relaxations.sage_polys import sage_feasibility as _poly_sage_feasibility
 from sageopt.relaxations.sage_sigs import sage_multiplier_search as _sig_sage_mult_search
 from sageopt.relaxations.sage_polys import sage_multiplier_search as _poly_sage_mult_search
-from sageopt.relaxations.sage_sigs import conditional_sage_data as _sig_cond_sage_data
-from sageopt.relaxations.sage_polys import conditional_sage_data as _poly_cond_sage_data
+from sageopt.relaxations.sage_sigs import infer_domain as _sig_cond_sage_data
+from sageopt.relaxations.sage_polys import infer_domain as _poly_cond_sage_data
 
 
 def sage_feasibility(f, X=None):
@@ -95,7 +95,7 @@ def sage_multiplier_search(f, level=1, X=None):
         raise ValueError('"f" must be a Signomial or Polynomial.')
 
 
-def conditional_sage_data(f, gts, eqs, check_feas=True):
+def infer_domain(f, gts, eqs, check_feas=True):
     """
     Infer (and construct a representation for) a tractable set ``X`` which
     is contains { x : g(x) >= 0 for g in gts } and

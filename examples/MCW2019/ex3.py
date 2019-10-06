@@ -1,4 +1,4 @@
-from sageopt import standard_poly_monomials, conditional_sage_data, poly_solrec, poly_constrained_relaxation
+from sageopt import standard_poly_monomials, infer_domain, poly_solrec, poly_constrained_relaxation
 import numpy as np
 
 n = 7
@@ -9,7 +9,7 @@ for i in range(n):
     sel[i] = False
     f -= 64 * np.prod(x[sel])
 gts = [0.25 - x[i]**2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
-X = conditional_sage_data(f, gts, [])
+X = infer_domain(f, gts, [])
 dual = poly_constrained_relaxation(f, gts=[], eqs=[], form='dual', p=0, q=1, ell=0, X=X)
 dual.solve(verbose=False, solver='MOSEK')
 print()

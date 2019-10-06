@@ -16,6 +16,7 @@ Multiple changes here are API breaking. The next release will be 0.4.0.
  - An explicit requirement that ``Constraint.variables`` returns both all variables in its scope,
  and that all returned Variables be "proper".
 ## Changed
+ - conditional_sage_data to infer_domain.
  - Conditional SAGE constraints now assume that "conditioning" is feasible.
  - primal sage constraints now have age vectors sum to <= c, rather than == c. This
  is w.l.o.g., and hopefully will help with some solvers.
@@ -60,8 +61,6 @@ where the user is warned if a constant negative value is sufficiently
 small (e.g. 1e-7), and the negative value is then simply set to zero.
 If the constant negative value was above this threshold, then raise
 an error.
-## Big TODO
- - Fix the PolyDomain class to match the SigDomain class.
 
 # [0.3.4] - 2019-09-09
 ## Added

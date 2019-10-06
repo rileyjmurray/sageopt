@@ -6,17 +6,18 @@ Overview of sageopt
 Sageopt includes functionality for optimization and checking nonnegativity of signomials and polynomials.
 The conceptual components here are:
 
- 1. Some classes representing signomials, polynomials, and domains over which these functions
-    are defined.
+ 1. Some classes representing signomials and polynomials, as well as domains to which these functions
+    are restricted.
 
  2. A high-level modeling interface (called "coniclifts") for convex optimization problems.
-    Advanced users can interact with native primal or dual "SAGE constraints" via this interface.
+    This interface includes native primal and dual "SAGE constraints."
 
 Sageopt then takes these two components, and defines various functions to reduce user's barrier to
-entry in working with SAGE relaxations. Our primary concern is to make it easier to use SAGE relaxations
-for *optimization*; those problems have different "primal" and "dual" forms, and it can take a bit of
-expertise to implement the more advanced dual-form relaxations.
+entry in working with SAGE relaxations.
 
+Our main concern is to make it easier to get started with *optimization*.
+SAGE relaxations for optimization have different "primal" and "dual" forms, and it would take a bit of
+expertise to implement the advanced dual-form relaxations from scratch.
 The documentation below will bring you up to speed on the basics of sageopt's signomial
 and polynomial optimization features, as well as the most crucial prerequisites.
 
@@ -27,8 +28,7 @@ and polynomial optimization features, as well as the most crucial prerequisites.
    Polynomials <sageopt.polynomials>
 
 At some point, users will need to interact with sageopt's "coniclifts" backend.
-This is especially true if you intend to use sageopt mostly for certifying function nonnegativity
-(although we do have a few pre-built functions there as well).
+This is especially true if you intend to use sageopt mostly for certifying function nonnegativity.
 Documentation for coniclifts is given below.
 
 .. toctree::

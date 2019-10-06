@@ -1,5 +1,5 @@
 from sageopt import standard_sig_monomials, sig_solrec
-from sageopt import conditional_sage_data, sig_constrained_relaxation
+from sageopt import infer_domain, sig_constrained_relaxation
 
 # Problem data
 n = 3
@@ -19,7 +19,7 @@ bounds = [
 gts = main_gts + bounds
 
 # setup SAGE relaxations
-X = conditional_sage_data(f, gts, [])
+X = infer_domain(f, gts, [])
 prim = sig_constrained_relaxation(f, main_gts, [], X, 'P', p=0, q=1, ell=0)
 dual = sig_constrained_relaxation(f, main_gts, [], X, 'D', p=0, q=1, ell=0)
 
@@ -54,7 +54,7 @@ bounds = [
 ]
 gts = main_gts + bounds
 eqs = [70.7107 / A[0] + P / A[0] - P / A[2]]
-X = conditional_sage_data(f, bounds, [])
+X = infer_domain(f, bounds, [])
 prim = sig_constrained_relaxation(f, main_gts, eqs, X, 'P', p=0, q=1, ell=0)
 dual = sig_constrained_relaxation(f, main_gts, eqs, X, 'D', p=0, q=1, ell=0)
 # Solve SAGE relaxations, and print the resulting objective values.

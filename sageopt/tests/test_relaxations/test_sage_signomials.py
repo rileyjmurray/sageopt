@@ -17,7 +17,7 @@ import unittest
 import numpy as np
 from sageopt import coniclifts as cl
 from sageopt.relaxations import sig_relaxation, sig_constrained_relaxation, sage_multiplier_search
-from sageopt.relaxations import sig_solrec, conditional_sage_data
+from sageopt.relaxations import sig_solrec, infer_domain
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 
 
@@ -333,7 +333,7 @@ class TestSAGERelaxations(unittest.TestCase):
                 15 - y[2], y[2] - 8,
                 1 - y[3], y[3] - 0.01]
         eqs = []
-        AbK = conditional_sage_data(f, gts, eqs)
+        AbK = infer_domain(f, gts, eqs)
         p, q, ell = 0, 1, 0
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK)
         assert abs(vals[0] - vals[1]) < 1e-5
@@ -363,7 +363,7 @@ class TestSAGERelaxations(unittest.TestCase):
                5 - y[0],   y[0] - 0.1,
                450 - y[1], y[1] - 380]
         eqs = []
-        AbK = conditional_sage_data(f, gts, eqs)
+        AbK = infer_domain(f, gts, eqs)
         p, q, ell = 0, 2, 0
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
         assert abs(vals[0] - vals[1]) < 1e-1
@@ -401,7 +401,7 @@ class TestSAGERelaxations(unittest.TestCase):
                1e2 - x[0], 1e2 - x[1], 1e2 - x[2],
                x[0] - 1, x[1] - 1, x[2] - 1]
         eqs = []
-        AbK = conditional_sage_data(f, gts, eqs)
+        AbK = infer_domain(f, gts, eqs)
         p, q, ell = 0, 1, 1
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
         assert abs(vals[0] - vals[1]) < 1e-4
