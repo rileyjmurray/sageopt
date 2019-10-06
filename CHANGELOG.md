@@ -4,70 +4,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# [unreleased]
-Multiple changes here are API breaking. The next release will be 0.4.0.
+# [0.4.0] - 2019-10-06
 ## Added
  - SigDomain and PolyDomain classes.
  - sage_cones.py, which handles the ordinary and conditional SAGE cases.
  - Support for automatic elimination of trivial AGE cones from SAGE relaxations. This can be disabled
- by setting the variable ``_EXPENSIVE_REDUCTION_=False``.
- - An argument to ``conditional_sage_data`` functions, so that they now can check if the system
- defined by the inferred constraints is feasible. The default is to perform the feasibility check.
- - An explicit requirement that ``Constraint.variables`` returns both all variables in its scope,
- and that all returned Variables be "proper".
+   by calling ``sageopt.coniclifts.presolve_trivial_age_cones(False)``.
+ - An explicit requirement that ``Constraint.variables()`` returns both all variables in its scope,
+   and that all returned Variables be "proper".
+ - For PrimalSageCone: added the option to allow AGE vectors to sum <= c, or == c. The default is <= c.
+   The default setting can be changed by calling ``sageopt.coniclifts.sum_age_force_equality(True)``.
 ## Changed
- - conditional_sage_data to infer_domain.
- - Conditional SAGE constraints now assume that "conditioning" is feasible.
- - primal sage constraints now have age vectors sum to <= c, rather than == c. This
- is w.l.o.g., and hopefully will help with some solvers.
- - sage_cone.py to ordinary_sage_cone.py
- - The "var_name_to_locs" dict from coniclifts.compilers.compile_constrained_system. If a ScalarVariable
- does not participate in the conic system but its parent Variable object does, then that ScalarVariable's
- selector index in ``var_name_to_locs[parent_variable.name]`` will **now** be -1. In order to load values
- into user-defined Variable objects, the vector "x" for the vectorized conic system **must now be** augmented
- to ``x0 = np.hstack([x,0])``. Augmenting in this way means that ScalarVariables are set to the value 0
- by default, but we only do this if its value does not affect the feasibility of the constraints.
- This return value has also been renamed to "variable_map".
- - Many changes to fields in the Problem class. Problem.user_cons is now Problem.constraints.
- Problem.user_obj is now Problem.objective_expr. Problem.user_variable_map is now Problem.variable_map.
- - How ElementwiseConstraint objects report their variables. They now always include user-defined variables,
- and if ``con.variables()`` is called after epigraph substitution, then the list will also contain the epigraph
- variables. ``con.violation()`` is still only computed with respect to user-defined variables.
- - When compile_constrained_system finds all variables. Now there is no need for a separate call to find variables
- within compile_problem.
+ - ``conditional_sage_data`` is ``infer_domain``. These functions have an additional argument for checking
+   feasibility of the inferred system (defaults to True).
  - The signature of ``sig_relaxation`` and ``sig_constrained_relaxation``. Hierarchy parameters are now specified
- by keyword arguments, and the argument ``X`` comes before the argument ``form``.
- - Fixed a bug in conditional_sage_data. Equality constraints were being incorrectly compiled.
- The bug only meant that SAGE relaxations solved in the past were weaker than they should have been.
- - The signature of PrimalCondSageCone and DualCondSageCone
+   by keyword arguments, and the argument ``X`` comes before the argument ``form``.
+ - Conditional SAGE constraints now assume that the "conditioning" is feasible.
+ - The ``var_name_to_locs`` dict from ``coniclifts.compilers.compile_constrained_system``.
+   It now has a slightly different definition, and a different name.
+ - Fields in the Problem class. ``Problem.user_cons`` is now ``Problem.constraints``.
+   ``Problem.user_obj`` is now ``Problem.objective_expr``.
+   ``Problem.user_variable_map`` is now ``Problem.variable_map``.
+ - How ElementwiseConstraint objects report their variables. They now always include user-defined variables,
+   and if ``con.variables()`` is called after epigraph substitution, then the list will also contain the epigraph
+   variables.
+ - Fixed a bug in ``conditional_sage_data`` (now, ``infer_domain``). Equality constraints were being
+   incorrectly compiled. The bug only meant that SAGE relaxations solved in the past were unnecessarily weak.
 ## Removed
- - conditional_sage_cone.py, ordinary_sage_cone.py.
+ - ``log_domain_converter``. It wasn't being used.
+ - conditional_sage_cone.py, sage_cone.py.
  - sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
- as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.
-## Small TODO
- - Changing the SAGE constraint from sum-age == c to sum-age <= c actually caused ECOS some trouble.
- So there should be a compilation option which allows the user to chose which
- they want.
- - In PrimalSageCone._initialize_variables, it sometimes happens that we declare
-an AGE vector c_var of length zero. This happens when a component
-of c is constant, and negative, but that component has been identified
-as having a trivial AGE cone (i.e. the AGE cone reduces to the nonnegative
-orthant). Assuming the trivial AGE cone was identified correctly,
-this means the SAGE constraint is feasible. This case should be handled
-gracefully (at least with a descriptive error message). Check both
-primal and dual cases.
-One way to handle the above issue would be to have a threshold,
-where the user is warned if a constant negative value is sufficiently
-small (e.g. 1e-7), and the negative value is then simply set to zero.
-If the constant negative value was above this threshold, then raise
-an error.
+   as top-level imports within sageopt. These functions are still accessible from sageopt.relaxations.
+
 
 # [0.3.4] - 2019-09-09
 ## Added
  - sig_relaxation and sig_constrained_relaxation. These are wrappers around sig_primal/sig_dual
- and sig_constrained_primal/sig_constrained_dual. I introduced these because now users can specify the
- form as a keyword argument. This keeps the number of user-facing functions lower, and
- the docstrings for these functions can be heavy on LaTeX for rendering in web documentation.
+   and sig_constrained_primal/sig_constrained_dual. I introduced these because now users can specify the
+   form as a keyword argument. This keeps the number of user-facing functions lower, and
+   the docstrings for these functions can be heavy on LaTeX for rendering in web documentation.
  - Variants of the above for polynomial problems.
 ## Changed
  - Major changes to how coniclifts handles the compilation process. Refer to commit 7cb07866e55c6618ce17d090d52281512ea2351f.
@@ -94,52 +69,52 @@ an error.
  - Some unittests for conditional sage polynomials.
 ## Changed
  - Conditional SAGE cone compilation behavior. It used to be that conditional
- SAGE cones were replaced by the nonnegative orthant if the parameter ``m <= 2`` .
- (The <= 2 was a hold-over from ordinary SAGE cones, where any 2-dimensional SAGE cone
- is equal to R^2_+). The behavior is now corrected, so that 2-dimensional conditional
- SAGE cones compile to mathematically correct forms.
+   SAGE cones were replaced by the nonnegative orthant if the parameter ``m <= 2`` .
+   (The <= 2 was a hold-over from ordinary SAGE cones, where any 2-dimensional SAGE cone
+   is equal to R^2_+). The behavior is now corrected, so that 2-dimensional conditional
+   SAGE cones compile to mathematically correct forms.
  - Solution recovery for SAGE polynomial relaxations. The MCW2019 paper didnt use
- constrained least-squares, because there was a separate need to handle when some
- entries of the moment vector were zero. The new implementation now solves a
- constrained least-squares problem when all entries of the moment vector are nonzero.
+   constrained least-squares, because there was a separate need to handle when some
+   entries of the moment vector were zero. The new implementation now solves a
+   constrained least-squares problem when all entries of the moment vector are nonzero.
 
 
 # [0.3.0] - 2019-06-30
 ## Added
  - Important functions to sageopt's ``__init__.py`` file.
- For example, you can now call ``sageopt.standard_sig_monomials(n)`` and
- ``sageopt.sig_constrained_primal(....)`` without following a chain of
- subpackages.
+   For example, you can now call ``sageopt.standard_sig_monomials(n)`` and
+   ``sageopt.sig_constrained_primal(....)`` without following a chain of
+   subpackages.
  - Added a function ``local_refine_polys_from_sigs``, which performs local refinement
    as though given signomial problem data actually defined polynomials. This
    is to help people who only use signomials as a modeling tool for polynomial
    optimization problems where decision variables must be nonnegative.
  - Track the constraint functions which generate the set ``X`` in conditional SAGE
-  relaxations. By keeping track of these functions, we can check membership in ``X``
-  just be evaluating functions, rather than by solving an optimization-based
-  feasibility problem. This is especially useful for polynomial problems.
+   relaxations. By keeping track of these functions, we can check membership in ``X``
+   just be evaluating functions, rather than by solving an optimization-based
+   feasibility problem. This is especially useful for polynomial problems.
  - Added a ``as_signomial`` function to Polynomial objects. There isn't a specific
-    use-case for this in sageopt's codebase, but it makes the Polynomial API closer
-    to the Signomial API, and that's desirable in its own right.
+   use-case for this in sageopt's codebase, but it makes the Polynomial API closer
+   to the Signomial API, and that's desirable in its own right.
  - Added a ``log_domain_converter`` to ``sage_polys.py``. The purpose of this new function
-    is to allow arguments to be passed in log-domain, but evaluated as though they
-    were in the original function's domain. This mimics the functionality of a user
-    calling ``f_sig = f.as_signomial()`` and subsequently evaluating ``f_sig(x)``,
-    however ``log_domain_converter`` does not require inputs to be Polynomial objects.
+   is to allow arguments to be passed in log-domain, but evaluated as though they
+   were in the original function's domain. This mimics the functionality of a user
+   calling ``f_sig = f.as_signomial()`` and subsequently evaluating ``f_sig(x)``,
+   however ``log_domain_converter`` does not require inputs to be Polynomial objects.
 ## Changed
  - Removed the local_refine implementation for polynomials; replaced
    it by a generic implementation which works for polynomials and signomials
  - Changed references to "X" and "logAbK" in user-facing functions to "X".
-  This is both out of consistency with the paper, and to reflect the fact that
-  the set X carries more information than just a conic representation.
+   This is both out of consistency with the paper, and to reflect the fact that
+   the set X carries more information than just a conic representation.
 ## Removed
  - Removed the ability to call signomials in geometric format.
 ## Remarks
-  - Plan to release this version as "0.3.0". This is done so that if bugs
-  are found in 0.2.0, we can release 0.2.x which still follows the 0.2.0 API.
-  The desire to have minimal support for the 0.2.0 API stems from the fact that
-  I have a massive collection of experiment / simulation code that I'd rather
-  not rewrite, and that I may have to run again before the paper is published.
+ - Plan to release this version as "0.3.0". This is done so that if bugs
+   are found in 0.2.0, we can release 0.2.x which still follows the 0.2.0 API.
+   The desire to have minimal support for the 0.2.0 API stems from the fact that
+   I have a massive collection of experiment / simulation code that I'd rather
+   not rewrite, and that I may have to run again before the paper is published.
 
 
 ## [0.2.0] - 2019-05-24

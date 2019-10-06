@@ -36,6 +36,8 @@ _ELIMINATE_TRIVIAL_AGE_CONES_ = True
 
 _REDUCTION_SOLVER_ = 'ECOS'
 
+_SUM_AGE_FORCE_EQUALITY_ = False
+
 
 def check_cones(K):
     if any([co.type not in _ALLOWED_CONES_ for co in K]):
@@ -43,11 +45,9 @@ def check_cones(K):
     pass
 
 
-#TODO: remove all references to ``cond``, and update references to ``X``.
-
 class PrimalSageCone(SetMembership):
     """
-
+    Represent the constraint ":math:`c \\in C_{\\mathrm{SAGE}}(\\alpha, X)`".
 
     Parameters
     ----------
@@ -110,6 +110,11 @@ class PrimalSageCone(SetMembership):
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
         for the name of any auxiliary Variable created when compiling to the coniclifts standard.
 
+    Notes
+    -----
+
+    The constructor can raise a RuntimeError if the constraint is deemed infeasible.
+
     """
 
     def __init__(self, c, alpha, X, name, **kwargs):
@@ -152,6 +157,12 @@ class PrimalSageCone(SetMembership):
                 c_len = num_cover
                 if i not in self.ech.N_I:
                     c_len += 1
+                if c_len == 0:  # pragma: no cover
+                    msg = 'PrimalSageCone constraint "' + self.name + '" encountered an index '
+                    msg += 'i=' + str(i) + '\n where the i-th AGE cone reduces to the nonnegative '
+                    msg += 'orthant, but self.c[i]=' + str(self.c[i].value) + ' is negative. \n\n'
+                    msg += 'This SAGE constraint is infeasible.'
+                    raise RuntimeError(msg)
                 var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
                 self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
             self._variables += list(self._nu_vars.values())
@@ -184,7 +195,8 @@ class PrimalSageCone(SetMembership):
         aux_c_vars = aux_c_vars[nonconst_locs, :]
         main_c_var = self.c[nonconst_locs]
         A_vals, A_rows, A_cols, b = comp_aff.columns_sum_leq_vec(aux_c_vars, main_c_var)
-        K = [Cone('+', b.size)]
+        conetype = '0' if _SUM_AGE_FORCE_EQUALITY_ else '+'
+        K = [Cone(conetype, b.size)]
         return A_vals, A_rows, A_cols, b, K
 
     def variables(self):
@@ -344,7 +356,7 @@ class PrimalSageCone(SetMembership):
 
 class DualSageCone(SetMembership):
     """
-
+    Represent the constraint ":math:`v \\in C_{\\mathrm{SAGE}}(\\alpha, X)^{\\dagger}`".
 
     Parameters
     ----------
@@ -379,9 +391,8 @@ class DualSageCone(SetMembership):
 
         When provided, this DualSageCone instance will compile to a constraint to ensure that ``v``
         is a valid dual variable to the constraint that :math:`c \\in C_{\\mathrm{SAGE}}(\\alpha, X)`,
-        where :math:`X` is determined by ``cond``. If we have have information about the sign of a
-        component of  ``c``, then it is possible to reduce the number of coniclifts primitives
-        needed to represent this constraint.
+        If we have have information about the sign of a component of  ``c``, then it is possible to
+        reduce the number of coniclifts primitives needed to represent this constraint.
 
 
     Attributes

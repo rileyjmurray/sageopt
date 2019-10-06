@@ -40,7 +40,7 @@ def clear_variable_indices():
 
 def presolve_trivial_age_cones(true_or_false=True):
     """
-    Set coniclifts' behavior for SAGE constraints (ordinary, and conditional SAGE).
+    Set coniclifts' behavior for SAGE constraints.
 
     If ``true_or_false=True``, then coniclifts will solve a series of small optimization
     problems whenever a SAGE constraint (primal or dual) is declared. This presolve
@@ -66,6 +66,35 @@ def heuristic_reduce_cond_age_cones(true_or_false=True):
     The default value for ``true_or_false`` in this function's signature represents
     sageopt's default behavior for this setting.
     """
-    import sageopt.coniclifts.constraints.set_membership.conditional_sage_cone as csc
-    csc._AGGRESSIVE_REDUCTION_ = true_or_false
+    import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
+    sc._AGGRESSIVE_REDUCTION_ = true_or_false
     pass
+
+
+def age_cone_reduction_solver(solver_str='ECOS'):
+    """
+    Use the provided string as the solver argument when any optimization-based
+    presolve is employed in SAGE constraints.
+
+    The default value for ``solver_str`` in this function's signature represents
+    sageopt's default behavior for this setting.
+    """
+    import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
+    sc._REDUCTION_SOLVER_ = solver_str
+
+
+def sum_age_force_equality(true_or_false=False):
+    """
+    Set coniclifts' behavior for compiling PrimalSageCone constraints.
+
+    If ``true_or_false=True``, then a PrimalSageCone constraint ``con`` will
+    tell the solver to require the values of ``con.age_vectors`` sum to ``con.c``.
+
+    If ``true_or_false=False``, then a PrimalSageCone constraint ``con`` will
+    tell the solver to require the sum of values of ``con.age_vectors`` is <= ``con.c``.
+
+    The default value for ``true_or_false`` in this function's signature represents
+    sageopt's default behavior for this setting.
+    """
+    import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
+    sc._SUM_AGE_FORCE_EQUALITY_ = true_or_false
