@@ -15,7 +15,6 @@
 """
 import numpy as np
 import scipy.sparse as sp
-from sageopt.coniclifts import utilities as util
 from collections import defaultdict
 from sageopt.coniclifts.cones import Cone
 
