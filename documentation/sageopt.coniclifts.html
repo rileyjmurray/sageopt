@@ -1,0 +1,999 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>coniclifts is sageopt’s backend &#8212; sageopt 0.4.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Nonnegativity" href="sageopt.nonnegativity.html" />
+    <link rel="prev" title="Polynomials" href="sageopt.polynomials.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sageopt</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="sageopt.html">Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sageopt.signomials.html">Signomials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.polynomials.html">Polynomials</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Coniclifts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-variable-class">The Variable class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-problem-class">The Problem class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-expression-system">The Expression system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sage-constraint-classes">SAGE constraint classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-compiler-interface">The compiler interface</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.nonnegativity.html">Nonnegativity</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../background.html">Background</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="sageopt.html">Overview of sageopt</a><ul>
+      <li>Previous: <a href="sageopt.polynomials.html" title="previous chapter">Polynomials</a></li>
+      <li>Next: <a href="sageopt.nonnegativity.html" title="next chapter">Nonnegativity</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="coniclifts-is-sageopt-s-backend">
+<h1><code class="docutils literal notranslate"><span class="pre">coniclifts</span></code> is <code class="docutils literal notranslate"><span class="pre">sageopt</span></code>’s backend<a class="headerlink" href="#coniclifts-is-sageopt-s-backend" title="Permalink to this headline">¶</a></h1>
+<p>Sageopt does not solve SAGE relaxations on its own; it relies on third party convex optimization solvers, such as
+ECOS or MOSEK. These solvers require input in very specific standard-forms. <em>Coniclifts</em>
+provides abstractions that allow us to state SAGE relaxations in high-level syntax, and manage
+interactions with these low-level solvers.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Coniclifts employs abstractions that are similar to those in <a class="reference external" href="cvxpy.org">CVXPY</a>.
+For example, it is possible to construct and solve a linear program using coniclifts:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sageopt.coniclifts</span> <span class="k">as</span> <span class="nn">cl</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1"># random problem data</span>
+<span class="n">G</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="c1"># input to coniclift&#39;s Problem constructor</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,))</span>
+<span class="n">constrs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x</span><span class="p">,</span> <span class="n">G</span> <span class="o">@</span> <span class="n">x</span> <span class="o">==</span> <span class="n">h</span><span class="p">]</span>
+<span class="n">objective_expression</span> <span class="o">=</span> <span class="n">c</span> <span class="o">@</span> <span class="n">x</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span> <span class="n">objective_expression</span><span class="p">,</span> <span class="n">constrs</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s1">&#39;ECOS&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">x_opt</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">value</span>
+</pre></div>
+</div>
+<p>In the example above, <code class="docutils literal notranslate"><span class="pre">constrs</span></code> consists of two coniclifts <em>Constraint</em> objects. Both of these
+objects were constructed with operator overloading (<code class="docutils literal notranslate"><span class="pre">&lt;=</span></code> and <code class="docutils literal notranslate"><span class="pre">==</span></code>), and the second Constraint made use of
+operator-overloaded matrix multiplication (<code class="docutils literal notranslate"><span class="pre">&#64;</span></code>). If you check the datatype of the object <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">=</span> <span class="pre">A</span> <span class="pre">&#64;</span> <span class="pre">x</span></code>, you
+would find that <code class="docutils literal notranslate"><span class="pre">y</span></code> is a coniclifts <em>Expression</em>. Expression objects track functions of <em>Variable</em> objects.</p>
+<p>Coniclifts has support for nonlinear convex constraints. The most important of these constraints are specified as
+“set membership”, rather than elementwise inequalities.
+For example, we have a <em>PrimalSageCone</em> class, which is used to construct some of the SAGE
+relaxations in the <code class="docutils literal notranslate"><span class="pre">sageopt.relaxations</span></code> package. Here is a concrete demonstration</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]])</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="c1"># alpha, c define a signomial in the usual way</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;gamma&#39;</span><span class="p">)</span>
+<span class="n">c_expr</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">c_expr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">gamma</span>   <span class="c1"># shift the constant term by -gamma</span>
+<span class="n">constr</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">PrimalSageCone</span><span class="p">(</span><span class="n">c_expr</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;example_constraint&#39;</span><span class="p">)</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">MAX</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="p">[</span><span class="n">constr</span><span class="p">])</span>
+<span class="c1"># find largest gamma so shifted signomial is nonnegative</span>
+<span class="n">status</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>By solving the problem described above, we have that <code class="docutils literal notranslate"><span class="pre">val</span></code> is a lower bound on the signomial which takes values
+<code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">c</span> <span class="pre">&#64;</span> <span class="pre">np.exp(alpha</span> <span class="pre">&#64;</span> <span class="pre">x)</span></code>.
+There are only a few set-membership constraints currently implemented in
+coniclifts; they can all be found in <code class="docutils literal notranslate"><span class="pre">sageopt.coniclifts.constraints.set_membership</span></code>.</p>
+<p>Coniclifts contains <em>operators</em> which represent functions applied to Expression objects.
+The module <code class="docutils literal notranslate"><span class="pre">sageopt/coniclifts/operators/affine.py</span></code> contains all affine array-manipulation operators you would use on
+a numpy ndarray <a class="reference external" href="https://github.com/rileyjmurray/sageopt/blob/master/sageopt/coniclifts/operators/affine.py">[link]</a>.
+This includes linear algebra operators such as <code class="docutils literal notranslate"><span class="pre">kron</span></code> or <code class="docutils literal notranslate"><span class="pre">trace</span></code>, reshaping
+operators such as <code class="docutils literal notranslate"><span class="pre">hstack</span></code> or <code class="docutils literal notranslate"><span class="pre">tile</span></code>, and array-creation routines like <code class="docutils literal notranslate"><span class="pre">diag</span></code> or <code class="docutils literal notranslate"><span class="pre">triu</span></code>.
+These functions behave in <em>identical</em> ways to their numpy counterparts, because Expression objects are actually a
+custom subclass of numpy’s <code class="docutils literal notranslate"><span class="pre">ndarray</span></code> datatype.</p>
+<p>Coniclifts also has a small selection of nonlinear operators:
+<code class="docutils literal notranslate"><span class="pre">weighted_sum_exp</span></code>, <code class="docutils literal notranslate"><span class="pre">vector2norm</span></code>, and <code class="docutils literal notranslate"><span class="pre">relent</span></code>. It is easy to add more nonlinear operators, but these three
+suffice for the internal uses currently found in sageopt. Here is a concrete example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]])</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">cons</span> <span class="o">=</span> <span class="p">[</span><span class="n">cl</span><span class="o">.</span><span class="n">weighted_sum_exp</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">@</span> <span class="n">x</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">obj</span> <span class="o">=</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">cons</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="n">x_expect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">4.93083</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.73838</span><span class="p">])</span>
+<span class="n">x_actual</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">value</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">x_expect</span><span class="p">,</span> <span class="n">x_actual</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>If you run the code above, you should find that it prints <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<p>It is important to note that nonlinear
+operators are not allowed in the objective function. So if you want to minimize a nonlinear convex function given by
+<code class="docutils literal notranslate"><span class="pre">expr</span></code>, you need to create an auxiliary variable such as <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">Variable(shape=(1,))</span></code>, add the constraint <code class="docutils literal notranslate"><span class="pre">expr</span>
+<span class="pre">&lt;=</span> <span class="pre">t</span></code>, and set the objective to minimize <code class="docutils literal notranslate"><span class="pre">t</span></code>. Here is an example of a constrained least-squares problem we solve
+for solution recovery in dual SAGE relaxations</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">K</span>  <span class="c1"># con is a DualSageCone instance</span>
+<span class="n">log_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],))</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+<span class="n">cons</span> <span class="o">=</span> <span class="p">[</span><span class="n">cl</span><span class="o">.</span><span class="n">vector2norm</span><span class="p">(</span><span class="n">log_v</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">@</span> <span class="n">x</span><span class="p">[:</span><span class="n">con</span><span class="o">.</span><span class="n">n</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">,</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">PrimalProductCone</span><span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">x</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span> <span class="n">K</span><span class="p">)]</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">cons</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The example above also alludes to a useful set-membership constraint, called <code class="docutils literal notranslate"><span class="pre">PrimalProductCone</span></code>. Follow
+<a class="reference external" href="https://github.com/rileyjmurray/sageopt/tree/master/sageopt/coniclifts/constraints/set_membership">this link</a>
+for source code of set-membership constraints available in coniclifts.</p>
+</div>
+<div class="section" id="the-variable-class">
+<h2>The Variable class<a class="headerlink" href="#the-variable-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sageopt.coniclifts.Variable">
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">Variable</code><a class="headerlink" href="#sageopt.coniclifts.Variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>An abstraction for a symbol appearing in constraint sets, or optimization problems.</p>
+<p>Variable objects are a custom subclass of numpy ndarrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>tuple</em>) – The dimensions of the Variable object. Defaults to <code class="docutils literal notranslate"><span class="pre">shape=()</span></code>.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – A string which should uniquely identify this Variable object in all models
+where it appears. Ideally, this string should be human-readable.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'unnamed_var_N'</span></code>,  where <code class="docutils literal notranslate"><span class="pre">N</span></code> is an integer.</p></li>
+<li><p><strong>var_properties</strong> (<em>list of str</em>) – Currently, the only accepted forms of this argument are the empty
+list (in which case an unstructured Variable is returned), or a list
+containing the string <code class="docutils literal notranslate"><span class="pre">'symmetric'</span></code> (in which case a symmetric matrix
+Variable is returned).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>The symbol you use in the Python interpreter does not need to match the “name” of a Variable.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;my_name&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A Variable object can take on any dimension that a numpy ndarray could take on.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;strange_shaped_var&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<p>Upon construction, Variable objects are “proper”. If you index into them, they are
+still considered Variable objects, but they no longer contain information about
+all of their components. A Variable object’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field only uniquely determines
+the “proper” version of that Variable. If <code class="docutils literal notranslate"><span class="pre">v.is_proper()</span> <span class="pre">==</span> <span class="pre">False</span></code>, then it should
+be possible to recover the original Variable object with <code class="docutils literal notranslate"><span class="pre">original_v</span> <span class="pre">=</span> <span class="pre">v.base</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>  <span class="c1"># sageopt.coniclifts.base.Variable</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">is_proper</span><span class="p">())</span>  <span class="c1"># True</span>
+
+<span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>  <span class="c1"># sageopt.coniclifts.base.Variable</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">is_proper</span><span class="p">())</span>  <span class="c1"># False</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>  <span class="c1"># True</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">base</span><span class="p">))</span>  <span class="c1"># True; these exist at the same place in memory.</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="sageopt.coniclifts.Variable.generation">
+<em class="property">property </em><code class="sig-name descname">generation</code><a class="headerlink" href="#sageopt.coniclifts.Variable.generation" title="Permalink to this definition">¶</a></dt>
+<dd><p>An internally-maintained index. Variable objects of different “generation” cannot
+participate in a common optimization problem.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Variable.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#sageopt.coniclifts.Variable.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A string which should uniquely identify this object in all models
+where it appears, provided <code class="docutils literal notranslate"><span class="pre">self.is_proper()</span> <span class="pre">==</span> <span class="pre">True</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Variable.scalar_variable_ids">
+<em class="property">property </em><code class="sig-name descname">scalar_variable_ids</code><a class="headerlink" href="#sageopt.coniclifts.Variable.scalar_variable_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Each component of this Variable object (i.e. each “scalar variable”) contains
+an index which uniquely identifies it in all models where this Variable appears.
+Return the list of these indices.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Variable.scalar_variables">
+<code class="sig-name descname">scalar_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Variable.scalar_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all ScalarVariables appearing in this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Variable.set_scalar_variables">
+<code class="sig-name descname">set_scalar_variables</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Variable.set_scalar_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign numeric values to the components of this Variable object.
+We require <code class="docutils literal notranslate"><span class="pre">self.shape</span> <span class="pre">==</span> <span class="pre">value.shape</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Variable.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Variable.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ndarray containing numeric entries, of shape equal to <code class="docutils literal notranslate"><span class="pre">self.shape</span></code>.
+This is the result of the most recent call to <code class="docutils literal notranslate"><span class="pre">set_scalar_variables</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="the-problem-class">
+<h2>The Problem class<a class="headerlink" href="#the-problem-class" title="Permalink to this headline">¶</a></h2>
+<p>Detailed documentation for the Problem class is given below. Most users will only interact with
+a few aspects of Problem objects. On a first read, it should be enough just to skim the documentation
+for this class. If you want to understand all the attributes of a Problem object,
+you will need to read <a class="reference internal" href="#cl-expression-system"><span class="std std-ref">The Expression system</span></a> and <a class="reference internal" href="#cl-compilerinterface"><span class="std std-ref">The compiler interface</span></a>.</p>
+<dl class="class">
+<dt id="sageopt.coniclifts.Problem">
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">Problem</code><span class="sig-paren">(</span><em class="sig-param">objective_sense</em>, <em class="sig-param">objective_expr</em>, <em class="sig-param">constraints</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem" title="Permalink to this definition">¶</a></dt>
+<dd><p>A representation for a convex optimization problem. When this Problem object is constructed,
+the constraints are immediately compiled into a flattened conic representation. This compilation
+process may take some time for large problems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>objective_sense</strong> (<em>str</em>) – Either coniclifts.MIN or coniclifts.MAX</p></li>
+<li><p><strong>objective_expr</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – The function to minimize or maximize. ScalarExpressions and real numeric types
+are also accepted. The final (cast) expression must be linear in its Variables.</p></li>
+<li><p><strong>constraints</strong> (<em>list of coniclifts.Constraint</em>) – Variables appearing in objective_expr are subject to Constraint objects in this list.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.objective_sense">
+<code class="sig-name descname">objective_sense</code><a class="headerlink" href="#sageopt.coniclifts.Problem.objective_sense" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value passed by the user to the constructor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.objective_expr">
+<code class="sig-name descname">objective_expr</code><a class="headerlink" href="#sageopt.coniclifts.Problem.objective_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value passed by the user to the constructor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression">Expression</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.constraints">
+<code class="sig-name descname">constraints</code><a class="headerlink" href="#sageopt.coniclifts.Problem.constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value passed by the user to the constructor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of coniclifts.Constraint</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.A">
+<code class="sig-name descname">A</code><a class="headerlink" href="#sageopt.coniclifts.Problem.A" title="Permalink to this definition">¶</a></dt>
+<dd><p>The matrix in the flattened conic representation of the feasible set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>CSC-format sparse matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.b">
+<code class="sig-name descname">b</code><a class="headerlink" href="#sageopt.coniclifts.Problem.b" title="Permalink to this definition">¶</a></dt>
+<dd><p>The offset vector in the flattened conic representation of the feasible set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.K">
+<code class="sig-name descname">K</code><a class="headerlink" href="#sageopt.coniclifts.Problem.K" title="Permalink to this definition">¶</a></dt>
+<dd><p>The cartesian product of these cones (in order) defines the convex cone appearing
+in the flattened conic representation of the feasible set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of coniclifts.Cone</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.all_variables">
+<code class="sig-name descname">all_variables</code><a class="headerlink" href="#sageopt.coniclifts.Problem.all_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>All Variable objects needed to represent the feasible set. This includes user-declared
+Variables, and Variables which were required to write the problem in terms of coniclifts
+primitives. It is recommended to access this list by calling <code class="docutils literal notranslate"><span class="pre">self.variables()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of coniclifts.Variable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.variable_map">
+<code class="sig-name descname">variable_map</code><a class="headerlink" href="#sageopt.coniclifts.Problem.variable_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map from a Variable’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field to a numpy array. If <code class="docutils literal notranslate"><span class="pre">myvar</span></code>
+is a coniclifts Variable appearing in the system defined by <code class="docutils literal notranslate"><span class="pre">constraints</span></code>,
+then a point <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfying <span class="math notranslate nohighlight">\(A x + b \in K\)</span> maps to a feasible value for
+<code class="docutils literal notranslate"><span class="pre">myvar</span></code> by</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">myvar_val</span> <span class="o">=</span> <span class="n">x0</span><span class="p">[</span><span class="n">variable_map</span><span class="p">[</span><span class="n">myvar</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>In particular, we guarantee <code class="docutils literal notranslate"><span class="pre">myvar.shape</span> <span class="pre">==</span> <span class="pre">variable_map[myvar.name].shape</span></code>.
+Augmenting <code class="docutils literal notranslate"><span class="pre">x</span></code> by zero to create <code class="docutils literal notranslate"><span class="pre">x0</span></code> reflects a convention that if a component of
+a Variable does not affect the constraints, that component is automatically assigned
+the value zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str,ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.variable_values">
+<code class="sig-name descname">variable_values</code><a class="headerlink" href="#sageopt.coniclifts.Problem.variable_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map from a Variable’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field to a numpy array, containing a feasible
+value for that Variable for this problem’s constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str, ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.solver_apply_data">
+<code class="sig-name descname">solver_apply_data</code><a class="headerlink" href="#sageopt.coniclifts.Problem.solver_apply_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A place to store metadata during a call to <code class="docutils literal notranslate"><span class="pre">self.solve(cache_apply_data=True)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str,dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.solver_raw_output">
+<code class="sig-name descname">solver_raw_output</code><a class="headerlink" href="#sageopt.coniclifts.Problem.solver_raw_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>A place to store metadata during a call to <code class="docutils literal notranslate"><span class="pre">self.solve(cache_raw_output=True)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str,dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.metadata">
+<code class="sig-name descname">metadata</code><a class="headerlink" href="#sageopt.coniclifts.Problem.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A place for users to store metadata produced when constructing this Problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.value">
+<code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Problem.value" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>The objective value from the last call to <code class="docutils literal notranslate"><span class="pre">self.solve</span></code>. Can be a float,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">np.inf</span></code>, <code class="docutils literal notranslate"><span class="pre">-np.inf</span></code>, or <code class="docutils literal notranslate"><span class="pre">np.NaN</span></code>.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.status">
+<code class="sig-name descname">status</code><a class="headerlink" href="#sageopt.coniclifts.Problem.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>The problem status from the last call to <code class="docutils literal notranslate"><span class="pre">self.solve</span></code>.
+Either <code class="docutils literal notranslate"><span class="pre">coniclifts.SOLVED</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.INACCURATE</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.FAILED</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>Problem status being <code class="docutils literal notranslate"><span class="pre">coniclifts.SOLVED</span></code> does not mean that the decision variables have
+been assigned specific values. It only means that the solver returned a normal status code
+(i.e. that the solver didn’t run into numerical difficulties). If a solver return code
+indicates the problem is “infeasible” or “unbounded”, we still set
+<code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">=</span> <span class="pre">coniclifts.SOLVED</span></code>. Therefore it is important to check that
+<code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">==</span> <span class="pre">coniclifts.SOLVED</span></code> and that <code class="docutils literal notranslate"><span class="pre">-np.inf</span> <span class="pre">&lt;</span> <span class="pre">self.value</span> <span class="pre">&lt;</span> <span class="pre">np.inf</span></code> before
+accessing a Variable’s value.</p>
+<dl class="method">
+<dt id="sageopt.coniclifts.Problem.solve">
+<code class="sig-name descname">solve</code><span class="sig-paren">(</span><em class="sig-param">solver=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem.solve" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>solver</strong> (<em>str</em>) – None or <code class="docutils literal notranslate"><span class="pre">'MOSEK'</span></code> or <code class="docutils literal notranslate"><span class="pre">'ECOS'</span></code>. Defaults to the first installed solver found in
+<code class="docutils literal notranslate"><span class="pre">Problem._SOLVER_ORDER_</span></code>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>status</strong> (<em>str</em>) – Either <code class="docutils literal notranslate"><span class="pre">coniclifts.SOLVED</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.INACCURATE</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.FAILED</span></code>.
+Refer to the Notes of the Problem class for the meanings of these values.</p></li>
+<li><p><strong>value</strong> (<em>float</em>) – The optimal objective value reported by the solver. Can be a float, <code class="docutils literal notranslate"><span class="pre">-np.inf</span></code>,
+<code class="docutils literal notranslate"><span class="pre">np.inf</span></code>, or <code class="docutils literal notranslate"><span class="pre">np.NaN</span></code>.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Keyword arguments.</p>
+<blockquote>
+<div><p>cache_apply_data</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Problem.variables">
+<code class="sig-name descname">variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem.variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a shallow copy of <code class="docutils literal notranslate"><span class="pre">self.all_variables</span></code>.</p>
+<p>This function is provided to match the syntax of CVXPY Problem objects.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="the-expression-system">
+<span id="cl-expression-system"></span><h2>The Expression system<a class="headerlink" href="#the-expression-system" title="Permalink to this headline">¶</a></h2>
+<p>Coniclifts is built around a few core ideas, including …</p>
+<ul class="simple">
+<li><p>transparency in the compilation process,</p></li>
+<li><p>ease-of-extension for experts in convex optimization,</p></li>
+<li><p>no dependence on a C or C++ backend,</p></li>
+<li><p>full compatibility with numpy.</p></li>
+</ul>
+<p>In order to achieve full compatibility with numpy, coniclifts takes an elementwise approach to symbolic expressions.
+Specifically, coniclifts begins with a few simple abstractions for scalar-valued symbolic expressions, and wraps
+those abstractions in a custom subclass of numpy’s ndarray. The coniclifts abstractions for scalar-valued symbolic
+expressions are as follows:</p>
+<ul class="simple">
+<li><p>A <em>ScalarExpression</em> class represents scalar-valued affine functions of certain irreducible primatives.
+ScalarExpressions are operator-overloaded to support <code class="docutils literal notranslate"><span class="pre">+</span></code>, <code class="docutils literal notranslate"><span class="pre">-</span></code>, and <code class="docutils literal notranslate"><span class="pre">*</span></code>. This allows ndarrays of
+ScalarExpressions to fall back on many functions which are implemented for numeric ndarrays.</p></li>
+<li><p>An abstract <em>ScalarAtom</em> class specifies the behavior of the irreducible primitives in ScalarExpressions. The
+ScalarAtom class immediately specializes into <em>ScalarVariables</em> (far and away the most important ScalarAtom), and
+another abstract class, called <em>NonlinearScalarAtom</em>. NonlinearScalarAtoms are implemented on a case-by-case basis,
+but include such things as the exponential function and the vector 2-norm.</p></li>
+</ul>
+<p>We ask interested users to refer to the source code for additional information on ScalarExpressions and
+ScalarAtoms. For most people, all you need to work with is the Expression class.</p>
+<dl class="class">
+<dt id="sageopt.coniclifts.Expression">
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">Expression</code><a class="headerlink" href="#sageopt.coniclifts.Expression" title="Permalink to this definition">¶</a></dt>
+<dd><p>An Expression is an ndarray whose entries are ScalarExpressions. Variable objects are
+a special case of Expression objects.</p>
+<p>Construction</p>
+<blockquote>
+<div><p>Expression objects can be constructed from ndarrays of numeric types, or ndarrays
+containing ScalarExpressions. In both cases, the construction syntax is</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">expr</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="n">existing_array</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Arithmetic operator overloading</p>
+<blockquote>
+<div><p>Operations <code class="docutils literal notranslate"><span class="pre">+</span></code>, <code class="docutils literal notranslate"><span class="pre">-</span></code>, <code class="docutils literal notranslate"><span class="pre">/</span></code> and <code class="docutils literal notranslate"><span class="pre">*</span></code> work in the exact same way as for numpy arrays.</p>
+<p>Expressions do not allow exponentiation (<code class="docutils literal notranslate"><span class="pre">**</span></code>).</p>
+<p>Expressions overload <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> (a.k.a. <code class="docutils literal notranslate"><span class="pre">__matmul__</span></code>) in a way that is consistent with
+numpy, but only for arguments which have up to two dimensions.</p>
+</div></blockquote>
+<p>Constraint-based operator overloading</p>
+<blockquote>
+<div><p>Operations <code class="docutils literal notranslate"><span class="pre">&lt;=</span></code> and <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> produce elementwise inequality constraints.</p>
+<p>The operation <code class="docutils literal notranslate"><span class="pre">==</span></code> produces an elementwise equality constraint.</p>
+<p>The operations <code class="docutils literal notranslate"><span class="pre">&gt;&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;&lt;</span></code> produce linear matrix inequality constraints.</p>
+</div></blockquote>
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.are_equivalent">
+<em class="property">static </em><code class="sig-name descname">are_equivalent</code><span class="sig-paren">(</span><em class="sig-param">expr1</em>, <em class="sig-param">expr2</em>, <em class="sig-param">rtol=1e-05</em>, <em class="sig-param">atol=1e-08</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.are_equivalent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a check that <code class="docutils literal notranslate"><span class="pre">expr1</span></code> and <code class="docutils literal notranslate"><span class="pre">expr2</span></code> are symbolically equivalent, in the
+sense of affine operators applied to ScalarAtoms. The equivalence is up to numerical
+tolerance in the sense of <code class="docutils literal notranslate"><span class="pre">np.allclose</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>expr1</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – </p></li>
+<li><p><strong>expr2</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – </p></li>
+<li><p><strong>rtol</strong> (<em>float</em>) – relative numerical tolerance</p></li>
+<li><p><strong>atol</strong> (<em>float</em>) – absolute numerical tolerance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>True if the Expressions can be verified as symbolically equivalent. False otherwise.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The behavior of this function is conservative. If <code class="docutils literal notranslate"><span class="pre">self</span></code> contains a mix of
+ScalarAtoms (e.g. ScalarVariables and NonlinearScalarAtoms), then this function
+might return False even when <code class="docutils literal notranslate"><span class="pre">expr1</span></code> and <code class="docutils literal notranslate"><span class="pre">expr2</span></code> are equivalent. This is
+due to nondeterministic behavior of <code class="docutils literal notranslate"><span class="pre">Expression.factor</span></code> in such situations.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.factor">
+<code class="sig-name descname">factor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tuple <code class="docutils literal notranslate"><span class="pre">(A,</span> <span class="pre">x,</span> <span class="pre">B)</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">A</span></code> is a tensor of one order higher than the current Expression object, i.e.
+<code class="docutils literal notranslate"><span class="pre">A.ndim</span> <span class="pre">==</span> <span class="pre">self.ndim</span> <span class="pre">+</span> <span class="pre">1</span></code>. The dimensions of <code class="docutils literal notranslate"><span class="pre">A</span></code> and <code class="docutils literal notranslate"><span class="pre">self</span></code> agree up until
+<code class="docutils literal notranslate"><span class="pre">self.ndim</span></code>, i.e. <code class="docutils literal notranslate"><span class="pre">A.shape[:-1]</span> <span class="pre">==</span> <span class="pre">self.shape</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">x</span></code> is a list of ScalarAtom objects, with <code class="docutils literal notranslate"><span class="pre">len(x)</span> <span class="pre">==</span> <span class="pre">A.shape[-1]</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">B</span></code> is a numpy array of the same shape as <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>The purpose of this function is to enable faster matrix multiplications of Expression
+objects. The idea is that if you tensor-contract <code class="docutils literal notranslate"><span class="pre">A</span></code> along its final dimension according
+to <code class="docutils literal notranslate"><span class="pre">x</span></code>, and then add <code class="docutils literal notranslate"><span class="pre">B</span></code>, you recover this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_affine">
+<code class="sig-name descname">is_affine</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_affine" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if the Expression is an affine function of Variables within its scope.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_concave">
+<code class="sig-name descname">is_concave</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_concave" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an ndarray of booleans. For a fixed component index, the value
+of the returned array indicates if that component of the current Expression
+is a concave function of Variables within its scope.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_constant">
+<code class="sig-name descname">is_constant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if no Variables appear in this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_convex">
+<code class="sig-name descname">is_convex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_convex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an ndarray of booleans. For a fixed component index, the value
+of the returned array indicates if that component of the current Expression
+is a convex function of Variables within its scope.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.scalar_atoms">
+<code class="sig-name descname">scalar_atoms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.scalar_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all ScalarAtoms appearing in this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.scalar_variables">
+<code class="sig-name descname">scalar_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.scalar_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all ScalarVariables appearing in this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Expression.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ndarray containing numeric entries, of shape equal to <code class="docutils literal notranslate"><span class="pre">self.shape</span></code>.
+This is the result of propagating the value of ScalarVariable objects
+through the symbolic operations tracked by this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.variables">
+<code class="sig-name descname">variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all Variable objects appearing in this Expression.
+You can assume that all Variable objects will be “proper”.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="sage-constraint-classes">
+<h2>SAGE constraint classes<a class="headerlink" href="#sage-constraint-classes" title="Permalink to this headline">¶</a></h2>
+<p>Coniclifts provides direct implementations of the primal and dual signomial SAGE cones. The implementation details
+between ordinary-SAGE and conditional-SAGE versions of the primal and dual cones are abstracted away by the classes</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="#sageopt.coniclifts.PrimalSageCone" title="sageopt.coniclifts.PrimalSageCone"><code class="xref py py-class docutils literal notranslate"><span class="pre">sageopt.coniclifts.PrimalSageCone</span></code></a>, and</p></li>
+<li><p><a class="reference internal" href="#sageopt.coniclifts.DualSageCone" title="sageopt.coniclifts.DualSageCone"><code class="xref py py-class docutils literal notranslate"><span class="pre">sageopt.coniclifts.DualSageCone</span></code></a>.</p></li>
+</ul>
+</div></blockquote>
+<p>These classes have virtually identical constructors and public attributes. In particular, both classes’ constructors
+require
+an argument <code class="docutils literal notranslate"><span class="pre">X</span></code>, which can be <code class="docutils literal notranslate"><span class="pre">None</span></code> or a <code class="docutils literal notranslate"><span class="pre">SigDomain</span></code>.
+Ordinary SAGE constraints are obtained by setting <code class="docutils literal notranslate"><span class="pre">X=None</span></code>.
+Conditional SAGE constraints assume the feasible set represented by induced by <code class="docutils literal notranslate"><span class="pre">X</span></code> is feasible, and it is the user’s
+responsibility to ensure this is the case.
+The main difference in these classes’ attributes is
+that <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> instances have a dict called <code class="docutils literal notranslate"><span class="pre">age_vectors</span></code> (which represent the certificates of nonnegativity)
+and that <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> instances have a dict called <code class="docutils literal notranslate"><span class="pre">mu_vars</span></code> (which are useful for solution recovery in SAGE
+relaxations of signomial programs).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> class performs a very efficient dimension-reduction procedure by analyzing the signs of
+the provided vector <code class="docutils literal notranslate"><span class="pre">c</span></code>. The details of the reduction are described in Corollary 5 of <a class="reference external" href="https://arxiv.org/abs/1907.00814">MCW2019</a>.
+At present, coniclifts does not provide a means to track the signs of Variable objects, and so this reduction
+is limited to indices <code class="docutils literal notranslate"><span class="pre">i</span></code> where <code class="docutils literal notranslate"><span class="pre">c[i]</span></code> is constant. This feature can optionally be carried over to
+<code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> objects, if the user provides a keyword argument <code class="docutils literal notranslate"><span class="pre">c</span></code> to the <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> constructor.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> and <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> classes automatically perform a more extensive presolve phase to
+eliminate trivial AGE cones (those which reduce to the nonnegative orthant).
+The computational cost of this presolve is borne when the constraint is constructed, and scales linearly in the
+dimension of the SAGE constraint (equal to <code class="docutils literal notranslate"><span class="pre">constr.alpha.shape[0]</span></code>).
+The cost of this presolve can be mitigated by
+recycling <code class="docutils literal notranslate"><span class="pre">covers</span> <span class="pre">=</span> <span class="pre">constr.ech.expcovers</span></code> from one call of a constraint constructor to the next.
+This presolve option can be disabled entirely by calling <code class="docutils literal notranslate"><span class="pre">sageopt.coniclifts.presolve_trivial_age_cones(False)</span></code>.</p>
+<dl class="class">
+<dt id="sageopt.coniclifts.PrimalSageCone">
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">PrimalSageCone</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">alpha</em>, <em class="sig-param">X</em>, <em class="sig-param">name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represent the constraint “<span class="math notranslate nohighlight">\(c \in C_{\mathrm{SAGE}}(\alpha, X)\)</span>”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – The vector subject to this PrimalSageCone constraint.</p></li>
+<li><p><strong>alpha</strong> (<em>ndarray</em>) – The rows of <code class="docutils literal notranslate"><span class="pre">alpha</span></code> are the exponents defining this primal SAGE cone.</p></li>
+<li><p><strong>X</strong> (<a class="reference internal" href="sageopt.signomials.html#sageopt.SigDomain" title="sageopt.SigDomain"><em>SigDomain</em></a><em> or </em><em>None</em>) – If None, then this constraint represents a primal ordinary-SAGE cone.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
+for the name of any auxiliary Variable created when compiling to the coniclifts standard.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Other Parameters</dt>
+<dd class="field-even"><p><strong>covers</strong> (<em>Dict[int, ndarray]</em>) – <code class="docutils literal notranslate"><span class="pre">covers[i]</span></code> indicates which indices <code class="docutils literal notranslate"><span class="pre">j</span></code> have <code class="docutils literal notranslate"><span class="pre">alpha[j,:]</span></code> participate in
+the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.alpha">
+<code class="sig-name descname">alpha</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>The rows of <code class="docutils literal notranslate"><span class="pre">alpha</span></code> are the exponents defining this primal SAGE cone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.c">
+<code class="sig-name descname">c</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.c" title="Permalink to this definition">¶</a></dt>
+<dd><p>The vector subject to this PrimalSageCone constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression">Expression</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.age_vectors">
+<code class="sig-name descname">age_vectors</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.age_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>If all Variable objects in the scope of this constraint are assigned feasible,
+values, then we should have <code class="docutils literal notranslate"><span class="pre">age_vectors[i].value</span></code> in the i-th AGE cone with
+respect to <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, and <code class="docutils literal notranslate"><span class="pre">c.value</span> <span class="pre">==</span> <span class="pre">sum([av.value</span> <span class="pre">for</span> <span class="pre">av</span> <span class="pre">in</span> <span class="pre">age_vectors.values()],</span> <span class="pre">axis=0)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[int, <a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression">Expression</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.X">
+<code class="sig-name descname">X</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.X" title="Permalink to this definition">¶</a></dt>
+<dd><p>If None, then this constraint represents a primal ordinary-SAGE cone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="sageopt.signomials.html#sageopt.SigDomain" title="sageopt.SigDomain">SigDomain</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.ech">
+<code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.ech" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Manages validation of <code class="docutils literal notranslate"><span class="pre">covers</span></code>
+when provided, and manages construction of <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ExpCoverHelper</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
+for the name of any auxiliary Variable created when compiling to the coniclifts standard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>The constructor can raise a RuntimeError if the constraint is deemed infeasible.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="sageopt.coniclifts.DualSageCone">
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">DualSageCone</code><span class="sig-paren">(</span><em class="sig-param">v</em>, <em class="sig-param">alpha</em>, <em class="sig-param">X</em>, <em class="sig-param">name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.DualSageCone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represent the constraint “<span class="math notranslate nohighlight">\(v \in C_{\mathrm{SAGE}}(\alpha, X)^{\dagger}\)</span>”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – The vector subject to the dual SAGE-cone constraint.</p></li>
+<li><p><strong>alpha</strong> (<em>ndarray</em>) – The matrix of exponent vectors defining the SAGE cone; <code class="docutils literal notranslate"><span class="pre">alpha.shape[0]</span> <span class="pre">==</span> <span class="pre">v.size</span></code>.</p></li>
+<li><p><strong>X</strong> (<a class="reference internal" href="sageopt.signomials.html#sageopt.SigDomain" title="sageopt.SigDomain"><em>SigDomain</em></a><em> or </em><em>None</em>) – If None, then this constraint represents a dual ordinary-SAGE cone.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
+for the name of any auxiliary Variable created when compiling to the coniclifts standard.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Other Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>covers</strong> (<em>Dict[int, ndarray]</em>) – <code class="docutils literal notranslate"><span class="pre">covers[i]</span></code> indicates which indices <code class="docutils literal notranslate"><span class="pre">j</span></code> have <code class="docutils literal notranslate"><span class="pre">alpha[j,:]</span></code> participate in
+the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.</p></li>
+<li><p><strong>c</strong> (<em>Expression or None</em>) – When provided, this DualSageCone instance will compile to a constraint to ensure that <code class="docutils literal notranslate"><span class="pre">v</span></code>
+is a valid dual variable to the constraint that <span class="math notranslate nohighlight">\(c \in C_{\mathrm{SAGE}}(\alpha, X)\)</span>,
+If we have have information about the sign of a component of  <code class="docutils literal notranslate"><span class="pre">c</span></code>, then it is possible to
+reduce the number of coniclifts primitives needed to represent this constraint.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="sageopt.coniclifts.DualSageCone.alpha">
+<code class="sig-name descname">alpha</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>The rows of <code class="docutils literal notranslate"><span class="pre">alpha</span></code> are the exponents defining this primal SAGE cone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.DualSageCone.v">
+<code class="sig-name descname">v</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.v" title="Permalink to this definition">¶</a></dt>
+<dd><p>The vector subject to this dual SAGE cone constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression">Expression</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.DualSageCone.X">
+<code class="sig-name descname">X</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.X" title="Permalink to this definition">¶</a></dt>
+<dd><p>If None, then this constraint represents a dual ordinary-SAGE cone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="sageopt.signomials.html#sageopt.SigDomain" title="sageopt.SigDomain">SigDomain</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.DualSageCone.mu_vars">
+<code class="sig-name descname">mu_vars</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.mu_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">mu_vars[i]</span></code> is the auxiliary variable associated with the i-th dual AGE cone.
+These variables are of shape <code class="docutils literal notranslate"><span class="pre">mu_vars[i].size</span> <span class="pre">==</span> <span class="pre">alpha.shape[1]</span></code>. The most basic
+solution recovery algorithm takes these variables, and considers points <code class="docutils literal notranslate"><span class="pre">x</span></code> of
+the form <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">mu_vars[i].value</span> <span class="pre">/</span> <span class="pre">self.v[i].value</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[int, <a class="reference internal" href="#sageopt.coniclifts.Variable" title="sageopt.coniclifts.Variable">Variable</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.DualSageCone.ech">
+<code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.ech" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Manages validation of <code class="docutils literal notranslate"><span class="pre">covers</span></code>
+when provided, and manages construction of <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ExpCoverHelper</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.DualSageCone.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
+for the name of any auxiliary Variable created when compiling to the coniclifts standard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="the-compiler-interface">
+<span id="cl-compilerinterface"></span><h2>The compiler interface<a class="headerlink" href="#the-compiler-interface" title="Permalink to this headline">¶</a></h2>
+<p>Up until now we have only described coniclifts as a tool for creating optimization problems. However, coniclifts’
+more fundamental use is to exploit the following fact: for every convex set <span class="math notranslate nohighlight">\(X \subset R^n\)</span>, there exists a
+matrix <span class="math notranslate nohighlight">\(A \in R^{k \times m}\)</span> , a vector <span class="math notranslate nohighlight">\(b \in R^k\)</span>, and a convex cone <span class="math notranslate nohighlight">\(K \subset R^k\)</span> so that
+<span class="math notranslate nohighlight">\(X = \{ (x_1,\ldots,x_n) \,:\, A x + b \in K, x \in R^m \}\)</span>. Coniclifts compiles all optimization problems into
+this standard form, where <span class="math notranslate nohighlight">\(K\)</span> is a product of elementary convex cones</p>
+<ol class="arabic simple">
+<li><p>The zero cone.</p></li>
+<li><p>The nonnegative orthant.</p></li>
+<li><p>The exponential cone.</p></li>
+<li><p>The second-order cone.</p></li>
+<li><p>The vectorized positive semidefinite cone.</p></li>
+</ol>
+<p>Crucially, coniclifts provides a means to map back and forth
+between models specified in high-level syntax, and models which exist in a flattened conic form using only primitives
+above.</p>
+<p>The most important function in coniclifts’ compilation process is given below.
+The final return argument mentions “ScalarVariable” objects, which users of coniclifts need not interact with directly.</p>
+<dl class="function">
+<dt id="sageopt.coniclifts.compilers.compile_constrained_system">
+<code class="sig-prename descclassname">sageopt.coniclifts.compilers.</code><code class="sig-name descname">compile_constrained_system</code><span class="sig-paren">(</span><em class="sig-param">constraints</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.compilers.compile_constrained_system" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a flattened conic representation of the set of variable values which satisfy the
+constraints (“the feasible set”). Return the flattened representation of the feasible set,
+data structures for mapping the vectorized representation back to Variables, and a list of
+all Variables needed to represent the feasible set.</p>
+<p>The final return argument (<code class="docutils literal notranslate"><span class="pre">svid2col</span></code>) can likely be ignored by end-users.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>constraints</strong> (<em>list of coniclifts.Constraint</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul>
+<li><p><strong>A</strong> (<em>CSC-format sparse matrix</em>) – The matrix appearing in the flattened representation of the feasible set.</p></li>
+<li><p><strong>b</strong> (<em>ndarray</em>) – The offset vector appearing in the flattened representation of the feasible set.</p></li>
+<li><p><strong>K</strong> (<em>list of coniclifts Cone objects</em>) – The cartesian product of these cones (in order) defines the convex cone appearing
+in the flattened representation of the feasible set.</p></li>
+<li><p><strong>variable_map</strong> (<em>Dict[str, ndarray]</em>) – A map from a Variable’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field to a numpy array. If <code class="docutils literal notranslate"><span class="pre">myvar</span></code> is a coniclifts
+Variable appearing in the system defined by <code class="docutils literal notranslate"><span class="pre">constraints</span></code>, then a point <code class="docutils literal notranslate"><span class="pre">x</span></code>
+satisfying <span class="math notranslate nohighlight">\(A x + b \in K\)</span> maps to a feasible value for <code class="docutils literal notranslate"><span class="pre">myvar</span></code> by</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">myvar_val</span> <span class="o">=</span> <span class="n">x0</span><span class="p">[</span><span class="n">variable_map</span><span class="p">[</span><span class="n">myvar</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>In particular, we guarantee <code class="docutils literal notranslate"><span class="pre">myvar.shape</span> <span class="pre">==</span> <span class="pre">variable_map[myvar.name].shape</span></code>.
+Augmenting <code class="docutils literal notranslate"><span class="pre">x</span></code> by zero to create <code class="docutils literal notranslate"><span class="pre">x0</span></code> reflects a convention that if a component of
+a Variable does not affect the constraints, that component is automatically assigned
+the value zero.</p>
+</li>
+<li><p><strong>variables</strong> (<em>list of coniclifts.Variable</em>) – All proper Variable objects appearing in the constraint set, including any auxiliary
+variables introduced to obtain a flattened conic system.</p></li>
+<li><p><strong>svid2col</strong> (<em>Dict[int, int]</em>) – A map from a ScalarVariable’s <code class="docutils literal notranslate"><span class="pre">id</span></code> to the index of the column in <code class="docutils literal notranslate"><span class="pre">A</span></code> where the ScalarVariable
+participates in the conic system. If the given ScalarVariable does not participate in the conic
+system, its <code class="docutils literal notranslate"><span class="pre">id</span></code> maps to <code class="docutils literal notranslate"><span class="pre">-1</span></code>.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/documentation/sageopt.coniclifts.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

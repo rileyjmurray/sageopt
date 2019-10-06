@@ -1,0 +1,788 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Polynomials &#8212; sageopt 0.4.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="coniclifts is sageopt’s backend" href="sageopt.coniclifts.html" />
+    <link rel="prev" title="Signomials" href="sageopt.signomials.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sageopt</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="sageopt.html">Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sageopt.signomials.html">Signomials</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Polynomials</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#polynomial-objects">polynomial objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conditioning">conditioning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optimization">optimization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-topics">advanced topics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.coniclifts.html">Coniclifts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.nonnegativity.html">Nonnegativity</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../background.html">Background</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="sageopt.html">Overview of sageopt</a><ul>
+      <li>Previous: <a href="sageopt.signomials.html" title="previous chapter">Signomials</a></li>
+      <li>Next: <a href="sageopt.coniclifts.html" title="next chapter"><code class="docutils literal notranslate"><span class="pre">coniclifts</span></code> is <code class="docutils literal notranslate"><span class="pre">sageopt</span></code>’s backend</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="polynomials">
+<h1>Polynomials<a class="headerlink" href="#polynomials" title="Permalink to this headline">¶</a></h1>
+<p>SAGE relaxations are well-suited to sparse polynomials, or polynomials of high
+degree. Sageopt provides a symbolic representation for such functions with the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">sageopt.Polynomial</span></code> class. The Polynomial class thinks in terms of the following expression:</p>
+<div class="math notranslate nohighlight">
+\[x \mapsto \sum_{i=1}^m c_i \prod_{j=1}^n {x_j}^{\alpha_{ij}}\]</div>
+<p>i.e. with parameters <span class="math notranslate nohighlight">\(\alpha \in \mathbb{N}^{m \times n}\)</span>, and <span class="math notranslate nohighlight">\(c \in \mathbb{R}^m\)</span>.
+This page contains (1) the documentation for this class, (2) discussion on the concept of
+<a class="reference internal" href="#condsagepolys"><span class="std std-ref">conditioning</span></a>, (3) documentation for pre-built functions which assist in polynomial
+<a class="reference internal" href="#workwithsagepolys"><span class="std std-ref">optimization</span></a>, and (4) some <a class="reference internal" href="#advancedpolys"><span class="std std-ref">advanced topics</span></a>.</p>
+<div class="section" id="polynomial-objects">
+<span id="polyobj"></span><h2>polynomial objects<a class="headerlink" href="#polynomial-objects" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sageopt.symbolic.polynomials.Polynomial">
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.symbolic.polynomials.</code><code class="sig-name descname">Polynomial</code><span class="sig-paren">(</span><em class="sig-param">alpha_maybe_c</em>, <em class="sig-param">c=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>A symbolic representation for polynomials which are sparse in the monomial basis.
+The constructor for this class can be called in two different ways, and the arguments
+to the constructor have names which reflect the different possibilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha_maybe_c</strong> (<em>dict</em><em> or </em><em>ndarray</em>) – <p>If <code class="docutils literal notranslate"><span class="pre">alpha_maybe_c</span></code> is a dict, then it must be a dictionary from tuples-of-numbers to
+scalars. The keys will be converted to rows of a matrix which we call <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, and
+the values will be assembled into a vector which we call <code class="docutils literal notranslate"><span class="pre">c</span></code>.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">alpha_maybe_c</span></code> is an ndarray, then the argument <code class="docutils literal notranslate"><span class="pre">c</span></code> must also be an ndarray,
+and <code class="docutils literal notranslate"><span class="pre">c.size</span></code> must equal the number of rows in <code class="docutils literal notranslate"><span class="pre">alpha_maybe_c</span></code>.</p>
+</p></li>
+<li><p><strong>c</strong> (<em>None</em><em> or </em><em>ndarray</em>) – This value is only used when <code class="docutils literal notranslate"><span class="pre">alpha_maybe_c</span></code> is an ndarray. In that case, this
+Polynomial represents <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">c</span> <span class="pre">&#64;</span> <span class="pre">np.prod(np.power(alpha_maybe_c,</span> <span class="pre">x))</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>There are two ways to call the Polynomial constructor.</p>
+<p>The first way is to specify a dictionary from tuples to scalars. Each key-value pair of the dictionary
+represents a monomial appearing in this polynomial. The key tuples must all be of some common length <code class="docutils literal notranslate"><span class="pre">n</span></code>.
+If <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">coeff)</span></code> is a key-value pair in this dictionary, then the Polynomial includes an additive term
+<code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">coeff</span> <span class="pre">*</span> <span class="pre">np.prod(np.power(a,</span> <span class="pre">x))</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alpha_and_c</span> <span class="o">=</span> <span class="p">{(</span><span class="mi">1</span><span class="p">,):</span> <span class="mi">2</span><span class="p">}</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="p">(</span><span class="n">alpha_and_c</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># equal to 2.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">))</span>  <span class="c1"># equal to -6.</span>
+</pre></div>
+</div>
+<p>The second way is to specify two arguments. In this case the first argument <code class="docutils literal notranslate"><span class="pre">alpha</span></code> is an ndarray of
+exponent vectors, where <code class="docutils literal notranslate"><span class="pre">alpha[i,</span> <span class="pre">j]</span></code> is the power of variable <code class="docutils literal notranslate"><span class="pre">j</span></code> in monomial <code class="docutils literal notranslate"><span class="pre">i</span></code>. The second argument
+is a numpy array <code class="docutils literal notranslate"><span class="pre">c</span></code>, where <code class="docutils literal notranslate"><span class="pre">c[i]</span></code> is the coefficient on the i-th monomial defined by <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+<span class="n">val</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># val = 1 * (-4) + 2 * (7) + 3 * (-4 * 7)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># -74</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="sageopt.symbolic.polynomials.Polynomial.n">
+<code class="sig-name descname">n</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.n" title="Permalink to this definition">¶</a></dt>
+<dd><p>The dimension of the space over which this Polynomial is defined. The number of columns in <code class="docutils literal notranslate"><span class="pre">alpha</span></code>,
+and the length of tuples appearing in the dictionary <code class="docutils literal notranslate"><span class="pre">alpha_c</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.symbolic.polynomials.Polynomial.m">
+<code class="sig-name descname">m</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.m" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of terms needed to express this Polynomial in the standard monomial basis.
+The number of rows in  <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.  The length of the dictionary <code class="docutils literal notranslate"><span class="pre">alpha_c</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.symbolic.polynomials.Polynomial.alpha">
+<code class="sig-name descname">alpha</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>Has shape <code class="docutils literal notranslate"><span class="pre">(m,</span> <span class="pre">n)</span></code>. Entry <code class="docutils literal notranslate"><span class="pre">alpha[i,j]</span></code> is the power of an implicit variable <code class="docutils literal notranslate"><span class="pre">x[j]</span></code>
+appearing in the i-th monomial for this Polynomial. The i-th monomial, in turn, has coefficient <code class="docutils literal notranslate"><span class="pre">c[i]</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.symbolic.polynomials.Polynomial.c">
+<code class="sig-name descname">c</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.c" title="Permalink to this definition">¶</a></dt>
+<dd><p>Has shape <code class="docutils literal notranslate"><span class="pre">(m,)</span></code>. The scalar <code class="docutils literal notranslate"><span class="pre">c[i]</span></code> is this Polynomial’s coefficient on the basis function
+<code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">np.prod(np.power(alpha[i,</span> <span class="pre">:],</span> <span class="pre">x))</span></code>. It is possible to have <code class="docutils literal notranslate"><span class="pre">c.dtype</span> <span class="pre">==</span> <span class="pre">object</span></code>, to allow for
+coniclifts Variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.symbolic.polynomials.Polynomial.alpha_c">
+<code class="sig-name descname">alpha_c</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.alpha_c" title="Permalink to this definition">¶</a></dt>
+<dd><p>The keys of <code class="docutils literal notranslate"><span class="pre">alpha_c</span></code> are tuples of length <code class="docutils literal notranslate"><span class="pre">n</span></code>, containing real numeric types (e.g int, float).
+These tuples correspond to rows in <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>defaultdict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>The Polynomial class subclasses the Signomial class. This is done because most algebraic operations between
+polynomials and signomials are identical. However it is important to remember that polynomials and signomials
+evaluate in very different ways.</p>
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.as_signomial">
+<code class="sig-name descname">as_signomial</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.as_signomial" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>f</strong> – For every elementwise positive vector <code class="docutils literal notranslate"><span class="pre">x</span></code>, we have <code class="docutils literal notranslate"><span class="pre">self(x)</span> <span class="pre">==</span> <span class="pre">f(np.log(x))</span></code>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="sageopt.signomials.html#sageopt.Signomial" title="sageopt.Signomial">Signomial</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.constant_location">
+<code class="sig-name descname">constant_location</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.constant_location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the index <code class="docutils literal notranslate"><span class="pre">i</span></code> so that <code class="docutils literal notranslate"><span class="pre">alpha[i,</span> <span class="pre">:]</span></code> is the zero vector.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.even_locations">
+<code class="sig-name descname">even_locations</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.even_locations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the largest ndarray <code class="docutils literal notranslate"><span class="pre">evens</span></code>, so that <code class="docutils literal notranslate"><span class="pre">np.all(alpha[evens,:]</span> <span class="pre">%</span> <span class="pre">2</span> <span class="pre">==</span> <span class="pre">0)</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.grad">
+<em class="property">property </em><code class="sig-name descname">grad</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>A numpy ndarray of shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> whose entries are Polynomials. For a numpy ndarray <code class="docutils literal notranslate"><span class="pre">x</span></code>,
+<code class="docutils literal notranslate"><span class="pre">grad[i](x)</span></code> is the partial derivative of this Polynomial with respect to coordinate <code class="docutils literal notranslate"><span class="pre">i</span></code>,
+evaluated at <code class="docutils literal notranslate"><span class="pre">x</span></code>. This array is constructed only when necessary, and is cached upon construction.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.hess">
+<em class="property">property </em><code class="sig-name descname">hess</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.hess" title="Permalink to this definition">¶</a></dt>
+<dd><p>A numpy ndarray of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">n)</span></code>, whose entries are Polynomials. For a numpy ndarray <code class="docutils literal notranslate"><span class="pre">x</span></code>,
+<code class="docutils literal notranslate"><span class="pre">hess[i,j](x)</span></code> is the (i,j)-th partial derivative of this Polynomial, evaluated at <code class="docutils literal notranslate"><span class="pre">x</span></code>.
+This array is constructed only when necessary, and is cached upon construction.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.partial">
+<code class="sig-name descname">partial</code><span class="sig-paren">(</span><em class="sig-param">i</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.partial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the symbolic partial derivative of this polynomial, at coordinate <code class="docutils literal notranslate"><span class="pre">i</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>i</strong> (<em>int</em>) – <code class="docutils literal notranslate"><span class="pre">i</span></code> must be an integer from 0 to <code class="docutils literal notranslate"><span class="pre">self.n</span> <span class="pre">-</span> <span class="pre">1</span></code>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>p</strong> – The function obtained by differentiating this polynomial with respect to its i-th argument.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sageopt.symbolic.polynomials.Polynomial" title="sageopt.symbolic.polynomials.Polynomial">Polynomial</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.query_coeff">
+<code class="sig-name descname">query_coeff</code><span class="sig-paren">(</span><em class="sig-param">a</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.query_coeff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the coefficient of the monomial <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">np.prod(np.power(a,</span> <span class="pre">x))</span></code> for this Polynomial.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.remove_terms_with_zero_as_coefficient">
+<code class="sig-name descname">remove_terms_with_zero_as_coefficient</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.remove_terms_with_zero_as_coefficient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">c</span></code>, and <code class="docutils literal notranslate"><span class="pre">alpha_c</span></code> to remove nonconstant terms where <code class="docutils literal notranslate"><span class="pre">c[i]</span> <span class="pre">==</span> <span class="pre">0</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.sig_rep">
+<em class="property">property </em><code class="sig-name descname">sig_rep</code><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.sig_rep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the signomial representative of the current Polynomial, as well as a list of constraints needed
+to enforce the relationship between the current Polynomial and the signomial representative.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>sr</strong> (<em>Signomial</em>) – If this Signomial is globally nonnegative, then the current Polynomial is also globally nonnegative.</p></li>
+<li><p><strong>sr_cons</strong> (<em>list of coniclifts Constraints</em>) – If the current Polynomial has nonconstant coefficients (i.e. some entries of <code class="docutils literal notranslate"><span class="pre">c</span></code> are coniclifts
+Variables), then <code class="docutils literal notranslate"><span class="pre">sr</span></code> will also have nonconstant coefficients. In order to enforce the relationship
+between <code class="docutils literal notranslate"><span class="pre">sr</span></code> and the current Polynomial, we may require constraints between <code class="docutils literal notranslate"><span class="pre">c</span></code> and <code class="docutils literal notranslate"><span class="pre">sr.c</span></code>.
+Any such constraints are in this list.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.Polynomial.standard_multiplier">
+<code class="sig-name descname">standard_multiplier</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.Polynomial.standard_multiplier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Polynomial which is globally nonnegative by construction, for use as a modulator in SAGE hierarchies.
+The particular polynomial has exponents <code class="docutils literal notranslate"><span class="pre">alpha</span> <span class="pre">=</span> <span class="pre">alpha[even_locations(),</span> <span class="pre">:]</span></code>, and a coefficient vector of
+all ones.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.standard_poly_monomials">
+<code class="sig-prename descclassname">polynomials.</code><code class="sig-name descname">standard_poly_monomials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.standard_poly_monomials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">x</span></code> where <code class="docutils literal notranslate"><span class="pre">x[i](z)</span> <span class="pre">=</span> <span class="pre">z[i]</span></code> for all numeric <code class="docutils literal notranslate"><span class="pre">z</span></code> of length <code class="docutils literal notranslate"><span class="pre">n</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – The polynomials will be defined on <span class="math notranslate nohighlight">\(R^n\)</span>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>x</strong> – An array  of length <code class="docutils literal notranslate"><span class="pre">n</span></code>, containing Polynomial objects.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>This function is useful for constructing Polynomials using algebraic syntax.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">standard_poly_monomials</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="conditioning">
+<span id="condsagepolys"></span><h2>conditioning<a class="headerlink" href="#conditioning" title="Permalink to this headline">¶</a></h2>
+<p>SAGE can naturally handle certain
+structured constraints in optimization problems, or nonnegativity problems.
+The process by which these constraints are handled is known as <em>partial dualization</em>.
+You can think of partial dualization as a type of “conditioning”, in the sense of conditional
+probability.</p>
+<p>In the polynomial case, the “nice” sets <span class="math notranslate nohighlight">\(X\)</span> are those satisfying three properties</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>invariance under reflection about the <span class="math notranslate nohighlight">\(n\)</span>
+hyperplanes <span class="math notranslate nohighlight">\(H_i = \{ (x_1,\ldots,x_n) : x_i = 0 \}\)</span>.</p></li>
+<li><p>the set <span class="math notranslate nohighlight">\(X \cap \mathbb{R}^n_{++}\)</span> is <a class="reference external" href="https://arxiv.org/abs/1812.04074">log-convex</a>, and</p></li>
+<li><p>the closure of <span class="math notranslate nohighlight">\(X \cap \mathbb{R}^n_{++}\)</span> equals <span class="math notranslate nohighlight">\(X \cap \mathbb{R}^n_+\)</span></p></li>
+</ol>
+</div></blockquote>
+<p>Take a look at Section 4 of <a class="reference external" href="https://arxiv.org/abs/1907.00814">MCW2019</a> to see why this is the case.</p>
+<p>Sageopt is designed so users can take advantage of partial dualization without being
+experts on the subject. Towards this end, sageopt includes a function which can infer
+a suitably structured <span class="math notranslate nohighlight">\(X\)</span> from a given collection of polynomial equations and inequalities.
+That function is described below.</p>
+<dl class="function">
+<dt id="sageopt.relaxations.sage_polys.infer_domain">
+<code class="sig-prename descclassname">sageopt.relaxations.sage_polys.</code><code class="sig-name descname">infer_domain</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">check_feas=True</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.relaxations.sage_polys.infer_domain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify a subset of the constraints in <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code> which can be incorporated into
+conditional SAGE relaxations for polynomials. Construct a PolyDomain object from the inferred
+constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference internal" href="#sageopt.symbolic.polynomials.Polynomial" title="sageopt.symbolic.polynomials.Polynomial"><em>Polynomial</em></a>) – The objective in a desired optimization problem. This parameter is only used to determine
+the dimension of the set defined by constraints in <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code>.</p></li>
+<li><p><strong>gts</strong> (<em>list of Polynomials</em>) – For every <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">gts</span></code>, there is a desired constraint that variables <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfy <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>eqs</strong> (<em>list of Polynomials</em>) – For every <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">eqs</span></code>, there is a desired constraint that variables <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfy <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>check_feas</strong> (<em>bool</em>) – Indicates whether or not to verify that the returned PolyDomain is nonempty.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>X</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sageopt.symbolic.polynomials.PolyDomain" title="sageopt.symbolic.polynomials.PolyDomain">PolyDomain</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>The function above captures a small portion of what is possible with conditional SAGE
+certificates for polynomials. In order to take more full advantage of the possibilities,
+you will need to describe the set yourself. Refer to the <a class="reference internal" href="#advancedpolys"><span class="std std-ref">advanced topics</span></a> section
+for more information.</p>
+</div>
+<div class="section" id="optimization">
+<span id="workwithsagepolys"></span><h2>optimization<a class="headerlink" href="#optimization" title="Permalink to this headline">¶</a></h2>
+<p>Here are sageopt’s core functions which can assist in polynomial optimization:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="#sageopt.poly_relaxation" title="sageopt.poly_relaxation"><code class="xref py py-func docutils literal notranslate"><span class="pre">sageopt.poly_relaxation()</span></code></a>,</p></li>
+<li><p><a class="reference internal" href="#sageopt.poly_constrained_relaxation" title="sageopt.poly_constrained_relaxation"><code class="xref py py-func docutils literal notranslate"><span class="pre">sageopt.poly_constrained_relaxation()</span></code></a>,</p></li>
+<li><p><a class="reference internal" href="#sageopt.poly_solrec" title="sageopt.poly_solrec"><code class="xref py py-func docutils literal notranslate"><span class="pre">sageopt.poly_solrec()</span></code></a>, and</p></li>
+<li><p><a class="reference internal" href="#sageopt.local_refine_polys_from_sigs" title="sageopt.local_refine_polys_from_sigs"><code class="xref py py-func docutils literal notranslate"><span class="pre">sageopt.local_refine_polys_from_sigs()</span></code></a>.</p></li>
+</ul>
+</div></blockquote>
+<p>We assume the user has already read the section on polynomial <a class="reference internal" href="#condsagepolys"><span class="std std-ref">conditioning</span></a>.
+Newcomers to sageopt might benefit from reading this page in
+one browser window, and keeping our page of <a class="reference internal" href="../examples/examples.html#allexamples"><span class="std std-ref">Examples</span></a> open in an adjacent window.
+It might also be useful to have a copy of <a class="reference external" href="https://arxiv.org/abs/1907.00814">MCW2019</a> at hand, since that article is
+referenced throughout this section.</p>
+<p>A remark: The functions described here are largely reference
+implementations. Depending on the specifics of your problem, it may be beneficial to implement variants of these
+functions by directly working with sageopt’s backend: coniclifts.</p>
+<div class="section" id="structured-constraints">
+<h3>structured constraints<a class="headerlink" href="#structured-constraints" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">poly_relaxation</span></code> requires that any and all constraints are incorporated into
+a set <span class="math notranslate nohighlight">\(X\)</span> , which satisfies the properties for polynomial <a class="reference internal" href="#condsagepolys"><span class="std std-ref">conditioning</span></a>.</p>
+<dl class="function">
+<dt id="sageopt.poly_relaxation">
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">poly_relaxation</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">X=None</em>, <em class="sig-param">form='dual'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.poly_relaxation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a coniclifts Problem instance for producing a lower bound on</p>
+<div class="math notranslate nohighlight">
+\[\min\{ f(x) \,:\, x \in X \}\]</div>
+<p>where <span class="math notranslate nohighlight">\(X=R^{\texttt{f.n}}\)</span> by default.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">form='dual'</span></code>, we can also attempt to recover solutions to the above problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference internal" href="#sageopt.symbolic.polynomials.Polynomial" title="sageopt.symbolic.polynomials.Polynomial"><em>Polynomial</em></a>) – The objective function to be minimized.</p></li>
+<li><p><strong>X</strong> (<a class="reference internal" href="#sageopt.symbolic.polynomials.PolyDomain" title="sageopt.symbolic.polynomials.PolyDomain"><em>PolyDomain</em></a><em> or </em><em>None</em>) – If <code class="docutils literal notranslate"><span class="pre">X</span></code> is None, then we produce a bound on <code class="docutils literal notranslate"><span class="pre">f</span></code> over <span class="math notranslate nohighlight">\(R^{\texttt{f.n}}\)</span>.</p></li>
+<li><p><strong>form</strong> (<em>str</em>) – Either <code class="docutils literal notranslate"><span class="pre">form='primal'</span></code> or <code class="docutils literal notranslate"><span class="pre">form='dual'</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>prob</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="sageopt.coniclifts.html#sageopt.coniclifts.Problem" title="sageopt.coniclifts.Problem">sageopt.coniclifts.Problem</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function also accepts the following keyword arguments:</p>
+<dl class="simple">
+<dt>poly_ell<span class="classifier">int</span></dt><dd><p>Controls the complexity of a polynomial modulating function. Must be nonnegative.</p>
+</dd>
+<dt>sigrep_ell<span class="classifier">int</span></dt><dd><p>Controls the complexity of the SAGE certificate applied to the Lagrangian’s signomial representative.</p>
+</dd>
+</dl>
+<p>The dual formulation does not allow that both <code class="docutils literal notranslate"><span class="pre">poly_ell</span></code> and <code class="docutils literal notranslate"><span class="pre">sigrep_ell</span></code> are greater than
+zero (such functionality is not implemented at this time).</p>
+</dd></dl>
+
+</div>
+<div class="section" id="arbitrary-constraints">
+<h3>arbitrary constraints<a class="headerlink" href="#arbitrary-constraints" title="Permalink to this headline">¶</a></h3>
+<p>In more general settings, you can use <code class="docutils literal notranslate"><span class="pre">poly_constrained_relaxation</span></code>. In
+addition to allowing sets <span class="math notranslate nohighlight">\(X\)</span> described above, this function
+allows explicit polynomial inequality constraints
+(<span class="math notranslate nohighlight">\(g(x) \geq 0\)</span>) and equality constraints (<span class="math notranslate nohighlight">\(g(x) = 0\)</span>).</p>
+<dl class="function">
+<dt id="sageopt.poly_constrained_relaxation">
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">poly_constrained_relaxation</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">X=None</em>, <em class="sig-param">form='dual'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.poly_constrained_relaxation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a coniclifts Problem representing a SAGE relaxation for the polynomial optimization
+problem</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+  \min\{ f(x) :~&amp; g(x) \geq 0 \text{ for } g \in \text{gts}, \\
+               &amp; g(x) = 0  \text{ for } g \in \text{eqs}, \\
+               &amp; \text{and } x \in X \}
+\end{align*}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(X = R^{\texttt{f.n}}\)</span> by default. The optimal value of this relaxation will
+produce a lower bound on the minimization problem described above. When <code class="docutils literal notranslate"><span class="pre">form='dual'</span></code>,
+a solution to this  relaxation can be used to help recover optimal solutions to the problem
+described above.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference internal" href="#sageopt.symbolic.polynomials.Polynomial" title="sageopt.symbolic.polynomials.Polynomial"><em>Polynomial</em></a>) – The objective to be minimized.</p></li>
+<li><p><strong>gts</strong> (<em>list of Polynomials</em>) – For every <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">gts</span></code>, there is a desired constraint that variables <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfy <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>eqs</strong> (<em>list of Polynomials</em>) – For every <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">eqs</span></code>, there is a desired constraint that variables <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfy <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>X</strong> (<a class="reference internal" href="#sageopt.symbolic.polynomials.PolyDomain" title="sageopt.symbolic.polynomials.PolyDomain"><em>PolyDomain</em></a>) – If <code class="docutils literal notranslate"><span class="pre">X</span></code> is None, then we produce a bound on <code class="docutils literal notranslate"><span class="pre">f</span></code> subject only to the constraints in
+<code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code>.</p></li>
+<li><p><strong>form</strong> (<em>str</em>) – Either <code class="docutils literal notranslate"><span class="pre">form='primal'</span></code> or <code class="docutils literal notranslate"><span class="pre">form='dual'</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>prob</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="sageopt.coniclifts.html#sageopt.coniclifts.Problem" title="sageopt.coniclifts.Problem">sageopt.coniclifts.Problem</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function also accepts the following keyword arguments:</p>
+<dl class="simple">
+<dt>p<span class="classifier">int</span></dt><dd><p>Controls the complexity of Lagrange multipliers on explicit polynomial constraints <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">p=0</span></code>, which corresponds to scalar Lagrange multipliers.</p>
+</dd>
+<dt>q<span class="classifier">int</span></dt><dd><p>The lists <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code> are replaced by lists of polynomials formed by all products of <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">q</span></code>
+elements from <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code> respectively. Defaults to <code class="docutils literal notranslate"><span class="pre">q</span> <span class="pre">=</span> <span class="pre">1</span></code>.</p>
+</dd>
+<dt>ell<span class="classifier">int</span></dt><dd><p>Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
+<code class="docutils literal notranslate"><span class="pre">ell=0</span></code>, which means the primal Lagrangian must be an X-SAGE polynomial.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>For further explanation of the parameters <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">q</span></code>, and <code class="docutils literal notranslate"><span class="pre">ell</span></code> in the function above, we refer the user
+to the <a class="reference internal" href="#advancedpolys"><span class="std std-ref">advanced topics</span></a> section.</p>
+</div>
+<div class="section" id="solution-recovery">
+<h3>solution recovery<a class="headerlink" href="#solution-recovery" title="Permalink to this headline">¶</a></h3>
+<p>Section 4.2 of <a class="reference external" href="https://arxiv.org/abs/1907.00814">MCW2019</a> introduces two solution recovery algorithms for dual SAGE relaxations.
+The main algorithm (“Algorithm 2”) is implemented by sageopt’s function <code class="docutils literal notranslate"><span class="pre">poly_solrec</span></code>, and the second algorithm
+(“Algorithm 2L”) is simply to use a local solver to refine the solution produced by the main algorithm.
+The exact choice of local solver is not terribly important. For completeness, sageopt includes
+a generic <a class="reference internal" href="sageopt.signomials.html#sageopt.local_refine" title="sageopt.local_refine"><code class="xref py py-func docutils literal notranslate"><span class="pre">sageopt.local_refine()</span></code></a> function which relies on the COBYLA solver.</p>
+<dl class="function">
+<dt id="sageopt.poly_solrec">
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">poly_solrec</code><span class="sig-paren">(</span><em class="sig-param">prob</em>, <em class="sig-param">ineq_tol=1e-08</em>, <em class="sig-param">eq_tol=1e-06</em>, <em class="sig-param">skip_ls=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.poly_solrec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recover a list of candidate solutions from a dual SAGE relaxation. Solutions are
+guaranteed to be feasible up to specified tolerances, but not necessarily optimal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prob</strong> (<a class="reference internal" href="sageopt.coniclifts.html#sageopt.coniclifts.Problem" title="sageopt.coniclifts.Problem"><em>coniclifts.Problem</em></a>) – A dual-form SAGE relaxation, from <code class="docutils literal notranslate"><span class="pre">poly_constrained_relaxation</span></code>.</p></li>
+<li><p><strong>ineq_tol</strong> (<em>float</em>) – The amount by which recovered solutions can violate inequality constraints.</p></li>
+<li><p><strong>eq_tol</strong> (<em>float</em>) – The amount by which recovered solutions can violate equality constraints.</p></li>
+<li><p><strong>skip_ls</strong> (<em>bool</em>) – Whether or not to skip least-squares solution recovery.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>sols</strong> – A list of feasible solutions, sorted in increasing order of objective function value.
+It is possible that this list is empty, in which case no feasible solutions were recovered.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of ndarrays</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function accepts the following keyword arguments:</p>
+<dl class="simple">
+<dt>zero_tol<span class="classifier">float</span></dt><dd><p>Used in magnitude recovery. If a component of the Lagrangian’s moment vector is smaller
+than this (in absolute value), pretend it’s zero in the least-squares step. Defaults to 1e-20.</p>
+</dd>
+<dt>heuristic_signs<span class="classifier">bool</span></dt><dd><p>Used in sign recovery. If True, then attempts to infer variable signs from the Lagrangian’s
+moment vector even when a completely consistent set of signs does not exist. Defaults to True.</p>
+</dd>
+<dt>all_signs<span class="classifier">bool</span></dt><dd><p>Used in sign recovery. If True, then consider returning solutions which differ only by sign.
+Defaults to True.</p>
+</dd>
+</dl>
+<p>This function is implemented only for poly_constrained_relaxation (not poly_relaxation).</p>
+</dd></dl>
+
+<p>When faced with a polynomial optimization problem over nonnegative variables,
+one should formulate the problem in terms of signomials.
+This reformulation is without loss of generality from the perspective of solving a SAGE relaxation,
+but the local-refinement stage of solution recovery is somewhat different.
+The following function may be important if a polynomial optimization problem has
+some variable equal to zero in an optimal solution.</p>
+<dl class="function">
+<dt id="sageopt.local_refine_polys_from_sigs">
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">local_refine_polys_from_sigs</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">x0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.local_refine_polys_from_sigs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>This is a helper function which …</dt><dd><ol class="arabic simple">
+<li><p>accepts signomial problem data (representative of a desired polynomial optimization problem),</p></li>
+<li><p>transforms the signomial data into equivalent polynomial data, and</p></li>
+<li><p>performs local refinement on the polynomial data, via the COBYLA solver.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference internal" href="sageopt.signomials.html#sageopt.Signomial" title="sageopt.Signomial"><em>Signomial</em></a>) – Defines the objective function to be minimized. From “f” we will construct
+a polynomial “p” where <code class="docutils literal notranslate"><span class="pre">p(y)</span> <span class="pre">=</span> <span class="pre">f(np.log(y))</span></code> for all positive vectors y.</p></li>
+<li><p><strong>gts</strong> (<em>list of Signomial</em>) – Each defining an inequality constraint <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>. From this list, we will construct a
+list of polynomials gts_poly, so that every <code class="docutils literal notranslate"><span class="pre">g0</span> <span class="pre">in</span> <span class="pre">gts</span></code> has a polynomial representative
+<code class="docutils literal notranslate"><span class="pre">g1</span> <span class="pre">in</span> <span class="pre">gts_poly</span></code>, satisfying <code class="docutils literal notranslate"><span class="pre">g1(y)</span> <span class="pre">=</span> <span class="pre">g0(np.log(y))</span></code> for all positive vectors y.</p></li>
+<li><p><strong>eqs</strong> (<em>list of Signomial</em>) – Each defining an equality constraint <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">0</span></code>. From this list, we will construct a
+list of polynomials <code class="docutils literal notranslate"><span class="pre">eqs_poly</span></code>, so that every <code class="docutils literal notranslate"><span class="pre">g0</span> <span class="pre">in</span> <span class="pre">gts</span></code> has a polynomial representative
+<code class="docutils literal notranslate"><span class="pre">g1</span> <span class="pre">in</span> <span class="pre">eqs_poly</span></code>, satisfying <code class="docutils literal notranslate"><span class="pre">g1(y)</span> <span class="pre">=</span> <span class="pre">g0(np.log(y))</span></code> for all positive vectors y.</p></li>
+<li><p><strong>x0</strong> (<em>ndarray</em>) – An initial condition for the <em>signomial</em> optimization problem
+<code class="docutils literal notranslate"><span class="pre">min{</span> <span class="pre">f(x)</span> <span class="pre">|</span>&#160; <span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">0</span> <span class="pre">for</span> <span class="pre">g</span> <span class="pre">in</span> <span class="pre">gts,</span> <span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">0</span> <span class="pre">for</span> <span class="pre">g</span> <span class="pre">in</span> <span class="pre">eqs</span> <span class="pre">}</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Other Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>rhobeg</strong> (<em>float</em>) – Controls the size of COBYLA’s initial search space around <code class="docutils literal notranslate"><span class="pre">y0</span> <span class="pre">=</span> <span class="pre">exp(x0)</span></code>.</p></li>
+<li><p><strong>rhoend</strong> (<em>float</em>) – Termination criteria, controlling the size of COBYLA’s smallest search space.</p></li>
+<li><p><strong>maxfun</strong> (<em>int</em>) – Termination criteria, bounding the number of COBYLA’s iterations.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>y</strong> – The output of COBYLA for the polynomial optimization problem
+<code class="docutils literal notranslate"><span class="pre">min{</span> <span class="pre">p(y)</span> <span class="pre">|</span> <span class="pre">g(y)</span> <span class="pre">&gt;=</span> <span class="pre">0</span> <span class="pre">for</span> <span class="pre">g</span> <span class="pre">in</span> <span class="pre">gts_poly,</span> <span class="pre">g(y)</span> <span class="pre">==</span> <span class="pre">0</span> <span class="pre">for</span> <span class="pre">g</span> <span class="pre">in</span> <span class="pre">eqs_poly,</span> <span class="pre">y</span> <span class="pre">&gt;=</span> <span class="pre">0</span> <span class="pre">}</span></code>
+with initial condition <code class="docutils literal notranslate"><span class="pre">y0</span> <span class="pre">=</span> <span class="pre">exp(x0)</span></code>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="advanced-topics">
+<span id="advancedpolys"></span><h2>advanced topics<a class="headerlink" href="#advanced-topics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="polydomain-objects">
+<h3>PolyDomain objects<a class="headerlink" href="#polydomain-objects" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="sageopt.symbolic.polynomials.PolyDomain">
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.symbolic.polynomials.</code><code class="sig-name descname">PolyDomain</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.PolyDomain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represent a set <span class="math notranslate nohighlight">\(X \subset R^n\)</span> satisfying the following properties:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>invariance under reflection about the <span class="math notranslate nohighlight">\(n\)</span>
+hyperplanes <span class="math notranslate nohighlight">\(H_i = \{ (x_1,\ldots,x_n) : x_i = 0 \}\)</span>.</p></li>
+<li><p>the set <span class="math notranslate nohighlight">\(X \cap R^n_{++}\)</span> is is log convex, and</p></li>
+<li><p>the closure of <span class="math notranslate nohighlight">\(X \cap R^n_{++}\)</span> equals <span class="math notranslate nohighlight">\(X \cap R^n_+\)</span></p></li>
+</ol>
+</div></blockquote>
+<p>Such sets are used in polynomial conditional SAGE relaxations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – The dimension of the space in which this set lives.</p>
+</dd>
+<dt class="field-even">Other Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>logspace_cons</strong> (<em>list of coniclifts.constraints.Constraint</em>) – Constraints over the variable <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">:=</span> <span class="pre">log(|x|)</span></code>, which define this PolyDomain.</p></li>
+<li><p><strong>gts</strong> (<em>list of callable</em>) – Inequality constraint functions (<code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>) which can be used to represent <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>eqs</strong> (<em>list of callable</em>) – Equality constraint functions (<code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">0</span></code>) which can be used to represent <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>check_feas</strong> (<em>bool</em>) – Whether or not to check that <code class="docutils literal notranslate"><span class="pre">X</span></code> is nonempty. Defaults to True.</p></li>
+<li><p><strong>log_AbK</strong> (<em>tuple</em>) – Specify a convex set in the coniclifts standard. <code class="docutils literal notranslate"><span class="pre">log_AbK[0]</span></code> is a SciPy sparse
+matrix. The first <code class="docutils literal notranslate"><span class="pre">n</span></code> columns of this matrix correspond to the variables over
+which this set is supposed to be defined. Any remaining columns are for auxiliary
+variables.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The constraint functions in <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code> should allow arguments where some components
+equal to zero. These functions can be Polynomial objects, but are not required to be.</p>
+<p>Only one of <code class="docutils literal notranslate"><span class="pre">log_AbK</span></code> and <code class="docutils literal notranslate"><span class="pre">logspace_cons</span></code> can be provided upon construction.
+If more than one of these value is provided, the constructor will raise an error.</p>
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.PolyDomain.check_membership">
+<code class="sig-name descname">check_membership</code><span class="sig-paren">(</span><em class="sig-param">x_val</em>, <em class="sig-param">tol</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.PolyDomain.check_membership" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate <code class="docutils literal notranslate"><span class="pre">self.gts</span></code> and <code class="docutils literal notranslate"><span class="pre">self.eqs</span></code> at <code class="docutils literal notranslate"><span class="pre">x_val</span></code>,
+to check if <code class="docutils literal notranslate"><span class="pre">x_val</span></code> belongs to this PolyDomain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_val</strong> (<em>ndarray</em>) – Check if <code class="docutils literal notranslate"><span class="pre">x_val</span></code> belongs in this domain.</p></li>
+<li><p><strong>tol</strong> (<em>float</em>) – Infeasibility tolerance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>res</strong> – True iff <code class="docutils literal notranslate"><span class="pre">x_val</span></code> belongs to the domain represented by <code class="docutils literal notranslate"><span class="pre">self</span></code>, up
+to infeasibility tolerance <code class="docutils literal notranslate"><span class="pre">tol</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.symbolic.polynomials.PolyDomain.parse_coniclifts_constraints">
+<code class="sig-name descname">parse_coniclifts_constraints</code><span class="sig-paren">(</span><em class="sig-param">logspace_cons</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.symbolic.polynomials.PolyDomain.parse_coniclifts_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify this PolyDomain object, so that it the log of its intersection
+with the positive orthant is the set of values satisfying constraints
+in logspace_cons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>logspace_cons</strong> (<em>list of coniclifts.Constraint</em>) – The provided constraints must be defined over a single coniclifts Variable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="hierarchy-parameters">
+<h3>hierarchy parameters<a class="headerlink" href="#hierarchy-parameters" title="Permalink to this headline">¶</a></h3>
+<p>Here we describe the precise meanings of parameters
+<code class="docutils literal notranslate"><span class="pre">p</span></code> and <code class="docutils literal notranslate"><span class="pre">ell</span></code> in <code class="docutils literal notranslate"><span class="pre">poly_constrained_relaxation</span></code>.
+In primal form, <code class="docutils literal notranslate"><span class="pre">poly_constrained_relaxation</span></code> operates by moving explicit polynomial constraints into a Lagrangian,
+and attempting to certify the Lagrangian as nonnegative over <code class="docutils literal notranslate"><span class="pre">X</span></code>;
+this is a standard combination of the concepts reviewed in Section 2 of <a class="reference external" href="https://arxiv.org/abs/1907.00814">MCW2019</a>.
+Parameter <code class="docutils literal notranslate"><span class="pre">ell</span></code> is essentially the same as in <code class="docutils literal notranslate"><span class="pre">poly_relaxation</span></code>: to improve the strength of the SAGE
+proof system, modulate the Lagrangian <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">-</span> <span class="pre">gamma</span></code> by powers of the polynomial
+<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">Polynomial(2</span> <span class="pre">*</span> <span class="pre">L.alpha,</span> <span class="pre">np.ones(L.m))</span></code>.
+Parameters <code class="docutils literal notranslate"><span class="pre">p</span></code> and <code class="docutils literal notranslate"><span class="pre">q</span></code> affect the <em>unmodulated Lagrangian</em> seen by <code class="docutils literal notranslate"><span class="pre">poly_constrained_relaxation</span></code>;
+this unmodulated Lagrangian is constructed with the following function.</p>
+<dl class="function">
+<dt id="sageopt.relaxations.sage_polys.make_poly_lagrangian">
+<code class="sig-prename descclassname">sageopt.relaxations.sage_polys.</code><code class="sig-name descname">make_poly_lagrangian</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">p</em>, <em class="sig-param">q</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.relaxations.sage_polys.make_poly_lagrangian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a problem</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+  \min\{ f(x) :~&amp; g(x) \geq 0 \text{ for } g \in \text{gts}, \\
+               &amp; g(x) = 0  \text{ for } g \in \text{eqs}, \\
+               &amp; \text{and } x \in X \}
+\end{align*}\end{split}\]</div>
+<p>construct the q-fold constraints <code class="docutils literal notranslate"><span class="pre">q-gts</span></code> and <code class="docutils literal notranslate"><span class="pre">q-eqs</span></code>, by taking all products
+of <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">q</span></code> elements from <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code> respectively. Then form the Lagrangian</p>
+<div class="math notranslate nohighlight">
+\[L = f - \gamma
+    - \sum_{g \, \in  \, \text{q-gts}} s_g \cdot g
+    - \sum_{g \, \in  \, \text{q-eqs}} z_g \cdot g\]</div>
+<p>where <span class="math notranslate nohighlight">\(\gamma\)</span> is a coniclifts Variable of dimension 1, and the coefficients
+on Polynomials  <span class="math notranslate nohighlight">\(s_g\)</span> and <span class="math notranslate nohighlight">\(z_g\)</span> are coniclifts Variables of a dimension
+determined by <code class="docutils literal notranslate"><span class="pre">p</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference internal" href="#sageopt.symbolic.polynomials.Polynomial" title="sageopt.symbolic.polynomials.Polynomial"><em>Polynomial</em></a>) – The objective in a desired minimization problem.</p></li>
+<li><p><strong>gts</strong> (<em>list of Polynomials</em>) – For every <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">gts</span></code>, there is a desired constraint that variables <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfy <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>eqs</strong> (<em>list of Polynomials</em>) – For every <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">eqs</span></code>, there is a desired constraint that variables <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfy <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>p</strong> (<em>int</em>) – Controls the complexity of <code class="docutils literal notranslate"><span class="pre">s_g</span></code> and <code class="docutils literal notranslate"><span class="pre">z_g</span></code>.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The number of folds of constraints <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>L</strong> (<em>Polynomial</em>) – <code class="docutils literal notranslate"><span class="pre">L.c</span></code> is an affine expression of coniclifts Variables.</p></li>
+<li><p><strong>ineq_dual_polys</strong> (<em>a list of pairs of Polynomials.</em>) – If the pair <code class="docutils literal notranslate"><span class="pre">(s_g,</span> <span class="pre">g)</span></code> is in this list, then <code class="docutils literal notranslate"><span class="pre">s_g</span></code> is a generalized Lagrange multiplier
+to the constraint <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>eq_dual_polys</strong> (<em>a list of pairs of Polynomials.</em>) – If the pair <code class="docutils literal notranslate"><span class="pre">(z_g,</span> <span class="pre">g)</span></code> is in this list, then <code class="docutils literal notranslate"><span class="pre">z_g</span></code> is a generalized Lagrange multiplier to the
+constraint <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">0</span></code>.</p></li>
+<li><p><strong>gamma</strong> (<em>coniclifts.Variable.</em>) – In primal-form SAGE relaxations, we want to maximize <code class="docutils literal notranslate"><span class="pre">gamma</span></code>. In dual form SAGE relaxations,
+<code class="docutils literal notranslate"><span class="pre">gamma</span></code> induces a normalizing equality constraint.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The Lagrange multipliers <code class="docutils literal notranslate"><span class="pre">s_g</span></code> and <code class="docutils literal notranslate"><span class="pre">z_g</span></code> share a common matrix of exponent vectors,
+which we call <code class="docutils literal notranslate"><span class="pre">alpha_hat</span></code>.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">p</span> <span class="pre">=</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">alpha_hat</span></code> consists of a single row, of all zeros. In this case,
+<code class="docutils literal notranslate"><span class="pre">s_g</span></code> and <code class="docutils literal notranslate"><span class="pre">z_g</span></code> are constant Polynomials, and the coefficient vectors <code class="docutils literal notranslate"><span class="pre">s_g.c</span></code>
+and <code class="docutils literal notranslate"><span class="pre">z_g.c</span></code> are effectively scalars. When <code class="docutils literal notranslate"><span class="pre">p</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>, the rows of <code class="docutils literal notranslate"><span class="pre">alpha_hat</span></code> are
+<em>initially</em> set set to all <code class="docutils literal notranslate"><span class="pre">p</span></code>-wise sums  of exponent vectors appearing in either <code class="docutils literal notranslate"><span class="pre">f</span></code>,
+or some <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">gts</span></code>,  or some <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">in</span> <span class="pre">eqs</span></code>. Then we replace</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alpha_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha_hat</span><span class="p">,</span> <span class="n">alpha_hat</span><span class="p">])</span>
+<span class="n">alpha_multiplier</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">alpha_hat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This has the effect of improving performance for problems where <code class="docutils literal notranslate"><span class="pre">alpha_hat</span></code> would otherwise
+contain very few rows in the even integer lattice.</p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/documentation/sageopt.polynomials.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

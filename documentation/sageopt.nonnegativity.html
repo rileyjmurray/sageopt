@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nonnegativity &#8212; sageopt 0.4.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Background" href="../background.html" />
+    <link rel="prev" title="coniclifts is sageopt’s backend" href="sageopt.coniclifts.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sageopt</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="sageopt.html">Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sageopt.signomials.html">Signomials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.polynomials.html">Polynomials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.coniclifts.html">Coniclifts</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Nonnegativity</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pre-made-functions">pre-made functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../background.html">Background</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="sageopt.html">Overview of sageopt</a><ul>
+      <li>Previous: <a href="sageopt.coniclifts.html" title="previous chapter"><code class="docutils literal notranslate"><span class="pre">coniclifts</span></code> is <code class="docutils literal notranslate"><span class="pre">sageopt</span></code>’s backend</a></li>
+      <li>Next: <a href="../background.html" title="next chapter">Background</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="nonnegativity">
+<span id="nonneg"></span><h1>Nonnegativity<a class="headerlink" href="#nonnegativity" title="Permalink to this headline">¶</a></h1>
+<p>Although most of sageopt is designed with optimization in mind, the underlying mechanism of “SAGE certificates”
+is really about certifying function nonnegativity. Certifying function nonnegativity (whether globally over
+<span class="math notranslate nohighlight">\(\mathbb{R}^n\)</span>, or over some proper subset <span class="math notranslate nohighlight">\(X \subset \mathbb{R}^n\)</span>) is an important problem in
+the mathematical field of algebraic geometry, and has practical applications to control theory. This page discusses
+how you can use sageopt to certify signomial and polynomial nonnegativity.</p>
+<div class="section" id="pre-made-functions">
+<h2>pre-made functions<a class="headerlink" href="#pre-made-functions" title="Permalink to this headline">¶</a></h2>
+<p>Sageopt offers two pre-made functions for certifying nonnegativity and finding SAGE decompositions:
+<code class="docutils literal notranslate"><span class="pre">sage_feasibility</span></code> and <code class="docutils literal notranslate"><span class="pre">sage_multiplier_search</span></code>. These functions are accessible as top-level imports
+<code class="docutils literal notranslate"><span class="pre">sageopt.sage_feasibility</span></code> and <code class="docutils literal notranslate"><span class="pre">sageopt.sage_multiplier_search</span></code>, where they accept Signomial or Polynomial objects.</p>
+<dl class="function">
+<dt id="sageopt.sage_feasibility">
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sage_feasibility</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">X=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sage_feasibility" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a Problem for checking if <code class="docutils literal notranslate"><span class="pre">f</span></code> admits an  X-SAGE decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference internal" href="sageopt.signomials.html#sageopt.Signomial" title="sageopt.Signomial"><em>Signomial</em></a><em> or </em><a class="reference internal" href="sageopt.polynomials.html#sageopt.symbolic.polynomials.Polynomial" title="sageopt.symbolic.polynomials.Polynomial"><em>Polynomial</em></a>) – We want to know if this function admits an X-SAGE decomposition</p></li>
+<li><p><strong>X</strong> (<a class="reference internal" href="sageopt.signomials.html#sageopt.SigDomain" title="sageopt.SigDomain"><em>SigDomain</em></a><em> or </em><a class="reference internal" href="sageopt.polynomials.html#sageopt.symbolic.polynomials.PolyDomain" title="sageopt.symbolic.polynomials.PolyDomain"><em>PolyDomain</em></a>) – Default to <span class="math notranslate nohighlight">\(X = \mathbb{R}^{\texttt{f.n}}\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>prob</strong> – Has objective “maximize 0”, and constraints that <code class="docutils literal notranslate"><span class="pre">f</span></code> is X-SAGE.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="sageopt.coniclifts.html#sageopt.coniclifts.Problem" title="sageopt.coniclifts.Problem">coniclifts.Problem</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function is simply a wrapper around two functions of the same name,
+which were written for cases where <code class="docutils literal notranslate"><span class="pre">f</span></code> is a Signomial or Polynomial.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sageopt.sage_multiplier_search">
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sage_multiplier_search</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">level=1</em>, <em class="sig-param">X=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sage_multiplier_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a Problem for an attempt to certify that <code class="docutils literal notranslate"><span class="pre">f</span></code> is X-nonnegative.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference internal" href="sageopt.signomials.html#sageopt.Signomial" title="sageopt.Signomial"><em>Signomial</em></a><em> or </em><a class="reference internal" href="sageopt.polynomials.html#sageopt.symbolic.polynomials.Polynomial" title="sageopt.symbolic.polynomials.Polynomial"><em>Polynomial</em></a>) – We are looking for a certificate that <code class="docutils literal notranslate"><span class="pre">f</span></code> is nonnegative over <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>level</strong> (<em>int</em>) – A positive integer. This determines the complexity of a modulator <code class="docutils literal notranslate"><span class="pre">g</span></code>
+which is positive over <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>X</strong> (<a class="reference internal" href="sageopt.signomials.html#sageopt.SigDomain" title="sageopt.SigDomain"><em>SigDomain</em></a><em> or </em><a class="reference internal" href="sageopt.polynomials.html#sageopt.symbolic.polynomials.PolyDomain" title="sageopt.symbolic.polynomials.PolyDomain"><em>PolyDomain</em></a>) – Default to <span class="math notranslate nohighlight">\(X = \mathbb{R}^{\texttt{f.n}}\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>prob</strong> – A problem with objective “maximize 0”, and constraints that both <code class="docutils literal notranslate"><span class="pre">g</span></code>
+and <code class="docutils literal notranslate"><span class="pre">f</span> <span class="pre">*</span> <span class="pre">g</span></code> are X-SAGE. The main variables in this problem are the coefficients
+of <code class="docutils literal notranslate"><span class="pre">g</span></code>. The complexity of <code class="docutils literal notranslate"><span class="pre">g</span></code> is determined by <code class="docutils literal notranslate"><span class="pre">level</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="sageopt.coniclifts.html#sageopt.coniclifts.Problem" title="sageopt.coniclifts.Problem">coniclifts.Problem</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function is simply a wrapper around two functions of the same name,
+which were written for cases where <code class="docutils literal notranslate"><span class="pre">f</span></code> is a Signomial or Polynomial.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/documentation/sageopt.nonnegativity.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

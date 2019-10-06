@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Examples &#8212; sageopt 0.4.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Overview of sageopt" href="../documentation/sageopt.html" />
+    <link rel="prev" title="Installation" href="../install.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sageopt</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#optimization-examples">Optimization Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-1-signomial">Example 1 (signomial)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-2-signomial">Example 2 (signomial)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-3-polynomial">Example 3 (polynomial)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-4-polynomial">Example 4 (polynomial)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#nonnegativity-examples">Nonnegativity Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Example 1 (signomial)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../documentation/sageopt.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../background.html">Background</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../install.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="../documentation/sageopt.html" title="next chapter">Overview of sageopt</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="toctree-wrapper compound">
+</div>
+<div class="section" id="examples">
+<span id="allexamples"></span><h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<p>The examples shown here appear in <a class="reference external" href="https://arxiv.org/abs/1907.00814">the 2019 article</a> by Murray, Chandrasekaran,
+and Wierman, titled <em>Signomial and Polynomial Optimization via Relative Entropy and Partial Dualization</em>. That paper
+introduced conditional SAGE certificates.</p>
+<div class="section" id="optimization-examples">
+<h2>Optimization Examples<a class="headerlink" href="#optimization-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="example-1-signomial">
+<h3>Example 1 (signomial)<a class="headerlink" href="#example-1-signomial" title="Permalink to this headline">¶</a></h3>
+<p>We want to solve a constraint signomial program in three variables.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+ \min_{x \in \mathbb{R}^3} &amp;~ f(x) \doteq 0.5 \exp(x_1 - x_2) -\exp x_1  - 5 \exp(-x_2)  \\
+                        \text{s.t.} &amp;~ g_1(x) \doteq 100 -  \exp(x_2 - x_3) -\exp x_2 - 0.05 \exp(x_1 + x_3) \geq 0\\
+                                    &amp;~ g_{2:4}(x) \doteq \exp(x) - (70,\,1,\, 0.5) \geq (0, 0, 0)  \\
+                                    &amp;~ g_{5:7}(x) \doteq (150,\,30,\,21) - \exp(x) \geq (0, 0, 0)
+\end{align*}\end{split}\]</div>
+<p>It’s often easier to specify a signomial program by defining symbols <code class="docutils literal notranslate"><span class="pre">y</span></code>,
+which are related to variables <code class="docutils literal notranslate"><span class="pre">x</span></code> by <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">=</span> <span class="pre">exp(x)</span></code>. You can get a hold of these symbols <code class="docutils literal notranslate"><span class="pre">y</span></code> by using the
+function <code class="docutils literal notranslate"><span class="pre">standard_sig_monomials</span></code>, and providing a dimension of your desired variable.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sageopt</span> <span class="k">as</span> <span class="nn">so</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">standard_sig_monomials</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span> <span class="o">-</span>  <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+       <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">70</span><span class="p">,</span>
+       <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+       <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span>
+       <span class="mi">150</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+       <span class="mi">30</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+       <span class="mi">21</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+<span class="n">eqs</span> <span class="o">=</span> <span class="p">[]</span>
+</pre></div>
+</div>
+<p>Next we will pass our problem through a function called <code class="docutils literal notranslate"><span class="pre">infer_domain</span></code>. This function parses the given
+constraint signomials, and infers any which can be written in a tractable convex form with respect to the
+optimization variable <code class="docutils literal notranslate"><span class="pre">x</span></code>
+.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">infer_domain</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For this problem, it just so happens that all constraints can be written in a convex form. Taking this as given, we use
+the function <code class="docutils literal notranslate"><span class="pre">sig_relaxation</span></code>
+for the resulting problem. The dual formulation is used because we want to recover a solution.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dual</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;dual&#39;</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">solutions</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_solrec</span><span class="p">(</span><span class="n">dual</span><span class="p">)</span>
+<span class="n">best_soln</span> <span class="o">=</span> <span class="n">solutions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">best_soln</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now let’s see if this solution is any good!</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The recovered solution has objective value ...&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">best_soln</span><span class="p">)))</span>  <span class="c1"># about -147.66666</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The recovered solution has constraint violation ...&quot;</span><span class="p">)</span>
+<span class="n">constraint_levels</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">g</span><span class="p">(</span><span class="n">best_soln</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gts</span><span class="p">])</span>  <span class="c1"># zero!</span>
+<span class="n">violation</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">constraint_levels</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="n">constraint_levels</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">violation</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The level 0 SAGE bound is ... &#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>  <span class="c1"># about -147.857</span>
+</pre></div>
+</div>
+<p>We can certify that the solution is actually much closer to optimality than the SAGE bound would suggest. We can
+easily construct and solve a level <code class="docutils literal notranslate"><span class="pre">ell=3</span></code> SAGE relaxation to produce a stronger lower bound on this minimization
+problem.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dual</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;dual&#39;</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The level 3 SAGE bound is ... &#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>  <span class="c1"># about  -147.6666</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2-signomial">
+<h3>Example 2 (signomial)<a class="headerlink" href="#example-2-signomial" title="Permalink to this headline">¶</a></h3>
+<p>We want to solve the following equality-constrained signomial program.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+ \min_{\substack{A \in \mathbb{R}^3_{++} \\ P \in \mathbb{R}_{++} }}
+            &amp;~ 10^4 (A_1 + A_2 + A_3)  \\
+\text{s.t.} &amp;~ 10^4 + 0.01 A_1^{-1}A_3^{} - 7.0711 A_1^{-1} \geq 0 \\
+            &amp;~ 10^4 + 0.00854 A_1^{-1}P - 0.60385(A_1^{-1} + A_2^{-1}) \geq 0  \\
+            &amp;~ 70.7107 A_1^{-1} - A_1^{-1}P - A_{3}^{-1}P = 0 \\
+            &amp;~ 10^4 \geq 10^4 A_1 \geq 10^{-4} \qquad  10^4 \geq 10^4 A_2 \geq 7.0711 \\
+            &amp;~ 10^4 \geq 10^4 A_3 \geq 10^{-4} \qquad 10^4 \geq 10^4 P_{~} \geq 10^{-4}
+\end{align*}\end{split}\]</div>
+<p>It is straightforward to compute a tight bound on the problem’s optimal objective, however solution recovery is
+difficult. Thus we show this problem in two forms: once with the equality constraint, and once where the inequality
+constraint is used to <em>define</em> a value of <span class="math notranslate nohighlight">\(P\)</span> (which we can then substitute into the rest of the formulation).
+First we show the case with the equality constraint.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sageopt</span> <span class="k">as</span> <span class="nn">so</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">standard_sig_monomials</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">P</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="n">main_gts</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">1e4</span> <span class="o">+</span> <span class="mf">1e-2</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.0711</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="mf">1e4</span>  <span class="o">+</span> <span class="mf">8.54e-3</span> <span class="o">*</span> <span class="n">P</span><span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">6.0385e-1</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="p">]</span>
+<span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.0711</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">P</span><span class="p">,</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">P</span> <span class="o">-</span> <span class="mf">1e-4</span>
+<span class="p">]</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="n">main_gts</span> <span class="o">+</span> <span class="n">bounds</span>
+<span class="n">eqs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">70.7107</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">P</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">P</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">infer_domain</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">prim</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_constrained_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">main_gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;primal&#39;</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">dual</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_constrained_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">main_gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;dual&#39;</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">prim</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">prim</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The equality constraint in this problem creates an unnecessary challenge in solution recovery. Since we usually want
+to recover optimal solutions, we reformulate the problem by substituting <span class="math notranslate nohighlight">\(P \leftarrow 70.7107 A_3 / (A_1 + A_3)
+\)</span> from constraints which involved <span class="math notranslate nohighlight">\(P\)</span>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">A</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">standard_sig_monomials</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="n">main_gts</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">1e4</span> <span class="o">+</span> <span class="mf">1e-2</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.0711</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="mf">1e4</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mf">8.54e-3</span> <span class="o">*</span> <span class="p">(</span><span class="mf">70.7012</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="o">-</span> <span class="mf">6.0385e-1</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="p">]</span>
+<span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.0711</span><span class="p">,</span>
+    <span class="mf">1e4</span> <span class="o">-</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">69.7107</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">(</span><span class="mf">1e8</span> <span class="o">*</span> <span class="mf">70.7107</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="n">main_gts</span> <span class="o">+</span> <span class="n">bounds</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">infer_domain</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">dual</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_constrained_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">main_gts</span><span class="p">,</span> <span class="p">[],</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;dual&#39;</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="n">solns</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_solrec</span><span class="p">(</span><span class="n">dual</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">solns</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-3-polynomial">
+<h3>Example 3 (polynomial)<a class="headerlink" href="#example-3-polynomial" title="Permalink to this headline">¶</a></h3>
+<p>In this example, we minimize</p>
+<div class="math notranslate nohighlight">
+\[f(x) = -64 \sum_{i=1}^7 \prod_{j \neq i} x_j\]</div>
+<p>over <span class="math notranslate nohighlight">\(x \in [-1/2, 1/2]^7\)</span>. We also want to recover optimal solutions.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sageopt</span> <span class="k">as</span> <span class="nn">so</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">standard_poly_monomials</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">):</span>
+    <span class="n">sel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">sel</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">f</span> <span class="o">-=</span> <span class="mi">64</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span>
+    <span class="c1"># ^ use simple NumPy functions to construct Polynomials!</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.25</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">)]</span>  <span class="c1"># -.5 &lt;= x[i] &lt;= .5</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">infer_domain</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">dual</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">poly_constrained_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[],</span> <span class="p">[],</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;dual&#39;</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s1">&#39;MOSEK&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">solns</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">poly_solrec</span><span class="p">(</span><span class="n">dual</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">sol</span> <span class="ow">in</span> <span class="n">solns</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also try this example with ECOS. When using ECOS, you might want to use local solver refinement, as accessed
+in <code class="docutils literal notranslate"><span class="pre">sageopt.local_refinement</span></code>.</p>
+</div>
+<div class="section" id="example-4-polynomial">
+<h3>Example 4 (polynomial)<a class="headerlink" href="#example-4-polynomial" title="Permalink to this headline">¶</a></h3>
+<p>We want to solve a degree six polynomial optimization problem in six variables.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+ \min_{x \in \mathbb{R}^6} &amp;~ f(x) \doteq x_1^6 - x_2^6 + x_3^6 - x_4^6 + x_5^6 - x_6^6 + x_1 - x_2 \\
+                        \text{s.t.} &amp;~ g_1(x) \doteq 2 x_{1}^{6}+3 x_{2}^{2}+2 x_{1} x_{2}+2 x_{3}^{6}+3 x_{4}^{2}+2 x_{3} x_{4}+2 x_{5}^{6}+3 x_{6}^{2}+2 x_{5} x_{6}  \geq 0  \\
+                                    &amp;~ g_2(x) \doteq 2 x_{1}^{2}+5 x_{2}^{2}+3 x_{1} x_{2}+2 x_{3}^{2}+5 x_{4}^{2}+3 x_{3} x_{4}+2 x_{5}^{2}+5 x_{6}^{2}+3 x_{5} x_{6}  \geq 0 \\
+                                    &amp;~ g_3(x) \doteq 3 x_{1}^{2}+2 x_{2}^{2}-4 x_{1} x_{2}+3 x_{3}^{2}+2 x_{4}^{2}-4 x_{3} x_{4}+3 x_{5}^{2}+2 x_{6}^{2}-4 x_{5} x_{6} \geq 0  \\
+                                    &amp;~ g_4(x) \doteq x_{1}^{2}+6 x_{2}^{2}-4 x_{1} x_{2}+x_{3}^{2}+6 x_{4}^{2}-4 x_{3} x_{4}+x_{5}^{2}+6 x_{6}^{2}-4 x_{5} x_{6} \geq 0 \\
+                                    &amp;~ g_5(x) \doteq x_{1}^{2}+4 x_{2}^{6}-3 x_{1} x_{2}+x_{3}^{2}+4 x_{4}^{6}-3 x_{3} x_{4}+x_{5}^{2}+4 x_{6}^{6}-3 x_{5} x_{6} \geq 0 \\
+                                    &amp;~ g_{6:10}(x) \doteq 1 - g_{1:5}(x) \geq  (0, 0, 0, 0, 0) \\
+                                    &amp;~ g_{11:16}(x) = x \geq (0, 0, 0, 0, 0, 0)
+\end{align*}\end{split}\]</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">sageopt</span></code> approach to this problem is to write it first as a signomial program, and then perform solution recovery with consideration to the underlying polynomial structure. The solution recovery starts with <code class="docutils literal notranslate"><span class="pre">sig_solrec</span></code> as normal, but then we refine the solution with a special function <code class="docutils literal notranslate"><span class="pre">local_refine_polys_from_sigs</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sageopt</span> <span class="k">as</span> <span class="nn">so</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">standard_sig_monomials</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">expr1</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+<span class="n">expr2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+<span class="n">expr3</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+
+<span class="n">expr4</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+<span class="n">expr5</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+
+<span class="n">gts</span> <span class="o">=</span> <span class="p">[</span><span class="n">expr3</span><span class="p">,</span> <span class="n">expr4</span><span class="p">,</span> <span class="n">expr5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">expr1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">expr2</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">expr3</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">expr4</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">expr5</span><span class="p">]</span>
+<span class="n">eqs</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">dual</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_constrained_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;dual&#39;</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">dual</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s1">&#39;MOSEK&#39;</span><span class="p">)</span>  <span class="c1"># ECOS fails</span>
+<span class="n">y0</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_solrec</span><span class="p">(</span><span class="n">dual</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">x_star</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">local_refine_polys_from_sigs</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">y0</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="n">f_poly</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">as_polynomial</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">f_poly</span><span class="p">(</span><span class="n">x_star</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x_star</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="nonnegativity-examples">
+<h2>Nonnegativity Examples<a class="headerlink" href="#nonnegativity-examples" title="Permalink to this headline">¶</a></h2>
+<p>Although sageopt is designed around optimization, the mechanism by which sageopt operates is to certify nonnegativity
+by decomposing a given function into a “Sum of AGE-functions”. These AGE functions are nonnegative, and can be proven
+nonnegative in a relatively simple way. If you want to check nonnegativity of the AGE functions yourself (you might
+find yourself in this situation if a numerical solver seemed to struggle with a SAGE relaxation), then you can do
+that. Here we show how to get a hold on these AGE functions, from a given SAGE relaxation.</p>
+<div class="section" id="id1">
+<h3>Example 1 (signomial)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Consider the following optimization problem:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+ \min_{x \in \mathbb{R}^3} &amp;~ f(x) \doteq 0.5 \exp(x_1 - x_2) -\exp x_1  - 5 \exp(-x_2)  \\
+                        \text{s.t.} &amp;~ g_1(x) \doteq 100 -  \exp(x_2 - x_3) -\exp x_2 - 0.05 \exp(x_1 + x_3) \geq 0\\
+                                    &amp;~ g_{2:4}(x) \doteq \exp(x) - (70,\,1,\, 0.5) \geq (0, 0, 0)  \\
+                                    &amp;~ g_{5:7}(x) \doteq (150,\,30,\,21) - \exp(x) \geq (0, 0, 0)
+\end{align*}\end{split}\]</div>
+<p>We can produce a bound on this minimum with a primal SAGE relaxation.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sageopt</span> <span class="k">as</span> <span class="nn">so</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">standard_sig_monomials</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">gts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span> <span class="o">-</span>  <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+       <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">70</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span>
+       <span class="mi">150</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">30</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">21</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">infer_domain</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gts</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">prim</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="s1">&#39;primal&#39;</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">prim</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s1">&#39;ECOS&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">prim</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># about -147.857</span>
+</pre></div>
+</div>
+<p>As long as the solver (here, ECOS) succeeds in solving the problem, the function <code class="docutils literal notranslate"><span class="pre">f</span> <span class="pre">-</span> <span class="pre">prim.value</span></code> should be
+nonnegative over the set represented by <code class="docutils literal notranslate"><span class="pre">X</span></code>. The intended proof that <code class="docutils literal notranslate"><span class="pre">f</span> <span class="pre">-</span> <span class="pre">prim.value</span></code> is nonnegative comes from
+the AGE functions participating in its decomposition. We can recover those functions as follows</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage_constraint</span> <span class="o">=</span> <span class="n">prim</span><span class="o">.</span><span class="n">user_cons</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># a PrimalSageCone object</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">sagecon</span><span class="o">.</span><span class="n">alpha</span>
+<span class="n">agefunctions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">sagecon</span><span class="o">.</span><span class="n">age_vectors</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">Signomial</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">ci</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">agefunctions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You should find that one of these AGE functions has very small positive coefficients, and a large negative term. We can
+investigate this suspicious AGE function further. Specifically, we can transform the suspicious AGE function into a
+convex function, and then solve a constrained convex optimization problem using a function from <code class="docutils literal notranslate"><span class="pre">scipy</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">suspicious_age</span> <span class="o">=</span> <span class="n">agefunctions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">convexified_suspicious_age</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">suspicious_age</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">fmin_cobyla</span>
+<span class="k">def</span> <span class="nf">sample_initial_point</span><span class="p">():</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="mi">70</span> <span class="o">+</span> <span class="mi">80</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">29</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span>
+    <span class="n">y3</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">20.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">([</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">y3</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">x0</span>
+<span class="n">fmin_cobyla</span><span class="p">(</span><span class="n">convexified_suspicious_age</span><span class="p">,</span>
+            <span class="n">sample_initial_point</span><span class="p">(),</span> <span class="n">gts</span><span class="p">,</span>
+            <span class="n">disp</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxfun</span><span class="o">=</span><span class="mf">1e5</span><span class="p">,</span> <span class="n">rhoend</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You should find that no matter how many initial conditions you provide to <code class="docutils literal notranslate"><span class="pre">scipy</span></code>’s solver, the reported optimal
+objective is nonnegative.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/examples/examples.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
