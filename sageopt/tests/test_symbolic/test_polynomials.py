@@ -16,6 +16,7 @@
 import numpy as np
 import unittest
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials, PolyDomain
+from sageopt.relaxations.sage_polys import infer_domain
 from sageopt import coniclifts as cl
 
 
@@ -137,6 +138,37 @@ class TestPolynomials(unittest.TestCase):
         except RuntimeError as err:
             err_str = str(err)
             assert 'seem to be infeasible' in err_str
+        pass
+
+    def test_infer_domain(self):
+        bounds = [(-0.1, 0.4), (0.4, 1),
+                  (-0.7, -0.4), (-0.7, 0.4),
+                  (0.1, 0.2), (-0.1, 0.2),
+                  (-0.3, 1.1), (-1.1, -0.3)]
+        x = standard_poly_monomials(8)
+        gp_gs = [0.4 ** 2 - x[0] ** 2,
+                 1 - x[1] ** 2, x[1] ** 2 - 0.4 ** 2,
+                 0.7 ** 2 - x[2] ** 2, x[2] ** 2 - 0.4 ** 2,
+                 0.7 ** 2 - x[3] ** 2,
+                 0.2 ** 2 - x[4] ** 2, x[4] ** 2 - 0.1 ** 2,
+                 0.2 ** 2 - x[5] ** 2,
+                 1.1 ** 2 - x[6] ** 2,
+                 1.1 ** 2 - x[7] ** 2, x[7] ** 2 - 0.3 ** 2]
+        lower_gs = [x[i] - lb for i, (lb, ub) in enumerate(bounds)]
+        upper_gs = [ub - x[i] for i, (lb, ub) in enumerate(bounds)]
+        gts = lower_gs + upper_gs + gp_gs
+        dummy_f = x[0]
+        dom = infer_domain(dummy_f, gts, [])
+        assert dom.A.shape == (12, 8)
+        assert len(dom.gts) == 12
+        assert len(dom.eqs) == 0
+        x0 = np.array([-0.1, 1, -0.6, 0, 0.2, 0.2, -0.3, -1.05])
+        is_in = dom.check_membership(x0, tol=1e-10)
+        assert is_in
+        x1 = x0.copy()
+        x1[7] = -1.11
+        is_in = dom.check_membership(x1, tol=1e-5)
+        assert not is_in
         pass
 
     #

@@ -466,29 +466,9 @@ def infer_domain(f, gts, eqs, check_feas=True):
     X : SigDomain or None
 
     """
-    x = cl.Variable(shape=(f.n,), name='x')
-    cl_cons = []
     conv_gt = con_gen.valid_posynomial_inequalities(gts)
-    for g in conv_gt:
-        nonconst_selector = np.ones(shape=(g.m,), dtype=bool)
-        nonconst_selector[g.constant_location()] = False
-        if g.m > 2:
-            cst = g.c[~nonconst_selector]
-            alpha = g.alpha[nonconst_selector, :]
-            c = -g.c[nonconst_selector]
-            expr = cl.weighted_sum_exp(c, alpha @ x)
-            cl_cons.append(expr <= cst)
-        elif g.m == 2:
-            expr = g.alpha[nonconst_selector, :] @ x
-            cst = np.log(g.c[~nonconst_selector] / abs(g.c[nonconst_selector]))
-            cl_cons.append(expr <= cst)
     conv_eqs = con_gen.valid_monomial_equations(eqs)
-    for g in conv_eqs:
-        # g is of the form c1 - c2 * exp(a.T @ x) == 0, where c1, c2 > 0
-        cst_loc = g.constant_location()
-        non_cst_loc = 1 - cst_loc
-        rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
-        cl_cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
+    cl_cons = con_gen.clcons_from_standard_gprep(f.n, conv_gt, conv_eqs)
     if len(cl_cons) > 0:
         sigdom = SigDomain(f.n, coniclifts_cons=cl_cons, gts=conv_gt, eqs=conv_eqs, check_feas=check_feas)
         return sigdom

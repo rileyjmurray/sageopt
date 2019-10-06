@@ -16,6 +16,7 @@
 import numpy as np
 from itertools import combinations_with_replacement
 from sageopt.symbolic.signomials import Signomial
+from sageopt import coniclifts as cl
 import warnings
 
 
@@ -91,3 +92,28 @@ def valid_gp_representable_poly_eqs(eqs):
         if is_even and np.count_nonzero(g.c != 0) == 2 and np.count_nonzero(g.c > 0) == 1:
             gp_rep_polys.append(g)
     return gp_rep_polys
+
+
+def clcons_from_standard_gprep(n, gts, eqs):
+    x = cl.Variable(shape=(n,), name='temp_x')
+    coniclift_cons = []
+    for g in gts:
+        nonconst_selector = np.ones(shape=(g.m,), dtype=bool)
+        nonconst_selector[g.constant_location()] = False
+        if g.m > 2:
+            cst = g.c[~nonconst_selector]
+            alpha = g.alpha[nonconst_selector, :]
+            c = -g.c[nonconst_selector]
+            expr = cl.weighted_sum_exp(c, alpha @ x)
+            coniclift_cons.append(expr <= cst)
+        elif g.m == 2:
+            expr = g.alpha[nonconst_selector, :] @ x
+            cst = np.log(g.c[~nonconst_selector] / abs(g.c[nonconst_selector]))
+            coniclift_cons.append(expr <= cst)
+    for g in eqs:
+        # g is of the form c1 - c2 * exp(a.T @ x) == 0, where c1, c2 > 0
+        cst_loc = g.constant_location()
+        non_cst_loc = 1 - cst_loc
+        rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
+        coniclift_cons.append(g.alpha[non_cst_loc, :] @ y == rhs)
+    return coniclift_cons

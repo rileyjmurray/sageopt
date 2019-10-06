@@ -500,33 +500,17 @@ def infer_domain(f, gts, eqs, check_feas=True):
     # GP-representable inequality constraints (recast as "Signomial >= 0")
     gp_gts = con_gen.valid_gp_representable_poly_inequalities(gts)
     gp_gts_sigreps = [Signomial(g.alpha_c) for g in gp_gts]
+    gp_gts_sigreps = con_gen.valid_posynomial_inequalities(gp_gts_sigreps)
+    #   ^ That second call is to convexify the signomials.
     # GP-representable equality constraints (recast as "Signomial == 0")
     gp_eqs = con_gen.valid_gp_representable_poly_eqs(eqs)
     gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]
-    # Mirror the conditional SAGE data implementation for signomials
-    y = cl.Variable(shape=(f.n,), name='log_abs_x')
-    coniclift_cons = []
-    for g in gp_gts_sigreps:
-        nonconst_selector = np.ones(shape=(g.m,), dtype=bool)
-        nonconst_selector[g.constant_location()] = False
-        if g.m > 2:
-            cst = g.c[~nonconst_selector]
-            alpha = g.alpha[nonconst_selector, :]
-            c = -g.c[nonconst_selector]
-            expr = cl.weighted_sum_exp(c, alpha @ y)
-            coniclift_cons.append(expr <= cst)
-        elif g.m == 2:
-            expr = g.alpha[nonconst_selector, :] @ y
-            cst = np.log(g.c[~nonconst_selector] / abs(g.c[nonconst_selector]))
-            coniclift_cons.append(expr <= cst)
-    for g in gp_eqs_sigreps:
-        # g is of the form c1 - c2 * exp(a.T @ x) == 0, where c1, c2 > 0
-        cst_loc = g.constant_location()
-        non_cst_loc = 1 - cst_loc
-        rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
-        coniclift_cons.append(g.alpha[non_cst_loc, :] @ y == rhs)
-    if len(coniclift_cons) > 0:
-        polydom = PolyDomain(f.n, logspace_cons=coniclift_cons,
+    gp_eqs_sigreps = con_gen.valid_monomial_equations(gp_eqs_sigreps)
+    #  ^ That second call is to make sure the nonconstant term has
+    #    a particular sign (specifically, a negative sign).
+    clcons = con_gen.clcons_from_standard_gprep(f.n, gp_gts_sigreps, gp_eqs_sigreps)
+    if len(clcons) > 0:
+        polydom = PolyDomain(f.n, logspace_cons=clcons,
                              gts=gp_gts, eqs=gp_eqs,
                              check_feas=check_feas)
         return polydom
