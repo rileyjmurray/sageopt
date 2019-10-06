@@ -12,6 +12,8 @@
 #
 import os
 import sys
+import inspect
+
 sys.path.insert(0, os.path.abspath('~/documents/research/software/sageopt'))
 
 
@@ -22,7 +24,7 @@ copyright = '2019, Riley J. Murray'
 author = 'Riley J. Murray'
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.4'
+release = '0.4.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -35,6 +37,27 @@ extensions = [
     'sphinx.ext.napoleon'
     # 'sphinx.ext.imgmath'
 ]
+
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    exclusions = ('__weakref__',  # special-members
+                  '__doc__', '__module__', '__dict__',  # undoc-members
+                  )
+    if inspect.ismethod(obj) or inspect.isfunction(obj):
+        func_name = obj.__qualname__
+        # exclusions for Variable objects
+        if func_name in {'Variable.is_constant', 'Variable.is_affine'}:
+            return True
+        if func_name in {'Expression.as_expr'}:
+            return True
+
+    exclude = name in exclusions
+    return skip or exclude
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -51,6 +74,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_theme = 'alabaster'
+
+# https://alabaster.readthedocs.io/en/latest/customization.html#theme-options
+html_theme_options = {
+    'github_user': 'rileyjmurray',
+    'github_repo': 'sageopt',
+    'body_text_align': 'justify',
+    'fixed_sidebar': 'true',
+    'page_width': '1000px'
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
