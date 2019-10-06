@@ -36,40 +36,6 @@ def build_cone_type_selectors(K):
     return type_selectors
 
 
-def replace_nonzero_cones_with_zero_cones_and_slacks(A, K, destructive=False, dont_rep=None):
-    # It only really makes sense to call this function after any isolated diagonal cone
-    # constraints have been separated / factored out of (A,K).
-    if not destructive:
-        A = A.copy()
-        K = K.copy()
-    if dont_rep is None:
-        dont_rep = set()
-    allowed = {'0'}.union(dont_rep)  # the zero cone is never replaced by slack variables
-    running_row_idx = 0
-    running_new_var_idx = 0
-    slacks_K = []
-    aug_data = [[], [], []]  # the constituent lists will store values, rows, and columns
-    for i in range(len(K)):
-        (co_type, co_len) = K[i].type, K[i].len
-        if co_type not in allowed:
-            new_col_idxs = np.arange(running_new_var_idx, running_new_var_idx + co_len)
-            running_new_var_idx += co_len
-            aug_data[2].append(new_col_idxs)
-            new_slack_co = Cone(co_type, co_len, {'col mapping': A.shape[1] + new_col_idxs})
-            slacks_K.append(new_slack_co)
-            aug_data[1].append(np.arange(running_row_idx, running_row_idx + co_len))
-            K[i] = Cone('0', co_len)
-        running_row_idx += co_len
-    if len(aug_data[2]) > 0:
-        aug_data[2] = np.hstack(aug_data[2])
-        aug_data[1] = np.hstack(aug_data[1])
-        aug_data[0] = -1 * np.ones(len(aug_data[1]))
-        augmenting_matrix = sp.csc_matrix((aug_data[0], (aug_data[1], aug_data[2])),
-                                          shape=(A.shape[0], running_new_var_idx))
-        A = sp.hstack([A, augmenting_matrix], format='csc')
-    return A, K, slacks_K
-
-
 def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
     """
     Replace the conic system {x : A @ x + b \in K } by {x0 : A1 @ x1 + b1 \in K}
@@ -128,16 +94,28 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
         K = K.copy()
     if dont_sep is None:
         dont_sep = set('0')
-    A0 = A
-    K0 = K
-    b0 = b
-    sep_K0 = []
-    #   introduce slack variables (and separately record constraints) to factor remaining constraints
-    #   of type "dont_sep" out of the matrix and into disjoint diagonal homogeneous cone constraints.
-    A1, K1, sep_K1 = replace_nonzero_cones_with_zero_cones_and_slacks(A0, K0, destructive=True, dont_rep=dont_sep)
-    #   A1 has the same number of rows of A0, but likely has more columns.
-    #   K1 is of the same length of K0, but only contains the cones in "dont_sep".
-    #   sep_K1 defines the constraints on any slack variables which allowed us to replace K0 by K1 as above.
-    sep_K = sep_K0 + sep_K1
-    return A1, b0, K1, sep_K
+    allowed = {'0'}.union(dont_sep)  # the zero cone is never replaced by slack variables
+    running_row_idx = 0
+    running_new_var_idx = 0
+    slacks_K = []
+    aug_data = [[], [], []]  # the constituent lists will store values, rows, and columns
+    for i in range(len(K)):
+        co_type, co_len = K[i].type, K[i].len
+        if co_type not in allowed:
+            new_col_idxs = np.arange(running_new_var_idx, running_new_var_idx + co_len)
+            running_new_var_idx += co_len
+            aug_data[2].append(new_col_idxs)
+            new_slack_co = Cone(co_type, co_len, {'col mapping': A.shape[1] + new_col_idxs})
+            slacks_K.append(new_slack_co)
+            aug_data[1].append(np.arange(running_row_idx, running_row_idx + co_len))
+            K[i] = Cone('0', co_len)
+        running_row_idx += co_len
+    if running_new_var_idx > 0:
+        aug_data[2] = np.hstack(aug_data[2])
+        aug_data[1] = np.hstack(aug_data[1])
+        aug_data[0] = -1 * np.ones(len(aug_data[1]))
+        augmenting_matrix = sp.csc_matrix((aug_data[0], (aug_data[1], aug_data[2])),
+                                          shape=(A.shape[0], running_new_var_idx))
+        A = sp.hstack([A, augmenting_matrix], format='csc')
+    return A, b, K, slacks_K
 
