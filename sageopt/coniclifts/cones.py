@@ -27,5 +27,5 @@ class Cone(object):
     def __eq__(self, other):
         if isinstance(other, Cone):
             return self.type == other.type and self.len == other.len and self.annotations == other.annotations
-        else:
+        else:  # pragma: no cover
             return False

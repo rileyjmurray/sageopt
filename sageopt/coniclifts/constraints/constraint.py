@@ -16,15 +16,9 @@
 
 
 class Constraint(object):
-
-    def is_affine(self):
-        raise NotImplementedError()
-
-    def is_elementwise(self):
-        raise NotImplementedError()
-
-    def is_setmem(self):
-        raise NotImplementedError()
+    """
+    This is currently only an interface, and contains no executable code.
+    """
 
     def variables(self):
         """

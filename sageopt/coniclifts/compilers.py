@@ -18,6 +18,8 @@ import numpy as np
 from collections import defaultdict
 from sageopt.coniclifts import utilities as util
 from sageopt.coniclifts.constraints.constraint import Constraint
+from sageopt.coniclifts.constraints.elementwise import ElementwiseConstraint
+from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
 from sageopt.coniclifts.base import ScalarVariable
 
 
@@ -98,9 +100,9 @@ def compile_constrained_system(constraints):
     # Categorize constraints (set membership vs elementwise).
     elementwise_constrs, setmem_constrs = [], []
     for c in constraints:
-        if c.is_setmem():
+        if isinstance(c, SetMembership):
             setmem_constrs.append(c)
-        elif c.is_elementwise():
+        elif isinstance(c, ElementwiseConstraint):
             elementwise_constrs.append(c)
         else:
             raise RuntimeError('Unknown argument')

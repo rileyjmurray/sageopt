@@ -2,5 +2,7 @@
 omit =
     sageopt/tests/*
     sageopt/coniclifts/problems/solvers/mosek.py
+    sageopt/coniclifts/constraints/constraint.py
+    sageopt/coniclifts/problems/solvers/solver.py
 # Run this file locally, with the following command:
 # nosetests --with-coverage --cover-package=sageopt --cover-config-file=.fullcoveragerc

@@ -16,6 +16,9 @@
 
 
 class Solver(object):
+    """
+    This is currently only an interface, and contains no executable code.
+    """
 
     @staticmethod
     def apply(c, A, b, K, destructive, compilation_options):
