@@ -50,10 +50,8 @@ def presolve_trivial_age_cones(true_or_false=True):
     The default value for ``true_or_false`` in this function's signature represents
     sageopt's default behavior for this setting.
     """
-    import sageopt.coniclifts.constraints.set_membership.ordinary_sage_cone as sc
+    import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
     sc._ELIMINATE_TRIVIAL_AGE_CONES_ = true_or_false
-    import sageopt.coniclifts.constraints.set_membership.conditional_sage_cone as csc
-    csc._ELIMINATE_TRIVIAL_AGE_CONES_ = true_or_false
     pass
 
 

@@ -45,11 +45,6 @@ def multi_dot(arrays):
     return cast_res(res)
 
 
-def vdot(a, b):
-    res = np.vdot(a, b)
-    return cast_res(res)
-
-
 def inner(a, b):
     res = np.inner(a, b)
     return cast_res(res)
@@ -60,14 +55,10 @@ def outer(a, b):
     return cast_res(res)
 
 
-def matmul(a, b):
-    res = np.matmul(a, b)
-    return cast_res(res)
-
-
-def tensordot(a, b, axes=1):
+def tensordot(a, b, axes=2):
     """
-    WARNING: default value for axes is changed from 2, to 1.
+    The default value ``axes=2`` is used for consistency with numpy.
+    Usage in coniclifts is mostly with ``axes=1``.
     """
     res = np.tensordot(a, b, axes)
     return cast_res(res)

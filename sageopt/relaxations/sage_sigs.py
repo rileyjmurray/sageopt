@@ -74,7 +74,7 @@ def sig_relaxation(f, X=None, form='dual', **kwargs):
     if form.lower()[0] == 'd':
         prob = sig_dual(f, ell, X, mod_supp)
     elif form.lower()[0] == 'p':
-        prob = sig_primal(f, ell, X, mod_supp, None)
+        prob = sig_primal(f, ell, X, mod_supp)
     else:
         raise RuntimeError('Unrecognized form: ' + form + '.')
     return prob
@@ -108,7 +108,7 @@ def sig_dual(f, ell=0, X=None, modulator_support=None):
     return prob
 
 
-def sig_primal(f, ell=0, X=None, modulator_support=None, additional_cons=None):
+def sig_primal(f, ell=0, X=None, modulator_support=None):
     f.remove_terms_with_zero_as_coefficient()
     if modulator_support is None:
         modulator_support = f.alpha
@@ -119,8 +119,6 @@ def sig_primal(f, ell=0, X=None, modulator_support=None, additional_cons=None):
     con = primal_sage_cone(s_mod, name=str(s_mod), X=X)
     constraints = [con]
     obj = gamma.as_expr()
-    if additional_cons is not None:
-        constraints += additional_cons
     prob = cl.Problem(cl.MAX, obj, constraints)
     cl.clear_variable_indices()
     return prob

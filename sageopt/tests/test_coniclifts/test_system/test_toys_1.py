@@ -39,10 +39,9 @@ class TestToys1(unittest.TestCase):
         cons = [expr <= 1]
         obj = - x[0] - 2 * x[1]
         prob = Problem(cl.MIN, obj, cons)
-        solver = 'ECOS'
-        res = prob.solve(solver=solver, verbose=False)
-        assert res[0] == 'solved'
-        assert abs(res[1] - 10.4075826) < 1e-6
+        status, val = prob.solve(solver='ECOS', verbose=False)
+        assert status == 'solved'
+        assert abs(val - 10.4075826) < 1e-6
         x_star = x.value
         expect = np.array([-4.93083, -2.73838])
         assert np.allclose(x_star, expect, atol=1e-4)
@@ -60,12 +59,25 @@ class TestToys1(unittest.TestCase):
                           [0.5, 0],
                           [0, 0.5]])
         gamma = cl.Variable(shape=(), name='gamma')
-        c = np.array([0 - gamma, 3, 2, 1, -4, -2])
+        c = cl.Expression([0 - gamma, 3, 2, 1, -4, -2])
+        expected_val = -1.8333331773244161
+
+        # with presolve
+        cl.presolve_trivial_age_cones(True)
         con = cl.PrimalSageCone(c, alpha, None, 'test_con_name')
         obj = gamma
         prob = Problem(cl.MAX, obj, [con])
         status, val = prob.solve(solver='ECOS', verbose=False)
-        expected_val = -1.8333331773244161
+        assert abs(val - expected_val) < 1e-6
+        v = con.violation()
+        assert v < 1e-6
+
+        # without presolve
+        cl.presolve_trivial_age_cones(False)
+        con = cl.PrimalSageCone(c, alpha, None, 'test_con_name')
+        obj = gamma
+        prob = Problem(cl.MAX, obj, [con])
+        status, val = prob.solve(solver='ECOS', verbose=False)
         assert abs(val - expected_val) < 1e-6
         v = con.violation()
         assert v < 1e-6

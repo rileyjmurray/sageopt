@@ -99,19 +99,14 @@ def poly_relaxation(f, X=None, form='dual', **kwargs):
         prob = poly_dual(f, poly_ell, sigrep_ell, X)
     elif form[0] == 'p':
         prob = poly_primal(f, poly_ell, sigrep_ell, X)
-    else:
+    else:  # pragma: no cover
         raise RuntimeError('Unrecognized form: ' + form + '.')
     return prob
 
 
 def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
     if poly_ell == 0:
-        sr, cons = f.sig_rep
-        if len(cons) > 0:
-            msg = '\n\nThe provided Polynomial has nonconstant coefficients.\n'
-            msg += 'The most likely cause is that a mistake has been made in setting up '
-            msg += 'the data for this function.\n Raising a RuntimeError.\n'
-            raise RuntimeError(msg)
+        sr, _ = f.sig_rep
         prob = sage_sigs.sig_dual(sr, sigrep_ell, X=X)
         cl.clear_variable_indices()
         return prob
@@ -130,19 +125,14 @@ def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
         prob = cl.Problem(cl.MIN, obj, constraints)
         cl.clear_variable_indices()
         return prob
-    else:
+    else:  # pragma: no cover
         raise NotImplementedError()
 
 
 def poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
     if poly_ell == 0:
-        sr, cons = f.sig_rep
-        if len(cons) > 0:
-            msg = '\n\nThe provided Polynomial has nonconstant coefficients.\n'
-            msg += 'The most likely cause is that a mistake has been made in setting up '
-            msg += 'the data for this function.\n Raising a RuntimeError.\n'
-            raise RuntimeError(msg)
-        prob = sage_sigs.sig_primal(sr, sigrep_ell, X=X, additional_cons=cons)
+        sr, _ = f.sig_rep
+        prob = sage_sigs.sig_primal(sr, sigrep_ell, X=X)
         cl.clear_variable_indices()
         return prob
     else:
@@ -295,7 +285,7 @@ def poly_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
         prob = poly_constrained_dual(f, gts, eqs, p, q, ell, X)
     elif form[0] == 'p':
         prob = poly_constrained_primal(f, gts, eqs, p, q, ell, X)
-    else:
+    else:  # pragma: no cover
         raise RuntimeError('Unrecognized form: ' + form + '.')
     return prob
 
@@ -590,8 +580,3 @@ def hierarchy_e_k(polys, k):
     s = s ** k
     return s.alpha
 
-
-def log_domain_converter(f):
-    # noinspection PyPep8
-    fhat = lambda x: f(np.exp(x))
-    return fhat

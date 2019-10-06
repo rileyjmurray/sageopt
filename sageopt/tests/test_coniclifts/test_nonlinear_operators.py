@@ -15,22 +15,26 @@
 """
 import unittest
 import numpy as np
+from scipy.special import rel_entr
 from sageopt.coniclifts.base import Variable
+from sageopt.coniclifts.operators import affine
 from sageopt.coniclifts.operators.relent import relent
 from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.compilers import compile_constrained_system
 from sageopt.coniclifts.cones import Cone
 
 
-class TestOperators(unittest.TestCase):
+class TestNonlinearOperators(unittest.TestCase):
 
-    def test_relent(self):
+    def test_relent_1(self):
+        # compilation and evaluation
         x = Variable(shape=(2,), name='x')
         y = Variable(shape=(2,), name='y')
         re = relent(2 * x, np.exp(1) * y)
         con = [re <= 10,
                3 <= x,
                x <= 5]
+        # compilation
         A, b, K, _, _, _ = compile_constrained_system(con)
         A_expect = np.array([[0., 0., 0., 0., -1., -1.],  # linear inequality on epigraph for relent constr
                              [1., 0., 0., 0., 0., 0.],    # bound constraints on x
@@ -47,6 +51,34 @@ class TestOperators(unittest.TestCase):
         assert np.all(A == A_expect)
         assert np.all(b == np.array([10., -3., -3., 5., 5., 0., 0., 0., 0., 0., 0.]))
         assert K == [Cone('+', 1), Cone('+', 2), Cone('+', 2), Cone('e', 3), Cone('e', 3)]
+        # value propagation
+        x0 = np.array([1,2])
+        x.set_scalar_variables(x0)
+        y0 = np.array([3,4])
+        y.set_scalar_variables(y0)
+        actual = re.value
+        expect = np.sum(rel_entr(2 * x0, np.exp(1) * y0))
+        assert abs(actual - expect) < 1e-7
+
+    def test_relent_2(self):
+        # compilation with the elementwise option
+        x = Variable(shape=(2,), name='x')
+        y = Variable(shape=(2,), name='y')
+        re = affine.sum(relent(2 * x, np.exp(1) * y, elementwise=True))
+        con = [re <= 1]
+        A, b, K, _, _, _ = compile_constrained_system(con)
+        A_expect = np.array([[0., 0., 0., 0., -1., -1.],  # linear inequality on epigraph for relent constr
+                             [0., 0., 0., 0., -1., 0.],   # first exponential cone
+                             [0., 0., 2.72, 0., 0., 0.],  #
+                             [2., 0., 0., 0., 0., 0.],    #
+                             [0., 0., 0., 0., 0., -1.],   # second exponential cone
+                             [0., 0., 0., 2.72, 0., 0.],  #
+                             [0., 2., 0., 0., 0., 0.]])   #
+        A = np.round(A.toarray(), decimals=2)
+        assert np.all(A == A_expect)
+        assert np.all(b == np.array([1., 0., 0., 0., 0., 0., 0.]))
+        assert K == [Cone('+', 1), Cone('e', 3), Cone('e', 3)]
+
 
     def test_vector2norm_1(self):
         x = Variable(shape=(3,), name='x')

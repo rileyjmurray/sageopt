@@ -214,7 +214,6 @@ class TestSagePolynomials(unittest.TestCase):
     #   Test multiplier search
     #
 
-    @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS fails on this problem.')
     def test_multiplier_search(self):
         # Background
         #
@@ -241,11 +240,12 @@ class TestSagePolynomials(unittest.TestCase):
         #
         x = standard_poly_monomials(3)
         p = (np.sum(x)) ** 2 + 0.35 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res1 = sage_multiplier_search(p, level=1).solve(solver='MOSEK', verbose=False)
+        res1 = sage_multiplier_search(p, level=1).solve(verbose=False)
         assert abs(res1[1]) < 1e-8
-        p -= 0.2 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
-        res2 = sage_multiplier_search(p, level=2).solve(solver='MOSEK', verbose=False)
-        assert abs(res2[1]) < 1e-8
+        if cl.Mosek.is_installed():
+            p -= 0.2 * (x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
+            res2 = sage_multiplier_search(p, level=2).solve(verbose=False)
+            assert abs(res2[1]) < 1e-8
 
     #
     #   Test conditional SAGE relaxations

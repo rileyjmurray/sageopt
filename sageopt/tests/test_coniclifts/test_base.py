@@ -52,19 +52,19 @@ class TestBase(unittest.TestCase):
         assert verify_entries(expr, x)
 
         T1 = np.random.randn(6, 3).round(decimals=4)
-        expr1 = affine.tensordot(T1, x)
+        expr1 = affine.tensordot(T1, x, axes=1)
         (A1, X1, B1) = expr1.factor()
         X1 = Expression(X1)
-        assert verify_entries(affine.tensordot(A1, X1) + B1, expr1)
+        assert verify_entries(affine.tensordot(A1, X1, axes=1) + B1, expr1)
 
         T2 = np.random.randn(2, 6).round(decimals=4)
-        expr2 = affine.tensordot(T2, expr1)
+        expr2 = affine.tensordot(T2, expr1, axes=1)
         (A2, X2, B2) = expr2.factor()
         X2 = Expression(X2)
-        assert verify_entries(affine.tensordot(A2, X2) + B2, expr2)
+        assert verify_entries(affine.tensordot(A2, X2, axes=1) + B2, expr2)
 
-        Tall = affine.tensordot(T2, A1)
-        res3 = affine.tensordot(Tall, X1)
+        Tall = affine.tensordot(T2, A1, axes=1)
+        res3 = affine.tensordot(Tall, X1, axes=1)
         assert verify_entries(res3, expr2)
 
     # noinspection PyUnusedLocal
