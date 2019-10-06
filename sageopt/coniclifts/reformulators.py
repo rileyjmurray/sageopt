@@ -37,43 +37,60 @@ def build_cone_type_selectors(K):
 
 def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
     """
-    Replace the conic system {x : A @ x + b \in K } by {x0 : A1 @ x1 + b1 \in K}
+    Given an affine representation {x : A @ x + b \in K}, construct a direct
+    representation {x : \exists y with  G @ [x,y] + h \in K1, y \in K2},
+    where ``K1`` consists exclusively of cones types in ``dont_sep``.
 
-    :param A: a scipy csc sparse matrix (m rows, n columns)
-    :param b: a numpy 1darray of length m
-    :param K: a list of cones, specified by (str, int) pairs, where "str" gives the
-    cones type, and "int" gives the cone's length.
-    :param destructive: a boolean. Indicates whether or not inputs (A,b) are modified,
-    or copied.
-    :param dont_sep: a set of cone types that are not to be modified while reformulating
-    the system. Common values are dont_sep={'0'} and dont_sep={'0','+'}.
+    Parameters
+    ----------
+    A : scipy.sparse.csc_matrix
+        Has ``m`` rows and ``n`` columns.
+    b : ndarray
+        Of size ``m``.
+    K : list of coniclifts.cones.Cone
+        Satisfies ``sum([co.len for co in K]) == m``.
+    destructive : bool
+        True if you want to modify ``A`` and ``K`` in-place.
+    dont_sep : set of coniclifts.cones.Cone
+        Cones that may be retained in the "affine part" of the feasible set's
+        direct representation.
 
-    :return: See in-line comments.
+    Returns
+    -------
 
-    Example: Suppose the conic system (A,b,K) can be expressed as {x : B @ x == d, G @ x + h >=0, x >=0 }, where G
-             is a non-square matrix. Then by calling this function with dont_sep=None, we obtain the conic system
-                { [x,y] : A1 @ [x, y] == b0 } \cap {[x, y] : x >= 0, y >= 0}
-             where A1 = [[B, 0], [G, -I]] and b0 = [d, -h]. This conic system is equivalent to (A,b,K) once we
-             project onto the x coordinates.
+    Examples
+    --------
 
-             This case is interesting because it shows that a cone constraint "x >= 0" can be separated from
-             from the matrix system, even though "x" appears in th inequality constraint "G @ x + d >= 0".
+    EX1: Suppose the conic system (A,b,K) can be expressed as {x : B @ x == d, G @ x + h >=0, x >=0 }, where G
+    is a non-square matrix. Then by calling this function with dont_sep=None, we obtain the conic system
+       { [x,y] : A1 @ [x, y] == b0 } \cap {[x, y] : x >= 0, y >= 0}
+    where A1 = [[B, 0], [G, -I]] and b0 = [d, -h]. This conic system is equivalent to (A,b,K) once we
+    project onto the x coordinates.
 
-    Example: Suppose the conic system (A,b,K) can be expressed as {x : B @ x == d, L <= x <= U }.
-             Then by calling this function with dont_sep=None, we obtain the conic system
-                { [x,y,z] : A1 @ [x,y,z] == b0 } \cap {[x,y,z] : y >= 0, z >= 0 }
-             where A1 = [[B, 0, 0], [I, -I, 0], [-I, 0, -I]] and b0 = [b, L, -U]. This conic system is equivalent
-             to (A,b,K) once we project out the [y,z] components.
+    This case is interesting because it shows that a cone constraint "x >= 0" can be separated from
+    from the matrix system, even though "x" appears in th inequality constraint "G @ x + d >= 0".
 
-             NOTE: here we ended up introducing slack variables for both inequalities in the variable "x", rather
-             than writing {[x,w] : B @ x == b + B @ L, U - L - x - w == 0} \cap {[x,w] : x >= 0, w >= 0 }. This
-             Second option is still a valid formulation, but it is not one that this function would generate.
 
-    Example: Suppose the conic system (A,b,K) can be expressed as  { x : B @ x == d, G @ x <=_{K_prime} h },
-             where every entry of G is nonzero, A is not square, and K_prime does not contain the zero cone.
-             Then dont_sep={'0'} yields
-                { [x, y] : A1 @ [x, y] == b0 } \cap { [x, y] : y \in K_{prime} }
-             for A1 = [[B, 0], [-G, -I]] and b0 = [d, -h].
+    EX2: Suppose the conic system (A,b,K) can be expressed as {x : B @ x == d, L <= x <= U }.
+    Then by calling this function with dont_sep=None, we obtain the conic system
+    { [x,y,z] : A1 @ [x,y,z] == b0 } \cap {[x,y,z] : y >= 0, z >= 0 }
+    where A1 = [[B, 0, 0], [I, -I, 0], [-I, 0, -I]] and b0 = [b, L, -U]. This conic system is equivalent
+    to (A,b,K) once we project out the [y,z] components.
+
+    NOTE: here we ended up introducing slack variables for both inequalities in the variable "x", rather
+    than writing {[x,w] : B @ x == b + B @ L, U - L - x - w == 0} \cap {[x,w] : x >= 0, w >= 0 }. This
+    Second option is still a valid formulation, but it is not one that this function would generate.
+
+
+    EX3: Suppose the conic system (A,b,K) can be expressed as  { x : B @ x == d, G @ x <=_{K_prime} h },
+    where every entry of G is nonzero, A is not square, and K_prime does not contain the zero cone.
+    Then dont_sep={'0'} yields
+    { [x, y] : A1 @ [x, y] == b0 } \cap { [x, y] : y \in K_{prime} }
+    for A1 = [[B, 0], [-G, -I]] and b0 = [d, -h].
+
+    Notes
+    -----
+    dont_sep=None is equivalent to dont_sep={'0'}.
 
     Common use-case: Passing dont_sep={'0','+'}. This ensures that any constraints on nonlinear cones
             (i.e. exp, psd, soc, etc...) are stated simply as "x[indices_j] \in K_j", where
@@ -85,8 +102,6 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
             while aspects of the conic system regarding other cones (e.g. second order cones, exponential cones,
             nonnegative orthants, etc...) are left alone.
 
-    REMARKS:
-        (1) dont_sep=None is equivalent to dont_sep={'0'}.
     """
     if not destructive:
         A = A.copy()
