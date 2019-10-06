@@ -127,7 +127,7 @@ class TestPolynomials(unittest.TestCase):
             assert False
         except RuntimeError as err:
             err_str = str(err)
-            assert 'could not be verified as feasible' in err_str
+            assert 'seem to be infeasible' in err_str
         A = np.ones(shape=(2, 2))
         b = np.array([0, 1])
         K = [cl.Cone('0', 2)]
@@ -136,7 +136,7 @@ class TestPolynomials(unittest.TestCase):
             assert False
         except RuntimeError as err:
             err_str = str(err)
-            assert 'could not be verified as feasible' in err_str
+            assert 'seem to be infeasible' in err_str
         pass
 
     #

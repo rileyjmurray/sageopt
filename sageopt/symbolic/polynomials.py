@@ -17,7 +17,9 @@
 import numpy as np
 import sageopt.coniclifts as cl
 from collections import defaultdict
-from sageopt.symbolic.signomials import Signomial, SigDomain
+from sageopt.symbolic.signomials import Signomial
+import warnings
+
 
 __NUMERIC_TYPES__ = (int, float, np.int_, np.float_)
 
@@ -515,12 +517,17 @@ class PolyDomain(object):
         prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
         prob.solve(verbose=False, solver='ECOS')
         if not prob.value < 1e-7:
-            msg1 = 'Inferred constraints could not be verified as feasible.\n'
-            msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'
-            msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
-            msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
-            msg = msg1 + msg2 + msg3 + msg4
-            raise RuntimeError(msg)
+            if prob.value is np.NaN:  # pragma: no cover
+                msg = 'PolyDomain constraints could not be verified as feasible.'
+                msg += '\n Proceed with caution!'
+                warnings.warn(msg)
+            else:
+                msg1 = 'PolyDomain constraints seem to be infeasible.\n'
+                msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'
+                msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
+                msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
+                msg = msg1 + msg2 + msg3 + msg4
+                raise RuntimeError(msg)
         pass
 
     def check_membership(self, x_val, tol):
@@ -575,7 +582,3 @@ class PolyDomain(object):
         if self.check_feas:
             self._check_feasibility()
         pass
-
-
-
-
