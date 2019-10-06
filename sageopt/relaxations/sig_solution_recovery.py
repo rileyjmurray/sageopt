@@ -86,7 +86,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
 
     """
     con = prob.constraints[0]
-    if not con.name == 'Lagrangian SAGE dual constraint':
+    if not con.name == 'Lagrangian SAGE dual constraint':  # pragma: no cover
         raise RuntimeError('Unexpected first constraint in dual SAGE relaxation.')
     metadata = prob.metadata
     f = metadata['f']
@@ -186,24 +186,6 @@ def _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol):
         if is_feasible(xi, gts, eqs, ineq_tol, eq_tol):
             mus.append(xi)
     return mus
-
-
-def _satisfies_AbK_constraints(A, b, K, mu, ineq_tol):
-    # This function cannot be trusted when some component mu[i] == -np.inf.
-    if np.any(np.isnan(mu)):
-        return False
-    x = cl.Variable(shape=(A.shape[1],))
-    t = cl.Variable(shape=(1,))
-    mu_flat = mu.ravel()
-    where_finite = np.where(mu > -np.inf)[0]
-    cons = [cl.vector2norm(mu_flat[where_finite] - x[where_finite]) <= t, cl.PrimalProductCone(A @ x + b, K)]
-    prob = cl.Problem(cl.MIN, t, cons)
-    cl.clear_variable_indices()
-    res = prob.solve(verbose=False)
-    if res[0] == cl.SOLVED and res[1] <= ineq_tol + 1e-8:
-        return True
-    else:
-        return False
 
 
 def _make_dummy_lagrangian(f, gts, eqs):
