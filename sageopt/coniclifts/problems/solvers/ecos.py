@@ -33,7 +33,7 @@ class ECOS(Solver):
             A = A.copy()
             K = copy.deepcopy(K)
         for co in K:
-            if co.type not in {'e', 'S', '+', '0'}:
+            if co.type not in {'e', 'S', '+', '0'}:  # pragma: no cover
                 msg1 = 'ECOS only supports cones with labels in the set {"e", "S", "+", "0"}. \n'
                 msg2 = 'The provided data includes an invalid cone labeled "' + str(co[0]) + '".'
                 raise RuntimeError(msg1 + msg2)
@@ -111,16 +111,16 @@ class ECOS(Solver):
                 # dual infeasible (primal unbounded)
                 problem_status = CL_CONSTANTS.solved
                 problem_value = -np.Inf
-            elif solver_status == 10:
+            elif solver_status == 10:  # pragma: no cover
                 # primal near-optimal
                 problem_status = CL_CONSTANTS.inaccurate
                 problem_value = solver_output['info']['pcost']
                 variable_values = ECOS.load_variable_values(solver_output['x'], var_mapping)
-            elif solver_status == 11:
+            elif solver_status == 11:  # pragma: no cover
                 # primal likely infeasible
                 problem_status = CL_CONSTANTS.inaccurate
                 problem_value = np.Inf
-            else:
+            else:  # pragma: no cover
                 # dual likely infeasible (primal likely unbounded)
                 problem_status = CL_CONSTANTS.inaccurate
                 problem_value = -np.Inf
