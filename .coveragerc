@@ -1,3 +1,6 @@
 [report]
 omit =
     sageopt/tests/*
+    sageopt/coniclifts/constraints/constraint.py
+    sageopt/coniclifts/constraints/set_membership/setmem.py
+    sageopt/coniclifts/problems/solvers/solver.py
