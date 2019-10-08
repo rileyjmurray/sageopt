@@ -15,7 +15,8 @@
 """
 import numpy as np
 import unittest
-from sageopt.symbolic.signomials import Signomial, SigDomain
+from sageopt.symbolic.signomials import Signomial, SigDomain, standard_sig_monomials
+from sageopt.relaxations import infer_domain
 from sageopt import coniclifts as cl
 
 
@@ -126,6 +127,42 @@ class TestSignomials(unittest.TestCase):
             assert 'seem to be infeasible' in err_str
         pass
 
+    def test_eqcon_infer_sigdomain(self):
+        y = standard_sig_monomials(3)
+        expx0 = np.exp([1, 2, 3])
+        eqs = [y[0] - expx0[0], 2*y[1] - 2*expx0[1], 0.5*expx0[2] - 0.5*y[2]]
+        gts = [y[0] - y[1] + y[2]]  # not convex
+        f = -np.sum(y) + 1
+        X = infer_domain(f, gts, eqs)
+        is_in = X.check_membership(np.array([1, 2, 3]), tol=1e-10)
+        assert is_in
+        is_in = X.check_membership(np.array([1.0001, 2, 3]), tol=1e-5)
+        assert not is_in
+        assert X.A.shape == (3, 3)
+        assert all([co.type == '0' for co in X.K])
+        residual = X.A @ np.array([1, 2, 3]) + X.b
+        assert np.allclose(residual, np.zeros(3))
+
+    def test_expcone_infer_sigdomain(self):
+        y = standard_sig_monomials(1)[0]
+        dummy_f = y * 0
+        g0 = 10 - y - y**2 - 1/y
+        d0 = infer_domain(dummy_f, [g0], [])
+        g1 = y * g0
+        d1 = infer_domain(dummy_f, [g1], [])
+        g2 = g0 / y**0.5
+        d2 = infer_domain(dummy_f, [g2], [])
+        assert np.allclose(d0.A, d1.A)
+        assert np.allclose(d0.A, d2.A)
+        assert np.allclose(d0.b, d1.b)
+        assert np.allclose(d0.b, d2.b)
+        for di in [d0, d1, d2]:
+            assert len(di.K) == 4
+            assert di.K[0].type == '+'
+            assert di.K[0].len == 1
+            for j in [1,2,3]:
+                assert di.K[j].type == 'e'
+        pass
 
 if __name__ == '__main__':
     unittest.main()

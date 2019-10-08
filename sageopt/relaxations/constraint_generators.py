@@ -115,5 +115,5 @@ def clcons_from_standard_gprep(n, gts, eqs):
         cst_loc = g.constant_location()
         non_cst_loc = 1 - cst_loc
         rhs = np.log(g.c[cst_loc] / abs(g.c[non_cst_loc]))
-        coniclift_cons.append(g.alpha[non_cst_loc, :] @ y == rhs)
+        coniclift_cons.append(g.alpha[non_cst_loc, :] @ x == rhs)
     return coniclift_cons

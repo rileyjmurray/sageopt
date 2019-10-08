@@ -140,7 +140,7 @@ class TestPolynomials(unittest.TestCase):
             assert 'seem to be infeasible' in err_str
         pass
 
-    def test_infer_domain(self):
+    def test_infer_box_polydomain(self):
         bounds = [(-0.1, 0.4), (0.4, 1),
                   (-0.7, -0.4), (-0.7, 0.4),
                   (0.1, 0.2), (-0.1, 0.2),
@@ -170,6 +170,19 @@ class TestPolynomials(unittest.TestCase):
         is_in = dom.check_membership(x1, tol=1e-5)
         assert not is_in
         pass
+
+    def test_infer_expcone_polydomain(self):
+        x = standard_poly_monomials(4)
+        g = 1 - np.sum(np.power(x, 2))
+        dummy_f = x[0] * 0
+        dom = infer_domain(dummy_f, [g], [])
+        assert len(dom.K) == 5
+        assert dom.A.shape == (13, 8)
+        assert dom.K[0].type == '+'
+        assert dom.K[0].len == 1
+        for i in [1,2,3,4]:
+            assert dom.K[i].type == 'e'
+        assert dom.b[0] == 1
 
     #
     #   Test construction of [constant] signomial representatives
