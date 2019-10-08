@@ -3,15 +3,6 @@
 When substantial effort is undertaken to change sageopt, or add new features, the plans and
 rationales for those changes should be listed here.
 
-
-## Add tests for constraint violations (coniclifts)
-
-This is a low-priority task.
-
-The ability to compute constraint violations was added pretty late in the coniclifts development process.
-Linear equations and inequalities, and SAGE cones have tests. Should add tests for other
-SetMembership constraints, and for some nonlinear atoms (such as vector2norm, or exp).
-
 ## Populate the design_notes folder.
 
 This is a high-priority task. It can be done incrementally.
@@ -76,35 +67,28 @@ existing solver interfaces do not allow these constraints. (So right now, a user
 an SDP, but cannot solve an SDP.)
 
 
-## Add more sophisticated dimension reduction for SAGE cones
+## Add more dimension reduction for constrained SAGE relaxations
 
-Suppose we want to represent a constraint "c is X-SAGE with respect to exponents alpha".
-Often, there are many indices "k" where the k^th X-AGE cone w.r.t. alpha is simply the
-nonnegative orthant.
+This note concerns signomial-constrained and polynomial-constrained
+SAGE relaxations. For these problems, the Lagrangian is not taking advantage
+of any sign information for its non-constant terms. For problems
+where the objective function is sparse, this sign information may be
+crucial. There are two clear obstacles for implementing this dimension
+reduction:
 
-If X is a cone, then it is easy to identify these indices:
+1. the signs restrictions on the Lagrangian's coefficient vector can
+   also affect sign restrictions on dual variables' coefficient vectors.
+   So there is a cyclic dependence between dimension reduction for the Lagrangian,
+   and dimension reduction for the dual variables appearing in the Lagrangian.
 
-find a nonzero vector x \in X so that (alpha - alpha[k,:]) @ x < 0.
+2. Coniclifts does not have support for tracking the signs of non-constant
+   expressions.
 
-When X is not a cone, we can check that
-
-    min{ t : x in X, (alpha - alpha[k,:]) @ x <= t } = -\infty
-
-Or, for numeric purposes, it should suffice to check that the value
-of the above optimization problem is <= -1000 (since exp(-1000)
-is zero in 64 bit arithmetic).
-
-In order to add this dimension-reduction to sageopt, it will be necessary to
-create "constraint factories", which perform this dimension reduction once,
-and allow it to be re-used across multiple desired constraints.
-
-*UPDATE* There is now an \_EXPENSIVE\_REDUCTION\_ flag in both ordinary_sage_cone.py and
-conditional_sage_cone.py which has ExpCoverHelper objects solve these optimization
-problems. Here are some useful extensions:
-
-1. Enable performing the reductions in parallel, with Dask.
-2. Recycle the expcovers across primal and dual forms of the same
-SAGE relaxation.
-3. Allow some logging during this reduction phase, so users have a sense
-for how long it's going to take.
+There is also a potential drawback of implementing this kind of dimension
+reduction: it would make the implementations of sig_constrained_relaxation
+or sig_relaxation much harder to read. Right now the simplicity of these
+functions is important, because they serve as a template if someone wanted
+to implement variations of those functions. If these functions are made
+substantially more complicated, then it might be good to put the current
+(simple) forms of these functions in an "advanced examples" section.
 
