@@ -311,14 +311,6 @@ def linear_system_negatives(alpha, moments):
         return x, alpha, U, W
 
 
-def _lin_indep_subset_negatives(alpha, b):
-    _, lin_indep_row_idxs = mod2rref(alpha.T)
-    alpha = alpha[lin_indep_row_idxs, :]
-    b = b[lin_indep_row_idxs]
-    x = mod2linsolve(alpha, b)
-    return x
-
-
 def greedy_weighted_cut_negatives(alpha, v):
     m, n = alpha.shape
     y = np.ones(n,)
