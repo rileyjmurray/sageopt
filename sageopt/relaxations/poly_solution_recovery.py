@@ -22,6 +22,8 @@ from scipy.optimize import fmin_cobyla
 import itertools
 
 
+#TODO: update this function to allow SigDomain arguments.
+#   Bring back "log_domain_converter" to turn the SigDomain into a PolyDomain
 def local_refine_polys_from_sigs(f, gts, eqs, x0, **kwargs):
     """
     This is a helper function which ...
@@ -85,6 +87,7 @@ def local_refine_polys_from_sigs(f, gts, eqs, x0, **kwargs):
     return y
 
 
+#TODO: update this function to work with poly_relaxation
 def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False, **kwargs):
     """
     Recover a list of candidate solutions from a dual SAGE relaxation. Solutions are
