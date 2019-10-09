@@ -38,7 +38,7 @@ def clear_variable_indices():
     pass
 
 
-def presolve_trivial_age_cones(true_or_false=True):
+def presolve_trivial_age_cones(true_or_false=False):
     """
     Set coniclifts' behavior for SAGE constraints.
 

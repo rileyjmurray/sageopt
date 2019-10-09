@@ -16,6 +16,7 @@
 import unittest
 import numpy as np
 from sageopt import coniclifts as cl
+from sageopt.coniclifts.constraints.set_membership import sage_cones
 from sageopt.relaxations import sig_relaxation, sig_constrained_relaxation, sage_multiplier_search
 from sageopt.relaxations import sig_solrec, infer_domain
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
@@ -50,7 +51,7 @@ def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='ECOS'):
 # noinspection SpellCheckingInspection
 class TestSAGERelaxations(unittest.TestCase):
 
-    def test_unconstrained_sage_1(self):
+    def test_unconstrained_sage_1(self, presolve=False):
         # Background
         #
         #       This is Example 1 from a 2018 paper by Murray, Chandrasekaran, and Wierman
@@ -62,6 +63,8 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       (2) Recover a globally optimal solution at ell == 1.
         #
+        initial_presolve = sage_cones._ELIMINATE_TRIVIAL_AGE_CONES_
+        cl.presolve_trivial_age_cones(presolve)
         alpha = np.array([[0, 0],
                           [1, 0],
                           [0, 1],
@@ -77,6 +80,10 @@ class TestSAGERelaxations(unittest.TestCase):
         assert abs(pd1[0] - expected[1]) < 1e-4 and abs(pd1[1] - expected[1]) < 1e-4
         optsols = sig_solrec(dual)
         assert (s(optsols[0]) - dual.value) < 1e-6
+        cl.presolve_trivial_age_cones(initial_presolve)
+
+    def test_unconstrained_sage_1a(self):
+        self.test_unconstrained_sage_1(True)
 
     def test_unconstrained_sage_2(self):
         # Background
@@ -135,7 +142,7 @@ class TestSAGERelaxations(unittest.TestCase):
         pd1, _ = primal_dual_vals(s, 1)
         assert pd1[0] == expected and pd1[1] == expected
 
-    def test_unconstrained_sage_4(self):
+    def test_unconstrained_sage_4(self, presolve=False):
         # Background
         #
         #       This example was constructed soley as a test case for sageopt.
@@ -152,6 +159,8 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       It may not be obvious, but the signomial "s" is actually convex!
         #
+        initial_presolve = sage_cones._ELIMINATE_TRIVIAL_AGE_CONES_
+        cl.presolve_trivial_age_cones(presolve)
         s = Signomial({(3,): 1, (2,): -4, (1,): 7, (-1,): 1})
         expected = [3.464102, 4.60250026, 4.6217973]
         pds = [primal_dual_vals(s, ell) for ell in range(3)]
@@ -162,6 +171,10 @@ class TestSAGERelaxations(unittest.TestCase):
         dual.solve(solver='ECOS', verbose=False)
         optsols = sig_solrec(dual)
         assert s(optsols[0]) < 1e-6 + dual.value
+        cl.presolve_trivial_age_cones(initial_presolve)
+
+    def test_unconstrained_sage_4a(self):
+        self.test_unconstrained_sage_4(True)
 
     def test_unconstrained_sage_5(self):
         # Background
