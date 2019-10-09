@@ -625,6 +625,49 @@ class ExpCoverHelper(object):
                     curr_row = self.alpha[i, :]
                     for j in range(self.m):
                         if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
+                            """
+                            Observation
+                            -----------
+
+                            By being in this part of the code, there must exist a k where
+
+                                 alpha[i,k] == 0 and alpha[j,k] > 0.
+
+                            The fact that alpha[i,k] == 0 means that for all j2, the
+                            expression (alpha[j2,:] - alpha[i,:]) @ mu[:, i] is (1)
+                            non-decreasing in mu[k,i], and (2) strictly increasing in
+                            mu[k,i] when j2 == j. Therefore by sending mu[i,k] to -\infty
+                            we send (alpha[j,:] - alpha[i,:]) @ mu[:, i] to -\infty.
+
+                            Consequence 1
+                            -------------
+
+                            If mu[:,i] is only subject to constraints of the form
+
+                                v[i]*log(v[j2]/v[i]) >= (alpha[j2,:] - alpha[i,:]) @ mu[:, i]  (*)
+
+                            with 0 <= j2 < m, then the particular constraint with j2 == j
+                            is never active at any optimal solution. For ordinary SAGE cones,
+                            this means the j-th term of alpha isn't used in the i-th AGE cone.
+
+                            Consequence 2
+                            -------------
+
+                            For conditional SAGE cones, there is another constraint:
+
+                                 A @ mu[:, i] + v[i] * b \in K.      (**)
+
+                            However, as long as (**) allows us to send mu[k,i] to -\infty
+                            without affecting feasibility, then the we arrive at the same
+                            conclusion: the j-th term of alpha isn't used in the i-th AGE cone.
+
+                            Such a situation might seem rare, but it is actually quite common.
+                            For example, the if "conditional" part of this constraint was
+                            represented by "cl.weighted_sum_exp(c, mat @ x) <= cst" for c >= 0,
+                            mat >= 0, and cst > 0, then (**) satisfies the necessary properties.
+                            More generally, if the conditioning allows y[k] == 0 in a "geometric
+                            form" solution, then (**) satisfies the aforementioned properties.
+                            """
                             curr_cover[j] = False
         if self.AbK is None:
             for i in self.U_I:
