@@ -625,26 +625,40 @@ class ExpCoverHelper(object):
                     curr_row = self.alpha[i, :]
                     for j in range(self.m):
                         if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
+                            curr_cover[j] = False
                             """
+                            The above operation is without loss of generality for ordinary SAGE
+                            constraints. For conditional SAGE constraints, the operation may or
+                            may-not be without loss of generality. As a basic check, the above
+                            operation is w.l.o.g. even for conditional SAGE constraints, as long
+                            as the "conditioning" satisfies the following property:
+
+                                Suppose "y" a geometric-form solution which is feasible w.r.t.
+                                conditioning. Then "y" remains feasible (w.r.t. conditioning)
+                                when we assign "y[k] = 0".
+
+                            The comments below explain in greater detail.
+
                             Observation
                             -----------
-
-                            By being in this part of the code, there must exist a k where
+                            By being in this part of the code, there must exist a "k" where
 
                                  alpha[i,k] == 0 and alpha[j,k] > 0.
 
-                            The fact that alpha[i,k] == 0 means that for all j2, the
-                            expression (alpha[j2,:] - alpha[i,:]) @ mu[:, i] is (1)
-                            non-decreasing in mu[k,i], and (2) strictly increasing in
-                            mu[k,i] when j2 == j. Therefore by sending mu[i,k] to -\infty
-                            we send (alpha[j,:] - alpha[i,:]) @ mu[:, i] to -\infty.
+                            Also, we have alpha >= 0. These facts tell us that the expression
+
+                                (alpha[j2,:] - alpha[i,:]) @ mu[:, i] (*)
+
+                            is (1) non-decreasing in mu[k,i] for all 0 <= j2 < m, and (2)
+                            strictly increasing in mu[k,i] when j2 == j. Therefore by
+                            sending mu[i,k] to -\infty, we do not increase (*) for any
+                            0 <= j2 < m, and in fact (*) goes to -\infty for j2 == j.
 
                             Consequence 1
                             -------------
-
                             If mu[:,i] is only subject to constraints of the form
 
-                                v[i]*log(v[j2]/v[i]) >= (alpha[j2,:] - alpha[i,:]) @ mu[:, i]  (*)
+                                v[i]*log(v[j2]/v[i]) >= (alpha[j2,:] - alpha[i,:]) @ mu[:, i]
 
                             with 0 <= j2 < m, then the particular constraint with j2 == j
                             is never active at any optimal solution. For ordinary SAGE cones,
@@ -652,7 +666,6 @@ class ExpCoverHelper(object):
 
                             Consequence 2
                             -------------
-
                             For conditional SAGE cones, there is another constraint:
 
                                  A @ mu[:, i] + v[i] * b \in K.      (**)
@@ -660,15 +673,7 @@ class ExpCoverHelper(object):
                             However, as long as (**) allows us to send mu[k,i] to -\infty
                             without affecting feasibility, then the we arrive at the same
                             conclusion: the j-th term of alpha isn't used in the i-th AGE cone.
-
-                            Such a situation might seem rare, but it is actually quite common.
-                            For example, the if "conditional" part of this constraint was
-                            represented by "cl.weighted_sum_exp(c, mat @ x) <= cst" for c >= 0,
-                            mat >= 0, and cst > 0, then (**) satisfies the necessary properties.
-                            More generally, if the conditioning allows y[k] == 0 in a "geometric
-                            form" solution, then (**) satisfies the aforementioned properties.
                             """
-                            curr_cover[j] = False
         if self.AbK is None:
             for i in self.U_I:
                 if np.count_nonzero(expcovers[i]) == 1:
