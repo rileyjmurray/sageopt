@@ -92,3 +92,14 @@ to implement variations of those functions. If these functions are made
 substantially more complicated, then it might be good to put the current
 (simple) forms of these functions in an "advanced examples" section.
 
+###  Introduce a pre-compile function for Constraint objects.
+
+For fancy constraints like PrimalSageCone or DualSageCone, this would
+declare the auxiliary variables. The idea is that if auxiliary variable
+declaration can be deferred until a Problem class sees the constraints,
+more advanced presolve can be applied with all of those constraints in
+mind at the same time.
+
+For ElementwiseConstraint objects, this would recompute ``con.expr``
+(and thereby undo any epigraph-substitution performed in a previous
+compilation phase).
