@@ -42,3 +42,9 @@ PrimalSageCone and DualSageCone objects should cache the compilation
 settings they observe during construction. This can mostly be done
 within the ExpCoverHelper class. However the PrimalSageCone class
 also needs to track if it uses age-sum-leq-c or age-sum-eq-c.
+
+## Consider moving infer_domain to symbolic
+
+Right now, SigDomain and PolyDomain objects are part of the symbolic
+subpackage, but infer_domain is part of the relaxations subpackage.
+Conceptually, it seems as though these should be in a common place.

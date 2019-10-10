@@ -110,7 +110,9 @@ class TestSagePolynomials(unittest.TestCase):
         res1 = primal_dual_unconstrained(p, 0, sigrep_ell=0)
         assert abs(res1[0] - res1[1]) <= 1e-6
         # Check for same results between the two formulations
-        assert abs(res0[0] - res1[0]) <= 1e-6
+        expected = 1
+        assert abs(res0[0] - expected) <= 1e-5
+        assert abs(res1[0] - expected) <= 1e-5
 
     def test_unconstrained_2(self):
         # Background
@@ -140,13 +142,18 @@ class TestSagePolynomials(unittest.TestCase):
                         (1, 2): -1,
                         (2, 1): 2,
                         (3, 3): -3})
-        res00 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=0)  # 0.6932
+        res00 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=0)
+        expect00 = 0.6932
         assert abs(res00[0] - res00[1]) <= 1e-6
-        res10 = primal_dual_unconstrained(p, poly_ell=1, sigrep_ell=0)  # 0.7587
+        assert abs(res00[0] - expect00) <= 1e-3
+        res10 = primal_dual_unconstrained(p, poly_ell=1, sigrep_ell=0)
+        expect10 = 0.7587
         assert abs(res10[0] - res10[1]) <= 1e-5
-        res01 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=1)  # 0.7876
+        assert abs(res10[0] - expect10) <= 1e-3
+        res01 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=1)
+        expect01 = 0.7876
         assert abs(res01[0] - res01[1]) <= 1e-5
-        assert res01[0] > res10[0] + 1e-2
+        assert abs(res01[0] - expect01) <= 1e-3
 
     def test_unconstrained_3(self):
         # Minimization of the six-hump camel back function.
@@ -161,15 +168,22 @@ class TestSagePolynomials(unittest.TestCase):
         # ECOS is unable to solver sigrep_ell=2 due to conditioning problems.
         # MOSEK easily solves sigrep_ell=2, and this is globally optimal
         res00 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=0)
+        expect00 = -1.18865
         assert abs(res00[0] - res00[1]) <= 1e-6
+        assert abs(res00[0] - expect00) <= 1e-3
         res10 = primal_dual_unconstrained(p, poly_ell=1, sigrep_ell=0)
+        expect10 = -1.03416
         assert abs(res10[0] - res10[1]) < 1e-6
+        assert abs(res10[0] - expect10) <= 1e-3
         if cl.Mosek.is_installed():
             res01 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=1, solver='MOSEK')
+            expect01 = -1.03221
             assert abs(res01[0] - res01[1]) <= 1e-6
+            assert abs(res01[0] - expect01) <= 1e-3
             res02 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=2, solver='MOSEK')
+            expect02 = -1.0316
             assert abs(res02[0] - res02[1]) < 1e-6
-            assert abs((res02[0] + res02[1])/2.0 - (-1.0316)) <= 1e-4
+            assert abs(res02[0] - expect02) <= 1e-3
 
     #
     #   Test constrained relaxations
@@ -197,10 +211,12 @@ class TestSagePolynomials(unittest.TestCase):
         claimed_min = -30.25
         claimed_max = 40
         res_min, _ = primal_dual_constrained(f, gts, [], 0, 1, 0, None)
-        assert abs(res_min[0] - claimed_min) < 1e-5 and abs(res_min[1] - claimed_min) < 1e-5
+        assert abs(res_min[0] - claimed_min) < 1e-5
+        assert abs(res_min[1] - claimed_min) < 1e-5
         res_max, _ = primal_dual_constrained(-f, gts, [], 0, 2, 0, None)
         res_max = [-res_max[0], -res_max[1]]
-        assert abs(res_max[0] - claimed_max) < 1e-5 and abs(res_max[1] - claimed_max) < 1e-5
+        assert abs(res_max[0] - claimed_max) < 1e-5
+        assert abs(res_max[1] - claimed_max) < 1e-5
 
     def test_ordinary_constrained_2(self):
         x = standard_poly_monomials(1)[0]
@@ -208,7 +224,9 @@ class TestSagePolynomials(unittest.TestCase):
         gts = [1 - x, x - (-1)]
         eqs = []
         res, _ = primal_dual_constrained(f, gts, eqs, 0, 2, 0, None)
-        assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
+        expect = -1
+        assert abs(res[0] - expect) < 1e-6
+        assert abs(res[1] - expect) < 1e-6
 
     #
     #   Test multiplier search
@@ -255,14 +273,17 @@ class TestSagePolynomials(unittest.TestCase):
         x = standard_poly_monomials(1)[0]
         f = -x**2
         gts = [1 - x**2]
-        eqs = []
-        X = infer_domain(f, gts, eqs)
-        res = primal_dual_unconstrained(f, 0, 0, X)
-        assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
-        res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
-        assert abs(res[0] - (-1)) < 1e-6 and abs(res[1] - (-1)) < 1e-6
+        opt = -1
+        X = infer_domain(f, gts, [])
+        res_uncon00 = primal_dual_unconstrained(f, 0, 0, X)
+        assert abs(res_uncon00[0] - opt) < 1e-6
+        assert abs(res_uncon00[1] - opt) < 1e-6
+        res_con010, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
+        assert abs(res_con010[0] - opt) < 1e-6
+        assert abs(res_con010[1] - opt) < 1e-6
         solns = poly_solution_recovery.poly_solrec(dual)
-        gap = abs(f(solns[0]) - (-1))
+        x_star = solns[0]
+        gap = abs(f(x_star) - opt)
         assert gap < 1e-6
 
     def test_conditional_sage_2(self):
@@ -274,13 +295,17 @@ class TestSagePolynomials(unittest.TestCase):
             sel[i] = False
             f -= 16 * np.prod(x[sel])
         gts = [0.25 - x[i] ** 2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
+        opt = -5
         X = infer_domain(f, gts, [])
-        res = primal_dual_unconstrained(f, 0, 0, X)
-        assert abs(res[0] - (-5)) < 1e-6 and abs(res[1] - (-5)) < 1e-6
-        res, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
-        assert abs(res[0] - (-5)) < 1e-6 and abs(res[1] - (-5)) < 1e-6
+        res_uncon00 = primal_dual_unconstrained(f, 0, 0, X)
+        assert abs(res_uncon00[0] - opt) < 1e-6
+        assert abs(res_uncon00[1] - opt) < 1e-6
+        res_con010, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
+        assert abs(res_con010[0] - opt) < 1e-6
+        assert abs(res_con010[1] - opt) < 1e-6
         solns = poly_solution_recovery.poly_solrec(dual)
-        gap = abs(f(solns[0]) - (-5))
+        x_star = solns[0]
+        gap = abs(f(x_star) - opt)
         assert gap < 1e-6
 
 

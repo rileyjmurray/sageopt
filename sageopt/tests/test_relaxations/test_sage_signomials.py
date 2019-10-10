@@ -318,6 +318,9 @@ class TestSAGERelaxations(unittest.TestCase):
         g5 = 3 - x[2]
         gts = [g1, g2, g3, g4, g5]
         res01, _ = constrained_primal_dual_vals(f, gts, [], p=0, q=1, ell=0, AbK=None)
+        expect = -6
+        assert abs(res01[0] - expect) < 1e-4
+        assert abs(res01[1] - expect) < 1e-4
         assert abs(res01[0] - res01[1]) < 1e-5
 
     def test_conditional_constrained_sage_1(self):
