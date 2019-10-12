@@ -42,12 +42,12 @@ class TestConstraints(unittest.TestCase):
         assert len(my_vars) == 1 and my_vars[0].name == x.name
 
         # Test ability to correctly compute violations
-        x.set_scalar_variables(x0)
+        x.value = x0
         viol = constraint.violation()
         assert viol < 1e-15
         viol = constraint.violation(norm_ord=1)
         assert viol < 1e-15
-        x.set_scalar_variables(np.zeros(n,))
+        x.value = np.zeros(n,)
         viol = constraint.violation()
         assert abs(viol - np.linalg.norm(b0, ord=2)) < 1e-15
         viol = constraint.violation(norm_ord=np.inf)
@@ -66,12 +66,12 @@ class TestConstraints(unittest.TestCase):
 
         # Test ability to correctly compute violations
         x0 = np.ones(shape=(n,))
-        x.set_scalar_variables(x0)
+        x.value = x0
         viol = constraint.violation()
         assert viol == 0
         x0 = np.zeros(shape=(n,))
         x0[0] = -1
-        x.set_scalar_variables(x0)
+        x.value = x0
         viol_one_norm = constraint.violation(norm_ord=1)
         assert abs(viol_one_norm - 4) < 1e-15
         viol_inf_norm = constraint.violation(norm_ord=np.inf)
@@ -88,7 +88,7 @@ class TestConstraints(unittest.TestCase):
         c = Variable(shape=(m,), name='test_c')
         constraint = sage_cones.PrimalSageCone(c, alpha, X=None, name='test')
         c0 = np.ones(shape=(m,))
-        c.set_scalar_variables(c0)
+        c.value = c0
         viol_default = constraint.violation()
         assert viol_default == 0
 

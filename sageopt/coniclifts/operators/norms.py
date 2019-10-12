@@ -41,6 +41,13 @@ class Vector2Norm(NonlinearScalarAtom):
         Vector2Norm._VECTOR_2_NORM_COUNTER_ += 1
         v = Variable(shape=(), name='_vec2norm_epi[' + str(self.id) + ']_')
         self._epigraph_variable = v[()].scalar_variables()[0]
+        self._evaluator = Vector2Norm._vector2norm_evaluator
+
+    @staticmethod
+    def _vector2norm_evaluator(vals):
+        vals = np.array(vals)
+        res = np.linalg.norm(vals, ord=2)
+        return res
 
     def is_convex(self):
         return True
@@ -68,6 +75,6 @@ class Vector2Norm(NonlinearScalarAtom):
         A_rows = np.array(A_rows)
         return A_vals, A_rows, A_cols, b, K
 
-    def value(self):
-        raise NotImplementedError()
+
+
 

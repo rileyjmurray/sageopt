@@ -226,11 +226,11 @@ class Problem(object):
             for v in self.all_variables:
                 if v.name in self.variable_values:
                     var_val = self.variable_values[v.name]
-                    v.set_scalar_variables(var_val)
+                    v.value = var_val
         else:
             for v in self.all_variables:
                 nans = np.NaN * np.empty(v.shape)
-                v.set_scalar_variables(nans)
+                v.value = nans
 
         # Record objective value
         if self.status in {CL_CONSTANTS.solved, CL_CONSTANTS.inaccurate}:

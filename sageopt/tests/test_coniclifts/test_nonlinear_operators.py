@@ -53,9 +53,9 @@ class TestNonlinearOperators(unittest.TestCase):
         assert K == [Cone('+', 1), Cone('+', 2), Cone('+', 2), Cone('e', 3), Cone('e', 3)]
         # value propagation
         x0 = np.array([1,2])
-        x.set_scalar_variables(x0)
+        x.value = x0
         y0 = np.array([3,4])
-        y.set_scalar_variables(y0)
+        y.value = y0
         actual = re.value
         expect = np.sum(rel_entr(2 * x0, np.exp(1) * y0))
         assert abs(actual - expect) < 1e-7
@@ -79,7 +79,6 @@ class TestNonlinearOperators(unittest.TestCase):
         assert np.all(b == np.array([1., 0., 0., 0., 0., 0., 0.]))
         assert K == [Cone('+', 1), Cone('e', 3), Cone('e', 3)]
 
-
     def test_vector2norm_1(self):
         x = Variable(shape=(3,), name='x')
         nrm = vector2norm(x)
@@ -94,6 +93,9 @@ class TestNonlinearOperators(unittest.TestCase):
         assert np.all(A == A_expect)
         assert np.all(b == np.array([1, 0, 0, 0, 0]))
         assert K == [Cone('+', 1), Cone('S', 4)]
+        x.value = np.zeros(3)
+        viol = con[0].violation()
+        assert viol == 0
 
     def test_vector2norm_2(self):
         x = Variable(shape=(3,), name='x')

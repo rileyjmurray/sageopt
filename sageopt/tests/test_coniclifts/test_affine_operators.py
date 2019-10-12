@@ -28,7 +28,7 @@ class TestAffineOperators(unittest.TestCase):
         expr1 = aff.dot(a, x)
         x0 = np.random.rand(4).round(decimals=4)
         expect = np.dot(a, x0)
-        x.set_scalar_variables(x0)
+        x.value = x0
         actual0 = expr0.value
         actual1 = expr1.value
         assert actual0 == expect
@@ -40,7 +40,7 @@ class TestAffineOperators(unittest.TestCase):
         X = Variable(shape=(3, 3), var_properties=['symmetric'])
         X0 = np.random.rand(3, 3).round(decimals=3)
         X0 += X0.T
-        X.set_scalar_variables(X0)
+        X.value = X0
         B = np.random.rand(3, 3).round(decimals=3)
         C = np.random.rand(3, 7).round(decimals=3)
 
@@ -66,7 +66,7 @@ class TestAffineOperators(unittest.TestCase):
         # test with multidimensional arrays
         a = np.arange(24).reshape((2, 3, 4))
         x = Variable(shape=(4,))
-        x.set_scalar_variables(np.arange(4))
+        x.value = np.arange(4)
         expr = aff.inner(a, x)
         expect = np.inner(a, np.arange(4))
         actual = expr.value
@@ -75,7 +75,7 @@ class TestAffineOperators(unittest.TestCase):
     def test_outer(self):
         x = Variable(shape=(3,))
         x0 = np.random.randn(3).round(decimals=3)
-        x.set_scalar_variables(x0)
+        x.value = x0
         a = np.array([1, 2, 3, 4])
         expr0 = aff.outer(a, x)
         assert np.allclose(expr0.value, np.outer(a, x0))
@@ -93,7 +93,7 @@ class TestAffineOperators(unittest.TestCase):
         expr0 = aff.kron(I, X)
         expr1 = aff.kron(X, I)
         X0 = np.random.randn(2, 2).round(decimals=3)
-        X.set_scalar_variables(X0)
+        X.value = X0
         assert np.allclose(expr0.value, np.kron(I, X0))
         assert np.allclose(expr1.value, np.kron(X0, I))
 

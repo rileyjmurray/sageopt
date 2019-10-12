@@ -58,6 +58,12 @@ class RelEnt(NonlinearScalarAtom):
         RelEnt._REL_ENT_COUNTER_ += 1
         v = Variable(shape=(), name='_rel_ent_epi[' + str(self.id) + ']_')
         self._epigraph_variable = v[()].scalar_variables()[0]
+        self._evaluator = RelEnt._rel_entr_evaluator
+
+    @staticmethod
+    def _rel_entr_evaluator(vals):
+        val = special_functions.rel_entr(vals[0], vals[1])
+        return val
 
     def is_convex(self):
         return True
@@ -91,13 +97,4 @@ class RelEnt(NonlinearScalarAtom):
         # ^ second row
         return A_vals, np.array(A_rows), A_cols, b, K
 
-    def value(self):
-        vals = []
-        for i in [0, 1]:
-            arg_as_list = self.args[i]
-            d = dict(arg_as_list[:-1])
-            arg_se = ScalarExpression(d, arg_as_list[-1][1], verify=False)
-            arg_val = arg_se.value
-            vals.append(arg_val)
-        val = special_functions.rel_entr(vals[0], vals[1])
-        return val
+

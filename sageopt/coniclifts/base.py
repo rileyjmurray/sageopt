@@ -33,34 +33,6 @@ class ScalarAtom(object):
     def is_affine(self):
         return False
 
-    def __add__(self, other):
-        return ScalarExpression({self: 1}, 0) + other
-
-    def __sub__(self, other):
-        return ScalarExpression({self: 1}, 0) - other
-
-    def __mul__(self, other):
-        if not isinstance(other, __REAL_TYPES__):  # pragma: no cover
-            raise RuntimeError('Can only multiply by scalars.')
-        return ScalarExpression({self: other}, 0)
-
-    def __truediv__(self, other):
-        if not isinstance(other, __REAL_TYPES__):  # pragma: no cover
-            raise RuntimeError('Can only divide by scalars.')
-        return ScalarExpression({self: (1 / other)}, 0)
-
-    def __neg__(self):
-        return ScalarExpression({self: -1}, 0)
-
-    def __radd__(self, other):
-        return self.__add__(other)
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
-
-    def __rsub__(self, other):
-        return other + ScalarExpression({self: -1}, 0)
-
     def __hash__(self):
         raise NotImplementedError()
 
@@ -82,15 +54,16 @@ class ScalarVariable(ScalarAtom):
     def curr_variable_count():
         return ScalarVariable._SCALAR_VARIABLE_COUNTER
 
-    def __init__(self, parent, name):
+    def __init__(self, parent, index):
         """
         :param parent: a Variable object originally containing this ScalarVariable
-        :param name: A string; likely the parent's name followed by a subscript.
+        :param index: a tuple. Access the ScalarExpression containing this ScalarVariable
+        with ``parent[index]``.
         """
         self._id = ScalarVariable._SCALAR_VARIABLE_COUNTER
         self._generation = parent.generation
         self._value = np.NaN
-        self.name = name
+        self.index = index
         self.parent = parent
         ScalarVariable._SCALAR_VARIABLE_COUNTER += 1
 
@@ -152,22 +125,12 @@ class NonlinearScalarAtom(ScalarAtom):
 
     @staticmethod
     def parse_arg(arg):
-        # Type conversion
-        if isinstance(arg, ScalarVariable):
-            arg = ScalarExpression({arg: 1}, 0)
-        elif isinstance(arg, Expression) and arg.size == 1:
-            arg = np.asscalar(arg)
-            # noinspection PyTypeChecker
-            return NonlinearScalarAtom.parse_arg(arg)
-        elif isinstance(arg, __REAL_TYPES__):
-            arg = ScalarExpression(dict(), arg)
-        # Parsing
         if isinstance(arg, ScalarExpression) and arg.is_affine():
             arg.remove_zeros()
             res = sorted(list(arg.atoms_to_coeffs.items()))
             return tuple(res + [('OFFSET', arg.offset)])
         else:  # pragma: no cover
-            raise RuntimeError('ScalarAtom arguments must be affine ScalarExpressions.')
+            raise RuntimeError('NonlinearScalarAtom arguments must be affine ScalarExpressions.')
 
     @staticmethod
     def __atom_text__():
@@ -209,16 +172,15 @@ class NonlinearScalarAtom(ScalarAtom):
         return var_list
 
     def value(self):
+        vals = []
+        for arg in self.args:
+            d = dict(arg[:-1])
+            arg_se = ScalarExpression(d, arg[-1][1], verify=False)
+            arg_val = arg_se.value
+            vals.append(arg_val)
         f = self.evaluator
-        # construct numeric values for argument expressions
-        args_val = np.zeros(shape=(len(self.args),))
-        for idx, arg in enumerate(self.args):
-            var_vals = np.array([tup[0].value for tup in arg[:-1]])
-            var_coeffs = np.array([tup[1] for tup in arg[:-1]])
-            args_val[idx] = np.dot(var_coeffs, var_vals) + arg[-1][1]
-        # evaluate the defining function, and return the result
-        val = f(args_val)
-        return val
+        res = f(vals)
+        return res
 
     def is_convex(self):
         raise NotImplementedError()
@@ -778,11 +740,11 @@ class Variable(Expression):
         obj._scalar_variable_ids = []
         obj._generation = Variable._VARIABLE_GENERATION
         if len(var_properties) == 0:
-            Variable.__unstructured_populate__(obj, name)
+            Variable.__unstructured_populate__(obj)
         elif 'symmetric' in var_properties:
-            Variable.__symmetric_populate__(obj, name)
+            Variable.__symmetric_populate__(obj)
         else:
-            Variable.__unstructured_populate__(obj, name)
+            Variable.__unstructured_populate__(obj)
             raise UserWarning('The variable with name ' + name + ' was declared with an unknown property.')
         if obj.size == 0:  # pragma: no cover
             raise RuntimeError('Cannot declare Variables with zero components.')
@@ -795,30 +757,30 @@ class Variable(Expression):
 
     # noinspection PyProtectedMember
     @staticmethod
-    def __unstructured_populate__(obj, name):
+    def __unstructured_populate__(obj):
         if obj.shape == ():
-            v = ScalarVariable(parent=obj, name=name)
+            v = ScalarVariable(parent=obj, index=tuple())
             np.ndarray.__setitem__(obj, tuple(), ScalarExpression({v: 1}, 0, verify=False))
             obj._scalar_variable_ids.append(v.id)
         else:
             for tup in array_index_iterator(obj.shape):
-                v = ScalarVariable(parent=obj, name=name + str(list(tup)))
+                v = ScalarVariable(parent=obj, index=tup)
                 obj._scalar_variable_ids.append(v.id)
                 np.ndarray.__setitem__(obj, tup, ScalarExpression({v: 1}, 0, verify=False))
         pass
 
     # noinspection PyProtectedMember
     @staticmethod
-    def __symmetric_populate__(obj, name):
+    def __symmetric_populate__(obj):
         if obj.ndim != 2 or obj.shape[0] != obj.shape[1]:  # pragma: no cover
             raise RuntimeError('Symmetric variables must be 2d, and square.')
         temp_id_array = np.zeros(shape=obj.shape, dtype=int)
         for i in range(obj.shape[0]):
-            v = ScalarVariable(parent=obj, name=name + str([i, i]))
+            v = ScalarVariable(parent=obj, index=(i, i))
             np.ndarray.__setitem__(obj, (i, i), ScalarExpression({v: 1}, 0, verify=False))
             temp_id_array[i, i] = v.id
             for j in range(i+1, obj.shape[1]):
-                v = ScalarVariable(parent=obj, name=name + str([i, j]))
+                v = ScalarVariable(parent=obj, index=(i, j))
                 np.ndarray.__setitem__(obj, (i, j), ScalarExpression({v: 1}, 0, verify=False))
                 np.ndarray.__setitem__(obj, (j, i), ScalarExpression({v: 1}, 0, verify=False))
                 temp_id_array[i, j] = v.id
@@ -877,7 +839,7 @@ class Variable(Expression):
         self._is_proper = state[-5]
         # fall back on the
         np.ndarray.__setstate__(self, state[:-5])
-        self.relink_scalar_variables()
+        self._relink_scalar_variables()
 
     def is_constant(self):
         return False
@@ -893,18 +855,6 @@ class Variable(Expression):
             return self._scalar_variable_ids[0]
         else:
             return self[(0,) * len(self.shape)].scalar_variables()[0].id
-
-    def set_scalar_variables(self, value):
-        """
-        Assign numeric values to the components of this Variable object.
-        We require ``self.shape == value.shape``.
-        """
-        if value.shape != self.shape:  # pragma: no cover
-            raise RuntimeError('Dimension mismatch.')
-        for tup in array_index_iterator(self.shape):
-            sv = list(self[tup].atoms_to_coeffs)[0]
-            sv._value = value[tup]
-        pass
 
     @property
     def scalar_variable_ids(self):
@@ -928,12 +878,9 @@ class Variable(Expression):
             return self._name
         else:
             tup = (0,) * len(self.shape)
-            temp = self[tup].scalar_variables()[0].name
-            if self.ndim > 0:
-                # Need to trim the indices at the end of the string
-                return temp[:-len(str(list(tup)))]
-            else:
-                return temp
+            prop_var = self[tup].scalar_variables()[0].parent
+            name = prop_var.name
+            return name
 
     @property
     def generation(self):
@@ -958,10 +905,19 @@ class Variable(Expression):
         val = expr.value
         return val
 
+    @value.setter
+    def value(self, value):
+        if value.shape != self.shape:  # pragma: no cover
+            raise RuntimeError('Dimension mismatch.')
+        for tup in array_index_iterator(self.shape):
+            sv = list(self[tup].atoms_to_coeffs)[0]
+            sv._value = value[tup]
+        pass
+
     def is_proper(self):
         return getattr(self, '_is_proper', False)
 
-    def relink_scalar_variables(self):
+    def _relink_scalar_variables(self):
         if not self.is_proper():
             pass
         svs = self.scalar_variables()

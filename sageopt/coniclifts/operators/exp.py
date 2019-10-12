@@ -65,7 +65,12 @@ class Exponential(NonlinearScalarAtom):
         Exponential._EXPONENTIAL_COUNTER_ += 1
         v = Variable(shape=(), name='_exp_epi_[' + str(self.id) + ']_')
         self._epigraph_variable = v[()].scalar_variables()[0]
+        self._evaluator = Exponential._exp_evaluator
         pass
+
+    @staticmethod
+    def _exp_evaluator(vals):
+        return np.exp(vals[0])
 
     def is_convex(self):
         return True
@@ -99,10 +104,4 @@ class Exponential(NonlinearScalarAtom):
         b[2] = 1
         return A_vals, np.array(A_rows), A_cols, b, K
 
-    def value(self):
-        x_list = self.args[0]
-        d = dict(x_list[:-1])
-        x_se = ScalarExpression(d, x_list[-1][1], verify=False)
-        x_val = x_se.value
-        val = np.exp(x_val)
-        return val
+
