@@ -93,6 +93,7 @@ class TestNonlinearOperators(unittest.TestCase):
         assert np.all(A == A_expect)
         assert np.all(b == np.array([1, 0, 0, 0, 0]))
         assert K == [Cone('+', 1), Cone('S', 4)]
+        # value propagation
         x.value = np.zeros(3)
         viol = con[0].violation()
         assert viol == 0

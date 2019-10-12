@@ -2,27 +2,16 @@ This file contains small tasks to improve sageopt. I write things
 here when they occur to me, but I don't have time to implement
 them at that particular moment.
 
-## Remove ScalarVariable names
-
-It's probably expensive to assign a string-based subscripted
-name for each ScalarVariable. The only place where I can see
-this mattering, is if a Variable object is not proper, and so
-it checks the main part of it's leading ScalarVariable's name
-field. However this could also be accomplished by just checking
-the name of the leading ScalarVariable's ``parent`` object
-(since the ``parent`` object of a ScalarVariable should always
-be proper). If I want to identify a ScalarVariable in a readable
-way, then I can just add an "index" field to the ScalarVariable
-class, which represents that ScalarVariable's position in its
-proper Variable parent.
-
 ## Change presolve behavior for trivial AGE cones
 
-Only presolve-away the trivial AGE cones if the user asks for it.
-(Since it *really* slows down problem construction.) Update unittests
-so that code path is still tested with ECOS. Make sure ECOS can still
-solve the resulting problems (since I expect them to have worse
-conditioning). Update rst files and web documentation.
+DONE: Only presolve-away the trivial AGE cones if the user asks for it.
+(Since it *really* slows down problem construction.)
+
+DONE: Update unittests so that code path is still tested with ECOS.
+Make sure ECOS can still solve the resulting problems (since I expect
+them to have worse conditioning).
+
+TODO: Update rst files and web documentation.
 
 ## Add unittests for minimax-free relaxations of constrained signomial programs
 
@@ -30,6 +19,16 @@ Right now, all system-level tests of the relaxations package use unconstrained
 relaxations, or the mixed conditional-SAGE / Lagrangian relaxations associated
 with sig_constrained_relaxation. There should be some dedicated tests for
 sig_relaxation with conditioning.
+
+## Add more tests for polynomial solution recovery
+
+Local_refine_polys_from_sigs could use an isolated unittest.
+
+poly_solrec needs a test for the codepath where ...
+ - we use ordinary SAGE cones,
+ - linear system sign pattern recovery fails, and moves to greedy_weighted_cut_negatives
+ - some components of the moment vector are zero.
+
 
 ## Improve management of sage cone compilation settings
 

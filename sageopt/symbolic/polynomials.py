@@ -252,10 +252,10 @@ class Polynomial(Signomial):
         Evaluating a Polynomial on another polynomial. ::
 
             p = Polynomial({(2,): 1})  # represents lambda x: x ** 2
-            z = Polynomial({(1,): 2, (0,): -1})  # represents lambda x: x - 1
-            w = p(z)  # represents lambda x: (x - 1) ** 2
-            print(w(1))  # equals zero
-            print(w(2))  # equals one
+            z = Polynomial({(1,): 2, (0,): -1})  # represents lambda x: 2*x - 1
+            w = p(z)  # represents lambda x: (2*x - 1) ** 2
+            print(w(0.5))  # equals zero
+            print(w(1))  # equals one
             print(w(0))  # equals one
 
         Notes

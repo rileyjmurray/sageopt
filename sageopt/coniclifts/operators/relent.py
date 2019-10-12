@@ -15,7 +15,7 @@
 """
 import numpy as np
 import scipy.special as special_functions
-from sageopt.coniclifts.base import NonlinearScalarAtom, Expression, ScalarExpression, Variable
+from sageopt.coniclifts.base import NonlinearScalarAtom, Expression, ScalarExpression, Variable, ScalarVariable
 from sageopt.coniclifts.utilities import array_index_iterator
 from sageopt.coniclifts.cones import Cone
 
@@ -84,15 +84,27 @@ class RelEnt(NonlinearScalarAtom):
         A_rows, A_cols, A_vals = [0], [self._epigraph_variable.id], [-1]
         # ^ first row
         x = self.args[0]
-        A_rows += (len(x)-1) * [2]
-        A_cols += [var.id for var, co in x[:-1]]
-        A_vals += [co for var, co in x[:-1]]
+        num_nonconst = len(x) - 1
+        if num_nonconst > 0:
+            A_rows += num_nonconst * [2]
+            A_cols += [var.id for var, co in x[:-1]]
+            A_vals += [co for var, co in x[:-1]]
+        else:
+            A_rows.append(2)
+            A_cols.append(ScalarVariable.curr_variable_count() - 1)
+            A_vals.append(0)
         b[2] = x[-1][1]
         # ^ third row
         y = self.args[1]
-        A_rows += (len(y)-1) * [1]
-        A_cols += [var.id for var, co in y[:-1]]
-        A_vals += [co for var, co in y[:-1]]
+        num_nonconst = len(y) - 1
+        if num_nonconst > 0:
+            A_rows += num_nonconst * [1]
+            A_cols += [var.id for var, co in y[:-1]]
+            A_vals += [co for var, co in y[:-1]]
+        else:
+            A_rows.append(1)
+            A_cols.append(ScalarVariable.curr_variable_count() - 1)
+            A_vals.append(0)
         b[1] = y[-1][1]
         # ^ second row
         return A_vals, np.array(A_rows), A_cols, b, K

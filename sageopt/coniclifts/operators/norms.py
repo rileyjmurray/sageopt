@@ -14,7 +14,7 @@
    limitations under the License.
 """
 import numpy as np
-from sageopt.coniclifts.base import NonlinearScalarAtom, Expression, ScalarExpression, Variable
+from sageopt.coniclifts.base import NonlinearScalarAtom, Expression, ScalarExpression, Variable, ScalarVariable
 from sageopt.coniclifts.cones import Cone
 
 
@@ -66,10 +66,17 @@ class Vector2Norm(NonlinearScalarAtom):
         b = np.zeros(m,)
         A_rows, A_cols, A_vals = [0], [self._epigraph_variable.id], [1]  # for first row
         for i, arg in enumerate(self.args):
-            A_rows += (len(arg)-1) * [i + 1]
-            for var, coeff in arg[:-1]:
-                A_cols.append(var.id)
-                A_vals.append(coeff)
+            nonconst_terms = len(arg) - 1
+            if nonconst_terms > 0:
+                A_rows += nonconst_terms * [i + 1]
+                for var, coeff in arg[:-1]:
+                    A_cols.append(var.id)
+                    A_vals.append(coeff)
+            else:
+                # make sure we infer correct dimensions later on
+                A_rows.append(i+1)
+                A_cols.append(ScalarVariable.curr_variable_count() - 1)
+                A_vals.append(0)
             b[i+1] = arg[-1][1]
         K = [Cone('S', m)]
         A_rows = np.array(A_rows)

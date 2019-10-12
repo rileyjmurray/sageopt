@@ -223,10 +223,14 @@ class TestSagePolynomials(unittest.TestCase):
         f = -x**2
         gts = [1 - x, x - (-1)]
         eqs = []
-        res, _ = primal_dual_constrained(f, gts, eqs, 0, 2, 0, None)
+        res, dual = primal_dual_constrained(f, gts, eqs, 0, 2, 0, None)
         expect = -1
         assert abs(res[0] - expect) < 1e-6
         assert abs(res[1] - expect) < 1e-6
+        sols = poly_solution_recovery.poly_solrec(dual, ineq_tol=0, eq_tol=0)
+        assert len(sols) > 0
+        x0 = sols[0]
+        assert f(x0) >= expect
 
     #
     #   Test multiplier search
@@ -307,6 +311,28 @@ class TestSagePolynomials(unittest.TestCase):
         x_star = solns[0]
         gap = abs(f(x_star) - opt)
         assert gap < 1e-6
+
+    def test_conditional_sage_3(self):
+        n = 5
+        x = standard_poly_monomials(n)
+        f = 0
+        for i in range(n):
+            sel = np.ones(n, dtype=bool)
+            sel[i] = False
+            f += 2**(n-1) * np.prod(x[sel])
+        gts = [0.25 - x[i] ** 2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
+        opt = -3
+        expect = -5
+        X = infer_domain(f, gts, [])
+        res_con010, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
+        assert abs(res_con010[0] - expect) < 1e-4
+        assert abs(res_con010[1] - expect) < 1e-4
+        solns = poly_solution_recovery.poly_solrec(dual)
+        assert len(solns) > 0
+        x_star = solns[0]
+        gap = abs(f(x_star) - opt)
+        assert gap < 1e-4
+        pass
 
 
 if __name__ == '__main__':

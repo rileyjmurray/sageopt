@@ -89,9 +89,16 @@ class Exponential(NonlinearScalarAtom):
         A_rows, A_cols, A_vals = [], [], []
         x = self.args[0]
         # first coordinate
-        A_rows += (len(x) - 1) * [0]
-        A_cols = [var.id for var, co in x[:-1]]
-        A_vals = [co for var, co in x[:-1]]
+        num_nonconst = len(x) - 1
+        if num_nonconst > 0:
+            A_rows += num_nonconst * [0]
+            A_cols = [var.id for var, co in x[:-1]]
+            A_vals = [co for var, co in x[:-1]]
+        else:
+            # infer correct dimensions later on
+            A_rows.append(0)
+            A_cols.append(ScalarVariable.curr_variable_count() - 1)
+            A_vals.append(0)
         b[0] = x[-1][1]
         # second coordinate
         A_rows.append(1),

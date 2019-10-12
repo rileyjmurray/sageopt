@@ -15,6 +15,7 @@
 """
 import unittest
 import numpy as np
+import sageopt as so
 from sageopt.relaxations.poly_solution_recovery import mod2linsolve, mod2rref
 
 
@@ -48,5 +49,14 @@ class TestPolySolutionRecoveryHelpers(unittest.TestCase):
         a1rref, p1 = mod2rref(A1)
         assert p1[-1] == n
 
+    def test_local_refine_polys_from_sigs(self):
+        x = so.standard_sig_monomials(3)
+        f = x[0] - x[1] - x[2]
+        gts = [1 - x[0], 2 - x[1], 0.75 - x[2]]
+        eqs = [x[1] - x[2]]
+        x0 = np.log(np.array([1, 0.25, 0.27]))  # slightly violates the equality constraint
+        y_actual = so.local_refine_polys_from_sigs(f, gts, eqs, x0)
+        y_expect = np.array([0, 0.75, 0.75])
+        assert np.allclose(y_actual, y_expect)
 
 

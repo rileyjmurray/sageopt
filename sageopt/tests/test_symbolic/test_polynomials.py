@@ -98,6 +98,22 @@ class TestPolynomials(unittest.TestCase):
         res.remove_terms_with_zero_as_coefficient()
         assert res.m == 1 and set(res.c) == {0}
 
+    def test_composition(self):
+        p = Polynomial({(2,): 1})  # represents lambda x: x ** 2
+        z = Polynomial({(1,): 2, (0,): -1})  # represents lambda x: 2*x - 1
+        w = p(z)  # represents lambda x: (2*x - 1) ** 2
+        assert w(0.5) == 0
+        assert w(1) == 1
+        assert w(0) == 1
+        x = standard_poly_monomials(3)
+        p = np.prod(x)
+        y = standard_poly_monomials(2)
+        expr = np.array([y[0], y[0]-y[1], y[1]])
+        w = p(expr)
+        assert w.n == 2
+        assert w(np.array([1, 1])) == 0
+        assert w(np.array([1, -2])) == -6
+
     def test_standard_monomials(self):
         x = standard_poly_monomials(3)
         y_actual = np.prod(x)

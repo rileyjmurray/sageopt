@@ -132,7 +132,7 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False, **kwargs):
     This function is implemented only for poly_constrained_relaxation (not poly_relaxation).
     """
     zero_tol = kwargs['zero_tol'] if 'zero_tol' in kwargs else 1e-20
-    heuristic = kwargs['heuristic_signs'] if 'heuristic_signs' in kwargs else False
+    heuristic = kwargs['heuristic_signs'] if 'heuristic_signs' in kwargs else True
     all_signs = kwargs['all_signs'] if 'all_signs' in kwargs else True
     metadata = prob.metadata
     f = metadata['f']
@@ -152,8 +152,12 @@ def poly_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False, **kwargs):
     mags = variable_magnitudes(con, alpha_reduced, v_reduced, zero_tol, skip_ls)
     signs = variable_sign_patterns(alpha_reduced, v_reduced, heuristic, all_signs)
     # Now we need to build the candidate solutions, and check them for feasibility.
-    gts = lag_gts + [g for g in con.X.gts]
-    eqs = lag_eqs + [g for g in con.X.eqs]
+    if con.X is not None:
+        gts = lag_gts + [g for g in con.X.gts]
+        eqs = lag_eqs + [g for g in con.X.eqs]
+    else:
+        gts = lag_gts
+        eqs = lag_eqs
     solutions = []
     for mag in mags:
         for sign in signs:
