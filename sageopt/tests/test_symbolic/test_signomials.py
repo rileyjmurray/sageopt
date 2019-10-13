@@ -107,6 +107,9 @@ class TestSignomials(unittest.TestCase):
         expect = 4*np.exp(-2*3)
         assert abs(actual[0] - expect) < 1e-8
 
+
+class TestSigDomain(unittest.TestCase):
+
     def test_infeasible_sig_domain(self):
         x = cl.Variable()
         cons = [x <= -1, x >= 1]
@@ -160,8 +163,24 @@ class TestSignomials(unittest.TestCase):
             assert len(di.K) == 4
             assert di.K[0].type == '+'
             assert di.K[0].len == 1
-            for j in [1,2,3]:
+            for j in [1, 2, 3]:
                 assert di.K[j].type == 'e'
+        pass
+
+    def test_freecomponent_infer_sigdomain(self):
+        x = standard_sig_monomials(4)
+        dummy_f = x[0] * 0
+        gts = [1-x[1]**0.5-x[2]**3]
+        dom = infer_domain(dummy_f, gts, [])
+        A, b, K = dom.A, dom.b, dom.K
+        # ^ Two exponential cones, two epigraph variables, one linear inequality
+        assert A.shape == (7, 6)
+        assert len(K) == 3
+        assert K[0].type == '+' and K[0].len == 1
+        assert K[1].type == 'e' and K[1].len == 3
+        assert K[2].type == 'e' and K[2].len == 3
+        assert np.count_nonzero(A[:, 0]) == 0
+        assert np.count_nonzero(A[:, 3]) == 0
         pass
 
 if __name__ == '__main__':

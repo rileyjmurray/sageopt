@@ -136,6 +136,37 @@ class TestPolynomials(unittest.TestCase):
         expect = 3*2*0.1234
         assert abs(actual[0] - expect) < 1e-8
 
+    #
+    #   Test construction of [constant] signomial representatives
+    #
+
+    def test_sigrep_1(self):
+        p = Polynomial({(0, 0): -1, (1, 2): 1, (2, 2): 10})
+        # One non-even lattice point (the only one) changes sign.
+        sr, sr_cons = p.sig_rep
+        assert len(sr_cons) == 0
+        assert sr.alpha_c == {(0, 0): -1, (1, 2): -1, (2, 2): 10}
+
+    def test_sigrep_2(self):
+        p = Polynomial({(0, 0): 0, (1, 1): -1, (3, 3): 5})
+        # One non-even lattice point changes sign, another stays the same
+        sr, sr_cons = p.sig_rep
+        assert len(sr_cons) == 0
+        assert sr.alpha_c == {(0, 0): 0, (1, 1): -1, (3, 3): -5}
+
+    def test_sigrep_3(self):
+        alpha = np.random.randint(low=1, high=10, size=(10, 3))
+        alpha *= 2
+        c = np.random.randn(10)
+        p = Polynomial(alpha, c)
+        # The signomial representative has the same exponents and coeffs.
+        sr, sr_cons = p.sig_rep
+        assert len(sr_cons) == 0
+        assert p.alpha_c == sr.alpha_c
+
+
+class TestPolyDomains(unittest.TestCase):
+
     def test_infeasible_poly_domain(self):
         x = cl.Variable()
         cons = [x <= -1, x >= 1]
@@ -199,34 +230,6 @@ class TestPolynomials(unittest.TestCase):
         for i in [1,2,3,4]:
             assert dom.K[i].type == 'e'
         assert dom.b[0] == 1
-
-    #
-    #   Test construction of [constant] signomial representatives
-    #
-
-    def test_sigrep_1(self):
-        p = Polynomial({(0, 0): -1, (1, 2): 1, (2, 2): 10})
-        # One non-even lattice point (the only one) changes sign.
-        sr, sr_cons = p.sig_rep
-        assert len(sr_cons) == 0
-        assert sr.alpha_c == {(0, 0): -1, (1, 2): -1, (2, 2): 10}
-
-    def test_sigrep_2(self):
-        p = Polynomial({(0, 0): 0, (1, 1): -1, (3, 3): 5})
-        # One non-even lattice point changes sign, another stays the same
-        sr, sr_cons = p.sig_rep
-        assert len(sr_cons) == 0
-        assert sr.alpha_c == {(0, 0): 0, (1, 1): -1, (3, 3): -5}
-
-    def test_sigrep_3(self):
-        alpha = np.random.randint(low=1, high=10, size=(10, 3))
-        alpha *= 2
-        c = np.random.randn(10)
-        p = Polynomial(alpha, c)
-        # The signomial representative has the same exponents and coeffs.
-        sr, sr_cons = p.sig_rep
-        assert len(sr_cons) == 0
-        assert p.alpha_c == sr.alpha_c
 
 
 if __name__ == '__main__':

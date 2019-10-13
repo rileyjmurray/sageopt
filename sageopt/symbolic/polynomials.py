@@ -576,7 +576,15 @@ class PolyDomain(object):
             msg += str(self._y.size) + ', but this SigDomain was declared as dimension ' + str(self.n) + '.'
             raise RuntimeError(msg)
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(logspace_cons)
-        self.A = A.toarray()
+        A = A.toarray()
+        selector = variable_map[self._y.name].ravel()
+        A0 = np.hstack((A, np.zeros(shape=(A.shape[0], 1))))
+        A_lift = A0[:, selector]
+        aux_len = A.shape[1] - np.count_nonzero(selector != -1)
+        if aux_len > 0:
+            A_aux = A[:, -aux_len:]
+            A_lift = np.hstack((A_lift, A_aux))
+        self.A = A_lift
         self.b = b
         self.K = K
         if self.check_feas:

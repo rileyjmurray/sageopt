@@ -31,7 +31,7 @@ class Problem(object):
     Parameters
     ----------
     objective_sense : str
-        Either coniclifts.MIN or coniclifts.MAX
+        Either ``coniclifts.MIN`` or ``coniclifts.MAX``
 
     objective_expr : Expression
         The function to minimize or maximize. ScalarExpressions and real numeric types

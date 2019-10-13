@@ -203,7 +203,7 @@ class Mosek(Solver):
         # task.putdouparam(mosek.dparam.intpnt_tol_dsafe, pdsafe)
         # task.putdouparam(mosek.dparam.intpnt_co_tol_infeas, 1e-8)
         # task.putdouparam(mosek.dparam.intpnt_tol_path, 1.0e-1)
-        # task.putintparam(mosek.iparam.intpnt_scaling, mosek.scalingtype.free)
+        # task.putintparam(mosek.iparam.intpnt_scaling, mosek.scalingtype.none)
         # task.putintparam(mosek.iparam.intpnt_solve_form, mosek.solveform.primal)
         # task.putintparam(mosek.iparam.intpnt_max_num_cor, int(1e8))
         # task.putintparam(mosek.iparam.intpnt_max_num_refinement_steps, int(1e8))

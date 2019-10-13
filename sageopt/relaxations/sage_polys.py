@@ -63,8 +63,6 @@ def poly_relaxation(f, X=None, form='dual', **kwargs):
 
     where :math:`X=R^{\\texttt{f.n}}` by default.
 
-    If ``form='dual'``, we can also attempt to recover solutions to the above problem.
-
     Parameters
     ----------
     f : Polynomial
@@ -91,6 +89,10 @@ def poly_relaxation(f, X=None, form='dual', **kwargs):
 
     The dual formulation does not allow that both ``poly_ell`` and ``sigrep_ell`` are greater than
     zero (such functionality is not implemented at this time).
+
+    Sageopt does not currently implement solution recovery for dual-form relaxations generated
+    by this function. If you want to recover solutions, call ``poly_constrained_relaxation``
+    with empty lists ``gts=[]`` and  ``eqs=[]``.
     """
     poly_ell = kwargs['poly_ell'] if 'poly_ell' in kwargs else 0
     sigrep_ell = kwargs['sigrep_ell'] if 'sigrep_ell' in kwargs else 0
