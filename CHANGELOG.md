@@ -8,12 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
  - Fixed a bug in the function ``clcons_from_standard_gprep``.
  - ``Variable.value`` is now a settable property.
+ - Fixed a bug in SigDomain and PolyDomain.
 ## Removed
  - ``Variable.set_scalar_variables``.
  - The ``name`` field of the ScalarVariable class.
  - Some unused functions in ``coniclifts.base.ScalarAtom``.
 ## Added
  - An ``index`` field to the ScalarVariable class.
+ - A ``_DEACTIVATE_SCALING_`` static attribute in the ``Mosek`` class.
 
 # [0.4.0] - 2019-10-06
 ## Added
