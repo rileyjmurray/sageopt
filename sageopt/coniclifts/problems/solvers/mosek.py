@@ -28,6 +28,8 @@ class Mosek(Solver):
 
     _CO_TOL_NEAR_REL_ = 1000
 
+    _DEACTIVATE_SCALING_ = False
+
     @staticmethod
     def apply(c, A, b, K, destructive, compilation_options):
         # This function is analogous to "apply(...)" in cvxpy's mosek_conif.py.
@@ -203,7 +205,8 @@ class Mosek(Solver):
         # task.putdouparam(mosek.dparam.intpnt_tol_dsafe, pdsafe)
         # task.putdouparam(mosek.dparam.intpnt_co_tol_infeas, 1e-8)
         # task.putdouparam(mosek.dparam.intpnt_tol_path, 1.0e-1)
-        # task.putintparam(mosek.iparam.intpnt_scaling, mosek.scalingtype.none)
+        if Mosek._DEACTIVATE_SCALING_:
+            task.putintparam(mosek.iparam.intpnt_scaling, mosek.scalingtype.none)
         # task.putintparam(mosek.iparam.intpnt_solve_form, mosek.solveform.primal)
         # task.putintparam(mosek.iparam.intpnt_max_num_cor, int(1e8))
         # task.putintparam(mosek.iparam.intpnt_max_num_refinement_steps, int(1e8))

@@ -78,6 +78,7 @@ def sparse_matrix_data_to_csc(data_tuples, index_map=None):
     num_rows = np.max(A_rows) + 1
     A = sp.csc_matrix((A_vals, (A_rows, A_cols)),
                       shape=(int(num_rows), int(num_cols)), dtype=float)
+    A.eliminate_zeros()
     return A, index_map
 
 
