@@ -47,3 +47,13 @@ are ``mosek.dparam.intpnt_co_tol_near_rel`` and
 Send sage_benchmarks primal problem 2, params (p=0, q=3, ell=0, nontriv
 X) to MOSEK. With the default scaling, it returns a significantly
 infeasible solution.
+
+## Add a top-level import to run all unittests.
+
+If a user installs sageopt from pypi, then they will almost certainly
+get a wheel. If they get a wheel, then there is no way for them to
+run tests locally (since there is no precompiled bytecode for that
+purpose). It is desirable to allow users to run tests, because they
+can use that to verify that their solver is correctly configured.
+Also, if they have a strange version of some dependency, they can see
+which tests fail as a result.
