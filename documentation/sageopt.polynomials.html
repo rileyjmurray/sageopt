@@ -428,7 +428,6 @@ a set <span class="math notranslate nohighlight">\(X\)</span> , which satisfies 
 <div class="math notranslate nohighlight">
 \[\min\{ f(x) \,:\, x \in X \}\]</div>
 <p>where <span class="math notranslate nohighlight">\(X=R^{\texttt{f.n}}\)</span> by default.</p>
-<p>If <code class="docutils literal notranslate"><span class="pre">form='dual'</span></code>, we can also attempt to recover solutions to the above problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -454,6 +453,9 @@ a set <span class="math notranslate nohighlight">\(X\)</span> , which satisfies 
 </dl>
 <p>The dual formulation does not allow that both <code class="docutils literal notranslate"><span class="pre">poly_ell</span></code> and <code class="docutils literal notranslate"><span class="pre">sigrep_ell</span></code> are greater than
 zero (such functionality is not implemented at this time).</p>
+<p>Sageopt does not currently implement solution recovery for dual-form relaxations generated
+by this function. If you want to recover solutions, call <code class="docutils literal notranslate"><span class="pre">poly_constrained_relaxation</span></code>
+with empty lists <code class="docutils literal notranslate"><span class="pre">gts=[]</span></code> and  <code class="docutils literal notranslate"><span class="pre">eqs=[]</span></code>.</p>
 </dd></dl>
 
 </div>

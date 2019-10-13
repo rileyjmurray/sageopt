@@ -17,7 +17,7 @@ Optimization Examples
 Example 1 (signomial)
 ~~~~~~~~~~~~~~~~~~~~~
 
-We want to solve a constrained signomial program in three variables.
+We want to solve a constraint signomial program in three variables.
 
 .. math::
 

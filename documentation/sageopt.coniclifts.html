@@ -281,13 +281,6 @@ Return the list of these indices.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="sageopt.coniclifts.Variable.set_scalar_variables">
-<code class="sig-name descname">set_scalar_variables</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Variable.set_scalar_variables" title="Permalink to this definition">¶</a></dt>
-<dd><p>Assign numeric values to the components of this Variable object.
-We require <code class="docutils literal notranslate"><span class="pre">self.shape</span> <span class="pre">==</span> <span class="pre">value.shape</span></code>.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="sageopt.coniclifts.Variable.value">
 <em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Variable.value" title="Permalink to this definition">¶</a></dt>
 <dd><p>An ndarray containing numeric entries, of shape equal to <code class="docutils literal notranslate"><span class="pre">self.shape</span></code>.
@@ -312,7 +305,7 @@ process may take some time for large problems.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>objective_sense</strong> (<em>str</em>) – Either coniclifts.MIN or coniclifts.MAX</p></li>
+<li><p><strong>objective_sense</strong> (<em>str</em>) – Either <code class="docutils literal notranslate"><span class="pre">coniclifts.MIN</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.MAX</span></code></p></li>
 <li><p><strong>objective_expr</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – The function to minimize or maximize. ScalarExpressions and real numeric types
 are also accepted. The final (cast) expression must be linear in its Variables.</p></li>
 <li><p><strong>constraints</strong> (<em>list of coniclifts.Constraint</em>) – Variables appearing in objective_expr are subject to Constraint objects in this list.</p></li>
@@ -711,13 +704,14 @@ the provided vector <code class="docutils literal notranslate"><span class="pre"
 At present, coniclifts does not provide a means to track the signs of Variable objects, and so this reduction
 is limited to indices <code class="docutils literal notranslate"><span class="pre">i</span></code> where <code class="docutils literal notranslate"><span class="pre">c[i]</span></code> is constant. This feature can optionally be carried over to
 <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> objects, if the user provides a keyword argument <code class="docutils literal notranslate"><span class="pre">c</span></code> to the <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> constructor.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> and <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> classes automatically perform a more extensive presolve phase to
+<p>The <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> and <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> classes can perform a more extensive presolve phase to
 eliminate trivial AGE cones (those which reduce to the nonnegative orthant).
+By default, this presolve ability is turned off. This default can be changed by calling
+<code class="docutils literal notranslate"><span class="pre">sageopt.coniclifts.presolve_trivial_age_cones(True)</span></code>.
 The computational cost of this presolve is borne when the constraint is constructed, and scales linearly in the
 dimension of the SAGE constraint (equal to <code class="docutils literal notranslate"><span class="pre">constr.alpha.shape[0]</span></code>).
-The cost of this presolve can be mitigated by
-recycling <code class="docutils literal notranslate"><span class="pre">covers</span> <span class="pre">=</span> <span class="pre">constr.ech.expcovers</span></code> from one call of a constraint constructor to the next.
-This presolve option can be disabled entirely by calling <code class="docutils literal notranslate"><span class="pre">sageopt.coniclifts.presolve_trivial_age_cones(False)</span></code>.</p>
+The cost of this presolve can be mitigated by recycling <code class="docutils literal notranslate"><span class="pre">covers</span> <span class="pre">=</span> <span class="pre">constr.ech.expcovers</span></code> from one call of a
+constraint constructor to the next.</p>
 <dl class="class">
 <dt id="sageopt.coniclifts.PrimalSageCone">
 <em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">PrimalSageCone</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">alpha</em>, <em class="sig-param">X</em>, <em class="sig-param">name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone" title="Permalink to this definition">¶</a></dt>

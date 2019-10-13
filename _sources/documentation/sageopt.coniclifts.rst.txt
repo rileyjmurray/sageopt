@@ -187,13 +187,14 @@ At present, coniclifts does not provide a means to track the signs of Variable o
 is limited to indices ``i`` where ``c[i]`` is constant. This feature can optionally be carried over to
 ``DualSageCone`` objects, if the user provides a keyword argument ``c`` to the ``DualSageCone`` constructor.
 
-The ``PrimalSageCone`` and ``DualSageCone`` classes automatically perform a more extensive presolve phase to
+The ``PrimalSageCone`` and ``DualSageCone`` classes can perform a more extensive presolve phase to
 eliminate trivial AGE cones (those which reduce to the nonnegative orthant).
+By default, this presolve ability is turned off. This default can be changed by calling
+``sageopt.coniclifts.presolve_trivial_age_cones(True)``.
 The computational cost of this presolve is borne when the constraint is constructed, and scales linearly in the
 dimension of the SAGE constraint (equal to ``constr.alpha.shape[0]``).
-The cost of this presolve can be mitigated by
-recycling ``covers = constr.ech.expcovers`` from one call of a constraint constructor to the next.
-This presolve option can be disabled entirely by calling ``sageopt.coniclifts.presolve_trivial_age_cones(False)``.
+The cost of this presolve can be mitigated by recycling ``covers = constr.ech.expcovers`` from one call of a
+constraint constructor to the next.
 
 .. autoclass:: sageopt.coniclifts.PrimalSageCone
 
