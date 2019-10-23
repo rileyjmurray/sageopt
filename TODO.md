@@ -57,3 +57,10 @@ purpose). It is desirable to allow users to run tests, because they
 can use that to verify that their solver is correctly configured.
 Also, if they have a strange version of some dependency, they can see
 which tests fail as a result.
+
+## Fix a bug in signomial construction
+
+x = so.standard_sig_monomials(2)
+y = so.standard_sig_monomials(3)
+
+h = sum(x) + sum(y)  # should throw an error, currently doesnt.
