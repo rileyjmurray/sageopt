@@ -64,3 +64,15 @@ x = so.standard_sig_monomials(2)
 y = so.standard_sig_monomials(3)
 
 h = sum(x) + sum(y)  # should throw an error, currently doesnt.
+
+## Increase compatibility with cvxpy
+
+Make Problem objects take two arguments instead of three;
+the objective sense shouldn't be an extra argument.
+
+## Fix a bug in Expression operator overloading
+
+When you try to multiply two non-constant Expression objects,
+there should be an error raised saying you can't do that.
+But instead there's some kind of infinite recursion. This
+is evident when calling np.dot(x,x) where x is a coniclifts Variable.
