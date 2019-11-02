@@ -126,6 +126,9 @@ class Signomial(object):
         ``lambda x: np.sum([ alpha_c[a] * np.exp(a @ x) for a in alpha_c])``. The default value for this
         dictionary is zero.
 
+    metadata : dict
+        A place for the user to store arbitrary information about this Signomial object.
+
     Notes
     -----
 
@@ -183,6 +186,7 @@ class Signomial(object):
         self._grad = None
         self._hess = None
         self._update_alpha_c_arrays()
+        self.metadata = dict()
         pass
 
     def _cache_grad(self):

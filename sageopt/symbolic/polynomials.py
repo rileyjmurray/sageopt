@@ -127,6 +127,9 @@ class Polynomial(Signomial):
         The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
         These tuples correspond to rows in ``alpha``.
 
+    metadata : dict
+        A place for the user to store arbitrary information about this Polynomial object.
+
     Notes
     -----
     The Polynomial class subclasses the Signomial class. This is done because most algebraic operations between
