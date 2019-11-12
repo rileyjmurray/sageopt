@@ -417,9 +417,9 @@ class Signomial(object):
         d = defaultdict(int)
         for j in range(self.m):
             c = self.c[j] * self.alpha[j, i]
-            if c != 0:
+            if (not isinstance(c, __NUMERIC_TYPES__)) or c != 0:
                 vec = self.alpha[j, :].copy()
-                d[tuple(vec.tolist())] = c
+                d[tuple(vec.tolist())] += c
         d[self.n * (0,)] += 0
         p = Signomial(d)
         return p

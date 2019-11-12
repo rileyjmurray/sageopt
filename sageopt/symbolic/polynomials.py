@@ -355,7 +355,7 @@ class Polynomial(Signomial):
                 vec = self.alpha[j, :].copy()
                 c = self.c[j] * vec[i]
                 vec[i] -= 1
-                d[tuple(vec.tolist())] = c
+                d[tuple(vec.tolist())] += c
         d[self.n * (0,)] += 0
         p = Polynomial(d)
         return p

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [0.4.2] - unreleased
 ## Added
  - A ``metadata`` field to Signomial and Polynomial objects.
+## Changed
+ - ``Signomial.partial`` and ``Polynomial.partial`` to correctly work with nonconstant coefficients.
 
 
 # [0.4.1] - 2019-10-13
