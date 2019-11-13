@@ -76,3 +76,9 @@ When you try to multiply two non-constant Expression objects,
 there should be an error raised saying you can't do that.
 But instead there's some kind of infinite recursion. This
 is evident when calling np.dot(x,x) where x is a coniclifts Variable.
+
+## Implement the caret (^) operator for Signomial and Polynomial objects
+
+This boils down to implementing ``__xor__``. Add documentation for this
+operator, but warn users about the dangers of using it with possible
+numeric types.
