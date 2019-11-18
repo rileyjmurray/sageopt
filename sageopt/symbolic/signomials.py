@@ -101,7 +101,7 @@ class Signomial(object):
         x = np.random.randn(2)
         print(f(x) - c @ np.exp(alpha @ x))  # zero, up to rounding errors.
 
-    Attributes
+    Properties
     ----------
 
     n : int
@@ -125,6 +125,9 @@ class Signomial(object):
         These tuples define linear functions. This Signomial could be evaluated by the code snippet
         ``lambda x: np.sum([ alpha_c[a] * np.exp(a @ x) for a in alpha_c])``. The default value for this
         dictionary is zero.
+
+    Attributes
+    ----------
 
     metadata : dict
         A place for the user to store arbitrary information about this Signomial object.
@@ -159,48 +162,44 @@ class Signomial(object):
 
         However, it is useful to have rapid access to the matrix of linear functionals ``alpha``, or the coefficient
         vector ``c`` as numpy arrays. So these fields are also maintained explicitly.
-
-        If a user modifies the fields ``alpha`` or ``c`` directly, there may be an inconsistency between these
-        fields, and the dictionary ``alpha_c``. Therefore the fields ``alpha`` and ``c`` should not be modified
-        without taking great care to ensure consistency with the signomial's dictionary representation.
     """
 
     def __init__(self, alpha_maybe_c, c=None):
         # noinspection PyArgumentList
         if c is None:
             # noinspection PyArgumentList
-            self.alpha_c = defaultdict(int, alpha_maybe_c)
+            self._alpha_c = defaultdict(int, alpha_maybe_c)
         else:
             alpha = np.round(alpha_maybe_c, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
             alpha = alpha.tolist()
             if len(alpha) != c.size:  # pragma: no cover
                 raise RuntimeError('alpha and c specify different numbers of terms')
-            self.alpha_c = defaultdict(int)
+            self._alpha_c = defaultdict(int)
             for j in range(c.size):
-                self.alpha_c[tuple(alpha[j])] += c[j]
-        self.n = len(list(self.alpha_c.items())[0][0])
-        self.alpha_c[(0,) * self.n] += 0  # ensures that there's a constant term.
-        self.m = len(self.alpha_c)
-        self.alpha = None
-        self.c = None
+                self._alpha_c[tuple(alpha[j])] += c[j]
+        self._n = len(list(self._alpha_c.items())[0][0])
+        self._alpha_c[(0,) * self._n] += 0  # ensures that there's a constant term.
+        self._m = len(self._alpha_c)
+        self._alpha = None
+        self._c = None
         self._grad = None
         self._hess = None
-        self._update_alpha_c_arrays()
+        self._arrays_stale = True
         self.metadata = dict()
         pass
 
     def _cache_grad(self):
         if self._grad is None:
-            g = np.empty(shape=(self.n,), dtype=object)
-            for i in range(self.n):
+            g = np.empty(shape=(self._n,), dtype=object)
+            for i in range(self._n):
                 g[i] = self.partial(i)
             self._grad = g
         pass
 
     def _cache_hess(self):
         if self._hess is None:
-            H = np.empty(shape=(self.n, self.n), dtype=object)
-            for i in range(self.n):
+            H = np.empty(shape=(self._n, self._n), dtype=object)
+            for i in range(self._n):
                 ith_partial = self.partial(i)
                 for j in range(i+1):
                     curr_partial = ith_partial.partial(j)
@@ -208,6 +207,30 @@ class Signomial(object):
                     H[j, i] = curr_partial
             self._hess = H
         pass
+
+    @property
+    def m(self):
+        return self._m
+
+    @property
+    def n(self):
+        return self._n
+
+    @property
+    def alpha(self):
+        if self._arrays_stale:
+            self._update_alpha_c_arrays()
+        return self._alpha
+
+    @property
+    def c(self):
+        if self._arrays_stale:
+            self._update_alpha_c_arrays()
+        return self._c
+
+    @property
+    def alpha_c(self):
+        return self._alpha_c
 
     @property
     def grad(self):
@@ -234,8 +257,8 @@ class Signomial(object):
         Returns the coefficient of the basis function ``lambda x: np.exp(a @ x)`` for this Signomial.
         """
         tup = tuple(np.round(a, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__))
-        if tup in self.alpha_c:
-            return self.alpha_c[tup]
+        if tup in self._alpha_c:
+            return self._alpha_c[tup]
         else:
             return 0
 
@@ -251,22 +274,25 @@ class Signomial(object):
         """
         alpha = []
         c = []
-        for k, v in self.alpha_c.items():
+        for k, v in self._alpha_c.items():
             alpha.append(k)
             c.append(v)
-        self.alpha = np.array(alpha)
-        self.c = np.array(c)
-        if self.c.dtype == np.dtype('O'):
-            self.c = cl.Expression(self.c)
+        self._alpha = np.array(alpha)
+        self._c = np.array(c)
+        if self._c.dtype == np.dtype('O'):
+            self._c = cl.Expression(self._c)
+        self._arrays_stale = False
 
     def __add__(self, other):
         if not isinstance(other, Signomial):
-            tup = (0,) * self.n
+            tup = (0,) * self._n
             d = {tup: other}
             other = Signomial(d)
+        if not other.n == self._n:
+            raise RuntimeError('Cannot add Signomials with different numbers of variables.')
         # noinspection PyArgumentList
-        d = defaultdict(int, self.alpha_c)
-        for k, v in other.alpha_c.items():
+        d = defaultdict(int, self._alpha_c)
+        for k, v in other._alpha_c.items():
             d[k] += v
         res = Signomial(d)
         res.remove_terms_with_zero_as_coefficient()
@@ -277,9 +303,11 @@ class Signomial(object):
 
     def __mul__(self, other):
         if not isinstance(other, Signomial):
-            tup = (0,) * self.n
+            tup = (0,) * self._n
             d = {tup: other}
             other = Signomial(d)
+        if not other.n == self._n:
+            raise RuntimeError('Cannot multiply Signomials with different numbers of variables.')
         d = defaultdict(int)
         alpha1, c1 = self.alpha, self.c
         alpha2, c2 = other.alpha, other.c
@@ -312,22 +340,22 @@ class Signomial(object):
 
     def __pow__(self, power, modulo=None):
         if self.c.dtype not in __NUMERIC_TYPES__:
-            if isinstance(self.c, cl.Expression) and not self.c.is_constant():  # pragma: no cover
+            if isinstance(self.c, cl.Expression) and not self.c.is_constant():
                 raise RuntimeError('Cannot exponentiate signomials with symbolic coefficients.')
         if power % 1 == 0 and power >= 0:
             power = int(power)
             if power == 0:
                 # noinspection PyTypeChecker
-                return Signomial({(0,) * self.n: 1})
+                return Signomial({(0,) * self._n: 1})
             else:
-                s = Signomial(self.alpha_c)
+                s = Signomial(self._alpha_c)
                 for t in range(power - 1):
                     s = s * self
                 return s
         else:
-            d = dict((k, v) for (k, v) in self.alpha_c.items() if v != 0)
+            d = dict((k, v) for (k, v) in self._alpha_c.items() if v != 0)
             if len(d) != 1:
-                raise ValueError('Only signomials with exactly one term can be raised to power %s.')
+                raise ValueError('Only signomials with exactly one term can be raised to power %s.', power)
             v = list(d.values())[0]
             if v < 0 and not power % 1 == 0:
                 raise ValueError('Cannot compute non-integer power %s of coefficient %s', power, v)
@@ -344,19 +372,19 @@ class Signomial(object):
         """
         Evaluates the mathematical function specified by the current Signomial object.
 
-        :param x: either a scalar (if self.n == 1), or a numpy n-d array with len(x.shape) <= 2
-        and x.shape[0] == self.n.
-        :return:  If x is a scalar or an n-d array of shape (self.n,), then "val" is a numeric
-        type equal to the signomial evaluated at x. If instead x is of shape (self.n, k) for
-        some positive integer k, then "val" is a numpy n-d array of shape (k,), with val[i]
+        :param x: either a scalar (if self._n == 1), or a numpy _n-d array with len(x.shape) <= 2
+        and x.shape[0] == self._n.
+        :return:  If x is a scalar or an _n-d array of shape (self._n,), then "val" is a numeric
+        type equal to the signomial evaluated at x. If instead x is of shape (self._n, k) for
+        some positive integer k, then "val" is a numpy _n-d array of shape (k,), with val[i]
         equal to the current signomial evaluated on the i^th column of x.
 
         This function's behavior is undefined when x is not a scalar and has len(x.shape) > 2.
         """
         if np.isscalar(x) or (isinstance(x, np.ndarray) and x.size == 1 and x.ndim == 0):
             x = np.array([np.asscalar(np.array(x))])  # coerce into a 1d array of shape (1,).
-        if not x.shape[0] == self.n:
-            msg = 'Domain is R^' + str(self.n) + 'but x is in R^' + str(x.shape[0])
+        if not x.shape[0] == self._n:
+            msg = 'Domain is R^' + str(self._n) + 'but x is in R^' + str(x.shape[0])
             raise ValueError(msg)
         if x.ndim > 2:
             msg = 'Signomials cannot be called on ndarrays with more than 2 dimensions.'
@@ -368,15 +396,15 @@ class Signomial(object):
         return val
 
     def __hash__(self):
-        return hash(frozenset(self.alpha_c.items()))
+        return hash(frozenset(self._alpha_c.items()))
 
     def __eq__(self, other):
         if not isinstance(other, Signomial):
             return False
-        if self.m != other.m:
+        if self._m != other._m:
             return False
-        for k in self.alpha_c:
-            v = self.alpha_c[k]
+        for k in self._alpha_c:
+            v = self._alpha_c[k]
             other_v = other.query_coeff(np.array(k))
             if not cl.Expression.are_equivalent(other_v, v, rtol=1e-8):
                 return False
@@ -387,15 +415,14 @@ class Signomial(object):
         Update ``alpha``, ``c``, and ``alpha_c`` to remove nonconstant terms where ``c[i] == 0``.
         """
         d = dict()
-        for (k, v) in self.alpha_c.items():
+        for (k, v) in self._alpha_c.items():
             if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
                 d[k] = v
         # noinspection PyArgumentList
-        self.alpha_c = defaultdict(int, d)
-        tup = (0,) * self.n
-        self.alpha_c[tup] += 0
-        self.m = len(self.alpha_c)
-        self._update_alpha_c_arrays()
+        self._alpha_c = defaultdict(int, d)
+        tup = (0,) * self._n
+        self._alpha_c[tup] += 0
+        self._m = len(self._alpha_c)
         pass
 
     def partial(self, i):
@@ -412,15 +439,15 @@ class Signomial(object):
         p : Signomial
             The function obtained by differentiating this signomial with respect to its i-th argument.
         """
-        if i < 0 or i >= self.n:  # pragma: no cover
+        if i < 0 or i >= self._n:  # pragma: no cover
             raise RuntimeError('This Signomial does not have an input at index ' + str(i) + '.')
         d = defaultdict(int)
-        for j in range(self.m):
+        for j in range(self._m):
             c = self.c[j] * self.alpha[j, i]
             if (not isinstance(c, __NUMERIC_TYPES__)) or c != 0:
                 vec = self.alpha[j, :].copy()
                 d[tuple(vec.tolist())] += c
-        d[self.n * (0,)] += 0
+        d[self._n * (0,)] += 0
         p = Signomial(d)
         return p
 
@@ -429,8 +456,8 @@ class Signomial(object):
         Return the gradient of this Signomial (as an ndarray) at the point ``x``.
         """
         _ = self.grad  # construct the function handles.
-        g = np.zeros(self.n)
-        for i in range(self.n):
+        g = np.zeros(self._n)
+        for i in range(self._n):
             g[i] = self._grad[i](x)
         return g
 
@@ -440,8 +467,8 @@ class Signomial(object):
         """
         if self._hess is None:
             _ = self.hess  # ignore the return value
-        H = np.zeros(shape=(self.n, self.n))
-        for i in range(self.n):
+        H = np.zeros(shape=(self._n, self._n))
+        for i in range(self._n):
             for j in range(i+1):
                 val = self._hess[i, j](x)
                 H[i, j] = val
@@ -514,7 +541,7 @@ class SigDomain(object):
 
     AbK : tuple
         Specify a convex set in the coniclifts standard. ``AbK[0]`` is a SciPy sparse
-        matrix. The first ``n`` columns of this matrix correspond to the variables over
+        matrix. The first ``_n`` columns of this matrix correspond to the variables over
         which this set is supposed to be defined. Any remaining columns are for auxiliary
         variables.
 

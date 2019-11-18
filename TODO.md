@@ -40,7 +40,7 @@ Right now there isn't any. Cover generic keyword arguments (e.g.
 ``verbose``, ``cache_apply_data``), and solver-specific keyword
 arguments (e.g. ``max_iters`` for ECOS).
 
-Need to espose MOSEK solver settings. Ones of practical interest
+Need to expose MOSEK solver settings. Ones of practical interest
 are ``mosek.dparam.intpnt_co_tol_near_rel`` and
 ``mosek.iparam.intpnt_scaling``.
 
@@ -48,37 +48,19 @@ Send sage_benchmarks primal problem 2, params (p=0, q=3, ell=0, nontriv
 X) to MOSEK. With the default scaling, it returns a significantly
 infeasible solution.
 
-## Add a top-level import to run all unittests.
+## Update web documentation to run nosetests, when installing from pip
 
-If a user installs sageopt from pypi, then they will almost certainly
-get a wheel. If they get a wheel, then there is no way for them to
-run tests locally (since there is no precompiled bytecode for that
-purpose). It is desirable to allow users to run tests, because they
-can use that to verify that their solver is correctly configured.
-Also, if they have a strange version of some dependency, they can see
-which tests fail as a result.
-
-## Fix a bug in signomial construction
-
-x = so.standard_sig_monomials(2)
-y = so.standard_sig_monomials(3)
-
-h = sum(x) + sum(y)  # should throw an error, currently doesnt.
+The command ``nosetests sageopt`` should work.
 
 ## Increase compatibility with cvxpy
 
 Make Problem objects take two arguments instead of three;
 the objective sense shouldn't be an extra argument.
 
-## Fix a bug in Expression operator overloading
-
-When you try to multiply two non-constant Expression objects,
-there should be an error raised saying you can't do that.
-But instead there's some kind of infinite recursion. This
-is evident when calling np.dot(x,x) where x is a coniclifts Variable.
-
 ## Implement the caret (^) operator for Signomial and Polynomial objects
 
 This boils down to implementing ``__xor__``. Add documentation for this
 operator, but warn users about the dangers of using it with possible
 numeric types.
+
+## Add sageopt.interop, for interfacing with other systems (GPKit)

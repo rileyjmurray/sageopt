@@ -103,7 +103,7 @@ class Polynomial(Signomial):
         val = f(x)  # val = 1 * (-4) + 2 * (7) + 3 * (-4 * 7)
         print(val)  # -74
 
-    Attributes
+    Properties
     ----------
 
     n : int
@@ -126,6 +126,9 @@ class Polynomial(Signomial):
     alpha_c : defaultdict
         The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
         These tuples correspond to rows in ``alpha``.
+
+    Attributes
+    ----------
 
     metadata : dict
         A place for the user to store arbitrary information about this Polynomial object.
@@ -226,7 +229,7 @@ class Polynomial(Signomial):
     def __pow__(self, power, modulo=None):
         if self.c.dtype not in __NUMERIC_TYPES__:
             raise RuntimeError('Cannot exponentiate polynomials with symbolic coefficients.')
-        temp = Signomial(self.alpha_c)
+        temp = Signomial(self._alpha_c)
         temp = temp ** power
         temp = temp.as_polynomial()
         return temp
@@ -293,7 +296,7 @@ class Polynomial(Signomial):
             raise ValueError('Can only evaluate on x with dimension <= 2.')
 
     def __hash__(self):
-        return hash(frozenset(self.alpha_c.items()))
+        return hash(frozenset(self._alpha_c.items()))
 
     def __eq__(self, other):
         if not isinstance(other, Polynomial):
@@ -314,8 +317,8 @@ class Polynomial(Signomial):
         Returns the coefficient of the monomial ``lambda x: np.prod(np.power(a, x))`` for this Polynomial.
         """
         tup = tuple(a)
-        if tup in self.alpha_c:
-            return self.alpha_c[tup]
+        if tup in self._alpha_c:
+            return self._alpha_c[tup]
         else:
             return 0
 
@@ -431,7 +434,7 @@ class Polynomial(Signomial):
         f : Signomial
             For every elementwise positive vector ``x``, we have ``self(x) == f(np.log(x))``.
         """
-        f = Signomial(self.alpha_c)
+        f = Signomial(self._alpha_c)
         return f
 
 

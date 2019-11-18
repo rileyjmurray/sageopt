@@ -29,7 +29,7 @@ class TestSignomials(unittest.TestCase):
         alpha_c = {(0,): 1, (1,): -1, (2,): -2}
         # Construction with two numpy arrays as arguments
         s = Signomial(alpha, c)
-        assert s.n == 1 and s.m == 3 and s.alpha_c == alpha_c
+        assert s.n == 1 and s.m == 3 and s._alpha_c == alpha_c
         # Construction with a vector-to-coefficient dictionary
         s = Signomial(alpha_c)
         recovered_alpha_c = dict()
@@ -51,7 +51,7 @@ class TestSignomials(unittest.TestCase):
         # noinspection PyTypeChecker
         assert set(s.c) == set(2 * s0.c)
         s = 1 * s0
-        assert s.alpha_c == s0.alpha_c
+        assert s.alpha_c == s0._alpha_c
         s = 0 * s0
         s.remove_terms_with_zero_as_coefficient()
         assert s.m == 1 and set(s.c) == {0}
@@ -69,6 +69,38 @@ class TestSignomials(unittest.TestCase):
         assert s.m == 1 and set(s.c) == {0}
         s = s0 + t0
         assert s.alpha_c == {(-1,): 5, (0,): 1, (1,): 2, (2,): 3}
+
+    def test_invalid_signomial_operations(self):
+        x = standard_sig_monomials(2)
+        y = standard_sig_monomials(1)
+        try:
+            s = x[0] + y[0]
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'Cannot add' in err_str
+        try:
+            s = x[0] * y[0]
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'Cannot multiply' in err_str
+        s = sum(x)
+        try:
+            t = s**0.5
+            assert False
+        except ValueError as err:
+            err_str = str(err)
+            assert 'Only signomials with exactly one term' in err_str
+        z = cl.Variable()
+        s = 0 * s + z  # a Signomial, with only a constant term.
+        try:
+            t = s ** 2
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'Cannot exponentiate signomials with symbolic coefficients' in err_str
+        pass
 
     def test_signomial_multiplication(self):
         # data for tests
@@ -183,5 +215,4 @@ class TestSigDomain(unittest.TestCase):
         assert np.count_nonzero(A[:, 3]) == 0
         pass
 
-if __name__ == '__main__':
-    unittest.main()
+

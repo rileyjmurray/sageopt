@@ -119,6 +119,3 @@ class TestNonlinearOperators(unittest.TestCase):
         assert np.all(b == b_expect)
         assert K == [Cone('+', 1), Cone('S', 4)]
 
-
-if __name__ == '__main__':
-    unittest.main()

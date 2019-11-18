@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - A ``metadata`` field to Signomial and Polynomial objects.
 ## Changed
  - ``Signomial.partial`` and ``Polynomial.partial`` to correctly work with nonconstant coefficients.
-
+ - Essentially all "attributes" of Signomial or Polynomial objects have become "properties". The
+   most important change is that ``self.alpha`` and ``self.c`` are now only created when necessary;
+   the internal ``alpha_c`` dict still defines the Signomial or Polynomial as a mathematical object,
+   but this has also been turned into a hidden attribute ``self._alpha_c``.
 
 # [0.4.1] - 2019-10-13
 ## Changed

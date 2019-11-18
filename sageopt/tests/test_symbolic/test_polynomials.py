@@ -46,7 +46,7 @@ class TestPolynomials(unittest.TestCase):
         # noinspection PyTypeChecker
         assert set(s.c) == set(2 * s0.c)
         s = 1 * s0
-        assert s.alpha_c == s0.alpha_c
+        assert s.alpha_c == s0._alpha_c
         s = 0 * s0
         s.remove_terms_with_zero_as_coefficient()
         assert s.m == 1 and set(s.c) == {0}
@@ -162,7 +162,7 @@ class TestPolynomials(unittest.TestCase):
         # The signomial representative has the same exponents and coeffs.
         sr, sr_cons = p.sig_rep
         assert len(sr_cons) == 0
-        assert p.alpha_c == sr.alpha_c
+        assert p._alpha_c == sr.alpha_c
 
 
 class TestPolyDomains(unittest.TestCase):
@@ -231,6 +231,3 @@ class TestPolyDomains(unittest.TestCase):
             assert dom.K[i].type == 'e'
         assert dom.b[0] == 1
 
-
-if __name__ == '__main__':
-    unittest.main()

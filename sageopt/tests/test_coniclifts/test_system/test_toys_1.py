@@ -92,7 +92,3 @@ class TestToys1(unittest.TestCase):
         prob.solve(solver='ECOS', verbose=False)
         assert np.allclose(x.value, np.array([0, 1, 0, 0]))
         pass
-
-
-if __name__ == '__main__':
-    unittest.main()

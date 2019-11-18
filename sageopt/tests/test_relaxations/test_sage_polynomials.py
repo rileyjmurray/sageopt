@@ -333,7 +333,3 @@ class TestSagePolynomials(unittest.TestCase):
         gap = abs(f(x_star) - opt)
         assert gap < 1e-4
         pass
-
-
-if __name__ == '__main__':
-    unittest.main()

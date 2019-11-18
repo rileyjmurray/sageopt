@@ -266,10 +266,15 @@ class ScalarExpression(object):
             return f
         elif isinstance(other, np.ndarray):
             return self.as_expr() * other
-        elif isinstance(other, ScalarExpression) and other.is_constant():
+        if not isinstance(other, ScalarExpression):
+            otype = str(type(other))
+            raise RuntimeError('Cannot multiply ScalarExpression with object of type %s', otype)
+        elif other.is_constant():
             return other.offset * self
+        elif self.is_constant():
+            return other * self.offset
         else:
-            return other.__rmul__(self)
+            raise RuntimeError('Cannot multiply two non-constant ScalarExpression objects.')
 
     def __truediv__(self, other):
         if not isinstance(other, __REAL_TYPES__):  # pragma: no cover

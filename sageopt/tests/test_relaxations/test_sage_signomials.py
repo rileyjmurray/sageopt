@@ -424,7 +424,3 @@ class TestSAGERelaxations(unittest.TestCase):
         assert abs(vals[0] - (-83.3235)) < 1e-4
         solns = sig_solrec(dual, ineq_tol=0)
         assert (f(solns[0]) - dual.value) / abs(dual.value) < 0.007
-
-
-if __name__ == '__main__':
-    unittest.main()

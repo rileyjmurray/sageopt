@@ -106,8 +106,3 @@ class TestAffineOperators(unittest.TestCase):
         expr0 = aff.trace(temp)
         expr1 = aff.sum(x)
         assert Expression.are_equivalent(expr0, expr1)
-
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -22,5 +22,7 @@ setuptools.setup(
     python_requires='>=3.5',
     install_requires=["ecos >= 2",
                       "numpy >= 1.14",
-                      "scipy >= 1.1"]
+                      "scipy >= 1.1",
+                      "nose"],
+    test_suite='nose.collector'
 )

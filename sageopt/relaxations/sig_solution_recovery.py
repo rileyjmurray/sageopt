@@ -105,6 +105,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
     eqs = lag_eqs + X_eqs
     # Search for solutions which meet the feasibility criteria
     v = con.v.value
+    v[v < 0] = 0
     if np.any(np.isnan(v)):
         return None
     alpha = con.alpha
@@ -124,7 +125,7 @@ def sig_solrec(prob, ineq_tol=1e-8, eq_tol=1e-6, skip_ls=False):
 
 def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_tol, eq_tol):
     v_reduced = M @ v
-    log_v_reduced = np.log(v_reduced)
+    log_v_reduced = np.log(v_reduced + 1e-8)
     if con.X is not None:
         mu_ls = _constrained_least_squares(con, alpha_reduced, log_v_reduced)
     else:
@@ -158,6 +159,9 @@ def _constrained_least_squares(con, alpha, log_v):
 
 def _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol):
     mus_exist = list(con.mu_vars.keys())
+    mus_exist = [i for i in mus_exist if v[i] > 0]
+    if len(mus_exist) == 0:
+        return []
     # build a matrix whose columns are simple candidate solutions to an optimization problem.
     raw_xs = []
     for i in mus_exist:

@@ -103,3 +103,16 @@ mind at the same time.
 For ElementwiseConstraint objects, this would recompute ``con.expr``
 (and thereby undo any epigraph-substitution performed in a previous
 compilation phase).
+
+## Add verobsity settings to problem construction
+
+It can take a long time to build bigger SAGE relaxations,
+especially when an optimization-based presolve is employed.
+A user might have no idea if it's worth waiting for the problem
+to be built. For example, if it takes 10 minutes to construct only
+a tiny fraction of the full problem, the most likely situation is
+that the final SAGE relaxation can't be solved in a reasonable
+time frame. If a user knew that they were only a tiny way into
+problem construction, they could (rightly) terminate the program
+(or otherwise interrupt execution) and try different settings.
+

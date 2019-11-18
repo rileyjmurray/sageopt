@@ -82,6 +82,3 @@ class TestCompilers(unittest.TestCase):
         assert np.allclose(expect_rows_3to6, A[3:, :])
         assert np.all(b == np.array([5, -1, -1, 2, 2, 2]))
 
-
-if __name__ == '__main__':
-    unittest.main()

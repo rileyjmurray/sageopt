@@ -156,6 +156,15 @@ class TestBase(unittest.TestCase):
         z = x[1:]
         assert z.leading_scalar_variable_id() > xid
 
+    def test_nonconstant_expression_multiplication(self):
+        x = Variable()
+        try:
+            y = x*x
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'Cannot multiply two non-constant ScalarExpression objects' in err_str
+
 
 if __name__ == '__main__':
     unittest.main()
