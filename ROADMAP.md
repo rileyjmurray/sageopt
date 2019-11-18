@@ -39,6 +39,10 @@ make sure that the coniclifts API is aligned with the cvxpy API as best as possi
 Make Problem objects take two arguments instead of three;
 the objective sense shouldn't be an extra argument.
 
+Try to figure out how to do signomial arithmetic without as
+many affine operations on the coefficient vector. Indexing
+and stacking *will* slow things down in cvxpy.
+
 ## Add support for more solvers (coniclifts)
 
 This is a medium-priority task. It can be done with virtually no changes to existing files. 
