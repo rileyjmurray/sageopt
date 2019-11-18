@@ -110,3 +110,21 @@ time frame. If a user knew that they were only a tiny way into
 problem construction, they could (rightly) terminate the program
 (or otherwise interrupt execution) and try different settings.
 
+## More powerful abstractions for Signomial and Polynomial objects
+
+I think one hurdle for users is specifying lists of Signomial
+or Polynomial objects in a standard format (``gts``, ``eqs``).
+I can imagine a ``NominalConstraint`` object which is created
+with operator-overloading (``==``, ``<=``). A hurdle here is
+that Signomial and Polynomial objects already use ``==`` as
+a test for symbolic equality.
+
+Another hurdle to users is having to work with scalar-valued Signomial
+and Polynomial objects. For more complicated models, a ``NomialMap``
+object could be very useful. A ``NomialMap`` object could also be
+substantially more efficient than an array of Signomial or Polynomial
+objects. Operations like taking the dot-product of two Signomial
+maps could easily reduce quadratic time complexity down to linear
+complexity, or even faster.
+
+
