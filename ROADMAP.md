@@ -3,18 +3,6 @@
 When substantial effort is undertaken to change sageopt, or add new features, the plans and
 rationales for those changes should be listed here.
 
-## Populate the design_notes folder.
-
-This is a high-priority task. It can be done incrementally.
-
-Files in the design_notes folder should explain the overall architecture of sageopt and its
-various submodules (e.g. coniclifts). These files should serve as both a guide to those who
-are trying to understand how sageopt works for the first time, and as a reference for people
-who are already deeply familiar with certain aspects of sageopt. These documents should keep
-track of "lessons learned" throughout the life of the sageopt project (e.g. "We used to do X,
-which was nice for Y reasons, but created problems for Z, so now we do W.")
-
-
 ## Increase compatibility with CVXPY (eventually, allow a CVXPY backend).
 
 An earlier version of sageopt (called "sigpy") used cvxpy as its backend for constructing SAGE

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [0.4.2] - unreleased
 ## Added
  - A ``metadata`` field to Signomial and Polynomial objects.
+ - ``sageopt.interop``, for interacting with other python projects. Right now, there
+   is only support for GPKit.
 ## Changed
  - ``Signomial.partial`` and ``Polynomial.partial`` to correctly work with nonconstant coefficients.
  - Essentially all "attributes" of Signomial or Polynomial objects have become "properties". The
