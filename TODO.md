@@ -2,14 +2,6 @@ This file contains small tasks to improve sageopt. I write things
 here when they occur to me, but I don't have time to implement
 them at that particular moment.
 
-## Add unittests for minimax-free relaxations of constrained signomial programs
-
-Right now, all system-level tests of the relaxations package use unconstrained
-relaxations, or the mixed conditional-SAGE / Lagrangian relaxations associated
-with sig_constrained_relaxation. There should be some dedicated tests for
-sig_relaxation with conditioning.
-
-
 ## Improve management of sage cone compilation settings
 
 To view the setting, a user has to trace back far into coniclifts

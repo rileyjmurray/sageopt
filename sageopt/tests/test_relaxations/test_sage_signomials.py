@@ -22,14 +22,14 @@ from sageopt.relaxations import sig_solrec, infer_domain
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 
 
-def primal_dual_vals(f, ell):
+def primal_dual_vals(f, ell, X=None, solver='ECOS'):
     # primal
-    prob = sig_relaxation(f, form='primal', ell=ell)
-    status, value = prob.solve(solver='ECOS', verbose=False)
+    prob = sig_relaxation(f, X, form='primal', ell=ell)
+    status, value = prob.solve(solver=solver, verbose=False)
     prim = value
     # dual
-    prob = sig_relaxation(f, form='dual', ell=ell)
-    status, value = prob.solve(solver='ECOS', verbose=False)
+    prob = sig_relaxation(f, X, form='dual', ell=ell)
+    status, value = prob.solve(solver=solver, verbose=False)
     dual = value
     return [prim, dual], prob
 
@@ -322,6 +322,46 @@ class TestSAGERelaxations(unittest.TestCase):
         assert abs(res01[0] - expect) < 1e-4
         assert abs(res01[1] - expect) < 1e-4
         assert abs(res01[0] - res01[1]) < 1e-5
+
+    def test_conditional_sage_1(self):
+        # Background
+        #
+        #       This is Problem 1 from MCW2019. It appears in many papers on algorithms
+        #       for signomial progamming. All constraints are convex.
+        #
+        # Tests
+        #
+        #       ell=0 and ell=3. Test for recovery of a feasible solution for
+        #       ell=0, and test for recovery of an optimal solution for ell=3.
+        #
+        # Notes
+        #
+        #       ECOS can't solve the primal when ell > 0. Only try ell=3 if MOSEK is installed.
+        #
+        y = standard_sig_monomials(3)
+        f = 0.5 * y[0] * y[1] ** -1 - y[0] - 5 * y[1] ** -1
+        gts = [100 - y[1] * y[2] ** -1 - y[1] - 0.05 * y[0] * y[2],
+               y[0] - 70, y[1] - 1, y[2] - 0.5,
+               150 - y[0], 30 - y[1], 21 - y[2]]
+        eqs = []
+        X = infer_domain(f, gts, eqs)
+        vals, prob = primal_dual_vals(f, 0, X)
+        expect = -147.85712
+        assert abs(vals[0] - expect) <= 1e-3
+        assert abs(vals[1] - expect) <= 1e-3
+        solutions = sig_solrec(prob)
+        assert len(solutions) > 0
+        if cl.Mosek.is_installed():
+            vals, prob = primal_dual_vals(f, 3, X, solver='MOSEK')
+            expect = -147.6666
+            assert abs(vals[0] - expect) <= 1e-3
+            assert abs(vals[1] - expect) <= 1e-3
+            solutions = sig_solrec(prob)
+            assert len(solutions) > 0
+            x_star = solutions[0]
+            gap = f(x_star) - prob.value
+            assert abs(gap) <= 1e-3
+        pass
 
     def test_conditional_constrained_sage_1(self):
         # Background
