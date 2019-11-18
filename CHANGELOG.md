@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# [0.4.2] - unreleased
+# [0.4.2] - 2019-11-18
 ## Added
  - A ``metadata`` field to Signomial and Polynomial objects.
  - ``sageopt.interop``, for interacting with other python projects. Right now, there
-   is only support for GPKit.
+   is only support for GPKit. The GPKit functions are minimal, and untested. They
+   will be properly fleshed out when version 0.5 is released.
 ## Changed
  - ``Signomial.partial`` and ``Polynomial.partial`` to correctly work with nonconstant coefficients.
  - Essentially all "attributes" of Signomial or Polynomial objects have become "properties". The
