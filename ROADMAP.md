@@ -125,6 +125,26 @@ object could be very useful. A ``NomialMap`` object could also be
 substantially more efficient than an array of Signomial or Polynomial
 objects. Operations like taking the dot-product of two Signomial
 maps could easily reduce quadratic time complexity down to linear
-complexity, or even faster.
+complexity, or even faster. A basic step for NomialMap objects might
+be to remove dependency on the ``alpha_c`` field of Signomial and Polynomial
+objects. There are actually very few places in the code where that field
+is used; those places are mostly for tests.
+
+Plan of attack for the above two ideas:
+
+1. Implement an ``are_equivalent`` function.
+2. Create an ``AltSet`` class, which behaves like a set, but
+   calls ``are_equivalent`` instead of ``__eq__``. Replace usage
+   of ``set`` class containing Signomials with the ``AltSet`` class.
+   Still have this class rely on ``__hash__``.
+3. Switch all tests to the ``are_equivalent`` function.
+4. Temporarily have ``__eq__`` raise a runtime error if called, see
+   if all tests pass.
+5. Design the ``NomialMap`` class(es).
+6. Create a ``FuncCon`` class (or something to that affect), which
+   can represent inequality constraints and equality constraints.
+7. Change ``__eq__`` to create instances of ``FuncCon``.
+8. Implement ``__ge__`` and ``__le__`` for Signomial objects, have
+   these functions return ``FuncCon`` objects.
 
 

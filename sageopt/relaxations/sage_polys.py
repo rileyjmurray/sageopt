@@ -121,7 +121,7 @@ def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
         constraints = relative_dual_sage_poly_cone(lagrangian, v, con_base_name, log_AbK=X)
         a = sym_corr.relative_coeff_vector(modulator, lagrangian.alpha)
         constraints.append(a.T @ v == 1)
-        f_mod = Polynomial(f.alpha_c) * modulator
+        f_mod = Polynomial(f.alpha, f.c) * modulator
         obj_vec = sym_corr.relative_coeff_vector(f_mod, lagrangian.alpha)
         obj = obj_vec.T @ v
         prob = cl.Problem(cl.MIN, obj, constraints)
@@ -501,12 +501,12 @@ def infer_domain(f, gts, eqs, check_feas=True):
     """
     # GP-representable inequality constraints (recast as "Signomial >= 0")
     gp_gts = con_gen.valid_gp_representable_poly_inequalities(gts)
-    gp_gts_sigreps = [Signomial(g.alpha_c) for g in gp_gts]
+    gp_gts_sigreps = [Signomial(g.alpha, g.c) for g in gp_gts]
     gp_gts_sigreps = con_gen.valid_posynomial_inequalities(gp_gts_sigreps)
     #   ^ That second call is to convexify the signomials.
     # GP-representable equality constraints (recast as "Signomial == 0")
     gp_eqs = con_gen.valid_gp_representable_poly_eqs(eqs)
-    gp_eqs_sigreps = [Signomial(g.alpha_c) for g in gp_eqs]
+    gp_eqs_sigreps = [Signomial(g.alpha, g.c) for g in gp_eqs]
     gp_eqs_sigreps = con_gen.valid_monomial_equations(gp_eqs_sigreps)
     #  ^ That second call is to make sure the nonconstant term has
     #    a particular sign (specifically, a negative sign).
@@ -521,9 +521,11 @@ def infer_domain(f, gts, eqs, check_feas=True):
 
 
 def hierarchy_e_k(polys, k):
-    alpha_tups = sum([list(s.alpha_c.keys()) for s in polys], [])
-    alpha_tups = set(alpha_tups)
-    s = Polynomial(dict([(a, 1.0) for a in alpha_tups]))
+    alphas = [s.alpha for s in polys]
+    alpha = np.vstack(alphas)
+    alpha = np.unique(alpha, axis=0)
+    c = np.ones(shape=(alpha.shape[0],))
+    s = Polynomial(alpha, c)
     s = s ** k
     return s.alpha
 

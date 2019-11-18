@@ -477,8 +477,10 @@ def infer_domain(f, gts, eqs, check_feas=True):
 
 
 def hierarchy_e_k(sigs, k):
-    alpha_tups = sum([list(s.alpha_c.keys()) for s in sigs], [])
-    alpha_tups = set(alpha_tups)
-    s = Signomial(dict([(a, 1.0) for a in alpha_tups]))
+    alphas = [s.alpha for s in sigs]
+    alpha = np.vstack(alphas)
+    alpha = np.unique(alpha, axis=0)
+    c = np.ones(shape=(alpha.shape[0],))
+    s = Signomial(alpha, c)
     s = s ** k
     return s.alpha
