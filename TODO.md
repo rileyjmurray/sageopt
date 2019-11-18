@@ -26,11 +26,12 @@ Make sure to raise a runtime error if an unrecognized keyword argument
 is supplied. This is necessary to catch typos in keyword arguments
 which aren't part of the function signature.
 
-## Add documentation for keyword arguments to Problem.solve()
+## Web documentation
 
-Right now there isn't any. Cover generic keyword arguments (e.g.
-``verbose``, ``cache_apply_data``), and solver-specific keyword
-arguments (e.g. ``max_iters`` for ECOS).
+1. Suggest running nosetests, after installing from pip
+2. Add documentation for keyword arguments to Problem.solve()
+
+## Expose MOSEK solver options to prob.solve()
 
 Need to expose MOSEK solver settings. Ones of practical interest
 are ``mosek.dparam.intpnt_co_tol_near_rel`` and
@@ -40,19 +41,12 @@ Send sage_benchmarks primal problem 2, params (p=0, q=3, ell=0, nontriv
 X) to MOSEK. With the default scaling, it returns a significantly
 infeasible solution.
 
-## Update web documentation to run nosetests, when installing from pip
-
-The command ``nosetests sageopt`` should work.
-
 ## Increase compatibility with cvxpy
 
 Make Problem objects take two arguments instead of three;
 the objective sense shouldn't be an extra argument.
 
-## Implement the caret (^) operator for Signomial and Polynomial objects
+## sageopt.interop.gpkit
 
-This boils down to implementing ``__xor__``. Add documentation for this
-operator, but warn users about the dangers of using it with possible
-numeric types.
-
-## Add sageopt.interop, for interfacing with other systems (GPKit)
+Write tests. Setup a continuous-integration environment which
+installs GPKit. Add web documentation.

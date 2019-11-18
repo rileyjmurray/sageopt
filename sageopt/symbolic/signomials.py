@@ -137,14 +137,14 @@ class Signomial(object):
 
     Operator overloading.
 
-        The Signomial class implements ``+``, ``-``, ``*``, and ``**`` between pairs of Signomials,
-        and pairs involving one Signomial and one numeric type.
+        The operators ``+``, ``-``, and ``*`` are defined between pairs of Signomials, and pairs
+        ``{s, t}`` where ``s`` is a Signomial and ``t`` is either numeric or a coniclifts Expression.
 
-        The Signomial class also implements ``s1 / s2`` where ``s2`` is a numeric type or Signomial,
-        but if ``s2`` is a Signomial, then its coefficient vector ``s2.c`` can only contain one nonzero entry.
+        A signomial ``s`` can be raised to a numeric power ``p`` by writing ``s**power``; if ``s.c``
+        contains more than one nonzero entry, it can only be raised to nonnegative integer powers.
 
-        You can also use ``+``, ``-``, and ``*`` for pairs involving one Signomial and one non-Signomial.
-        If ``s3`` is the result of such an operation, then ``s3.c`` will be an ndarray with ``s3.dtype == object``.
+        The Signomial class also implements ``s1 / s2`` where ``s2`` is a numeric type or Signomial;
+        if ``s2`` is a Signomial, then its coefficient vector ``s2.c`` can only contain one nonzero entry.
 
     Function evaluations.
 
@@ -157,11 +157,8 @@ class Signomial(object):
     Internal representations.
 
         Both ``self.alpha_c`` and ``(self.alpha, self.c)`` completely specify a Signomial object.
-
-        ``alpha_c`` is the dictionary which is taken to *define* this Signomial as a mathematical object.
-
-        However, it is useful to have rapid access to the matrix of linear functionals ``alpha``, or the coefficient
-        vector ``c`` as numpy arrays. So these fields are also maintained explicitly.
+        You are free to use whichever is more convenient in a given context. Neither of these fields
+        should be modified manually.
     """
 
     def __init__(self, alpha_maybe_c, c=None):
@@ -339,6 +336,8 @@ class Signomial(object):
         return other + (-1) * self
 
     def __pow__(self, power, modulo=None):
+        if type(power) not in __NUMERIC_TYPES__:
+            raise RuntimeError('Cannot raise a signomial to non-numeric powers.')
         if self.c.dtype not in __NUMERIC_TYPES__:
             if isinstance(self.c, cl.Expression) and not self.c.is_constant():
                 raise RuntimeError('Cannot exponentiate signomials with symbolic coefficients.')

@@ -2,8 +2,8 @@ from sageopt import infer_domain, sig_relaxation, standard_sig_monomials, sig_so
 
 n = 3
 y = standard_sig_monomials(n)
-f = 0.5 * y[0] * y[1] ** -1 - y[0] - 5 * y[1] ** -1
-gts = [100 -  y[1] * y[2] ** -1 - y[1] - 0.05 * y[0] * y[2],
+f = 0.5 * y[0] / y[1] - y[0] - 5 / y[1]
+gts = [100 - y[1] / y[2] - y[1] - 0.05 * y[0] * y[2],
        y[0] - 70,
        y[1] - 1,
        y[2] - 0.5,

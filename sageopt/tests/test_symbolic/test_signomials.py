@@ -37,6 +37,15 @@ class TestSignomials(unittest.TestCase):
             recovered_alpha_c[tuple(s.alpha[i, :])] = s.c[i]
         assert s.n == 1 and s.m == 3 and alpha_c == recovered_alpha_c
 
+    def test_exponentiation(self):
+        x = standard_sig_monomials(2)
+        y0 = (x[0] - x[1])**2
+        y1 = x[0]**2 - 2*x[0]*x[1] + x[1]**2
+        assert y0 == y1
+        z0 = x[0]**0.5
+        z1 = Signomial({(0.5, 0): 1})
+        assert z0 == z1
+
     # noinspection PyUnresolvedReferences
     def test_scalar_multiplication(self):
         # data for tests
@@ -100,6 +109,12 @@ class TestSignomials(unittest.TestCase):
         except RuntimeError as err:
             err_str = str(err)
             assert 'Cannot exponentiate signomials with symbolic coefficients' in err_str
+        try:
+            y = x[0] ** x[1]
+            assert False
+        except RuntimeError as err:
+            err_str = str(err)
+            assert 'Cannot raise a signomial to non-numeric powers.' == err_str
         pass
 
     def test_signomial_multiplication(self):

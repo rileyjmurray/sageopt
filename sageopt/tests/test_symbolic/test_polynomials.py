@@ -89,14 +89,14 @@ class TestPolynomials(unittest.TestCase):
     def test_polynomial_exponentiation(self):
         p = Polynomial({(0,): -1, (1,): 1})
         # square of (x-1)
-        res = p ** 2 - Polynomial({(0,): 1, (1,): -2, (2,): 1})
-        res.remove_terms_with_zero_as_coefficient()
-        assert res.m == 1 and set(res.c) == {0}
+        res = p ** 2
+        expect = Polynomial({(0,): 1, (1,): -2, (2,): 1})
+        assert res == expect
         # cube of (2x+5)
         p = Polynomial({(0,): 5, (1,): 2})
-        res = p ** 3 - Polynomial({(0,): 125, (1,): 150, (2,): 60, (3,): 8})
-        res.remove_terms_with_zero_as_coefficient()
-        assert res.m == 1 and set(res.c) == {0}
+        expect = Polynomial({(0,): 125, (1,): 150, (2,): 60, (3,): 8})
+        res = p ** 3
+        assert res == expect
 
     def test_composition(self):
         p = Polynomial({(2,): 1})  # represents lambda x: x ** 2
