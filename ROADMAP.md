@@ -15,9 +15,7 @@ track of "lessons learned" throughout the life of the sageopt project (e.g. "We 
 which was nice for Y reasons, but created problems for Z, so now we do W.")
 
 
-## Create a flexible backend, that can use either coniclifts, or cvxpy.
-
-This is a high-priority task. It will require large, coordinated changes to sageopt.
+## Increase compatibility with CVXPY (eventually, allow a CVXPY backend).
 
 An earlier version of sageopt (called "sigpy") used cvxpy as its backend for constructing SAGE
 relaxations. We moved to a custom backend for a few reasons:
@@ -48,6 +46,10 @@ The third part in that vision is the fuzziest bit. I don't want to make the rela
 a mess of code that is hard to read and hard to maintain. In addition, it will be important to
 make sure that the coniclifts API is aligned with the cvxpy API as best as possible.
 
+### smaller steps
+
+Make Problem objects take two arguments instead of three;
+the objective sense shouldn't be an extra argument.
 
 ## Add support for more solvers (coniclifts)
 

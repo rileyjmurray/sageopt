@@ -41,11 +41,6 @@ Send sage_benchmarks primal problem 2, params (p=0, q=3, ell=0, nontriv
 X) to MOSEK. With the default scaling, it returns a significantly
 infeasible solution.
 
-## Increase compatibility with cvxpy
-
-Make Problem objects take two arguments instead of three;
-the objective sense shouldn't be an extra argument.
-
 ## sageopt.interop.gpkit
 
 Write tests. Setup a continuous-integration environment which
