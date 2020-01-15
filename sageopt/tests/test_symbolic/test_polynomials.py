@@ -25,7 +25,7 @@ class TestPolynomials(unittest.TestCase):
     @staticmethod
     def are_equal(poly1, poly2):
         diff = poly1 - poly2
-        diff.remove_terms_with_zero_as_coefficient()
+        dff = diff.without_zeros()
         return diff.m == 1 and diff.c[0] == 0
 
     #
@@ -48,7 +48,7 @@ class TestPolynomials(unittest.TestCase):
         s = 1 * s0
         assert s.alpha_c == s0.alpha_c
         s = 0 * s0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.m == 1 and set(s.c) == {0}
 
     def test_addition_and_subtraction(self):
@@ -59,10 +59,10 @@ class TestPolynomials(unittest.TestCase):
                         np.array([5]))
         # tests
         s = s0 - s0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.m == 1 and set(s.c) == {0}
         s = -s0 + s0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.m == 1 and set(s.c) == {0}
         s = s0 + t0
         assert s.alpha_c == {(0,): 1, (1,): 2, (2,): 3, (4,): 5}
@@ -77,13 +77,13 @@ class TestPolynomials(unittest.TestCase):
                         np.array([0]))
         # tests
         s = s0 * t0
-        s.remove_terms_with_zero_as_coefficient()
-        assert s.alpha_c == {(1,): 1, (2,): 2, (3,): 3, (0,): 0}
+        s = s.without_zeros()
+        assert s.alpha_c == {(1,): 1, (2,): 2, (3,): 3}
         s = t0 * s0
-        s.remove_terms_with_zero_as_coefficient()
-        assert s.alpha_c == {(1,): 1, (2,): 2, (3,): 3, (0,): 0}
+        s = s.without_zeros()
+        assert s.alpha_c == {(1,): 1, (2,): 2, (3,): 3}
         s = s0 * q0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.alpha_c == {(0,): 0}
 
     def test_polynomial_exponentiation(self):

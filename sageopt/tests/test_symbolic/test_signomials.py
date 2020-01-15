@@ -62,7 +62,7 @@ class TestSignomials(unittest.TestCase):
         s = 1 * s0
         assert s.alpha_c == s0.alpha_c
         s = 0 * s0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.m == 1 and set(s.c) == {0}
 
     def test_addition_and_subtraction(self):
@@ -71,10 +71,10 @@ class TestSignomials(unittest.TestCase):
         t0 = Signomial({(-1,): 5})
         # tests
         s = s0 - s0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.m == 1 and set(s.c) == {0}
         s = -s0 + s0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.m == 1 and set(s.c) == {0}
         s = s0 + t0
         assert s.alpha_c == {(-1,): 5, (0,): 1, (1,): 2, (2,): 3}
@@ -124,13 +124,13 @@ class TestSignomials(unittest.TestCase):
         q0 = Signomial({(5,): 0})
         # tests
         s = s0 * t0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.alpha_c == {(-1,): 1, (0,): 2, (1,): 3}
         s = t0 * s0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.alpha_c == {(-1,): 1, (0,): 2, (1,): 3}
         s = s0 * q0
-        s.remove_terms_with_zero_as_coefficient()
+        s = s.without_zeros()
         assert s.alpha_c == {(0,): 0}
 
     def test_signomial_evaluation(self):

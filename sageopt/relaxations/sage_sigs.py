@@ -82,12 +82,12 @@ def sig_relaxation(f, X=None, form='dual', **kwargs):
 
 
 def sig_dual(f, ell=0, X=None, modulator_support=None):
-    f.remove_terms_with_zero_as_coefficient()
+    f = f.without_zeros()
     # Signomial definitions (for the objective).
-    if modulator_support is None:
-        modulator_support = f.alpha
-    t_mul = Signomial(modulator_support, np.ones(modulator_support.shape[0])) ** ell
     lagrangian = f - cl.Variable(name='gamma')
+    if modulator_support is None:
+        modulator_support = lagrangian.alpha
+    t_mul = Signomial(modulator_support, np.ones(modulator_support.shape[0])) ** ell
     metadata = {'f': f, 'lagrangian': lagrangian, 'modulator': t_mul, 'X': X}
     lagrangian = lagrangian * t_mul
     f_mod = f * t_mul
@@ -110,13 +110,13 @@ def sig_dual(f, ell=0, X=None, modulator_support=None):
 
 
 def sig_primal(f, ell=0, X=None, modulator_support=None):
-    f.remove_terms_with_zero_as_coefficient()
-    if modulator_support is None:
-        modulator_support = f.alpha
-    t = Signomial(modulator_support, np.ones(modulator_support.shape[0]))
+    f = f.without_zeros()
     gamma = cl.Variable(name='gamma')
-    s_mod = (f - gamma) * (t ** ell)
-    s_mod.remove_terms_with_zero_as_coefficient()
+    lagrangian = f - gamma
+    if modulator_support is None:
+        modulator_support = lagrangian.alpha
+    t = Signomial(modulator_support, np.ones(modulator_support.shape[0]))
+    s_mod = lagrangian * (t ** ell)
     con = primal_sage_cone(s_mod, name=str(s_mod), X=X)
     constraints = [con]
     obj = gamma.as_expr()
@@ -146,7 +146,7 @@ def sage_feasibility(f, X=None, additional_cons=None):
         A coniclifts maximization Problem. If ``f`` admits an X-SAGE decomposition, then we should have
         ``prob.value > -np.inf``, once ``prob.solve()`` has been called.
     """
-    f.remove_terms_with_zero_as_coefficient()
+    f = f.without_zeros()
     con = primal_sage_cone(f, name=str(f), X=X)
     constraints = [con]
     if additional_cons is not None:
@@ -187,9 +187,9 @@ def sage_multiplier_search(f, level=1, X=None):
     is a coniclifts Variable defining a nonzero X-SAGE function. Then we check if ``f_mod = f * mult``
     is X-SAGE for any choice of ``c_tilde``.
     """
-    f.remove_terms_with_zero_as_coefficient()
+    f = f.without_zeros()
     constraints = []
-    mult_alpha = hierarchy_e_k([f], k=level)
+    mult_alpha = hierarchy_e_k([f, Signomial({(0,) * f.n: 1})], k=level)
     c_tilde = cl.Variable(mult_alpha.shape[0], name='c_tilde')
     mult = Signomial(mult_alpha, c_tilde)
     constraints.append(cl.sum(c_tilde) >= 1)
@@ -279,7 +279,7 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     lagrangian, ineq_lag_mults, _, gamma = make_sig_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'X': X}
     if ell > 0:
-        alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
+        alpha_E_1 = hierarchy_e_k([f, Signomial({(0,) * f.n: 1})] + list(gts) + list(eqs), k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
     else:
@@ -315,7 +315,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_sig_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'level': (p, q, ell), 'X': X}
     if ell > 0:
-        alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
+        alpha_E_1 = hierarchy_e_k([f, Signomial({(0,) * f.n: 1})] + list(gts) + list(eqs), k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
         f = f * modulator
@@ -428,7 +428,7 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
     folded_gt = con_gen.up_to_q_fold_cons(gts, q)
     gamma = cl.Variable(name='gamma')
     L = f - gamma
-    alpha_E_p = hierarchy_e_k([f] + list(gts) + list(eqs), k=p)
+    alpha_E_p = hierarchy_e_k([L] + list(gts) + list(eqs), k=p)
     ineq_dual_sigs = []
     summands = [L]
     for g in folded_gt:

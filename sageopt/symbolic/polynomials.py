@@ -16,7 +16,6 @@
 
 import numpy as np
 import sageopt.coniclifts as cl
-from collections import defaultdict
 from sageopt.symbolic.signomials import Signomial
 import warnings
 
@@ -123,7 +122,7 @@ class Polynomial(Signomial):
         ``lambda x: np.prod(np.power(alpha[i, :], x))``. It is possible to have ``c.dtype == object``, to allow for
         coniclifts Variables.
 
-    alpha_c : defaultdict
+    alpha_c : dict
         The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
         These tuples correspond to rows in ``alpha``.
 
@@ -317,12 +316,12 @@ class Polynomial(Signomial):
         Return a Polynomial which is symbolically equivalent to ``self``,
         but which doesn't track basis functions ``alpha[i,:]`` for which ``c[i] == 0``.
         """
-        d = defaultdict(int)
-        for (k, v) in self._alpha_c.items():
+        d = dict()
+        for (k, v) in self.alpha_c.items():
             if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
                 d[k] = v
-        tup = (0,) * self._n
-        d[tup] += 0
+        if len(d) == 0:
+            d[(0,) * self.n] = 0
         p = Polynomial(d)
         return p
 
@@ -366,14 +365,19 @@ class Polynomial(Signomial):
         """
         if i < 0 or i >= self.n:
             raise RuntimeError('This polynomial does not have an input at index ' + str(i) + '.')
-        d = defaultdict(int)
+        d = dict()
         for j in range(self.m):
-            if self.alpha[j, i] > 0:
-                vec = self.alpha[j, :].copy()
+            vec = self.alpha[j, :].copy()
+            if vec[i] > 0:
                 c = self.c[j] * vec[i]
                 vec[i] -= 1
-                d[tuple(vec.tolist())] += c
-        d[self.n * (0,)] += 0
+                tup = tuple(vec)
+                if tup not in d:
+                    d[tup] = c
+                else:
+                    d[tup] += c
+        if len(d) == 0:
+            d[(0,) * self.n] = 0
         p = Polynomial(d)
         return p
 

@@ -165,8 +165,8 @@ class TestSAGERelaxations(unittest.TestCase):
         expected = [3.464102, 4.60250026, 4.6217973]
         pds = [primal_dual_vals(s, ell) for ell in range(3)]
         for ell in range(3):
-            assert abs(pds[ell][0] == expected[ell]) < 1e-5
-            assert abs(pds[ell][1] == expected[ell]) < 1e-5
+            assert abs(pds[ell][0][0] - expected[ell]) < 1e-5
+            assert abs(pds[ell][0][1] - expected[ell]) < 1e-5
         dual = sig_relaxation(s, form='dual', ell=3)
         dual.solve(solver='ECOS', verbose=False)
         optsols = sig_solrec(dual)

@@ -15,7 +15,7 @@
 """
 import sageopt.coniclifts as cl
 import numpy as np
-from collections import defaultdict
+import scipy.sparse as sp
 import warnings
 
 
@@ -110,7 +110,7 @@ class Signomial(object):
 
     m : int
         The number of terms needed to express this Signomial in a basis of monomial functions
-        ``lambda x: exp(a @ x)`` for row vectors ``a``. The signomial is presumed to include a constant term.
+        ``lambda x: exp(a @ x)`` for row vectors ``a``.
 
     alpha : ndarray
         Has shape ``(m, n)``. Each row specifies a vector appearing in an exponential function which
@@ -120,11 +120,10 @@ class Signomial(object):
         Has shape ``(m,)``. The scalar ``c[i]`` is this Signomial's coefficient on the basis function
         ``lambda x: exp(alpha[i, :] @ x)``. It is possible to have ``c.dtype == object``.
 
-    alpha_c : defaultdict
+    alpha_c : dict
         The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
         These tuples define linear functions. This Signomial could be evaluated by the code snippet
-        ``lambda x: np.sum([ alpha_c[a] * np.exp(a @ x) for a in alpha_c])``. The default value for this
-        dictionary is zero.
+        ``lambda x: np.sum([ alpha_c[a] * np.exp(a @ x) for a in alpha_c])``.
 
     Attributes
     ----------
@@ -162,30 +161,30 @@ class Signomial(object):
     """
 
     def __init__(self, alpha_maybe_c, c=None):
-        self._array_backed = False
-        self._dict_backed = False
         # noinspection PyArgumentList
         if c is None:
             # noinspection PyArgumentList
-            self._alpha_c = defaultdict(int, alpha_maybe_c)
-            self._dict_backed = True
+            self._alpha_c = alpha_maybe_c
+            self._c = None
+            self._alpha = None
+            self._n = len(list(self._alpha_c.items())[0][0])
+            self._m = len(self._alpha_c)
+            self._no_dict_repr = False
+            self._no_array_repr = True
         else:
-            self._array_backed = True
+            if alpha_maybe_c.shape[0] != c.size:  # pragma: no cover
+                raise ValueError('alpha and c specify different numbers of terms')
             alpha = np.round(alpha_maybe_c, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
-            alpha = alpha.tolist()
-            if len(alpha) != c.size:  # pragma: no cover
-                raise RuntimeError('alpha and c specify different numbers of terms')
-            self._alpha_c = defaultdict(int)
-            for j in range(c.size):
-                self._alpha_c[tuple(alpha[j])] += c[j]
-        self._n = len(list(self._alpha_c.items())[0][0])
-        self._alpha_c[(0,) * self._n] += 0  # ensures that there's a constant term.
-        self._m = len(self._alpha_c)
-        self._alpha = None
-        self._c = None
+            alpha, c = Signomial.sum_duplicates(alpha, c)
+            self._alpha = alpha
+            self._c = c
+            self._alpha_c = None
+            self._n = alpha.shape[1]
+            self._m = alpha.shape[0]
+            self._no_dict_repr = True
+            self._no_array_repr = False
         self._grad = None
         self._hess = None
-        self._arrays_stale = True
         self.metadata = dict()
         pass
 
@@ -219,18 +218,20 @@ class Signomial(object):
 
     @property
     def alpha(self):
-        if self._arrays_stale:
-            self._update_alpha_c_arrays()
+        if self._no_array_repr:
+            self._build_alpha_c_arrays()
         return self._alpha
 
     @property
     def c(self):
-        if self._arrays_stale:
-            self._update_alpha_c_arrays()
+        if self._no_array_repr:
+            self._build_alpha_c_arrays()
         return self._c
 
     @property
     def alpha_c(self):
+        if self._no_dict_repr:
+            self._build_alpha_c_dict()
         return self._alpha_c
 
     @property
@@ -267,12 +268,13 @@ class Signomial(object):
         """
         Return the index ``i`` so that ``alpha[i, :]`` is the zero vector.
         """
-        return np.where((self.alpha == 0).all(axis=1))[0][0]
+        res = np.where((self.alpha == 0).all(axis=1))[0]
+        if res.size == 0:
+            return None
+        else:
+            return res[0]
 
-    def _update_alpha_c_arrays(self):
-        """
-        Call this function whenever the dictionary representation of this Signomial object has been updated.
-        """
+    def _build_alpha_c_arrays(self):
         alpha = []
         c = []
         for k, v in self.alpha_c.items():
@@ -288,7 +290,14 @@ class Signomial(object):
                     warnings.warn('A signomial is being constructed with usual coefficient vector.')
                 else:
                     raise e
-        self._arrays_stale = False
+        self._no_array_repr = False
+
+    def _build_alpha_c_dict(self):
+        alpha, c = self._alpha, self._c
+        self._alpha_c = dict()
+        for j in range(c.size):
+            self._alpha_c[tuple(alpha[j, :])] = c[j]
+        self._no_dict_repr = False
 
     def __add__(self, other):
         from sageopt.symbolic.arithmetic import mat_sum
@@ -423,16 +432,19 @@ class Signomial(object):
         """
         Update ``alpha``, ``c``, and ``alpha_c`` to remove nonconstant terms where ``c[i] == 0``.
         """
+        if self._no_dict_repr:
+            self._build_alpha_c_dict()
+            self._no_dict_repr = False
         d = dict()
         for (k, v) in self._alpha_c.items():
             if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
                 d[k] = v
-        # noinspection PyArgumentList
-        self._alpha_c = defaultdict(int, d)
-        tup = (0,) * self._n
-        self._alpha_c[tup] += 0
+        self._alpha_c = d
+        if len(d) == 0:
+            tup = (0,) * self._n
+            self._alpha_c[tup] = 0
         self._m = len(self._alpha_c)
-        self._arrays_stale = True
+        self._no_array_repr = True
         pass
 
     def without_zeros(self):
@@ -440,12 +452,12 @@ class Signomial(object):
         Return a Signomial which is symbolically equivalent to ``self``,
         but which doesn't track basis functions ``alpha[i,:]`` for which ``c[i] == 0``.
         """
-        d = defaultdict(int)
-        for (k, v) in self._alpha_c.items():
+        d = dict()
+        for (k, v) in self.alpha_c.items():
             if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
                 d[k] = v
-        tup = (0,) * self._n
-        d[tup] += 0
+        if len(d) == 0:
+            d[(0,) * self._n] = 0
         s = Signomial(d)
         return s
 
@@ -465,13 +477,14 @@ class Signomial(object):
         """
         if i < 0 or i >= self._n:  # pragma: no cover
             raise RuntimeError('This Signomial does not have an input at index ' + str(i) + '.')
-        d = defaultdict(int)
+        d = dict()
         for j in range(self._m):
-            c = self.c[j] * self.alpha[j, i]
+            vec = self.alpha[j, :]
+            c = self.c[j] * vec[i]
             if (not isinstance(c, __NUMERIC_TYPES__)) or c != 0:
-                vec = self.alpha[j, :].copy()
-                d[tuple(vec.tolist())] += c
-        d[self._n * (0,)] += 0
+                d[tuple(vec)] = c
+        if len(d) == 0:
+            d[(0,) * self._n] = 0
         p = Signomial(d)
         return p
 
@@ -511,6 +524,27 @@ class Signomial(object):
         from sageopt.symbolic.polynomials import Polynomial
         f = Polynomial(self.alpha, self.c)
         return f
+
+    @staticmethod
+    def sum_duplicates(alpha, c):
+        alpha_reduced, inv, counts = np.unique(alpha, axis=0,
+                                               return_inverse=True,
+                                               return_counts=True)
+        if np.all(counts == 1):
+            return alpha, c
+        else:
+            # the following is inefficient
+            m_reduced = alpha_reduced.shape[0]
+            reducer_cols = []
+            for i in range(m_reduced):
+                idxs = np.nonzero(inv == i)[0]
+                reducer_cols.append(idxs)
+            reducer_cols = np.hstack(reducer_cols)
+            reducer_rows = np.repeat(np.arange(m_reduced), counts)
+            reducer_coeffs = np.ones(reducer_rows.size)
+            R = sp.csr_matrix((reducer_coeffs, (reducer_rows, reducer_cols)))
+            c_reduced = R @ c
+            return alpha_reduced, c_reduced
 
 
 class SigDomain(object):
