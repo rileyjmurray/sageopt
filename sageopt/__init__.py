@@ -29,4 +29,6 @@ from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials, Po
 from sageopt.relaxations import poly_relaxation, poly_constrained_relaxation
 from sageopt.relaxations import poly_solrec
 
-__version__ = '0.4.2'
+import sageopt.interop.scipy
+
+__version__ = '0.4.3'

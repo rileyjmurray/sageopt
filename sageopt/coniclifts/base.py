@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import numpy as np
+import scipy.sparse as sp
 from collections import defaultdict
 from sageopt.coniclifts.constraints.elementwise import ElementwiseConstraint
 from sageopt.coniclifts.constraints.set_membership.psd_cone import PSD
@@ -306,6 +307,7 @@ class ScalarExpression(object):
                 del self.atoms_to_coeffs[a]
 
     def is_constant(self):
+        self.remove_zeros()
         return len(self.atoms_to_coeffs) == 0
 
     def is_convex(self):
@@ -347,6 +349,7 @@ class ScalarExpression(object):
         return ElementwiseConstraint(self, other, "==")
 
     def scalar_variables(self):
+        self.remove_zeros()
         svs = []
         for a in self.atoms_to_coeffs:
             if isinstance(a, ScalarVariable):
@@ -409,6 +412,8 @@ class Expression(np.ndarray):
 
     """
 
+    __array_priority__ = 100
+
     def __new__(cls, obj):
         attempt = np.array(obj, dtype=object, copy=False, subok=True)
         for tup in array_index_iterator(attempt.shape):
@@ -436,6 +441,8 @@ class Expression(np.ndarray):
             msg = '\n \t Matmul implementation uses "dot", '
             msg += 'which behaves differently for higher dimension arrays.\n'
             raise RuntimeError(msg)
+        if isinstance(other, sp.spmatrix):
+            other = other.toarray()
         (A, x, B) = self.factor()
         if isinstance(other, Expression):
             if not other.is_constant():  # pragma: no cover
@@ -912,6 +919,8 @@ class Variable(Expression):
 
     @value.setter
     def value(self, value):
+        if isinstance(value, __REAL_TYPES__):
+            value = np.array(value)
         if value.shape != self.shape:  # pragma: no cover
             raise RuntimeError('Dimension mismatch.')
         for tup in array_index_iterator(self.shape):

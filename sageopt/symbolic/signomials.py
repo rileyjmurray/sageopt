@@ -162,11 +162,15 @@ class Signomial(object):
     """
 
     def __init__(self, alpha_maybe_c, c=None):
+        self._array_backed = False
+        self._dict_backed = False
         # noinspection PyArgumentList
         if c is None:
             # noinspection PyArgumentList
             self._alpha_c = defaultdict(int, alpha_maybe_c)
+            self._dict_backed = True
         else:
+            self._array_backed = True
             alpha = np.round(alpha_maybe_c, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
             alpha = alpha.tolist()
             if len(alpha) != c.size:  # pragma: no cover
@@ -254,8 +258,8 @@ class Signomial(object):
         Returns the coefficient of the basis function ``lambda x: np.exp(a @ x)`` for this Signomial.
         """
         tup = tuple(np.round(a, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__))
-        if tup in self._alpha_c:
-            return self._alpha_c[tup]
+        if tup in self.alpha_c:
+            return self.alpha_c[tup]
         else:
             return 0
 
@@ -271,27 +275,30 @@ class Signomial(object):
         """
         alpha = []
         c = []
-        for k, v in self._alpha_c.items():
+        for k, v in self.alpha_c.items():
             alpha.append(k)
             c.append(v)
         self._alpha = np.array(alpha)
         self._c = np.array(c)
         if self._c.dtype == np.dtype('O'):
-            self._c = cl.Expression(self._c)
+            try:
+                self._c = cl.Expression(self._c)
+            except RuntimeError as e:
+                if e.args[0] == 'Can only initialize with numeric, ScalarExpression, or ScalarAtom types.':
+                    warnings.warn('A signomial is being constructed with usual coefficient vector.')
+                else:
+                    raise e
         self._arrays_stale = False
 
     def __add__(self, other):
+        from sageopt.symbolic.arithmetic import mat_sum
         if not isinstance(other, Signomial):
             tup = (0,) * self._n
             d = {tup: other}
             other = Signomial(d)
         if not other.n == self._n:
             raise RuntimeError('Cannot add Signomials with different numbers of variables.')
-        # noinspection PyArgumentList
-        d = defaultdict(int, self._alpha_c)
-        for k, v in other._alpha_c.items():
-            d[k] += v
-        res = Signomial(d)
+        res = mat_sum(self, other)
         res.remove_terms_with_zero_as_coefficient()
         return res
 
@@ -299,20 +306,14 @@ class Signomial(object):
         return self.__add__(other)
 
     def __mul__(self, other):
+        from sageopt.symbolic.arithmetic import mat_prod
         if not isinstance(other, Signomial):
             tup = (0,) * self._n
             d = {tup: other}
             other = Signomial(d)
         if not other.n == self._n:
             raise RuntimeError('Cannot multiply Signomials with different numbers of variables.')
-        d = defaultdict(int)
-        alpha1, c1 = self.alpha, self.c
-        alpha2, c2 = other.alpha, other.c
-        for i1, v1 in enumerate(alpha1):
-            for i2, v2 in enumerate(alpha2):
-                v3 = np.round(v1 + v2, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
-                d[tuple(v3)] += c1[i1] * c2[i2]
-        res = Signomial(d)
+        res = mat_prod(self, other)
         res.remove_terms_with_zero_as_coefficient()
         return res
 
@@ -339,20 +340,23 @@ class Signomial(object):
         if type(power) not in __NUMERIC_TYPES__:
             raise RuntimeError('Cannot raise a signomial to non-numeric powers.')
         if self.c.dtype not in __NUMERIC_TYPES__:
-            if isinstance(self.c, cl.Expression) and not self.c.is_constant():
-                raise RuntimeError('Cannot exponentiate signomials with symbolic coefficients.')
+            msg = 'Cannot exponentiate signomials with symbolic coefficients.'
+            if not isinstance(self.c, cl.Expression):
+                raise RuntimeError(msg)
+            elif not self.c.is_constant():
+                raise RuntimeError(msg)
         if power % 1 == 0 and power >= 0:
             power = int(power)
             if power == 0:
                 # noinspection PyTypeChecker
                 return Signomial({(0,) * self._n: 1})
             else:
-                s = Signomial(self._alpha_c)
+                s = Signomial(self.alpha_c)
                 for t in range(power - 1):
                     s = s * self
                 return s
         else:
-            d = dict((k, v) for (k, v) in self._alpha_c.items() if v != 0)
+            d = dict((k, v) for (k, v) in self.alpha_c.items() if v != 0)
             if len(d) != 1:
                 raise ValueError('Only signomials with exactly one term can be raised to power %s.', power)
             v = list(d.values())[0]
@@ -395,17 +399,23 @@ class Signomial(object):
         return val
 
     def __hash__(self):
-        return hash(frozenset(self._alpha_c.items()))
+        return hash(frozenset(self.alpha_c.items()))
 
     def __eq__(self, other):
+        # Have this function return False if the coefficient vector isn't numeric,
+        # or a constant
         if not isinstance(other, Signomial):
             return False
         if self._m != other._m:
             return False
-        for k in self._alpha_c:
-            v = self._alpha_c[k]
+        if self.c.dtype not in __NUMERIC_TYPES__:
+            return False
+        if other.c.dtype not in __NUMERIC_TYPES__:
+            return False
+        for k in self.alpha_c:
+            v = self.alpha_c[k]
             other_v = other.query_coeff(np.array(k))
-            if not cl.Expression.are_equivalent(other_v, v, rtol=1e-8):
+            if abs(v - other_v) > 1e-8:
                 return False
         return True
 
@@ -422,7 +432,22 @@ class Signomial(object):
         tup = (0,) * self._n
         self._alpha_c[tup] += 0
         self._m = len(self._alpha_c)
+        self._arrays_stale = True
         pass
+
+    def without_zeros(self):
+        """
+        Return a Signomial which is symbolically equivalent to ``self``,
+        but which doesn't track basis functions ``alpha[i,:]`` for which ``c[i] == 0``.
+        """
+        d = defaultdict(int)
+        for (k, v) in self._alpha_c.items():
+            if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
+                d[k] = v
+        tup = (0,) * self._n
+        d[tup] += 0
+        s = Signomial(d)
+        return s
 
     def partial(self, i):
         """

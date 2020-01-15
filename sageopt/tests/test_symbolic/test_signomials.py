@@ -29,7 +29,7 @@ class TestSignomials(unittest.TestCase):
         alpha_c = {(0,): 1, (1,): -1, (2,): -2}
         # Construction with two numpy arrays as arguments
         s = Signomial(alpha, c)
-        assert s.n == 1 and s.m == 3 and s._alpha_c == alpha_c
+        assert s.n == 1 and s.m == 3 and s.alpha_c == alpha_c
         # Construction with a vector-to-coefficient dictionary
         s = Signomial(alpha_c)
         recovered_alpha_c = dict()
@@ -60,7 +60,7 @@ class TestSignomials(unittest.TestCase):
         # noinspection PyTypeChecker
         assert set(s.c) == set(2 * s0.c)
         s = 1 * s0
-        assert s.alpha_c == s0._alpha_c
+        assert s.alpha_c == s0.alpha_c
         s = 0 * s0
         s.remove_terms_with_zero_as_coefficient()
         assert s.m == 1 and set(s.c) == {0}
@@ -202,16 +202,25 @@ class TestSigDomain(unittest.TestCase):
         d1 = infer_domain(dummy_f, [g1], [])
         g2 = g0 / y**0.5
         d2 = infer_domain(dummy_f, [g2], [])
-        assert np.allclose(d0.A, d1.A)
-        assert np.allclose(d0.A, d2.A)
-        assert np.allclose(d0.b, d1.b)
-        assert np.allclose(d0.b, d2.b)
         for di in [d0, d1, d2]:
             assert len(di.K) == 4
             assert di.K[0].type == '+'
             assert di.K[0].len == 1
             for j in [1, 2, 3]:
                 assert di.K[j].type == 'e'
+        for di in [d0, d1, d2]:
+            A = di.A
+            assert np.allclose(A[0, :], np.array([0, -1, -1, -1]))
+            selector = np.zeros(shape=(A.shape[0],), dtype=bool)
+            selector[[1, 4, 7]] = True
+            coeffs = np.sort(A[selector, 0])
+            assert np.allclose(coeffs, np.array([-1, 1, 2]))
+            assert np.allclose(A[~selector, 0], np.zeros(A.shape[0] - 3))
+            compare = np.zeros(shape=(A.shape[0]-1, A.shape[1]-1))
+            compare[1, 0] = 1
+            compare[4, 1] = 1
+            compare[7, 2] = 1
+            assert np.allclose(A[1:, 1:], compare)
         pass
 
     def test_freecomponent_infer_sigdomain(self):
@@ -229,5 +238,3 @@ class TestSigDomain(unittest.TestCase):
         assert np.count_nonzero(A[:, 0]) == 0
         assert np.count_nonzero(A[:, 3]) == 0
         pass
-
-

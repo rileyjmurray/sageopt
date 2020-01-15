@@ -120,6 +120,13 @@ class TestBase(unittest.TestCase):
         y = c @ x
         assert y.shape == tuple()
 
+    def test_matmul_2(self):
+        x = Variable(shape=(10,))
+        A = sp.eye(10)
+        y = A @ x + 2 * np.ones(10)
+        delta = y - x
+        assert delta.is_constant()
+
     def test_curvature(self):
         x = Variable(shape=(2,))
         nl_term = weighted_sum_exp(1, x[1])

@@ -305,8 +305,8 @@ class TestSagePolynomials(unittest.TestCase):
         assert abs(res_uncon00[0] - opt) < 1e-6
         assert abs(res_uncon00[1] - opt) < 1e-6
         res_con010, dual = primal_dual_constrained(f, [], [], 0, 1, 0, X)
-        assert abs(res_con010[0] - opt) < 1e-6
-        assert abs(res_con010[1] - opt) < 1e-6
+        assert abs(res_con010[0] - opt) < 1e-4
+        assert abs(res_con010[1] - opt) < 1e-4
         solns = poly_solution_recovery.poly_solrec(dual)
         x_star = solns[0]
         gap = abs(f(x_star) - opt)

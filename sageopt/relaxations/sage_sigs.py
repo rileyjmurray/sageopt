@@ -18,6 +18,7 @@ from sageopt import coniclifts as cl
 from sageopt.symbolic.signomials import Signomial, SigDomain
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
+from sageopt.symbolic import arithmetic as arith
 
 
 def primal_sage_cone(sig, name, X, expcovers=None):
@@ -429,18 +430,20 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
     L = f - gamma
     alpha_E_p = hierarchy_e_k([f] + list(gts) + list(eqs), k=p)
     ineq_dual_sigs = []
+    summands = [L]
     for g in folded_gt:
         s_g_coeff = cl.Variable(name='s_' + str(g), shape=(alpha_E_p.shape[0],))
         s_g = Signomial(alpha_E_p, s_g_coeff)
-        L -= s_g * g
+        summands.append(-g * s_g)
         ineq_dual_sigs.append((s_g, g))
     eq_dual_sigs = []
     folded_eq = con_gen.up_to_q_fold_cons(eqs, q)
     for g in folded_eq:
         z_g_coeff = cl.Variable(name='z_' + str(g), shape=(alpha_E_p.shape[0],))
         z_g = Signomial(alpha_E_p, z_g_coeff)
-        L -= z_g * g
+        summands.append(-g * z_g)
         eq_dual_sigs.append((z_g, g))
+    L = arith.quick_sum(summands)
     return L, ineq_dual_sigs, eq_dual_sigs, gamma
 
 

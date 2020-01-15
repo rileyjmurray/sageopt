@@ -229,7 +229,7 @@ class Polynomial(Signomial):
     def __pow__(self, power, modulo=None):
         if self.c.dtype not in __NUMERIC_TYPES__:
             raise RuntimeError('Cannot exponentiate polynomials with symbolic coefficients.')
-        temp = Signomial(self._alpha_c)
+        temp = Signomial(self.alpha_c)
         temp = temp ** power
         temp = temp.as_polynomial()
         return temp
@@ -296,7 +296,7 @@ class Polynomial(Signomial):
             raise ValueError('Can only evaluate on x with dimension <= 2.')
 
     def __hash__(self):
-        return hash(frozenset(self._alpha_c.items()))
+        return hash(frozenset(self.alpha_c.items()))
 
     def __eq__(self, other):
         if not isinstance(other, Polynomial):
@@ -312,13 +312,27 @@ class Polynomial(Signomial):
         Signomial.remove_terms_with_zero_as_coefficient(self)
         pass
 
+    def without_zeros(self):
+        """
+        Return a Polynomial which is symbolically equivalent to ``self``,
+        but which doesn't track basis functions ``alpha[i,:]`` for which ``c[i] == 0``.
+        """
+        d = defaultdict(int)
+        for (k, v) in self._alpha_c.items():
+            if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
+                d[k] = v
+        tup = (0,) * self._n
+        d[tup] += 0
+        p = Polynomial(d)
+        return p
+
     def query_coeff(self, a):
         """
         Returns the coefficient of the monomial ``lambda x: np.prod(np.power(a, x))`` for this Polynomial.
         """
         tup = tuple(a)
-        if tup in self._alpha_c:
-            return self._alpha_c[tup]
+        if tup in self.alpha_c:
+            return self.alpha_c[tup]
         else:
             return 0
 
@@ -434,7 +448,7 @@ class Polynomial(Signomial):
         f : Signomial
             For every elementwise positive vector ``x``, we have ``self(x) == f(np.log(x))``.
         """
-        f = Signomial(self._alpha_c)
+        f = Signomial(self.alpha_c)
         return f
 
 
