@@ -114,14 +114,9 @@ def moment_reduction_array(s_h, h, L):
             msg2 = 'that is not present among the exponent vectors of "L".'
             raise RuntimeError(msg0 + msg1 + msg2)
     C_rows = []
-    alpha_from_dict = []
-    for alpha_i in s_h.alpha_c:
-        alpha_from_dict.append(alpha_i)
-        temp_func = constructor({alpha_i: 1}) * h
+    for alpha_i in s_h.alpha:
+        temp_func = constructor({tuple(alpha_i): 1}) * h
         c_row = relative_coeff_vector(temp_func, L.alpha)
         C_rows.append(c_row)
     C = np.vstack(C_rows)
-    alpha_from_dict = np.stack(alpha_from_dict, axis=0)
-    _, a1_to_a2 = row_correspondence(s_h.alpha, alpha_from_dict)
-    C = C[a1_to_a2, :]
     return C
