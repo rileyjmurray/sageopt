@@ -31,7 +31,7 @@ class TestSignomials(unittest.TestCase):
         s = Signomial(alpha, c)
         assert s.n == 1 and s.m == 3 and s.alpha_c == alpha_c
         # Construction with a vector-to-coefficient dictionary
-        s = Signomial(alpha_c)
+        s = Signomial.from_dict(alpha_c)
         recovered_alpha_c = dict()
         for i in range(s.m):
             recovered_alpha_c[tuple(s.alpha[i, :])] = s.c[i]

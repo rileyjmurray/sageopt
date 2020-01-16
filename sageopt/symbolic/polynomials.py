@@ -56,44 +56,25 @@ def standard_poly_monomials(n):
 class Polynomial(Signomial):
     """
     A symbolic representation for polynomials which are sparse in the monomial basis.
-    The constructor for this class can be called in two different ways, and the arguments
-    to the constructor have names which reflect the different possibilities.
 
     Parameters
     ----------
 
-    alpha_maybe_c : dict or ndarray
+    alpha : ndarray
 
-         If ``alpha_maybe_c`` is a dict, then it must be a dictionary from tuples-of-numbers to
-         scalars. The keys will be converted to rows of a matrix which we call ``alpha``, and
-         the values will be assembled into a vector which we call ``c``.
+        The returned Polynomial will have one monomial for each row in alpha. The number
+        ``alpha[i, j]`` represents the power of variable ``j`` on the i-th monomial.
 
-         If ``alpha_maybe_c`` is an ndarray, then the argument ``c`` must also be an ndarray,
-         and ``c.size`` must equal the number of rows in ``alpha_maybe_c``.
+    c : ndarray
 
-    c : None or ndarray
-
-        This value is only used when ``alpha_maybe_c`` is an ndarray. In that case, this
-        Polynomial represents ``lambda x: c @ np.prod(np.power(alpha_maybe_c, x))``.
+        The number ``c[i]`` gives the coefficient on the i-th monomial, where the i-th
+        monomial is defined by ``alpha[i, :]``. This Polynomial will represent the function
+        ``lambda x: c @ np.prod(np.power(alpha, x))``.
 
     Examples
     --------
 
-    There are two ways to call the Polynomial constructor.
-
-    The first way is to specify a dictionary from tuples to scalars. Each key-value pair of the dictionary
-    represents a monomial appearing in this polynomial. The key tuples must all be of some common length ``n``.
-    If ``(a, coeff)`` is a key-value pair in this dictionary, then the Polynomial includes an additive term
-    ``lambda x: coeff * np.prod(np.power(a, x))``. ::
-
-        alpha_and_c = {(1,): 2}
-        f = Polynomial(alpha_and_c)
-        print(f(1))  # equal to 2.
-        print(f(-3))  # equal to -6.
-
-    The second way is to specify two arguments. In this case the first argument ``alpha`` is an ndarray of
-    exponent vectors, where ``alpha[i, j]`` is the power of variable ``j`` in monomial ``i``. The second argument
-    is a numpy array ``c``, where ``c[i]`` is the coefficient on the i-th monomial defined by ``alpha``. ::
+    There are three ways to make Polynomial objects. The first way is to call the constructor::
 
         alpha = np.array([[1, 0], [0, 1], [1, 1]])
         c = np.array([1, 2, 3])
@@ -101,6 +82,22 @@ class Polynomial(Signomial):
         x = np.array([-4, 7])
         val = f(x)  # val = 1 * (-4) + 2 * (7) + 3 * (-4 * 7)
         print(val)  # -74
+
+    You can also use ``Polynomial.from_dict``, which maps exponent vectors (represented as
+    tuples) to scalars::
+
+        alpha_and_c = {(1,): 2}
+        f = Polynomial.from_dict(alpha_and_c)
+        print(f(1))  # equal to 2.
+        print(f(-3))  # equal to -6.
+
+    The final way to construct a Polynomial is with algebraic syntax, like::
+
+        x = standard_poly_monomials(3)
+        f = (x[0] ** 2) * x[2] + 4 * x[1] * x[2] * x[0]
+        z = np.array([1, 2, 3])
+        val = f(z)  # val = (1**2) * 3 + 4 * (2 * 3 * 1)
+        print(val)  # 27.
 
     Properties
     ----------
@@ -140,8 +137,8 @@ class Polynomial(Signomial):
 
     """
 
-    def __init__(self, alpha_maybe_c, c=None):
-        Signomial.__init__(self, alpha_maybe_c, c)
+    def __init__(self, alpha, c):
+        Signomial.__init__(self, alpha, c)
         if not np.all(self.alpha % 1 == 0):  # pragma: no cover
             raise RuntimeError('Exponents must belong the the integer lattice.')
         if not np.all(self.alpha >= 0):  # pragma: no cover
@@ -226,7 +223,7 @@ class Polynomial(Signomial):
     def __pow__(self, power, modulo=None):
         if self.c.dtype not in __NUMERIC_TYPES__:
             raise RuntimeError('Cannot exponentiate polynomials with symbolic coefficients.')
-        temp = Signomial(self.alpha_c)
+        temp = Signomial(self.alpha, self.c)
         temp = temp ** power
         temp = temp.as_polynomial()
         return temp
@@ -364,7 +361,7 @@ class Polynomial(Signomial):
                     d[tup] += c
         if len(d) == 0:
             d[(0,) * self.n] = 0
-        p = Polynomial(d)
+        p = Polynomial.from_dict(d)
         return p
 
     def standard_multiplier(self):
@@ -440,7 +437,7 @@ class Polynomial(Signomial):
         f : Signomial
             For every elementwise positive vector ``x``, we have ``self(x) == f(np.log(x))``.
         """
-        f = Signomial(self.alpha_c)
+        f = Signomial(self.alpha, self.c)
         return f
 
     @staticmethod

@@ -104,9 +104,9 @@ def moment_reduction_array(s_h, h, L):
         s_h.alpha).
     """
     if isinstance(h, Polynomial):
-        constructor = Polynomial
+        classname = Polynomial
     elif isinstance(h, Signomial):
-        constructor = Signomial
+        classname = Signomial
     else:
         raise RuntimeError('Unknown argument.')
     minimal_L = s_h * h
@@ -118,7 +118,7 @@ def moment_reduction_array(s_h, h, L):
             raise RuntimeError(msg0 + msg1 + msg2)
     C_rows = []
     for alpha_i in s_h.alpha:
-        temp_func = constructor({tuple(alpha_i): 1}) * h
+        temp_func = classname.from_dict({tuple(alpha_i): 1}) * h
         c_row = relative_coeff_vector(temp_func, L.alpha)
         C_rows.append(c_row)
     C = np.vstack(C_rows)

@@ -60,49 +60,45 @@ def standard_sig_monomials(n):
 class Signomial(object):
     """
     A symbolic representation for linear combinations of exponentials, composed with
-    linear functions. The constructor for this class can be called in two different ways, and
-    the arguments to the constructor have names which reflect the different possibilities.
-    Refer to the Examples if you find the description of the constructor arguments unclear.
+    linear functions.
 
     Parameters
     ----------
 
-    alpha_maybe_c : dict or ndarray
+    alpha : ndarray
 
-         If ``alpha_maybe_c`` is a dict, then it must be a dictionary from tuples-of-numbers to
-         scalars. The keys will be converted to rows of a matrix which we call ``alpha``, and
-         the values will be assembled into a vector which we call ``c``.
-
-         If ``alpha_maybe_c`` is an ndarray, then the argument ``c`` must also be an ndarray,
-         and ``c.size`` must equal the number of rows in ``alpha_maybe_c``.
+         The rows of ``alpha`` comprise this Signomial's exponent vectors.
 
     c : None or ndarray
 
-        This value is only used when ``alpha_maybe_c`` is an ndarray. If that is the case, then
-        this Signomial will represent the function ``lambda x: c @ np.exp(alpha_maybe_c @ x)``.
+        An ndarray of coefficients; with one coefficient for each row in alpha.
+        This Signomial will represent the function ``lambda x: c @ np.exp(alpha @ x)``.
 
     Examples
     --------
 
-    There are two ways to call the Signomial constructor.
-
-    The first way is to specify a dictionary from tuples to scalars. The tuples are interpreted as linear
-    functionals appearing in the exponential terms, and the scalars are the corresponding coefficients.::
-
-        alpha_and_c = {(1,): 2}
-        f = Signomial(alpha_and_c)
-        print(f(1))  # equal to 2 * np.exp(1).
-        print(f(0))  # equal to 2.
-
-    The second way is to specify two arguments. In this case the first argument is an ndarray
-    where the rows represent linear functionals, and the second argument is a vector of corresponding
-    coefficients.::
+    There are three ways to make Signomial objects. The first way is to call the constructor::
 
         alpha = np.array([[1, 0], [0, 1], [1, 1]])
         c = np.array([1, 2, 3])
         f = Signomial(alpha, c)
         x = np.random.randn(2)
         print(f(x) - c @ np.exp(alpha @ x))  # zero, up to rounding errors.
+
+    You can also use ``Signomial.from_dict`` which maps exponent vectors (represented as
+    tuples) to scalars::
+
+        alpha_and_c = {(1,): 2}
+        f = Signomial.from_dict(alpha_and_c)
+        print(f(1))  # equal to 2 * np.exp(1),
+        print(f(0))  # equal to 2.
+
+    The final way to construct a Signomial is with algebraic syntax, like::
+
+        y = standard_sig_monomials(2)  # y[i] represents exp(x[i])
+        f = (y[0] - y[1]) ** 3 + 1 / y[0]  # a Signomial in two variables
+        x = np.array([1, 1])
+        print(f(x))  # np.exp(-1), up rounding errors.
 
     Properties
     ----------
@@ -154,40 +150,22 @@ class Signomial(object):
         then ``s(x)`` computes the Signomial object as though it were any other elementary Python function.
 
         Signomial objects provide functions to compute gradients (equivalently, Jacobians) and Hessians.
-        These methods operate by caching and evaluating symbolic representations of the relevant partial derivatives.
+        These methods operate by caching and evaluating symbolic representations of partial derivatives.
 
-    Internal representations.
-
-        Both ``self.alpha_c`` and ``(self.alpha, self.c)`` completely specify a Signomial object.
-        You are free to use whichever is more convenient in a given context. Neither of these fields
-        should be modified manually.
     """
 
-    def __init__(self, alpha_maybe_c, c=None):
-        # noinspection PyArgumentList
-        if c is None:
-            # noinspection PyArgumentList
-            self._alpha_c = alpha_maybe_c
-            self._c = None
-            self._alpha = None
-            self._n = len(list(self._alpha_c.items())[0][0])
-            self._m = len(self._alpha_c)
-            self._no_dict_repr = False
-            self._no_array_repr = True
-        else:
-            if alpha_maybe_c.shape[0] != c.size:  # pragma: no cover
-                raise ValueError('alpha and c specify different numbers of terms')
-            if isinstance(c, np.ndarray) and not isinstance(c, cl.Expression) and c.dtype == object:
-                raise ValueError('If c is an ordinary numpy array, it cannot have dtype == object.')
-            alpha = np.round(alpha_maybe_c, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
-            alpha, c = Signomial.sum_duplicates(alpha, c)
-            self._alpha = alpha
-            self._c = c
-            self._alpha_c = None
-            self._n = alpha.shape[1]
-            self._m = alpha.shape[0]
-            self._no_dict_repr = True
-            self._no_array_repr = False
+    def __init__(self, alpha, c):
+        if alpha.shape[0] != c.size:  # pragma: no cover
+            raise ValueError('alpha and c specify different numbers of terms')
+        if isinstance(c, np.ndarray) and not isinstance(c, cl.Expression) and c.dtype == object:
+            raise ValueError('If c is an ordinary numpy array, it cannot have dtype == object.')
+        alpha = np.round(alpha, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
+        alpha, c = Signomial.sum_duplicates(alpha, c)
+        self._alpha = alpha
+        self._c = c
+        self._n = alpha.shape[1]
+        self._m = alpha.shape[0]
+        self._alpha_c = None
         self._grad = None
         self._hess = None
         self.metadata = dict()
@@ -223,19 +201,15 @@ class Signomial(object):
 
     @property
     def alpha(self):
-        if self._no_array_repr:
-            self._build_alpha_c_arrays()
         return self._alpha
 
     @property
     def c(self):
-        if self._no_array_repr:
-            self._build_alpha_c_arrays()
         return self._c
 
     @property
     def alpha_c(self):
-        if self._no_dict_repr:
+        if self._alpha_c is None:
             self._build_alpha_c_dict()
         return self._alpha_c
 
@@ -278,25 +252,6 @@ class Signomial(object):
             return None
         else:
             return res[0]
-
-    def _build_alpha_c_arrays(self):
-        alpha = []
-        c = []
-        for k, v in self.alpha_c.items():
-            alpha.append(k)
-            c.append(v)
-        self._alpha = np.array(alpha)
-        self._c = np.array(c)
-        if self._c.dtype == np.dtype('O'):
-            raise ValueError()
-            #try:
-            #    self._c = cl.Expression(self._c)
-            #except RuntimeError as e:
-            #    if e.args[0] == 'Can only initialize with numeric, ScalarExpression, or ScalarAtom types.':
-            #        warnings.warn('A signomial is being constructed with unusual coefficient vector.')
-            #    else:
-            #        raise e
-        self._no_array_repr = False
 
     def _build_alpha_c_dict(self):
         alpha, c = self._alpha, self._c
@@ -358,7 +313,7 @@ class Signomial(object):
                 # noinspection PyTypeChecker
                 return self.upcast_to_signomial(1)
             else:
-                s = Signomial(self.alpha_c)
+                s = Signomial(self.alpha, self.c)
                 for t in range(power - 1):
                     s = s * self
                 return s
