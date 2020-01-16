@@ -160,7 +160,7 @@ class Signomial(object):
         if isinstance(c, np.ndarray) and not isinstance(c, cl.Expression) and c.dtype == object:
             raise ValueError('If c is an ordinary numpy array, it cannot have dtype == object.')
         alpha = np.round(alpha, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
-        alpha, c = Signomial.sum_duplicates(alpha, c)
+        alpha, c = sym_util.consolidate_basis_funcs(alpha, c)
         self._alpha = alpha
         self._c = c
         self._n = alpha.shape[1]
@@ -388,30 +388,20 @@ class Signomial(object):
         """
         if self.m == 1:
             return self
-        elif isinstance(self.c, cl.Variable):
+        if isinstance(self.c, cl.Variable):
             return self
+        to_drop = sym_util.find_zero_entries(self.c)
+        if len(to_drop) == 0:
+            return self
+        elif len(to_drop) == self.m:
+            # noinspection PyTypeChecker
+            return self.upcast_to_signomial(0)
         else:
-            # identify coordinates of self.c to drop.
-            to_drop = []
-            if isinstance(self.c, cl.Expression):
-                for i, ci in enumerate(self.c):
-                    if ci.is_constant() and ci.value == 0:
-                        to_drop.append(i)
-            elif isinstance(self.c, np.ndarray) and self.c.dtype in __NUMERIC_TYPES__:
-                to_drop = list(np.nonzero(self.c == 0)[0])
-            else:
-                raise NotImplementedError('cvxpy handling should go here')
-            # DO THE DROPPING!
-            if len(to_drop) == 0:
-                return self
-            elif len(to_drop) == self.m:
-                return self.upcast_to_signomial(0)
-            else:
-                keepers = np.ones(self.m, dtype=bool)
-                keepers[to_drop] = False
-                c = self.c[keepers]
-                alpha = self.alpha[keepers, :]
-                s = Signomial(alpha, c)
+            keepers = np.ones(self.m, dtype=bool)
+            keepers[to_drop] = False
+            c = self.c[keepers]
+            alpha = self.alpha[keepers, :]
+            s = Signomial(alpha, c)
             return s
 
     def partial(self, i):
@@ -478,90 +468,6 @@ class Signomial(object):
         f = Polynomial(self.alpha, self.c)
         return f
 
-    @staticmethod
-    def sum_duplicates(alpha, c):
-        alpha_reduced, inv, counts = np.unique(alpha, axis=0, return_inverse=True, return_counts=True)
-        if np.all(counts == 1):
-            # then all exponent vectors are unique
-            return alpha, c
-        m_reduced = alpha_reduced.shape[0]
-        reducer_cols = []
-        for i in range(m_reduced):
-            # this way of constructing "reducer_cols" is inefficient
-            idxs = np.nonzero(inv == i)[0]
-            reducer_cols.append(idxs)
-        if isinstance(c, cl.Expression):
-            c_reduced = cl.Expression([sum(c[rc]) for rc in reducer_cols])
-            # ^ should be much faster than the sparse-matrix multiply, used below.
-        else:
-            reducer_cols = np.hstack(reducer_cols)
-            reducer_rows = np.repeat(np.arange(m_reduced), counts)
-            reducer_coeffs = np.ones(reducer_rows.size)
-            R = sp.csr_matrix((reducer_coeffs, (reducer_rows, reducer_cols)))
-            c_reduced = R @ c
-        return alpha_reduced, c_reduced
-
-    @staticmethod
-    def product(f1, f2):
-        alpha1, c1 = f1.alpha, f1.c
-        alpha2, c2 = f2.alpha, f2.c
-        alpha1_lift = np.tile(alpha1.astype(np.float_), reps=[alpha2.shape[0], 1])
-        alpha2_lift = np.repeat(alpha2.astype(np.float_), alpha1.shape[0], axis=0)
-        alpha_lift = alpha1_lift + alpha2_lift
-        alpha_lift = np.round(alpha_lift, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
-        if isinstance(c1, np.ndarray) and (isinstance(c1, cl.Expression) or c1.dtype != np.dtype('O')):
-            c1_lift = aff.tile(c1, reps=alpha2.shape[0])
-        else:
-            raise NotImplementedError()
-        if isinstance(c2, np.ndarray) and (isinstance(c2, cl.Expression) or c2.dtype != np.dtype('O')):
-            c2_lift = aff.repeat(c2, repeats=alpha1.shape[0])
-        else:
-            raise NotImplementedError()
-        c_lift = c1_lift * c2_lift  # TODO: update this line to be compatible with cvxpy
-        p = type(f1)(alpha_lift, c_lift)
-        return p
-
-    @staticmethod
-    def sum(funcs):
-        if len(funcs) == 0:
-            raise ValueError()
-        elif any(not isinstance(f, Signomial) for f in funcs):
-            raise ValueError()
-        elif len(funcs) == 1:
-            return funcs[0]
-        f0 = funcs[0]
-        alpha = [ai for ai in f0.alpha]  # initial value
-        all_crs = [[idx for idx in range(f0.m)]]
-        d0 = {tuple(ai): i for (i, ai) in enumerate(f0.alpha)}
-        labeler = sym_util.Labeler(f0.m)
-        acd = defaultdict(labeler.next_label, d0)
-        for f in funcs[1:]:
-            crs = []
-            for ai in f.alpha:
-                up_next = labeler.up_next
-                idx = acd[tuple(ai)]
-                crs.append(idx)
-                if idx == up_next:
-                    alpha.append(ai)
-            all_crs.append(crs)
-        alpha = np.stack(alpha, axis=0)
-        num_rows = alpha.shape[0]
-        lifted_cs = []
-        for i, crs in enumerate(all_crs):
-            c = funcs[i].c
-            if isinstance(c, cl.Expression):
-                lifted_c = cl.Expression(np.zeros(num_rows))
-                lifted_c[crs] = c
-            else:
-                m = len(crs)
-                P = sp.csr_matrix((np.ones(m), (crs, np.arange(m))),
-                                  shape=(num_rows, m))
-                lifted_c = P @ c
-            lifted_cs.append(lifted_c)
-        c = sum(lifted_cs)
-        s = type(f0)(alpha, c)
-        return s
-
     def upcast_to_signomial(self, other):
         if isinstance(other, Signomial):
             return other
@@ -579,6 +485,42 @@ class Signomial(object):
         else:
             s = Signomial(alpha, other.flatten())
             return s
+
+    @staticmethod
+    def product(f1, f2):
+        alpha1, c1 = f1.alpha, f1.c
+        alpha2, c2 = f2.alpha, f2.c
+        if not isinstance(c1, np.ndarray) or not isinstance(c2, np.ndarray):
+            raise NotImplementedError()
+        # lift alpha1, c1 into the product basis
+        alpha1_lift = np.tile(alpha1.astype(np.float_), reps=[alpha2.shape[0], 1])
+        c1_lift = aff.tile(c1, reps=alpha2.shape[0])
+        # lift alpha2, c2 into the product basis
+        alpha2_lift = np.repeat(alpha2.astype(np.float_), alpha1.shape[0], axis=0)
+        c2_lift = aff.repeat(c2, repeats=alpha1.shape[0])
+        # explicitly form the product basis, and the coefficient vector for the product
+        alpha_lift = np.round(alpha1_lift + alpha2_lift,
+                              decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
+        c_lift = c1_lift * c2_lift
+        p = type(f1)(alpha_lift, c_lift)
+        return p
+
+    @staticmethod
+    def sum(funcs):
+        if len(funcs) == 0:
+            raise ValueError()
+        elif any(not isinstance(f, Signomial) for f in funcs):
+            raise ValueError()
+        elif len(funcs) == 1:
+            return funcs[0]
+        mats = [f.alpha for f in funcs]
+        alpha, all_crs = sym_util.align_basis_matrices(mats)
+        num_rows = alpha.shape[0]
+        coeff_vecs = [f.c for f in funcs]
+        lifted_cs = sym_util.lift_basis_coeffs(coeff_vecs, all_crs, num_rows)
+        c = sum(lifted_cs)
+        s = type(funcs[0])(alpha, c)
+        return s
 
     @staticmethod
     def from_dict(d):
