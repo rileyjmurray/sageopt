@@ -337,12 +337,12 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_poly_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'X': X}
     if ell > 0:
-        alpha_E_1 = hierarchy_e_k([f] + list(gts) + list(eqs), k=1)
+        alpha_E_1 = hierarchy_e_k([f, f.upcast_to_polynomial(1)] + gts + eqs, k=1)
         modulator = Polynomial(2 * alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
         f = f * modulator
     else:
-        modulator = Polynomial({(0,) * f.n: 1})
+        modulator = f.upcast_to_polynomial(1)
     metadata['modulator'] = modulator
     # In primal form, the Lagrangian is constrained to be a SAGE polynomial.
     # Introduce a dual variable "v" for this constraint.
@@ -457,7 +457,7 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     folded_gt = con_gen.up_to_q_fold_cons(gts, q)
     gamma = cl.Variable(name='gamma')
     L = f - gamma
-    alpha_E_p = hierarchy_e_k([f] + list(gts) + list(eqs), k=p)
+    alpha_E_p = hierarchy_e_k([f, f.upcast_to_polynomial(1)] + gts + eqs, k=p)
     alpha_multiplier = np.vstack([2 * alpha_E_p, alpha_E_p])
     alpha_multiplier = np.unique(alpha_multiplier, axis=0)
     ineq_dual_polys = []

@@ -50,7 +50,7 @@ def valid_posynomial_inequalities(gs):
             raise RuntimeError('Attempting to convexify an infeasible signomial inequality constraint.')
         else:
             pos_loc = np.where(g.c > 0)[0][0]
-            inverse_term = Signomial({tuple(-g.alpha[pos_loc, :]): 1})
+            inverse_term = Signomial.from_dict({tuple(-g.alpha[pos_loc, :]): 1})
             conv_gs.append(g * inverse_term)
     return conv_gs
 
@@ -65,7 +65,7 @@ def valid_monomial_equations(eqs):
         pos_loc = np.where(g.c > 0)[0]
         if pos_loc.size == 1:
             pos_loc = pos_loc[0]
-            inverse_term = Signomial({tuple(-g.alpha[pos_loc, :]): 1})
+            inverse_term = Signomial.from_dict({tuple(-g.alpha[pos_loc, :]): 1})
             conv_eqs.append(g * inverse_term)
     return conv_eqs
 

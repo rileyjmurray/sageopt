@@ -43,7 +43,7 @@ class TestSignomials(unittest.TestCase):
         y1 = x[0]**2 - 2*x[0]*x[1] + x[1]**2
         assert y0 == y1
         z0 = x[0]**0.5
-        z1 = Signomial({(0.5, 0): 1})
+        z1 = Signomial.from_dict({(0.5, 0): 1})
         assert z0 == z1
 
     # noinspection PyUnresolvedReferences
@@ -67,8 +67,8 @@ class TestSignomials(unittest.TestCase):
 
     def test_addition_and_subtraction(self):
         # data for tests
-        s0 = Signomial({(0,): 1, (1,): 2, (2,): 3})
-        t0 = Signomial({(-1,): 5})
+        s0 = Signomial.from_dict({(0,): 1, (1,): 2, (2,): 3})
+        t0 = Signomial.from_dict({(-1,): 5})
         # tests
         s = s0 - s0
         s = s.without_zeros()
@@ -119,9 +119,9 @@ class TestSignomials(unittest.TestCase):
 
     def test_signomial_multiplication(self):
         # data for tests
-        s0 = Signomial({(0,): 1, (1,): 2, (2,): 3})
-        t0 = Signomial({(-1,): 1})
-        q0 = Signomial({(5,): 0})
+        s0 = Signomial.from_dict({(0,): 1, (1,): 2, (2,): 3})
+        t0 = Signomial.from_dict({(-1,): 1})
+        q0 = Signomial.from_dict({(5,): 0})
         # tests
         s = s0 * t0
         s = s.without_zeros()
@@ -134,7 +134,7 @@ class TestSignomials(unittest.TestCase):
         assert s.alpha_c == {(0,): 0}
 
     def test_signomial_evaluation(self):
-        s = Signomial({(1,): 1})
+        s = Signomial.from_dict({(1,): 1})
         assert s(0) == 1 and abs(s(1) - np.exp(1)) < 1e-10
         zero = np.array([0])
         one = np.array([1])
@@ -143,13 +143,13 @@ class TestSignomials(unittest.TestCase):
         assert np.allclose(s(zero_one), np.exp(zero_one), rtol=0, atol=1e-10)
 
     def test_signomial_grad_val(self):
-        f = Signomial({(2,): 1, (0,): -1})
+        f = Signomial.from_dict({(2,): 1, (0,): -1})
         actual = f.grad_val(np.array([3]))
         expect = 2*np.exp(2*3)
         assert abs(actual[0] - expect) < 1e-8
 
     def test_signomial_hess_val(self):
-        f = Signomial({(-2,): 1, (0,): -1})
+        f = Signomial.from_dict({(-2,): 1, (0,): -1})
         actual = f.hess_val(np.array([3]))
         expect = 4*np.exp(-2*3)
         assert abs(actual[0] - expect) < 1e-8

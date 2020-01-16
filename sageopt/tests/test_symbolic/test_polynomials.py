@@ -87,20 +87,20 @@ class TestPolynomials(unittest.TestCase):
         assert s.alpha_c == {(0,): 0}
 
     def test_polynomial_exponentiation(self):
-        p = Polynomial({(0,): -1, (1,): 1})
+        p = Polynomial.from_dict({(0,): -1, (1,): 1})
         # square of (x-1)
         res = p ** 2
-        expect = Polynomial({(0,): 1, (1,): -2, (2,): 1})
+        expect = Polynomial.from_dict({(0,): 1, (1,): -2, (2,): 1})
         assert res == expect
         # cube of (2x+5)
-        p = Polynomial({(0,): 5, (1,): 2})
-        expect = Polynomial({(0,): 125, (1,): 150, (2,): 60, (3,): 8})
+        p = Polynomial.from_dict({(0,): 5, (1,): 2})
+        expect = Polynomial.from_dict({(0,): 125, (1,): 150, (2,): 60, (3,): 8})
         res = p ** 3
         assert res == expect
 
     def test_composition(self):
-        p = Polynomial({(2,): 1})  # represents lambda x: x ** 2
-        z = Polynomial({(1,): 2, (0,): -1})  # represents lambda x: 2*x - 1
+        p = Polynomial.from_dict({(2,): 1})  # represents lambda x: x ** 2
+        z = Polynomial.from_dict({(1,): 2, (0,): -1})  # represents lambda x: 2*x - 1
         w = p(z)  # represents lambda x: (2*x - 1) ** 2
         assert w(0.5) == 0
         assert w(1) == 1
@@ -117,21 +117,21 @@ class TestPolynomials(unittest.TestCase):
     def test_standard_monomials(self):
         x = standard_poly_monomials(3)
         y_actual = np.prod(x)
-        y_expect = Polynomial({(1, 1, 1): 1})
+        y_expect = Polynomial.from_dict({(1, 1, 1): 1})
         assert TestPolynomials.are_equal(y_actual, y_expect)
         x = standard_poly_monomials(2)
         y_actual = np.sum(x) ** 2
-        y_expect = Polynomial({(2, 0): 1, (1, 1): 2, (0, 2): 1})
+        y_expect = Polynomial.from_dict({(2, 0): 1, (1, 1): 2, (0, 2): 1})
         assert TestPolynomials.are_equal(y_actual, y_expect)
 
     def test_polynomial_grad_val(self):
-        f = Polynomial({(3,): 1, (0,): -1})
+        f = Polynomial.from_dict({(3,): 1, (0,): -1})
         actual = f.grad_val(np.array([0.5]))
         expect = 3*0.5**2
         assert abs(actual[0] - expect) < 1e-8
 
     def test_polynomial_hess_val(self):
-        f = Polynomial({(3,): 1, (0,): -1})
+        f = Polynomial.from_dict({(3,): 1, (0,): -1})
         actual = f.hess_val(np.array([0.1234]))
         expect = 3*2*0.1234
         assert abs(actual[0] - expect) < 1e-8
@@ -141,14 +141,14 @@ class TestPolynomials(unittest.TestCase):
     #
 
     def test_sigrep_1(self):
-        p = Polynomial({(0, 0): -1, (1, 2): 1, (2, 2): 10})
+        p = Polynomial.from_dict({(0, 0): -1, (1, 2): 1, (2, 2): 10})
         # One non-even lattice point (the only one) changes sign.
         sr, sr_cons = p.sig_rep
         assert len(sr_cons) == 0
         assert sr.alpha_c == {(0, 0): -1, (1, 2): -1, (2, 2): 10}
 
     def test_sigrep_2(self):
-        p = Polynomial({(0, 0): 0, (1, 1): -1, (3, 3): 5})
+        p = Polynomial.from_dict({(0, 0): 0, (1, 1): -1, (3, 3): 5})
         # One non-even lattice point changes sign, another stays the same
         sr, sr_cons = p.sig_rep
         assert len(sr_cons) == 0

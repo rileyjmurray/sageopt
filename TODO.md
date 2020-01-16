@@ -22,7 +22,7 @@ Conceptually, it seems as though these should be in a common place.
 
 ## Add keyword argument checks in sage_sigs.py and sage_polys.py.
 
-Make sure to raise a runtime error if an unrecognized keyword argument
+Make sure to raise a value error if an unrecognized keyword argument
 is supplied. This is necessary to catch typos in keyword arguments
 which aren't part of the function signature.
 
@@ -45,3 +45,20 @@ infeasible solution.
 
 Write tests. Setup a continuous-integration environment which
 installs GPKit. Add web documentation.
+
+
+## Signomial and Polynomial class refactoring
+
+Change constructors to only allow (alpha, c) array-based construction.
+
+Create a helper function, Signomial.from_dict(alpha_c), which constructs
+a Signomial object like Signomial(alpha_c) currently does.
+
+Change array-based constructor so that it allows the following cases
+ * numeric ndarrays
+ * coniclifts Expressions
+ * things that *aren't* ndarrays (suggesting cvxpy Expressions)
+Raise a ValueError if someone supplies an ndarray with dtype=object
+that isn't a coniclifts Expression.
+
+Remove _build_alpha_c_arrays(). 

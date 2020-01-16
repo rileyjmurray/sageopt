@@ -132,7 +132,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #       It is suspected that the standard SAGE hierarchy never produces a finite bound
         #       for this signomial.
         #
-        s = Signomial({(1, 0, 0): 1,
+        s = Signomial.from_dict({(1, 0, 0): 1,
                        (0, 1, 0): -1,
                        (0, 0, 1): -1})
         s = s ** 2
@@ -161,7 +161,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         initial_presolve = sage_cones._ELIMINATE_TRIVIAL_AGE_CONES_
         cl.presolve_trivial_age_cones(presolve)
-        s = Signomial({(3,): 1, (2,): -4, (1,): 7, (-1,): 1})
+        s = Signomial.from_dict({(3,): 1, (2,): -4, (1,): 7, (-1,): 1})
         expected = [3.464102, 4.60250026, 4.6217973]
         pds = [primal_dual_vals(s, ell) for ell in range(3)]
         for ell in range(3):
@@ -242,7 +242,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #       (3) Improve the finite bound from Test 2 by verifying nonnegativity of an
         #           appropriate translate of "s".
         #
-        s = Signomial({(1,): 1, (-1,): -1}) ** 4
+        s = Signomial.from_dict({(1,): 1, (-1,): -1}) ** 4
         prob0 = sage_multiplier_search(s, level=1)
         res0 = prob0.solve(solver='ECOS', verbose=False)
         val0 = res0[1]
@@ -270,12 +270,12 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       (2) Recover a solution (feasible up to tol 1e-7) with at most 0.01 percent optimality gap
         #
-        s0 = Signomial({(10.2, 0, 0): 10, (0, 9.8, 0): 10, (0, 0, 8.2): 10})
-        s1 = Signomial({(1.5089, 1.0981, 1.3419): -14.6794})
-        s2 = Signomial({(1.0857, 1.9069, 1.6192): -7.8601})
-        s3 = Signomial({(1.0459, 0.0492, 1.6245): 8.7838})
+        s0 = Signomial.from_dict({(10.2, 0, 0): 10, (0, 9.8, 0): 10, (0, 0, 8.2): 10})
+        s1 = Signomial.from_dict({(1.5089, 1.0981, 1.3419): -14.6794})
+        s2 = Signomial.from_dict({(1.0857, 1.9069, 1.6192): -7.8601})
+        s3 = Signomial.from_dict({(1.0459, 0.0492, 1.6245): 8.7838})
         f = s0 + s1 + s2 + s3
-        g = Signomial({(10.2, 0, 0): -8,
+        g = Signomial.from_dict({(10.2, 0, 0): -8,
                        (0, 9.8, 0): -8,
                        (0, 0, 8.2): -8,
                        (1.0857, 1.9069, 1.6192): -6.4,
@@ -302,7 +302,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         x = standard_sig_monomials(3)
         f = -2 * x[0] + x[1] - x[2]
-        g1 = Signomial({(0, 0, 0): 24,
+        g1 = Signomial.from_dict({(0, 0, 0): 24,
                         (1, 0, 0): -20,
                         (0, 1, 0): 9,
                         (0, 0, 1): -13,

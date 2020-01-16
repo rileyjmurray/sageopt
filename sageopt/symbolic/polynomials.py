@@ -174,10 +174,8 @@ class Polynomial(Signomial):
         if not isinstance(other, Polynomial):
             if isinstance(other, Signomial):  # pragma: no cover
                 raise RuntimeError('Cannot multiply signomials and polynomials.')
-            # else, we assume that "other" is a scalar type
-            tup = (0,) * self.n
-            d = {tup: other}
-            other = Polynomial(d)
+            other = self.upcast_to_signomial(other)
+            other = other.as_polynomial()
         self_var_coeffs = (self.c.dtype not in __NUMERIC_TYPES__)
         other_var_coeffs = (other.c.dtype not in __NUMERIC_TYPES__)
         if self_var_coeffs and other_var_coeffs:  # pragma: no cover
@@ -250,14 +248,14 @@ class Polynomial(Signomial):
         --------
         Evaluating a Polynomial at a numeric point. ::
 
-            p = Polynomial({(1,2,3): -1})
+            p = Polynomial.from_dict({(1,2,3): -1})
             x = np.array([3,2,1])
             print(p(x))  #  (3 ** 1) * (2 ** 2) * (1 ** 3) * (-1) == -12
 
         Evaluating a Polynomial on another polynomial. ::
 
-            p = Polynomial({(2,): 1})  # represents lambda x: x ** 2
-            z = Polynomial({(1,): 2, (0,): -1})  # represents lambda x: 2*x - 1
+            p = Polynomial.from_dict({(2,): 1})  # represents lambda x: x ** 2
+            z = Polynomial.from_dict({(1,): 2, (0,): -1})  # represents lambda x: 2*x - 1
             w = p(z)  # represents lambda x: (2*x - 1) ** 2
             print(w(0.5))  # equals zero
             print(w(1))  # equals one
@@ -309,13 +307,8 @@ class Polynomial(Signomial):
         Return a Polynomial which is symbolically equivalent to ``self``,
         but which doesn't track basis functions ``alpha[i,:]`` for which ``c[i] == 0``.
         """
-        d = dict()
-        for (k, v) in self.alpha_c.items():
-            if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
-                d[k] = v
-        if len(d) == 0:
-            d[(0,) * self.n] = 0
-        p = Polynomial(d)
+        p = Signomial.without_zeros(self)
+        p = p.as_polynomial()
         return p
 
     def query_coeff(self, a):
@@ -449,6 +442,19 @@ class Polynomial(Signomial):
         """
         f = Signomial(self.alpha_c)
         return f
+
+    @staticmethod
+    def from_dict(d):
+        s = Signomial.from_dict(d)
+        p = s.as_polynomial()
+        p._alpha_c = s.alpha_c
+        p._no_dict_repr = False
+        return p
+
+    def upcast_to_polynomial(self, other):
+        s = Signomial.upcast_to_signomial(self, other)
+        p = s.as_polynomial()
+        return p
 
 
 class PolyDomain(object):

@@ -48,7 +48,7 @@ class TestSagePolynomials(unittest.TestCase):
     #
 
     def test_sigrep_1(self):
-        p = Polynomial({(0, 0): -1, (1, 2): 1, (2, 2): 10})
+        p = Polynomial.from_dict({(0, 0): -1, (1, 2): 1, (2, 2): 10})
         gamma = cl.Variable(shape=(), name='gamma')
         p -= gamma
         sr, sr_cons = p.sig_rep
@@ -73,7 +73,9 @@ class TestSagePolynomials(unittest.TestCase):
 
     def test_sigrep_2(self):
         c33 = cl.Variable(shape=(), name='c33')
-        p = Polynomial({(0, 0): 0, (1, 1): -1, (3, 3): c33})
+        alpha = np.array([[0, 0], [1, 1], [3, 3]])
+        c = cl.Expression([0, -1, c33])
+        p = Polynomial(alpha, c)
         sr, sr_cons = p.sig_rep
         assert len(sr_cons) == 2
         var_names = set(v.name for v in sr_cons[0].variables())
@@ -135,7 +137,7 @@ class TestSagePolynomials(unittest.TestCase):
         #       The furthest we could progress up the hierarchy before encountering a solver failure
         #       was (poly_ell=0, sigrep_ell=5). In this case the SAGE bound was 0.8336.
         #
-        p = Polynomial({(0, 0): 1,
+        p = Polynomial.from_dict({(0, 0): 1,
                         (2, 6): 3,
                         (6, 2): 2,
                         (2, 2): 6,
@@ -159,7 +161,7 @@ class TestSagePolynomials(unittest.TestCase):
 
     def test_unconstrained_3(self):
         # Minimization of the six-hump camel back function.
-        p = Polynomial({(0, 0): 0,
+        p = Polynomial.from_dict({(0, 0): 0,
                         (2, 0): 4,
                         (1, 1): 1,
                         (0, 2): -4,

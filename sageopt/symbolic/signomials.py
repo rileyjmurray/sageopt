@@ -177,6 +177,8 @@ class Signomial(object):
         else:
             if alpha_maybe_c.shape[0] != c.size:  # pragma: no cover
                 raise ValueError('alpha and c specify different numbers of terms')
+            if isinstance(c, np.ndarray) and not isinstance(c, cl.Expression) and c.dtype == object:
+                raise ValueError('If c is an ordinary numpy array, it cannot have dtype == object.')
             alpha = np.round(alpha_maybe_c, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
             alpha, c = Signomial.sum_duplicates(alpha, c)
             self._alpha = alpha
@@ -286,13 +288,14 @@ class Signomial(object):
         self._alpha = np.array(alpha)
         self._c = np.array(c)
         if self._c.dtype == np.dtype('O'):
-            try:
-                self._c = cl.Expression(self._c)
-            except RuntimeError as e:
-                if e.args[0] == 'Can only initialize with numeric, ScalarExpression, or ScalarAtom types.':
-                    warnings.warn('A signomial is being constructed with usual coefficient vector.')
-                else:
-                    raise e
+            raise ValueError()
+            #try:
+            #    self._c = cl.Expression(self._c)
+            #except RuntimeError as e:
+            #    if e.args[0] == 'Can only initialize with numeric, ScalarExpression, or ScalarAtom types.':
+            #        warnings.warn('A signomial is being constructed with unusual coefficient vector.')
+            #    else:
+            #        raise e
         self._no_array_repr = False
 
     def _build_alpha_c_dict(self):
@@ -353,7 +356,7 @@ class Signomial(object):
             power = int(power)
             if power == 0:
                 # noinspection PyTypeChecker
-                return Signomial({(0,) * self._n: 1})
+                return self.upcast_to_signomial(1)
             else:
                 s = Signomial(self.alpha_c)
                 for t in range(power - 1):
@@ -368,7 +371,7 @@ class Signomial(object):
                 raise ValueError('Cannot compute non-integer power %s of coefficient %s', power, v)
             alpha_tup = tuple(power * ai for ai in list(d.keys())[0])
             c = float(v) ** power
-            s = Signomial(alpha_maybe_c={alpha_tup: c})
+            s = Signomial.from_dict({alpha_tup: c})
             return s
 
     def __neg__(self):
@@ -447,7 +450,7 @@ class Signomial(object):
             if len(to_drop) == 0:
                 return self
             elif len(to_drop) == self.m:
-                return Signomial({(0,) * self.n: 0})
+                return self.upcast_to_signomial(0)
             else:
                 keepers = np.ones(self.m, dtype=bool)
                 keepers[to_drop] = False
@@ -480,7 +483,7 @@ class Signomial(object):
                 d[tuple(vec)] = c
         if len(d) == 0:
             d[(0,) * self._n] = 0
-        p = Signomial(d)
+        p = Signomial.from_dict(d)
         return p
 
     def grad_val(self, x):
@@ -522,28 +525,26 @@ class Signomial(object):
 
     @staticmethod
     def sum_duplicates(alpha, c):
-        alpha_reduced, inv, counts = np.unique(alpha, axis=0,
-                                               return_inverse=True,
-                                               return_counts=True)
+        alpha_reduced, inv, counts = np.unique(alpha, axis=0, return_inverse=True, return_counts=True)
         if np.all(counts == 1):
+            # then all exponent vectors are unique
             return alpha, c
+        m_reduced = alpha_reduced.shape[0]
+        reducer_cols = []
+        for i in range(m_reduced):
+            # this way of constructing "reducer_cols" is inefficient
+            idxs = np.nonzero(inv == i)[0]
+            reducer_cols.append(idxs)
+        if isinstance(c, cl.Expression):
+            c_reduced = cl.Expression([sum(c[rc]) for rc in reducer_cols])
+            # ^ should be much faster than the sparse-matrix multiply, used below.
         else:
-            # the following is inefficient
-            m_reduced = alpha_reduced.shape[0]
-            reducer_cols = []
-            for i in range(m_reduced):
-                idxs = np.nonzero(inv == i)[0]
-                reducer_cols.append(idxs)
-            if isinstance(c, cl.Expression):
-                c_reduced = cl.Expression([sum(c[rc]) for rc in reducer_cols])
-                # ^ should be much faster than the sparse-matrix multiply, used below.
-            else:
-                reducer_cols = np.hstack(reducer_cols)
-                reducer_rows = np.repeat(np.arange(m_reduced), counts)
-                reducer_coeffs = np.ones(reducer_rows.size)
-                R = sp.csr_matrix((reducer_coeffs, (reducer_rows, reducer_cols)))
-                c_reduced = R @ c
-            return alpha_reduced, c_reduced
+            reducer_cols = np.hstack(reducer_cols)
+            reducer_rows = np.repeat(np.arange(m_reduced), counts)
+            reducer_coeffs = np.ones(reducer_rows.size)
+            R = sp.csr_matrix((reducer_coeffs, (reducer_rows, reducer_cols)))
+            c_reduced = R @ c
+        return alpha_reduced, c_reduced
 
     @staticmethod
     def product(f1, f2):
@@ -609,18 +610,34 @@ class Signomial(object):
     def upcast_to_signomial(self, other):
         if isinstance(other, Signomial):
             return other
-        elif isinstance(other, __NUMERIC_TYPES__) or isinstance(other, cl.base.ScalarExpression):
-            s = Signomial({(0,) * self.n: other})
+        alpha = np.zeros(shape=(1, self.n))
+        if isinstance(other, __NUMERIC_TYPES__):
+            s = Signomial(alpha, np.array([other]))
             return s
+        elif isinstance(other, cl.base.ScalarExpression):
+            s = Signomial(alpha, cl.Expression([other]))
+            return s
+        elif not hasattr(other, 'size'):
+            raise ValueError()
+        elif other.size > 1:
+            raise ValueError()
         else:
-            if hasattr(other, 'size') and other.size > 1:
-                raise ValueError()
-            elif isinstance(other, np.ndarray):
-                other = other.item()
-            elif hasattr(other, 'flatten'):
-                other = other.flatten()[0]
-            s = Signomial({(0,) * self.n: other})
+            s = Signomial(alpha, other.flatten())
             return s
+
+    @staticmethod
+    def from_dict(d):
+        alpha = []
+        c = []
+        for k, v in d.items():
+            alpha.append(k)
+            c.append(v)
+        alpha = np.array(alpha)
+        c = np.array(c)
+        s = Signomial(alpha, c)
+        s._alpha_c = d
+        s._no_dict_repr = False
+        return s
 
 
 class SigDomain(object):
