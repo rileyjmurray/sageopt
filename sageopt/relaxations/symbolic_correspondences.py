@@ -24,8 +24,11 @@ __EXPONENT_VECTOR_TOLERANCE__ = 10**-(__EXPONENT_VECTOR_DECIMAL_POINTS__ + 1)
 
 def relative_coeff_vector(s, reference_alpha):
     c = np.zeros(reference_alpha.shape[0])
+    sc = s.c
+    if hasattr(sc, 'value'):
+        sc = sc.value
     common, corr = row_correspondence(s.alpha, reference_alpha)
-    c[corr] = s.c[common]
+    c[corr] = sc[common]
     return c
 
 

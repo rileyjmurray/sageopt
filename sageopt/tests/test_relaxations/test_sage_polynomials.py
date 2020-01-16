@@ -150,10 +150,12 @@ class TestSagePolynomials(unittest.TestCase):
         expect10 = 0.7587
         assert abs(res10[0] - res10[1]) <= 1e-5
         assert abs(res10[0] - expect10) <= 1e-3
-        res01 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=1)
-        expect01 = 0.7876
-        assert abs(res01[0] - res01[1]) <= 1e-5
-        assert abs(res01[0] - expect01) <= 1e-3
+        if cl.Mosek.is_installed():
+            # ECOS fails
+            res01 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=1, solver='MOSEK')
+            expect01 = 0.7876
+            assert abs(res01[0] - res01[1]) <= 1e-5
+            assert abs(res01[0] - expect01) <= 1e-3
 
     def test_unconstrained_3(self):
         # Minimization of the six-hump camel back function.

@@ -18,7 +18,6 @@ from sageopt import coniclifts as cl
 from sageopt.symbolic.signomials import Signomial, SigDomain
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
-from sageopt.symbolic import arithmetic as arith
 
 
 def primal_sage_cone(sig, name, X, expcovers=None):
@@ -443,7 +442,7 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
         z_g = Signomial(alpha_E_p, z_g_coeff)
         summands.append(-g * z_g)
         eq_dual_sigs.append((z_g, g))
-    L = arith.quick_sum(summands)
+    L = Signomial.sum(summands)
     return L, ineq_dual_sigs, eq_dual_sigs, gamma
 
 

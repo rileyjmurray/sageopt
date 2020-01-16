@@ -304,13 +304,6 @@ class Polynomial(Signomial):
             res = Signomial.__eq__(self, other)
             return res
 
-    def remove_terms_with_zero_as_coefficient(self):
-        """
-        Update ``alpha``, ``c``, and ``alpha_c`` to remove nonconstant terms where ``c[i] == 0``.
-        """
-        Signomial.remove_terms_with_zero_as_coefficient(self)
-        pass
-
     def without_zeros(self):
         """
         Return a Polynomial which is symbolically equivalent to ``self``,
@@ -442,6 +435,8 @@ class Polynomial(Signomial):
             sigrep_c[need_vars] = c_hat
             self._sig_rep_constrs.append(c_hat <= self.c[need_vars])
             self._sig_rep_constrs.append(c_hat <= -self.c[need_vars])
+        if sigrep_c.dtype == object:
+            sigrep_c = cl.Expression(sigrep_c)
         self._sig_rep = Signomial(self.alpha, sigrep_c)
         pass
 

@@ -14,6 +14,9 @@
    limitations under the License.
 """
 import sageopt.coniclifts as cl
+from collections import defaultdict
+from sageopt.symbolic import utilities as sym_util
+from sageopt.coniclifts.operators import affine as aff
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -300,30 +303,22 @@ class Signomial(object):
         self._no_dict_repr = False
 
     def __add__(self, other):
-        from sageopt.symbolic.arithmetic import mat_sum
-        if not isinstance(other, Signomial):
-            tup = (0,) * self._n
-            d = {tup: other}
-            other = Signomial(d)
+        other = self.upcast_to_signomial(other)
         if not other.n == self._n:
             raise RuntimeError('Cannot add Signomials with different numbers of variables.')
-        res = mat_sum(self, other)
-        res.remove_terms_with_zero_as_coefficient()
+        res = Signomial.sum([self, other])
+        res = res.without_zeros()
         return res
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __mul__(self, other):
-        from sageopt.symbolic.arithmetic import mat_prod
-        if not isinstance(other, Signomial):
-            tup = (0,) * self._n
-            d = {tup: other}
-            other = Signomial(d)
+        other = self.upcast_to_signomial(other)
         if not other.n == self._n:
             raise RuntimeError('Cannot multiply Signomials with different numbers of variables.')
-        res = mat_prod(self, other)
-        res.remove_terms_with_zero_as_coefficient()
+        res = Signomial.product(self, other)
+        res = res.without_zeros()
         return res
 
     def __rmul__(self, other):
@@ -428,38 +423,38 @@ class Signomial(object):
                 return False
         return True
 
-    def remove_terms_with_zero_as_coefficient(self):
-        """
-        Update ``alpha``, ``c``, and ``alpha_c`` to remove nonconstant terms where ``c[i] == 0``.
-        """
-        if self._no_dict_repr:
-            self._build_alpha_c_dict()
-            self._no_dict_repr = False
-        d = dict()
-        for (k, v) in self._alpha_c.items():
-            if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
-                d[k] = v
-        self._alpha_c = d
-        if len(d) == 0:
-            tup = (0,) * self._n
-            self._alpha_c[tup] = 0
-        self._m = len(self._alpha_c)
-        self._no_array_repr = True
-        pass
-
     def without_zeros(self):
         """
         Return a Signomial which is symbolically equivalent to ``self``,
         but which doesn't track basis functions ``alpha[i,:]`` for which ``c[i] == 0``.
         """
-        d = dict()
-        for (k, v) in self.alpha_c.items():
-            if (not isinstance(v, __NUMERIC_TYPES__)) or v != 0:
-                d[k] = v
-        if len(d) == 0:
-            d[(0,) * self._n] = 0
-        s = Signomial(d)
-        return s
+        if self.m == 1:
+            return self
+        elif isinstance(self.c, cl.Variable):
+            return self
+        else:
+            # identify coordinates of self.c to drop.
+            to_drop = []
+            if isinstance(self.c, cl.Expression):
+                for i, ci in enumerate(self.c):
+                    if ci.is_constant() and ci.value == 0:
+                        to_drop.append(i)
+            elif isinstance(self.c, np.ndarray) and self.c.dtype in __NUMERIC_TYPES__:
+                to_drop = list(np.nonzero(self.c == 0)[0])
+            else:
+                raise NotImplementedError('cvxpy handling should go here')
+            # DO THE DROPPING!
+            if len(to_drop) == 0:
+                return self
+            elif len(to_drop) == self.m:
+                return Signomial({(0,) * self.n: 0})
+            else:
+                keepers = np.ones(self.m, dtype=bool)
+                keepers[to_drop] = False
+                c = self.c[keepers]
+                alpha = self.alpha[keepers, :]
+                s = Signomial(alpha, c)
+            return s
 
     def partial(self, i):
         """
@@ -539,12 +534,93 @@ class Signomial(object):
             for i in range(m_reduced):
                 idxs = np.nonzero(inv == i)[0]
                 reducer_cols.append(idxs)
-            reducer_cols = np.hstack(reducer_cols)
-            reducer_rows = np.repeat(np.arange(m_reduced), counts)
-            reducer_coeffs = np.ones(reducer_rows.size)
-            R = sp.csr_matrix((reducer_coeffs, (reducer_rows, reducer_cols)))
-            c_reduced = R @ c
+            if isinstance(c, cl.Expression):
+                c_reduced = cl.Expression([sum(c[rc]) for rc in reducer_cols])
+                # ^ should be much faster than the sparse-matrix multiply, used below.
+            else:
+                reducer_cols = np.hstack(reducer_cols)
+                reducer_rows = np.repeat(np.arange(m_reduced), counts)
+                reducer_coeffs = np.ones(reducer_rows.size)
+                R = sp.csr_matrix((reducer_coeffs, (reducer_rows, reducer_cols)))
+                c_reduced = R @ c
             return alpha_reduced, c_reduced
+
+    @staticmethod
+    def product(f1, f2):
+        alpha1, c1 = f1.alpha, f1.c
+        alpha2, c2 = f2.alpha, f2.c
+        alpha1_lift = np.tile(alpha1.astype(np.float_), reps=[alpha2.shape[0], 1])
+        alpha2_lift = np.repeat(alpha2.astype(np.float_), alpha1.shape[0], axis=0)
+        alpha_lift = alpha1_lift + alpha2_lift
+        alpha_lift = np.round(alpha_lift, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
+        if isinstance(c1, np.ndarray) and (isinstance(c1, cl.Expression) or c1.dtype != np.dtype('O')):
+            c1_lift = aff.tile(c1, reps=alpha2.shape[0])
+        else:
+            raise NotImplementedError()
+        if isinstance(c2, np.ndarray) and (isinstance(c2, cl.Expression) or c2.dtype != np.dtype('O')):
+            c2_lift = aff.repeat(c2, repeats=alpha1.shape[0])
+        else:
+            raise NotImplementedError()
+        c_lift = c1_lift * c2_lift  # TODO: update this line to be compatible with cvxpy
+        p = type(f1)(alpha_lift, c_lift)
+        return p
+
+    @staticmethod
+    def sum(funcs):
+        if len(funcs) == 0:
+            raise ValueError()
+        elif any(not isinstance(f, Signomial) for f in funcs):
+            raise ValueError()
+        elif len(funcs) == 1:
+            return funcs[0]
+        f0 = funcs[0]
+        alpha = [ai for ai in f0.alpha]  # initial value
+        all_crs = [[idx for idx in range(f0.m)]]
+        d0 = {tuple(ai): i for (i, ai) in enumerate(f0.alpha)}
+        labeler = sym_util.Labeler(f0.m)
+        acd = defaultdict(labeler.next_label, d0)
+        for f in funcs[1:]:
+            crs = []
+            for ai in f.alpha:
+                up_next = labeler.up_next
+                idx = acd[tuple(ai)]
+                crs.append(idx)
+                if idx == up_next:
+                    alpha.append(ai)
+            all_crs.append(crs)
+        alpha = np.stack(alpha, axis=0)
+        num_rows = alpha.shape[0]
+        lifted_cs = []
+        for i, crs in enumerate(all_crs):
+            c = funcs[i].c
+            if isinstance(c, cl.Expression):
+                lifted_c = cl.Expression(np.zeros(num_rows))
+                lifted_c[crs] = c
+            else:
+                m = len(crs)
+                P = sp.csr_matrix((np.ones(m), (crs, np.arange(m))),
+                                  shape=(num_rows, m))
+                lifted_c = P @ c
+            lifted_cs.append(lifted_c)
+        c = sum(lifted_cs)
+        s = type(f0)(alpha, c)
+        return s
+
+    def upcast_to_signomial(self, other):
+        if isinstance(other, Signomial):
+            return other
+        elif isinstance(other, __NUMERIC_TYPES__) or isinstance(other, cl.base.ScalarExpression):
+            s = Signomial({(0,) * self.n: other})
+            return s
+        else:
+            if hasattr(other, 'size') and other.size > 1:
+                raise ValueError()
+            elif isinstance(other, np.ndarray):
+                other = other.item()
+            elif hasattr(other, 'flatten'):
+                other = other.flatten()[0]
+            s = Signomial({(0,) * self.n: other})
+            return s
 
 
 class SigDomain(object):
