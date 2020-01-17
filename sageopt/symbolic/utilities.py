@@ -99,5 +99,6 @@ def find_zero_entries(c):
     elif isinstance(c, np.ndarray) and c.dtype in __REAL_TYPES__:
         to_drop = list(np.nonzero(c == 0)[0])
     else:
-        raise NotImplementedError('cvxpy handling should go here')
+        #TODO: implement this properly (it's really the cvxpy-case).
+        return []
     return to_drop

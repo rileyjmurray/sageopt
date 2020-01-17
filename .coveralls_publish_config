@@ -5,5 +5,6 @@ omit =
     sageopt/coniclifts/constraints/constraint.py
     sageopt/coniclifts/constraints/set_membership/setmem.py
     sageopt/coniclifts/problems/solvers/solver.py
+    sageopt/interop/cvxpy.py
 # Run this file locally, with the following command:
 # nosetests --with-coverage --cover-package=sageopt --cover-config-file=.fullcoveragerc

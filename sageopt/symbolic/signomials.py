@@ -488,16 +488,18 @@ class Signomial(object):
 
     @staticmethod
     def product(f1, f2):
-        alpha1, c1 = f1.alpha, f1.c
-        alpha2, c2 = f2.alpha, f2.c
-        if not isinstance(c1, np.ndarray) or not isinstance(c2, np.ndarray):
-            raise NotImplementedError()
+        alpha1, c1 = f1.alpha.astype(np.float_), f1.c
+        m1 = alpha1.shape[0]
+        alpha2, c2 = f2.alpha.astype(np.float_), f2.c
+        m2 = alpha2.shape[0]
         # lift alpha1, c1 into the product basis
-        alpha1_lift = np.tile(alpha1.astype(np.float_), reps=[alpha2.shape[0], 1])
-        c1_lift = aff.tile(c1, reps=alpha2.shape[0])
+        tile_idxs = np.tile(np.arange(m1), reps=m2)
+        alpha1_lift = alpha1[tile_idxs, :]
+        c1_lift = c1[tile_idxs]
         # lift alpha2, c2 into the product basis
-        alpha2_lift = np.repeat(alpha2.astype(np.float_), alpha1.shape[0], axis=0)
-        c2_lift = aff.repeat(c2, repeats=alpha1.shape[0])
+        repeat_idxs = np.repeat(np.arange(m2), repeats=m1)
+        alpha2_lift = alpha2[repeat_idxs, :]
+        c2_lift = c2[repeat_idxs]
         # explicitly form the product basis, and the coefficient vector for the product
         alpha_lift = np.round(alpha1_lift + alpha2_lift,
                               decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
