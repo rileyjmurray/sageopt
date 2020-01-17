@@ -14,11 +14,8 @@
    limitations under the License.
 """
 import sageopt.coniclifts as cl
-from collections import defaultdict
 from sageopt.symbolic import utilities as sym_util
-from sageopt.coniclifts.operators import affine as aff
 import numpy as np
-import scipy.sparse as sp
 import warnings
 
 
