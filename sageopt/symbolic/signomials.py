@@ -152,12 +152,15 @@ class Signomial(object):
     """
 
     def __init__(self, alpha, c):
+        if isinstance(alpha, list):
+            alpha = np.ndarray(alpha)
         if alpha.shape[0] != c.size:  # pragma: no cover
             raise ValueError('alpha and c specify different numbers of terms')
         if isinstance(c, np.ndarray) and not isinstance(c, cl.Expression) and c.dtype == object:
             raise ValueError('If c is an ordinary numpy array, it cannot have dtype == object.')
-        alpha = np.round(alpha, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
-        alpha, c = sym_util.consolidate_basis_funcs(alpha, c)
+        if isinstance(alpha, np.ndarray):
+            alpha = np.round(alpha, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
+            alpha, c = sym_util.consolidate_basis_funcs(alpha, c)
         self._alpha = alpha
         self._c = c
         self._n = alpha.shape[1]
@@ -244,6 +247,8 @@ class Signomial(object):
         """
         Return the index ``i`` so that ``alpha[i, :]`` is the zero vector.
         """
+        if not isinstance(self.alpha, np.ndarray):
+            raise NotImplementedError()
         res = np.where((self.alpha == 0).all(axis=1))[0]
         if res.size == 0:
             return None
@@ -252,10 +257,11 @@ class Signomial(object):
 
     def _build_alpha_c_dict(self):
         alpha, c = self._alpha, self._c
+        if not isinstance(alpha, np.ndarray):
+            raise NotImplementedError()
         self._alpha_c = dict()
         for j in range(c.size):
             self._alpha_c[tuple(alpha[j, :])] = c[j]
-        self._no_dict_repr = False
 
     def __add__(self, other):
         other = self.upcast_to_signomial(other)
@@ -310,6 +316,10 @@ class Signomial(object):
                 # noinspection PyTypeChecker
                 return self.upcast_to_signomial(1)
             else:
+                #TODO: implement a faster version of this in utilties.py,
+                # by using multinomial coefficients. Once this is done,
+                # add new tests for correctness of ``__pow__``, since it would
+                # no longer follow from correctness of ``__mul__``.
                 s = Signomial(self.alpha, self.c)
                 for t in range(power - 1):
                     s = s * self
@@ -343,6 +353,9 @@ class Signomial(object):
 
         This function's behavior is undefined when x is not a scalar and has len(x.shape) > 2.
         """
+        if not isinstance(self.alpha, np.ndarray):
+            # assuming cvxpy Expression, could substitute alpha = alpha.value
+            raise NotImplementedError()
         if np.isscalar(x) or (isinstance(x, np.ndarray) and x.size == 1 and x.ndim == 0):
             x = np.array([np.asscalar(np.array(x))])  # coerce into a 1d array of shape (1,).
         if not x.shape[0] == self._n:
@@ -361,15 +374,13 @@ class Signomial(object):
         return hash(frozenset(self.alpha_c.items()))
 
     def __eq__(self, other):
-        # Have this function return False if the coefficient vector isn't numeric,
-        # or a constant
         if not isinstance(other, Signomial):
             return False
         if self._m != other._m:
             return False
-        if self.c.dtype not in __NUMERIC_TYPES__:
+        if self.c.dtype not in __NUMERIC_TYPES__ or other.c.dtype not in __NUMERIC_TYPES__:
             return False
-        if other.c.dtype not in __NUMERIC_TYPES__:
+        if not isinstance(self._alpha, np.ndarray) or not isinstance(other.alpha, np.ndarray):
             return False
         for k in self.alpha_c:
             v = self.alpha_c[k]
@@ -485,9 +496,13 @@ class Signomial(object):
 
     @staticmethod
     def product(f1, f2):
-        alpha1, c1 = f1.alpha.astype(np.float_), f1.c
+        alpha1, c1 = f1.alpha, f1.c
+        if isinstance(alpha1, np.ndarray):
+            alpha1 = alpha1.astype(np.float_)
         m1 = alpha1.shape[0]
-        alpha2, c2 = f2.alpha.astype(np.float_), f2.c
+        alpha2, c2 = f2.alpha, f2.c
+        if isinstance(alpha2, np.ndarray):
+            alpha2 = alpha2.astype(np.float_)
         m2 = alpha2.shape[0]
         # lift alpha1, c1 into the product basis
         tile_idxs = np.tile(np.arange(m1), reps=m2)
@@ -498,8 +513,10 @@ class Signomial(object):
         alpha2_lift = alpha2[repeat_idxs, :]
         c2_lift = c2[repeat_idxs]
         # explicitly form the product basis, and the coefficient vector for the product
-        alpha_lift = np.round(alpha1_lift + alpha2_lift,
-                              decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
+        alpha_lift = alpha1_lift + alpha2_lift
+        if isinstance(alpha_lift, np.ndarray):
+            alpha_lift = np.round(alpha_lift,
+                                  decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
         c_lift = c1_lift * c2_lift
         p = type(f1)(alpha_lift, c_lift)
         return p
@@ -532,7 +549,6 @@ class Signomial(object):
         c = np.array(c)
         s = Signomial(alpha, c)
         s._alpha_c = d
-        s._no_dict_repr = False
         return s
 
 

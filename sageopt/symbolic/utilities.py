@@ -17,6 +17,7 @@ from collections import defaultdict
 import numpy as np
 import scipy.sparse as sp
 from sageopt import coniclifts as cl
+from sageopt.interop import cvxpy as cp_interop
 from sageopt.coniclifts.base import __REAL_TYPES__
 
 
@@ -33,7 +34,7 @@ class Labeler(object):
 
 def align_basis_matrices(mats):
     mat0 = mats[0]
-    aligned_mat = [ri for ri in mat0]  # initial value
+    aligned_rows = [ri for ri in mat0]  # initial value
     lifting_locs = [[idx for idx in range(mat0.shape[0])]]
     d0 = {tuple(ri): i for (i, ri) in enumerate(mat0)}
     labeler = Labeler(mat0.shape[0])
@@ -45,9 +46,11 @@ def align_basis_matrices(mats):
             idx = acd[tuple(ri)]
             curr_coeff_locs.append(idx)
             if idx == up_next:
-                aligned_mat.append(ri)
+                aligned_rows.append(ri)
         lifting_locs.append(curr_coeff_locs)
-    aligned_mat = np.stack(aligned_mat, axis=0)
+    aligned_mat = np.stack(aligned_rows, axis=0)
+    if aligned_mat.dtype == object and cp_interop.CVXPY_INSTALLED:
+        aligned_mat = cp_interop.vstack(aligned_rows)
     return aligned_mat, lifting_locs
 
 
@@ -68,6 +71,9 @@ def lift_basis_coeffs(coeff_vecs, lifting_locs, lift_dim):
 
 
 def consolidate_basis_funcs(alpha, c):
+    #TODO: extend this to allow alpha to be a constant cvxpy Expression. Note: in order to do this,
+    # cvxpy will need a method to check symbolic equivalence (at least of constant Expressions).
+    # From there, I would need to create a cvxpy analog to ``np.unique``.
     alpha_reduced, inv, counts = np.unique(alpha, axis=0, return_inverse=True, return_counts=True)
     if np.all(counts == 1):
         # then all exponent vectors are unique

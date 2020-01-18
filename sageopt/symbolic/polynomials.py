@@ -445,7 +445,6 @@ class Polynomial(Signomial):
         s = Signomial.from_dict(d)
         p = s.as_polynomial()
         p._alpha_c = s.alpha_c
-        p._no_dict_repr = False
         return p
 
     def upcast_to_polynomial(self, other):

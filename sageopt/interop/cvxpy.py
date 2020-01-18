@@ -19,11 +19,24 @@ import warnings
 The purpose of this file is to change cvxpy's behavior for the multiplication operator ``*``.
 CVXPY's default behavior is for ``*`` to denote matrix multplication. I need it to mean 
 elementwise multiplication, for consistency with coniclifts.
+
+The current implementation doesn't work, because it breaks the canonicalization process,
+where ``*`` is used at certain times to denote matrix multiplication. For prototyping purposes,
+I'm editing cvxpy files on the fly to replace these instances with ``@``. On my desktop, 
+modified files are:
+
+/home/riley/anaconda3/envs/dev36/lib/python3.6/site-packages/cvxpy/reductions/utilities.py
+/home/riley/anaconda3/envs/dev36/lib/python3.6/site-packages/cvxpy/reductions/matrix_stuffing.py
+/home/riley/anaconda3/envs/dev36/lib/python3.6/site-packages/cvxpy/reductions/dcp2cone/cone_matrix_stuffing.py
+
+in cvxpy 1.1.0a2, I only needed to edit the first of those files.
 """
 
 try:
     import cvxpy as cp
     from cvxpy.expressions.expression import Expression as cp_exp
+
+    CVXPY_INSTALLED = True
 
     original_multiply = cp_exp.__mul__
 
@@ -42,5 +55,9 @@ try:
           + "\nIt now applies ELEMENTWISE multiplication."
 
     warnings.warn(msg)
+
+    def vstack(arg_list):
+        return cp.vstack(arg_list)
+
 except ImportError:
-    pass
+    CVXPY_INSTALLED = False
