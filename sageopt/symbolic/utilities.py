@@ -48,9 +48,12 @@ def align_basis_matrices(mats):
             if idx == up_next:
                 aligned_rows.append(ri)
         lifting_locs.append(curr_coeff_locs)
-    aligned_mat = np.stack(aligned_rows, axis=0)
-    if aligned_mat.dtype == object and cp_interop.CVXPY_INSTALLED:
+    if all(isinstance(r, np.ndarray) and r.dtype in __REAL_TYPES__ for r in aligned_rows):
+        aligned_mat = np.stack(aligned_rows, axis=0)
+    elif cp_interop.CVXPY_INSTALLED:
         aligned_mat = cp_interop.vstack(aligned_rows)
+    else:
+        raise ValueError()
     return aligned_mat, lifting_locs
 
 
