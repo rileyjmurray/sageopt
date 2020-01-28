@@ -28,6 +28,10 @@ class Mosek(Solver):
 
     _CO_TOL_NEAR_REL_ = 1000
 
+    _TOL_PATH_ = 1e-8
+
+    _TOL_STEP_SIZE_ = 1e-6
+
     _DEACTIVATE_SCALING_ = False
 
     @staticmethod
@@ -204,9 +208,10 @@ class Mosek(Solver):
         # task.putdouparam(mosek.dparam.intpnt_tol_psafe, pdsafe)
         # task.putdouparam(mosek.dparam.intpnt_tol_dsafe, pdsafe)
         # task.putdouparam(mosek.dparam.intpnt_co_tol_infeas, 1e-8)
-        # task.putdouparam(mosek.dparam.intpnt_tol_path, 1.0e-1)
+        task.putdouparam(mosek.dparam.intpnt_tol_path, Mosek._TOL_PATH_)
         if Mosek._DEACTIVATE_SCALING_:
             task.putintparam(mosek.iparam.intpnt_scaling, mosek.scalingtype.none)
+        task.putdouparam(mosek.dparam.intpnt_tol_step_size, Mosek._TOL_STEP_SIZE_)
         # task.putintparam(mosek.iparam.intpnt_solve_form, mosek.solveform.primal)
         # task.putintparam(mosek.iparam.intpnt_max_num_cor, int(1e8))
         # task.putintparam(mosek.iparam.intpnt_max_num_refinement_steps, int(1e8))

@@ -120,11 +120,10 @@ class Problem(object):
 
     Problem status being ``coniclifts.SOLVED`` does not mean that the decision variables have
     been assigned specific values. It only means that the solver returned a normal status code
-    (i.e. that the solver didn't run into numerical difficulties). If a solver return code
-    indicates the problem is "infeasible" or "unbounded", we still set
-    ``self.status = coniclifts.SOLVED``. Therefore it is important to check that
-    ``self.status == coniclifts.SOLVED`` and that ``-np.inf < self.value < np.inf`` before
-    accessing a Variable's value.
+    (i.e. that the solver didn't run into numerical difficulties). If a solver indicates the
+    problem is infeasible or unbounded, we still set ``self.status = coniclifts.SOLVED``.
+    Therefore it is important to check that ``self.status == coniclifts.SOLVED`` and that
+    ``-np.inf < self.value < np.inf`` before accessing a Variable's value.
     """
 
     _SOLVERS_ = {'ECOS': ECOS(), 'MOSEK': Mosek()}
