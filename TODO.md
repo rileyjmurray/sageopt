@@ -51,3 +51,9 @@ installs GPKit. Add web documentation.
 
 Make changes on web-documentation, and "Examples".
 
+## Fix a bug for signomial construction
+
+if ``f`` is a Signomial, and ``arr`` is a numpy array,
+then ``temp = -arr + f`` creates a numpy array of the
+expected Signomial objects, but ``temp = f - arr`` raises a
+``ValueError`` when ``upcast_to_signomial`` fails.
