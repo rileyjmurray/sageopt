@@ -57,3 +57,5 @@ if ``f`` is a Signomial, and ``arr`` is a numpy array,
 then ``temp = -arr + f`` creates a numpy array of the
 expected Signomial objects, but ``temp = f - arr`` raises a
 ``ValueError`` when ``upcast_to_signomial`` fails.
+
+#
