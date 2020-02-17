@@ -510,8 +510,7 @@ class DualSageCone(SetMembership):
                     singlevar = self.v[i]
                     av, ar, ac = comp_aff.mat_times_vecvar_plus_vec_times_singlevar(A, vecvar, b, singlevar)
                     curr_b = np.zeros(b.size, )
-                    curr_k = [Cone(co.type, co.len) for co in K]
-                    cone_data.append((av, ar, ac, curr_b, curr_k))
+                    cone_data.append((av, ar, ac, curr_b, K))
             return cone_data
         else:
             con = self.v >= 0
