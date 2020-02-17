@@ -44,8 +44,7 @@ def sum_relent(x, y, z, aux_vars):
     b[0] = -z.offset
     # populate the epigraph terms
     curr_row = 1
-    A_rows, A_cols, A_vals = _fast_elemwise_data(A_rows, A_cols, A_vals,
-                                                 b, x, y, aux_var_ids, curr_row)
+    _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row)
     return A_vals, np.array(A_rows), A_cols, b, K
 
 
@@ -68,12 +67,10 @@ def elementwise_relent(x, y, z):
     curr_row = 0
     if isinstance(z, Variable):
         aux_var_ids = z.scalar_variable_ids
-        A_rows, A_cols, A_vals = _fast_elemwise_data(A_rows, A_cols, A_vals,
-                                                     b, x, y, aux_var_ids, curr_row)
+        _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row)
     else:
         z = z.ravel()
-        A_rows, A_cols, A_vals = _compact_elemwise_data(A_rows, A_cols, A_vals,
-                                                        b, x, y, z, curr_row)
+        _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row)
     return A_vals, np.array(A_rows), A_cols, b, K
 
 
@@ -97,7 +94,6 @@ def _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row):
         A_vals += [co for _, co in id2co]
         b[curr_row + 1] = y[i].offset
         curr_row += 3
-    return A_rows, A_cols, A_vals
 
 
 def _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row):
@@ -121,7 +117,6 @@ def _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row):
         A_vals += [co for _, co in id2co]
         b[curr_row + 1] = y[i].offset
         curr_row += 3
-    return A_rows, A_cols, A_vals
 
 
 def _align_args(x, y):
