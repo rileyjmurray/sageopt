@@ -14,7 +14,7 @@
    limitations under the License.
 """
 import numpy as np
-from sageopt.coniclifts.base import Expression
+from sageopt.coniclifts.base import Expression, Variable
 from sageopt.coniclifts.cones import Cone
 
 
@@ -22,51 +22,30 @@ def sum_relent(x, y, z, aux_vars):
     # represent "sum{x[i] * ln( x[i] / y[i] )} + z <= 0" in conic form.
     # return the Variable object created for all epigraphs needed in
     # this process, as well as A_data, b, and K.
-    if not isinstance(x, Expression):
-        x = Expression(x)
-    if not isinstance(y, Expression):
-        y = Expression(y)
+    x, y = _align_args(x, y)
     if not isinstance(z, Expression):
         z = Expression(z)
-    x = x.ravel()
-    y = y.ravel()
-    z = z.ravel()
     if z.size != 1 or not z.is_affine():
         raise RuntimeError('Illegal argument to sum_relent.')
-    if x.size != y.size:
-        raise RuntimeError('Illegal arguments to sum_relent.')
+    else:
+        z = z.item()  # gets the single element
     num_rows = 1 + 3 * x.size
-    aux_var_ids = aux_vars.scalar_variable_ids
     b = np.zeros(num_rows,)
     K = [Cone('+', 1)] + [Cone('e', 3) for _ in range(x.size)]
     A_rows, A_cols, A_vals = [], [], []
     # populate the first row
-    z_id2co = [(a.id, co) for a, co in z[0].atoms_to_coeffs.items()]
+    z_id2co = [(a.id, co) for a, co in z.atoms_to_coeffs.items()]
     A_cols += [aid for aid, _ in z_id2co]
     A_vals += [-co for _, co in z_id2co]
-    A_cols += [aid for aid in aux_var_ids]
+    aux_var_ids = aux_vars.scalar_variable_ids
+    A_cols += aux_var_ids
     A_vals += [-1] * len(aux_var_ids)
     A_rows += [0] * len(A_vals)
-    b[0] = -z[0].offset
+    b[0] = -z.offset
     # populate the epigraph terms
-    for i in range(x.size):
-        curr_cone_start = 1 + 3 * i
-        # first entry of exp cone
-        A_rows.append(curr_cone_start)
-        A_cols.append(aux_var_ids[i])
-        A_vals.append(-1)
-        # third entry of exp cone
-        id2co = [(a.id, co) for a, co in x[i].atoms_to_coeffs.items()]
-        A_rows += [curr_cone_start + 2] * len(id2co)
-        A_cols += [aid for aid, _ in id2co]
-        A_vals += [co for _, co in id2co]
-        b[curr_cone_start + 2] = x[i].offset
-        # second entry of exp cone
-        id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
-        A_rows += [curr_cone_start + 1] * len(id2co)
-        A_cols += [aid for aid, _ in id2co]
-        A_vals += [co for _, co in id2co]
-        b[curr_cone_start + 1] = y[i].offset
+    curr_row = 1
+    A_rows, A_cols, A_vals = _fast_elemwise_data(A_rows, A_cols, A_vals,
+                                                 b, x, y, aux_var_ids, curr_row)
     return A_vals, np.array(A_rows), A_cols, b, K
 
 
@@ -81,6 +60,71 @@ def elementwise_relent(x, y, z):
     b - a numpy 1darray,
     K - a list of coniclifts Cone objects (of type 'e'),
     """
+    x, y = _align_args(x, y)
+    num_rows = 3 * x.size
+    b = np.zeros(num_rows,)
+    K = [Cone('e', 3) for _ in range(x.size)]
+    A_rows, A_cols, A_vals = [], [], []
+    curr_row = 0
+    if isinstance(z, Variable):
+        aux_var_ids = z.scalar_variable_ids
+        A_rows, A_cols, A_vals = _fast_elemwise_data(A_rows, A_cols, A_vals,
+                                                     b, x, y, aux_var_ids, curr_row)
+    else:
+        z = z.ravel()
+        A_rows, A_cols, A_vals = _compact_elemwise_data(A_rows, A_cols, A_vals,
+                                                        b, x, y, z, curr_row)
+    return A_vals, np.array(A_rows), A_cols, b, K
+
+
+def _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row):
+    # aux_var_ids is a list of ScalarVariable ids for epigraph terms
+    for i in range(x.size):
+        # first entry of exp cone
+        A_rows.append(curr_row)
+        A_cols.append(aux_var_ids[i])
+        A_vals.append(-1)
+        # third entry of exp cone
+        id2co = [(a.id, co) for a, co in x[i].atoms_to_coeffs.items()]
+        A_rows += [curr_row + 2] * len(id2co)
+        A_cols += [aid for aid, _ in id2co]
+        A_vals += [co for _, co in id2co]
+        b[curr_row + 2] = x[i].offset
+        # third entry of exp cone
+        id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
+        A_rows += [curr_row + 1] * len(id2co)
+        A_cols += [aid for aid, _ in id2co]
+        A_vals += [co for _, co in id2co]
+        b[curr_row + 1] = y[i].offset
+        curr_row += 3
+    return A_rows, A_cols, A_vals
+
+
+def _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row):
+    # z can be any affine coniclifts Expression
+    for i in range(x.size):
+        # first entry of exp cone
+        id2co = [(a.id, co) for a, co in z[i].atoms_to_coeffs.items()]
+        A_rows += [curr_row] * len(id2co)
+        A_cols += [aid for aid, _ in id2co]
+        A_vals += [-co for _, co in id2co]
+        # third entry of exp cone
+        id2co = [(a.id, co) for a, co in x[i].atoms_to_coeffs.items()]
+        A_rows += [curr_row + 2] * len(id2co)
+        A_cols += [aid for aid, _ in id2co]
+        A_vals += [co for _, co in id2co]
+        b[curr_row + 2] = x[i].offset
+        # third entry of exp cone
+        id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
+        A_rows += [curr_row + 1] * len(id2co)
+        A_cols += [aid for aid, _ in id2co]
+        A_vals += [co for _, co in id2co]
+        b[curr_row + 1] = y[i].offset
+        curr_row += 3
+    return A_rows, A_cols, A_vals
+
+
+def _align_args(x, y):
     if not isinstance(x, Expression):
         x = Expression(x)
     if not isinstance(y, Expression):
@@ -89,31 +133,4 @@ def elementwise_relent(x, y, z):
     y = y.ravel()
     if x.size != y.size:
         raise RuntimeError('Illegal arguments to sum_relent.')
-    num_rows = 3 * x.size
-    aux_var_ids = z.scalar_variable_ids
-    b = np.zeros(num_rows, )
-    K = [Cone('e', 3) for _ in range(x.size)]
-    A_rows, A_cols, A_vals = [], [], []
-    # populate the epigraph terms
-    # for ECOS, the negative of the epigraph maps to the first term,
-    #           the "x" maps to the third term,
-    #           and the "y" maps to the second term.
-    for i in range(x.size):
-        curr_cone_start = 3 * i
-        # first entry of exp cone
-        A_rows.append(curr_cone_start)
-        A_cols.append(aux_var_ids[i])
-        A_vals.append(-1)
-        # third entry of exp cone
-        id2co = [(a.id, co) for a, co in x[i].atoms_to_coeffs.items()]
-        A_rows += [curr_cone_start + 2] * len(id2co)
-        A_cols += [aid for aid, _ in id2co]
-        A_vals += [co for _, co in id2co]
-        b[curr_cone_start + 2] = x[i].offset
-        # third entry of exp cone
-        id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
-        A_rows += [curr_cone_start + 1] * len(id2co)
-        A_cols += [aid for aid, _ in id2co]
-        A_vals += [co for _, co in id2co]
-        b[curr_cone_start + 1] = y[i].offset
-    return A_vals, np.array(A_rows), A_cols, b, K
+    return x, y
