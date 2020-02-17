@@ -38,6 +38,8 @@ _REDUCTION_SOLVER_ = 'ECOS'
 
 _SUM_AGE_FORCE_EQUALITY_ = False
 
+_COMPACT_DUAL_CONE_ = False
+
 
 def check_cones(K):
     if any([co.type not in _ALLOWED_CONES_ for co in K]):
@@ -460,7 +462,7 @@ class DualSageCone(SetMembership):
                 self._variables.append(self._lifted_mu_vars[i])
                 self.mu_vars[i] = self._lifted_mu_vars[i][:self._n]
                 num_cover = self.ech.expcover_counts[i]
-                if num_cover > 0:
+                if num_cover > 0 and not _COMPACT_DUAL_CONE_:
                     var_name = '_relent_epi_[' + str(i) + ']_{' + self.name + '}'
                     epi = Variable(shape=(num_cover,), name=var_name)
                     self._relent_epi_vars[i] = epi
@@ -483,19 +485,24 @@ class DualSageCone(SetMembership):
                 num_cover = self.ech.expcover_counts[i]
                 if num_cover == 0:
                     continue
-                # relative entropy constraints
                 expr = np.tile(self.v[i], num_cover).view(Expression)
-                epi = self._relent_epi_vars[i]
-                cd = elementwise_relent(expr, self.v[idx_set], epi)
-                cone_data.append(cd)
-                # Linear inequalities
-                mat = self.alpha[idx_set, :] - self.alpha[i, :]
+                mat = self.alpha[i, :] - self.alpha[idx_set, :]
                 vecvar = self._lifted_mu_vars[i][:self._n]
-                av, ar, ac = comp_aff.mat_times_vecvar_minus_vecvar(-mat, vecvar, epi)
-                num_rows = mat.shape[0]
-                curr_b = np.zeros(num_rows)
-                curr_k = [Cone('+', num_rows)]
-                cone_data.append((av, ar, ac, curr_b, curr_k))
+                if _COMPACT_DUAL_CONE_:
+                    epi = mat @ vecvar
+                    cd = elementwise_relent(expr, self.v[idx_set], epi)
+                    cone_data.append(cd)
+                else:
+                    # relative entropy constraints
+                    epi = self._relent_epi_vars[i]
+                    cd = elementwise_relent(expr, self.v[idx_set], epi)
+                    cone_data.append(cd)
+                    # Linear inequalities
+                    av, ar, ac = comp_aff.mat_times_vecvar_minus_vecvar(mat, vecvar, epi)
+                    num_rows = mat.shape[0]
+                    curr_b = np.zeros(num_rows)
+                    curr_k = [Cone('+', num_rows)]
+                    cone_data.append((av, ar, ac, curr_b, curr_k))
                 # membership in cone induced by self.AbK
                 if self.X is not None:
                     A, b, K = self.X.A, self.X.b, self.X.K

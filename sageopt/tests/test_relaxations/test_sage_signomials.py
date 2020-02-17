@@ -51,7 +51,7 @@ def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='ECOS'):
 # noinspection SpellCheckingInspection
 class TestSAGERelaxations(unittest.TestCase):
 
-    def test_unconstrained_sage_1(self, presolve=False):
+    def test_unconstrained_sage_1(self, presolve=False, compactdual=False):
         # Background
         #
         #       This is Example 1 from a 2018 paper by Murray, Chandrasekaran, and Wierman
@@ -64,7 +64,9 @@ class TestSAGERelaxations(unittest.TestCase):
         #       (2) Recover a globally optimal solution at ell == 1.
         #
         initial_presolve = sage_cones._ELIMINATE_TRIVIAL_AGE_CONES_
+        initial_compactdual = sage_cones._COMPACT_DUAL_CONE_
         cl.presolve_trivial_age_cones(presolve)
+        cl.compact_sage_duals(compactdual)
         alpha = np.array([[0, 0],
                           [1, 0],
                           [0, 1],
@@ -81,9 +83,13 @@ class TestSAGERelaxations(unittest.TestCase):
         optsols = sig_solrec(dual)
         assert (s(optsols[0]) - dual.value) < 1e-6
         cl.presolve_trivial_age_cones(initial_presolve)
+        cl.compact_sage_duals(initial_compactdual)
 
     def test_unconstrained_sage_1a(self):
-        self.test_unconstrained_sage_1(True)
+        self.test_unconstrained_sage_1(True, False)
+
+    def test_unconstrained_sage_1b(self):
+        self.test_unconstrained_sage_1(False, True)  # running the primal is redundant here ...
 
     def test_unconstrained_sage_2(self):
         # Background
@@ -133,8 +139,8 @@ class TestSAGERelaxations(unittest.TestCase):
         #       for this signomial.
         #
         s = Signomial.from_dict({(1, 0, 0): 1,
-                       (0, 1, 0): -1,
-                       (0, 0, 1): -1})
+                                 (0, 1, 0): -1,
+                                 (0, 0, 1): -1})
         s = s ** 2
         expected = -np.inf
         pd0, _ = primal_dual_vals(s, 0)
@@ -142,7 +148,7 @@ class TestSAGERelaxations(unittest.TestCase):
         pd1, _ = primal_dual_vals(s, 1)
         assert pd1[0] == expected and pd1[1] == expected
 
-    def test_unconstrained_sage_4(self, presolve=False):
+    def test_unconstrained_sage_4(self, presolve=False, compactdual=False):
         # Background
         #
         #       This example was constructed soley as a test case for sageopt.
@@ -160,7 +166,9 @@ class TestSAGERelaxations(unittest.TestCase):
         #       It may not be obvious, but the signomial "s" is actually convex!
         #
         initial_presolve = sage_cones._ELIMINATE_TRIVIAL_AGE_CONES_
+        initial_compactdual = sage_cones._COMPACT_DUAL_CONE_
         cl.presolve_trivial_age_cones(presolve)
+        cl.compact_sage_duals(compactdual)
         s = Signomial.from_dict({(3,): 1, (2,): -4, (1,): 7, (-1,): 1})
         expected = [3.464102, 4.60250026, 4.6217973]
         pds = [primal_dual_vals(s, ell) for ell in range(3)]
@@ -172,9 +180,13 @@ class TestSAGERelaxations(unittest.TestCase):
         optsols = sig_solrec(dual)
         assert s(optsols[0]) < 1e-6 + dual.value
         cl.presolve_trivial_age_cones(initial_presolve)
+        cl.compact_sage_duals(initial_compactdual)
 
     def test_unconstrained_sage_4a(self):
-        self.test_unconstrained_sage_4(True)
+        self.test_unconstrained_sage_4(True, False)
+
+    def test_unconstrained_sage_4b(self):
+        self.test_unconstrained_sage_4(False, True)  # Running the primal is redundant here...
 
     def test_unconstrained_sage_5(self):
         # Background

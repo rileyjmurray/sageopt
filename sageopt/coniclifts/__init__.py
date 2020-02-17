@@ -98,3 +98,23 @@ def sum_age_force_equality(true_or_false=False):
     """
     import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
     sc._SUM_AGE_FORCE_EQUALITY_ = true_or_false
+
+
+def compact_sage_duals(true_or_false=False):
+    """
+    Decide how coniclifts compiles constraints
+        v[i] * log(v[i] / v[j]) <= (alpha[i,:] - alpha[j,:]) @ mu_i    (*)
+    which appear in DualSageCone objects.
+
+    If ``true_or_false=True``, then (*) compiles into a constraint that maps
+    (v[i],v[j],mu_i) into a single exponential cone.
+
+    If ``true_or_false=False``, then compiling (*) introduces an epigraph
+    variable ``epi`` plus the constraints ``v[i] * log(v[i]/v[j]) <= epi``
+    and ``epi <= (alpha[i,:] - alpha[j,:]) @ mu_i``.
+
+    The default value for ``true_or_false`` in this function's signature represents
+    sageopt's default behavior for this setting.
+    """
+    import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
+    sc._COMPACT_DUAL_CONE_ = true_or_false
