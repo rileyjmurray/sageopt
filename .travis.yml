@@ -9,7 +9,8 @@ install:
   - pip install pint cvxopt ad
   - pip install gpkit
   - python setup.py install
-# command to run tests
+# command to run tests (import gpkit, since it builds on first import).
 script:
+  - python -c "import gpkit"
   - nose2 --with-coverage --coverage-config=.coveralls_publish_config
   - coveralls --rcfile=.coveralls_publish_config
