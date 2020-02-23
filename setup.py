@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='sageopt',
-    version='0.4.3',
+    version='0.5',
     author='Riley John Murray',
     url='https://github.com/rileyjmurray/sageopt',
     author_email='rmurray@caltech.edu',
@@ -23,6 +23,6 @@ setuptools.setup(
     install_requires=["ecos >= 2",
                       "numpy >= 1.14",
                       "scipy >= 1.1",
-                      "nose"],
+                      "nose2"],
     test_suite='nose.collector'
 )

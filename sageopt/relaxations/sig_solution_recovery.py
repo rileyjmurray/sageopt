@@ -158,6 +158,13 @@ def _constrained_least_squares(con, alpha, log_v):
 
 
 def _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol):
+    # TODO: refactor this method to consider solution recovery of the form
+    #   x_candidate = sum([ con.mu_vars[i] for i in I]) / sum(con.v[I])
+    #   for arbitrary index sets I.
+    #   Right now we're doing this in a much more complicated way, by first
+    #   forming x_candidates for I = {i} (singletons), then then taking
+    #   convex combinations. This current approach may be subject to bad
+    #   rounding errors if some con.v[i] are near zero.
     mus_exist = list(con.mu_vars.keys())
     mus_exist = [i for i in mus_exist if v[i] > 0]
     if len(mus_exist) == 0:

@@ -1,9 +1,12 @@
 from sageopt.symbolic.signomials import Signomial
 
+
+GPKIT_INSTALLED = False
 try:
     from gpkit import SignomialsEnabled
     from gpkit.nomials import SignomialInequality, PosynomialInequality
     from gpkit.nomials import SingleSignomialEquality, MonomialEquality
+    GPKIT_INSTALLED = True
 except ImportError:
     pass
 
@@ -16,7 +19,7 @@ def gpkit_hmap_to_sageopt_sig(curhmap, vkmap):
         for vk, expval in expinfo.items():
             tup[vkmap[vk]] = expval
         temp_sig_dict[tuple(tup)] = coeff
-    s = Signomial(temp_sig_dict)
+    s = Signomial.from_dict(temp_sig_dict)
     return s
 
 

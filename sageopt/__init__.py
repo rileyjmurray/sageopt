@@ -32,4 +32,4 @@ from sageopt.relaxations import poly_solrec
 import sageopt.interop.scipy
 import sageopt.interop.cvxpy
 
-__version__ = '0.4.3'
+__version__ = '0.5'
