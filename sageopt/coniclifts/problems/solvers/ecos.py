@@ -16,6 +16,7 @@
 import numpy as np
 import scipy.sparse as sp
 from sageopt.coniclifts import utilities as util
+from sageopt.coniclifts.cones import build_cone_type_selectors
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.solver import Solver
 import copy
@@ -37,7 +38,7 @@ class ECOS(Solver):
                 msg1 = 'ECOS only supports cones with labels in the set {"e", "S", "+", "0"}. \n'
                 msg2 = 'The provided data includes an invalid cone labeled "' + str(co[0]) + '".'
                 raise RuntimeError(msg1 + msg2)
-        type_selectors, type_to_start_stops = util.parse_cones(K)
+        type_selectors = build_cone_type_selectors(K)
         # find indices of A corresponding to equality constraints
         A_ecos = A[type_selectors['0'], :]
         b_ecos = -b[type_selectors['0']]  # move to RHS
@@ -53,7 +54,7 @@ class ECOS(Solver):
         # create cone dims dict for ECOS
         cones = {'l': int(np.sum(type_selectors['+'])),
                  'e': int(np.sum(type_selectors['e']) / 3),
-                 'q': [stop - start for start, stop in type_to_start_stops['S']]}
+                 'q': util.contiguous_selector_lengths(type_selectors['S'])}
         data = {'G': G, 'h': h, 'cones': cones, 'A': A_ecos, 'b': b_ecos, 'c': c}
         inv_data = dict()
         return data, inv_data

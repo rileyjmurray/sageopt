@@ -15,10 +15,10 @@
 """
 import numpy as np
 import scipy.sparse as sp
-from sageopt.coniclifts.reformulators import separate_cone_constraints, build_cone_type_selectors
+from sageopt.coniclifts.reformulators import separate_cone_constraints
 from sageopt.coniclifts.problems.solvers.solver import Solver
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
-from sageopt.coniclifts.cones import Cone
+from sageopt.coniclifts.cones import Cone, build_cone_type_selectors
 import copy
 
 

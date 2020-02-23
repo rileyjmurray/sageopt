@@ -13,6 +13,24 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import numpy as np
+from collections import defaultdict
+
+
+def build_cone_type_selectors(K):
+    """
+    :param K: a list of Cones
+
+    :return: a map from cone type to indices for (A,b) in the conic system
+    {x : A @ x + b \in K}, and from cone type to a 1darray of cone lengths.
+    """
+    m = sum(co.len for co in K)
+    type_selectors = defaultdict(lambda: (lambda: np.zeros(m, dtype=bool))())
+    running_idx = 0
+    for i, co in enumerate(K):
+        type_selectors[co.type][running_idx:(running_idx+co.len)] = True
+        running_idx += co.len
+    return type_selectors
 
 
 class Cone(object):

@@ -82,26 +82,20 @@ def sparse_matrix_data_to_csc(data_tuples, index_map=None):
     return A, index_map
 
 
-def parse_cones(K):
+def contiguous_selector_lengths(sel):
     """
-    :param K: a list of Cones
 
-    :return: a map from cone type to indices for (A,b) in the conic system
-    {x : A @ x + b \in K}, and from cone type to a 1darray of cone lengths.
+    :param sel: a boolean array of shape (m,)
+    :return:
     """
-    m = sum(co.len for co in K)
-    type_selectors = defaultdict(lambda: (lambda: np.zeros(shape=(m,), dtype=bool))())
-    type_to_cone_start_stops = defaultdict(lambda: list())
-    running_idx = 0
-    for i, co in enumerate(K):
-        type_selectors[co.type][running_idx:(running_idx+co.len)] = True
-        type_to_cone_start_stops[co.type] += [(running_idx, running_idx + co.len)]
-        running_idx += co.len
-    return type_selectors, type_to_cone_start_stops
-
-
-def sparse_matrix_is_diag(A):
-    nonzero_row_idxs, nonzero_col_idxs = A.nonzero()
-    nonzero_col_idxs = np.unique(nonzero_col_idxs)
-    nonzero_row_idxs = np.unique(nonzero_row_idxs)
-    return A.nnz == A.shape[0] and len(nonzero_col_idxs) == len(nonzero_row_idxs)
+    locs = np.where(sel)[0]
+    if locs.size > 0:
+        auglocs = np.concatenate([locs, [-2]])
+        # ^ the [-2] is just to ensure last element in "locs" is counted in the next line
+        reverse_end_flags = (auglocs[1:] - auglocs[:-1]) == 1
+        stop_locs = np.where(~reverse_end_flags)[0] + 1
+        # ^ endpoints (exclusive) of consecutive True's in "sel"
+        lengths = np.diff(np.concatenate([[0], stop_locs]))
+        return lengths.tolist()
+    else:
+        return []
