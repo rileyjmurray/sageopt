@@ -21,10 +21,6 @@ import scipy.sparse as sp
 __REAL_TYPES__ = (int, float, np.int_, np.float_, np.longdouble)
 
 
-def zero_func():
-    return 0
-
-
 def array_index_iterator(shape):
     return product(*[range(d) for d in shape])
 
