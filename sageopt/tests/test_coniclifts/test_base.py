@@ -151,12 +151,13 @@ class TestBase(unittest.TestCase):
         assert Expression.are_equivalent(b, a)
 
     def test_variable_properties(self):
+        cur_gen = Variable._VARIABLE_GENERATION  # should be zero, unless testing in parallel
         x = Variable(shape=(3,), name='temp')
         assert x.name == 'temp'
-        assert x.generation == 0
+        assert x.generation == cur_gen
         y = x[:2]
         assert y.name == 'temp'
-        assert y.generation == 0
+        assert y.generation == cur_gen
         yid = y.leading_scalar_variable_id()
         xid = x.leading_scalar_variable_id()
         assert yid == xid

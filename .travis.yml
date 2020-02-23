@@ -3,9 +3,10 @@ language: python
 python:
   - "3.6"
   - "3.7"
-# command to install dependencies (2nd and 3rd pip calls just for GPKit integration)
+# command to install dependencies (3nd and 4th pip calls just for GPKit integration)
 install:
-  - pip install scipy>=1.1 numpy>=1.14 ecos>=2 nose2 coverage coveralls
+  - pip install scipy>=1.1 numpy>=1.14 ecos>=2 coveralls
+  - pip install nose2[coverage_plugin]
   - pip install pint cvxopt ad
   - pip install gpkit
   - python setup.py install

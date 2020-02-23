@@ -24,5 +24,5 @@ setuptools.setup(
                       "numpy >= 1.14",
                       "scipy >= 1.1",
                       "nose2"],
-    test_suite='nose.collector'
+    test_suite='nose2.collector'
 )
