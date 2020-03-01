@@ -25,14 +25,11 @@ import copy
 class ECOS(Solver):
 
     @staticmethod
-    def apply(c, A, b, K, destructive, compilation_options):
+    def apply(c, A, b, K, extra_data):
         """
         :return: G, h, cones, A_ecos, b_ecos --- where we expect
          a function call: sol = ecos.solve(c, G, h, cones, A_ecos, b_ecos)
         """
-        if not destructive:
-            A = A.copy()
-            K = copy.deepcopy(K)
         for co in K:
             if co.type not in {'e', 'S', '+', '0'}:  # pragma: no cover
                 msg1 = 'ECOS only supports cones with labels in the set {"e", "S", "+", "0"}. \n'

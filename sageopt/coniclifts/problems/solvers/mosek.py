@@ -35,7 +35,7 @@ class Mosek(Solver):
     _DEACTIVATE_SCALING_ = False
 
     @staticmethod
-    def apply(c, A, b, K, destructive, compilation_options):
+    def apply(c, A, b, K, extra_data):
         # This function is analogous to "apply(...)" in cvxpy's mosek_conif.py.
         #
         # Main obstacle: even after running (A,b,K) through "separate_cone_constraints", the PSD constraints are
@@ -55,13 +55,8 @@ class Mosek(Solver):
         if not Mosek._SDP_SUPPORT_:
             if any([co.type == 'P' for co in K]):
                 raise NotImplementedError('This functionality is being put on hold.')
-        if not destructive:
-            A = A.copy()
-            b = b.copy()
-            K = copy.deepcopy(K)
-            c = c.copy()
         inv_data = {'n': A.shape[1]}
-        A, b, K, sep_K = separate_cone_constraints(A, b, K, destructive=True, dont_sep={'0', '+'})
+        A, b, K, sep_K = separate_cone_constraints(A, b, K, dont_sep={'0', '+'})
         c = np.hstack([c, np.zeros(shape=(A.shape[1] - len(c)))])
         type_selectors = build_cone_type_selectors(K)
         # Below: inequality constraints that the "user" intended to give to MOSEK.
@@ -91,10 +86,6 @@ class Mosek(Solver):
         Mosek.set_default_solver_settings(task)
 
         # The following lines recover problem parameters, and define helper constants.
-        if not params['destructive']:
-            data['A'] = data['A'].copy()
-            data['b'] = data['b'].copy()
-            data['K'] = data['K'].copy()
         c, A, b, K, sep_K = data['c'], data['A'], data['b'], data['K'], data['sep_K']
         n = A.shape[1]
         m = A.shape[0]
@@ -104,6 +95,7 @@ class Mosek(Solver):
         task.putvarboundlist(np.arange(n, dtype=int),
                              [mosek.boundkey.fr] * n, np.zeros(n), np.zeros(n))
         for co in sep_K:
+            # TODO: vectorize this, by using task.appendcones()
             if co.type == 'S':
                 indices = co.annotations['col mapping']
                 task.appendcone(mosek.conetype.quad, 0.0, indices)
@@ -117,7 +109,7 @@ class Mosek(Solver):
         # Define linear inequality and equality constraints.
         task.appendcons(m)
         rows, cols, vals = sp.find(A)
-        task.putaijlist(rows.tolist(), cols.tolist(), vals.tolist())
+        task.putaijlist(rows.tolist(), cols.tolist(), vals.tolist())  # TODO: check if list conversion is necessary
         type_constraint = [mosek.boundkey.up] * K[0].len + [mosek.boundkey.fx] * K[1].len
         task.putconboundlist(np.arange(m, dtype=int), type_constraint, b, b)
 

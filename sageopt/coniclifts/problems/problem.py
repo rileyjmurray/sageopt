@@ -130,7 +130,7 @@ class Problem(object):
 
     _SOLVER_ORDER_ = ['MOSEK', 'ECOS']
 
-    def __init__(self, objective_sense, objective_expr, constraints):
+    def __init__(self, objective_sense, objective_expr, constraints, **kwargs):
         self.objective_sense = objective_sense
         if not isinstance(objective_expr, Expression):
             objective_expr = Expression(objective_expr)
@@ -155,9 +155,9 @@ class Problem(object):
         self.status = None  # "solved", "inaccurate", or "failed"
         self.value = np.NaN
         self.metadata = dict()
-        self.default_options = {'cache_apply_data': False, 'cache_raw_output': False,
-                                'destructive': False, 'compilation_options': dict(),
-                                'verbose': True}
+        self.default_options = {'cache_apply_data': False,
+                                'cache_raw_output': False, 'verbose': True}
+        self.default_options.update(kwargs)
         pass
 
     def solve(self, solver=None, **kwargs):
@@ -203,11 +203,12 @@ class Problem(object):
 
         # Finish solver-specific compilation
         t0 = time.time()
-        data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K,
-                                             options['destructive'],
-                                             options['compilation_options'])
+        data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K, options)
         self.timings[solver]['apply'] = time.time() - t0
         if options['cache_apply_data']:
+            # TODO: look into the possibility of always caching apply data,
+            #  and re-useing if the solver is called again (e.g. with different
+            #  parameters).
             self.solver_apply_data[solver] = (data, inv_data)
 
         # Solve the problem

@@ -13,12 +13,13 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import copy
 import numpy as np
 import scipy.sparse as sp
 from sageopt.coniclifts.cones import Cone
 
 
-def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
+def separate_cone_constraints(A, b, K, dont_sep=None):
     """
     Given an affine representation {x : A @ x + b \in K}, construct a direct
     representation {x : \exists y with  G @ [x,y] + h \in K1, y \in K2},
@@ -30,10 +31,8 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
         Has ``m`` rows and ``n`` columns.
     b : ndarray
         Of size ``m``.
-    K : list of coniclifts.cones.Cone
+    K : List[coniclifts.cones.Cone]
         Satisfies ``sum([co.len for co in K]) == m``.
-    destructive : bool
-        True if you want to modify ``K`` in-place.
     dont_sep : set of coniclifts.cones.Cone
         Cones that may be retained in the "affine part" of the feasible set's
         direct representation.
@@ -86,8 +85,7 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
             nonnegative orthants, etc...) are left alone.
 
     """
-    if not destructive:
-        K = K.copy()
+    K = copy.copy(K)
     if dont_sep is None:
         dont_sep = set('0')
     allowed = {'0'}.union(dont_sep)  # the zero cone is never replaced by slack variables

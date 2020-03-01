@@ -21,7 +21,7 @@ class Solver(object):
     """
 
     @staticmethod
-    def apply(c, A, b, K, destructive, compilation_options):
+    def apply(c, A, b, K, extra_data):
         raise NotImplementedError()
 
     @staticmethod
