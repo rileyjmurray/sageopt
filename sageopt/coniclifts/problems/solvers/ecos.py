@@ -25,7 +25,7 @@ import copy
 class ECOS(Solver):
 
     @staticmethod
-    def apply(c, A, b, K, extra_data):
+    def apply(c, A, b, K):
         """
         :return: G, h, cones, A_ecos, b_ecos --- where we expect
          a function call: sol = ecos.solve(c, G, h, cones, A_ecos, b_ecos)

@@ -203,7 +203,7 @@ class Problem(object):
 
         # Finish solver-specific compilation
         t0 = time.time()
-        data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K, options)
+        data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K)
         self.timings[solver]['apply'] = time.time() - t0
         if options['cache_apply_data']:
             # TODO: look into the possibility of always caching apply data,

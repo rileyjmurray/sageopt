@@ -19,7 +19,6 @@ from sageopt.coniclifts.reformulators import separate_cone_constraints
 from sageopt.coniclifts.problems.solvers.solver import Solver
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.cones import Cone, build_cone_type_selectors
-import copy
 
 
 class Mosek(Solver):
@@ -35,7 +34,7 @@ class Mosek(Solver):
     _DEACTIVATE_SCALING_ = False
 
     @staticmethod
-    def apply(c, A, b, K, extra_data):
+    def apply(c, A, b, K):
         # This function is analogous to "apply(...)" in cvxpy's mosek_conif.py.
         #
         # Main obstacle: even after running (A,b,K) through "separate_cone_constraints", the PSD constraints are
