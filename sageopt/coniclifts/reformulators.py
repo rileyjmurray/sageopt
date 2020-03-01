@@ -33,7 +33,7 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
     K : list of coniclifts.cones.Cone
         Satisfies ``sum([co.len for co in K]) == m``.
     destructive : bool
-        True if you want to modify ``A`` and ``K`` in-place.
+        True if you want to modify ``K`` in-place.
     dont_sep : set of coniclifts.cones.Cone
         Cones that may be retained in the "affine part" of the feasible set's
         direct representation.
@@ -87,7 +87,6 @@ def separate_cone_constraints(A, b, K, destructive=False, dont_sep=None):
 
     """
     if not destructive:
-        A = A.copy()
         K = K.copy()
     if dont_sep is None:
         dont_sep = set('0')
