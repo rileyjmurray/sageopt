@@ -17,7 +17,7 @@ from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.ecos import ECOS
 from sageopt.coniclifts.problems.solvers.mosek import Mosek
 from sageopt.coniclifts.compilers import compile_problem
-from sageopt.coniclifts.base import Expression
+from sageopt.coniclifts.base import Expression, Variable
 import numpy as np
 import time
 
@@ -155,9 +155,12 @@ class Problem(object):
         self.status = None  # "solved", "inaccurate", or "failed"
         self.value = np.NaN
         self.metadata = dict()
-        self.default_options = {'cache_apply_data': False,
+        self.problem_options = {'cache_apply_data': False,
                                 'cache_raw_output': False, 'verbose': True}
-        self.default_options.update(kwargs)
+        self.problem_options.update(kwargs)
+        self._integer_indices = None
+        if 'integer_variables' in kwargs:
+            self._parse_integer_constraints(kwargs['integer_variables'])
         pass
 
     def solve(self, solver=None, **kwargs):
@@ -194,7 +197,7 @@ class Problem(object):
                     break
         if solver is None:
             raise RuntimeError('No acceptable solver is installed.')
-        options = self.default_options.copy()
+        options = self.problem_options.copy()
         options.update(kwargs)
         solver_object = Problem._SOLVERS_[solver]
         if not solver_object.is_installed():
@@ -205,6 +208,8 @@ class Problem(object):
         t0 = time.time()
         data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K)
         self.timings[solver]['apply'] = time.time() - t0
+        if self._integer_indices is not None:
+            data['integer_indices'] = self._integer_indices.tolist()
         if options['cache_apply_data']:
             # TODO: look into the possibility of always caching apply data,
             #  and re-useing if the solver is called again (e.g. with different
@@ -253,4 +258,19 @@ class Problem(object):
         shallow_copy = [v for v in self.all_variables]
         return shallow_copy
 
-
+    def _parse_integer_constraints(self, int_vars):
+        """
+        int_vars : List[coniclifts.Variable]
+        """
+        int_indices = []
+        for int_var in int_vars:
+            if (not isinstance(int_var, Variable)) or (not int_var.is_proper()):
+                msg = 'Only "proper" Variables can be subject to integer constraints.'
+                raise ValueError(msg)
+            var_indices = self.variable_map[int_var.name].ravel()
+            if np.min(var_indices) < 0:
+                msg = 'A component of this Variable doesnt appear in the continuous model.'
+                raise ValueError(msg)
+            int_indices.append(var_indices)
+        int_indices = np.concatenate(int_indices)
+        self._integer_indices = int_indices

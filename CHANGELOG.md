@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  from the function ``sageopt.coniclifts.compact_sage_duals``.
  - Proper tests for GPKit integration.
  - CVXPY integration.
+ - mixed-integer support for MOSEK.
 ## Changed
  - Signomials are now represented primarily by arrays, rather than a dictionary.
  The dictionary is now only constructed when necessary, and is not used in any signomial

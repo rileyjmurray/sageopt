@@ -93,6 +93,10 @@ class Mosek(Solver):
         task.appendvars(n)
         task.putvarboundlist(np.arange(n, dtype=int),
                              [mosek.boundkey.fr] * n, np.zeros(n), np.zeros(n))
+        if 'integer_indices' in data:
+            int_idxs = data['integer_indices']
+            vartypes = [mosek.variabletype.type_int] * len(int_idxs)
+            task.putvartypelist(int_idxs, vartypes)
         for co in sep_K:
             # TODO: vectorize this, by using task.appendcones()
             if co.type == 'S':
@@ -108,7 +112,7 @@ class Mosek(Solver):
         # Define linear inequality and equality constraints.
         task.appendcons(m)
         rows, cols, vals = sp.find(A)
-        task.putaijlist(rows.tolist(), cols.tolist(), vals.tolist())  # TODO: check if list conversion is necessary
+        task.putaijlist(rows.tolist(), cols.tolist(), vals.tolist())
         type_constraint = [mosek.boundkey.up] * K[0].len + [mosek.boundkey.fx] * K[1].len
         task.putconboundlist(np.arange(m, dtype=int), type_constraint, b, b)
 
@@ -120,7 +124,10 @@ class Mosek(Solver):
         task.optimize()
         if params['verbose']:
             task.solutionsummary(mosek.streamtype.msg)
-        return {'env': env, 'task': task, 'params': params}
+
+        solver_output = {'env': env, 'task': task, 'params': params,
+                         'integer': 'integer_indices' in data}
+        return solver_output
 
     @staticmethod
     def parse_result(solver_output, inv_data, var_mapping):
@@ -141,10 +148,13 @@ class Mosek(Solver):
         """
         import mosek
         task = solver_output['task']
-        sol = mosek.soltype.itr
+        if solver_output['integer']:
+            sol = mosek.soltype.itg
+        else:
+            sol = mosek.soltype.itr
         solution_status = task.getsolsta(sol)
         variable_values = dict()
-        if solution_status == mosek.solsta.optimal:
+        if solution_status in [mosek.solsta.optimal, mosek.solsta.integer_optimal]:
             # optimal
             problem_status = CL_CONSTANTS.solved
             problem_value = task.getprimalobj(sol)
