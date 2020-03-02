@@ -16,6 +16,8 @@
 from sageopt import coniclifts
 from sageopt import relaxations
 from sageopt import symbolic
+from sageopt.symbolic import signomials
+from sageopt.symbolic import polynomials
 
 from sageopt.relaxations import local_refine, local_refine_polys_from_sigs
 from sageopt.relaxations import infer_domain

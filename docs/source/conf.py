@@ -13,6 +13,7 @@
 import os
 import sys
 import inspect
+import sageopt
 
 sys.path.insert(0, os.path.abspath('~/documents/research/software/sageopt'))
 
@@ -24,7 +25,7 @@ copyright = '2019, Riley J. Murray'
 author = 'Riley J. Murray'
 
 # The full version, including alpha/beta/rc tags
-release = '0.4.0'
+release = sageopt.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -79,6 +80,7 @@ html_theme = 'alabaster'
 html_theme_options = {
     'github_user': 'rileyjmurray',
     'github_repo': 'sageopt',
+    'github_type': 'star',
     'body_text_align': 'justify',
     'fixed_sidebar': 'true',
     'page_width': '1000px'

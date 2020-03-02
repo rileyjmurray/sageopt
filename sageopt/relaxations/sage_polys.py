@@ -200,9 +200,9 @@ def sage_multiplier_search(f, level=1, X=None):
 
     Notes
     -----
-    This function provides an alternative to moving up the SAGE hierarchy, for the goal of certifying
-    nonnegativity of a polynomial ``f`` over some set ``X`` where ``|X|`` is log-convex.
-    In general, the approach is to introduce a polynomial
+    This function provides an alternative to moving up the reference SAGE hierarchy, for the
+    goal of certifying nonnegativity of a polynomial ``f`` over some set ``X`` where ``|X|``
+    is log-convex. In general, the approach is to introduce a polynomial
 
         ``mult = Polynomial(alpha_hat, c_tilde)``
 

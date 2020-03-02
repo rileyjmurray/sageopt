@@ -36,3 +36,6 @@ Documentation for coniclifts is given below.
 
    Coniclifts <sageopt.coniclifts>
    Nonnegativity <sageopt.nonnegativity>
+
+Finally, sageopt provides some basic features for interacting with optimization packages
+in the python ecosystem: GPKit and CVXPY.

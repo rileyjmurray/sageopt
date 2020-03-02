@@ -43,11 +43,6 @@ def sage_feasibility(f, X=None):
     -------
     prob : coniclifts.Problem
         Has objective "maximize 0", and constraints that ``f`` is X-SAGE.
-
-    Notes
-    -----
-    This function is simply a wrapper around two functions of the same name,
-    which were written for cases where ``f`` is a Signomial or Polynomial.
     """
     if isinstance(f, Polynomial):
         prob = _poly_sage_feasibility(f, X)
@@ -79,11 +74,6 @@ def sage_multiplier_search(f, level=1, X=None):
         A problem with objective "maximize 0", and constraints that both ``g``
         and ``f * g`` are X-SAGE. The main variables in this problem are the coefficients
         of ``g``. The complexity of ``g`` is determined by ``level``.
-
-    Notes
-    -----
-    This function is simply a wrapper around two functions of the same name,
-    which were written for cases where ``f`` is a Signomial or Polynomial.
     """
     if isinstance(f, Polynomial):
         prob = _poly_sage_mult_search(f, level, X)
@@ -115,11 +105,6 @@ def infer_domain(f, gts, eqs, check_feas=True):
     Returns
     -------
     X : SigDomain or PolyDomain
-
-    Notes
-    -----
-    This is a wrapper around two functions of the same name,
-    which generate ``X`` in the signomial and polynomial cases.
     """
     if isinstance(f, Polynomial):
         X = _poly_cond_sage_data(f, gts, eqs, check_feas)

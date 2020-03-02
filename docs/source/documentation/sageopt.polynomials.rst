@@ -68,7 +68,7 @@ for more information.
 optimization
 ------------
 
-Here are sageopt's core functions which can assist in polynomial optimization:
+Here are sageopt's convenience functions for polynomial optimization:
 
  - :func:`sageopt.poly_relaxation`,
  - :func:`sageopt.poly_constrained_relaxation`,
@@ -81,10 +81,9 @@ one browser window, and keeping our page of :ref:`allexamples` open in an adjace
 It might also be useful to have a copy of MCW2019_ at hand, since that article is
 referenced throughout this section.
 
-A remark: The functions described here are largely reference
-implementations. Depending on the specifics of your problem, it may be beneficial to implement variants of these
-functions by directly working with sageopt's backend: coniclifts.
-
+A remark: The functions described here are *reference implementations*.
+Significant speed improvements are possible if you build variants of these functions
+directly with sageopt's backend: :ref:`coniclifts`.
 
 structured constraints
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -140,8 +139,8 @@ PolyDomain objects
 .. autoclass:: sageopt.symbolic.polynomials.PolyDomain
     :members:
 
-hierarchy parameters
-~~~~~~~~~~~~~~~~~~~~
+reference hierarchy parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here we describe the precise meanings of parameters
 ``p`` and ``ell`` in ``poly_constrained_relaxation``.

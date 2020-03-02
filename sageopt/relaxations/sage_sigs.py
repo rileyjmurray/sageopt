@@ -63,11 +63,11 @@ def sig_relaxation(f, X=None, form='dual', **kwargs):
     This function also accepts the following keyword arguments:
 
     ell : int
-        The level of the SAGE hierarchy. Must be nonnegative.
+        The level of the reference SAGE hierarchy. Must be nonnegative.
 
     mod_supp : NumPy ndarray
         Only used when ``ell > 0``. If ``mod_supp`` is not None, then the rows of this
-        array define the exponents of a positive definite modulating Signomial ``t`` in the SAGE hierarchy.
+        array define the exponents of a positive definite modulating Signomial ``t`` in the reference SAGE hierarchy.
     """
     ell = kwargs['ell'] if 'ell' in kwargs else 0
     mod_supp = kwargs['mod_supp'] if 'mod_supp' in kwargs else None
@@ -176,7 +176,7 @@ def sage_multiplier_search(f, level=1, X=None):
 
     Notes
     -----
-    This function provides an alternative to moving up the SAGE hierarchy, for the goal of certifying
+    This function provides an alternative to moving up the reference SAGE hierarchy, for the goal of certifying
     nonnegativity of a signomial ``f`` over some convex set ``X``.  In general, the approach is to introduce
     a signomial
 

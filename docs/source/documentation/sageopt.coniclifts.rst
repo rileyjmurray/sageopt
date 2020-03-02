@@ -1,3 +1,5 @@
+.. _coniclifts:
+
 ``coniclifts`` is ``sageopt``'s backend
 =======================================
 

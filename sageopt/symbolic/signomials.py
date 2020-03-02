@@ -68,7 +68,7 @@ class Signomial(object):
 
     c : None or ndarray
 
-        An ndarray of coefficients; with one coefficient for each row in alpha.
+        An ndarray of coefficients, with one coefficient for each row in alpha.
         This Signomial will represent the function ``lambda x: c @ np.exp(alpha @ x)``.
 
     Examples
@@ -133,7 +133,8 @@ class Signomial(object):
     Operator overloading.
 
         The operators ``+``, ``-``, and ``*`` are defined between pairs of Signomials, and pairs
-        ``{s, t}`` where ``s`` is a Signomial and ``t`` is either numeric or a coniclifts Expression.
+        ``{s, t}`` where ``s`` is a Signomial and ``t`` is scalar-like object. Specific examples of
+        scalar-like objects include numeric types, and coniclifts or CVXPY Expressions of size 1.
 
         A signomial ``s`` can be raised to a numeric power ``p`` by writing ``s**power``; if ``s.c``
         contains more than one nonzero entry, it can only be raised to nonnegative integer powers.
@@ -540,6 +541,19 @@ class Signomial(object):
 
     @staticmethod
     def from_dict(d):
+        """
+        Construct a Signomial object which represents the function::
+
+            lambda x: np.sum([ d[a] * np.exp(a @ x) for a in d])
+
+        Parameters
+        ----------
+        d : Dict[Tuple[Float], Float]
+
+        Returns
+        -------
+        s : Signomial
+        """
         alpha = []
         c = []
         for k, v in d.items():
@@ -604,7 +618,7 @@ class SigDomain(object):
 
     AbK : tuple
         Specify a convex set in the coniclifts standard. ``AbK[0]`` is a SciPy sparse
-        matrix. The first ``_n`` columns of this matrix correspond to the variables over
+        matrix. The first ``n`` columns of this matrix correspond to the variables over
         which this set is supposed to be defined. Any remaining columns are for auxiliary
         variables.
 

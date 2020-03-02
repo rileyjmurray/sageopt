@@ -10,7 +10,7 @@ Signomials look like the following:
 
    x \mapsto \sum_{i=1}^m c_i \exp({\alpha}_i \cdot x)
 
-The section ":ref:`sigobj`" covers sageopt's Signomial class, plus one extra helper function.
+The section ":ref:`sigobj`" covers sageopt's Signomial class, plus two extra helper functions.
 The section on :ref:`condsagesigs` covers the basics of a powerful connection between
 signomials and convexity.
 Sageopt has pre-built functions for constructing and working with convex relaxations of signomial
@@ -23,26 +23,21 @@ We also address some :ref:`advancedsigs`.
 signomial objects
 -----------------
 
-Here we cover the :class:`sageopt.Signomial` class, and the helper function
-:func:`sageopt.standard_sig_monomials`. The helper function
-is very convenient for constructing Signomial objects; you
-might even use it more than the Signomial constructor itself.
-Nevertheless, it is a good idea to review the Signomial class first.
+This section covers how to construct and use instances of the :class:`sageopt.Signomial` class.
 
 .. autoclass:: sageopt.Signomial
     :members:
 
-.. automethod:: sageopt.symbolic.signomials.standard_sig_monomials
+.. autofunction:: sageopt.standard_sig_monomials
 
 .. _condsagesigs:
 
 conditioning
 ------------
 
-The primary contribution of MCW2019_ was to show that convex sets have a special place
-in the theory of SAGE relaxations.
+Convex sets have a special place in the theory of SAGE relaxations.
 In particular, SAGE can incorporate convex constraints into a problem by a lossless process
-known as *partial dualization*.
+known as *partial dualization* MCW2019_.
 You can think of partial dualization as a type of "conditioning", in the sense of conditional
 probability.
 
@@ -69,7 +64,7 @@ by signomials. If your find yourself in this situation, refer to the :ref:`advan
 optimization
 ------------
 
-Here are sageopt's core functions which can assist with signomial optimization:
+Here are sageopt's convenience functions for signomial optimization:
 
  - :func:`sageopt.sig_relaxation`,
  - :func:`sageopt.sig_constrained_relaxation`,
@@ -82,9 +77,9 @@ one browser window, and keeping our page of :ref:`allexamples` open in an adjace
 It might also be useful to have a copy of MCW2019_ at hand, since that article is
 referenced throughout this section.
 
-A remark: The functions described here are largely reference
-implementations. Depending on the specifics of your problem, it may be beneficial to implement variants of these
-functions by directly working with sageopt's backend: coniclifts.
+A remark: The functions described here are *reference implementations*.
+Depending on the specifics of your problem, it may be beneficial to implement variants of these
+functions by directly working with sageopt's backend: :ref:`coniclifts<coniclifts>`.
 
 convex constraints
 ~~~~~~~~~~~~~~~~~~
@@ -163,8 +158,8 @@ SigDomain objects
 .. autoclass:: sageopt.SigDomain
     :members:
 
-hierarchy parameters
-~~~~~~~~~~~~~~~~~~~~
+reference hierarchy parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here we describe the precise meanings of parameters
 ``p`` and ``ell`` in ``sig_constrained_relaxation``.

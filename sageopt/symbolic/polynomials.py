@@ -67,9 +67,8 @@ class Polynomial(Signomial):
 
     c : ndarray
 
-        The number ``c[i]`` gives the coefficient on the i-th monomial, where the i-th
-        monomial is defined by ``alpha[i, :]``. This Polynomial will represent the function
-        ``lambda x: c @ np.prod(np.power(alpha, x))``.
+        The number ``c[i]`` os the coefficient on the i-th monomial, where the i-th
+        monomial is defined by ``alpha[i, :]``.
 
     Examples
     --------
@@ -442,6 +441,19 @@ class Polynomial(Signomial):
 
     @staticmethod
     def from_dict(d):
+        """
+        Construct a Polynomial object which represents the function::
+
+            lambda x: np.sum([ d[a] * np.prod(np.power(x, a)) for a in d]).
+
+        Parameters
+        ----------
+        d : Dict[Tuple[Float], Float]
+
+        Returns
+        -------
+        s : Polynomial
+        """
         s = Signomial.from_dict(d)
         p = s.as_polynomial()
         p._alpha_c = s.alpha_c
