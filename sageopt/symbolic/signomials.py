@@ -56,8 +56,28 @@ def standard_sig_monomials(n):
 
 class Signomial(object):
     """
-    A symbolic representation for linear combinations of exponentials, composed with
-    linear functions.
+    A concrete representation for a function of the form
+    :math:`x \\mapsto \\sum_{i=1}^m c_i \\exp(\\alpha_i \cdot x)`.
+
+    Operator overloading.
+
+        The operators ``+``, ``-``, and ``*`` are defined between pairs of Signomials, and pairs
+        ``{s, t}`` where ``s`` is a Signomial and ``t`` is "scalar-like." Specific examples of
+        "scalar-like" objects include numeric types, and coniclifts Expressions of size one.
+
+        A Signomial ``s`` can be raised to a numeric power ``p`` by writing ``s**p``; if ``s.c``
+        contains more than one nonzero entry, it can only be raised to nonnegative integer powers.
+
+        The Signomial class implements ``s1 / s2`` where ``s2`` is a numeric type or Signomial;
+        if ``s2`` is a Signomial, then its coefficient vector ``s2.c`` can only contain one nonzero entry.
+
+    Function evaluations.
+
+        Signomial objects are callable. If ``s`` is a Signomial object and ``x`` is a numpy array of length ``s.n``,
+        then ``s(x)`` computes the Signomial object as though it were any other elementary Python function.
+
+        Signomial objects provide functions to compute gradients (equivalently, Jacobians) and Hessians.
+        These methods operate by caching and evaluating symbolic representations of partial derivatives.
 
     Parameters
     ----------
@@ -69,7 +89,6 @@ class Signomial(object):
     c : None or ndarray
 
         An ndarray of coefficients, with one coefficient for each row in alpha.
-        This Signomial will represent the function ``lambda x: c @ np.exp(alpha @ x)``.
 
     Examples
     --------
@@ -92,64 +111,26 @@ class Signomial(object):
 
     The final way to construct a Signomial is with algebraic syntax, like::
 
-        y = standard_sig_monomials(2)  # y[i] represents exp(x[i])
+        y = sageopt.standard_sig_monomials(2)  # y[i] represents exp(x[i])
         f = (y[0] - y[1]) ** 3 + 1 / y[0]  # a Signomial in two variables
         x = np.array([1, 1])
         print(f(x))  # np.exp(-1), up rounding errors.
 
-    Properties
-    ----------
+    Signomial objects are not limited to numeric problem data for ``alpha`` and ``c``.
+    In fact, it's very common to have ``c`` contain a coniclifts Expression. For example,
+    if we started with a Signomial ``f`` and then updated ::
 
-    n : int
-        The dimension of the space over which this Signomial is defined. The number of columns in ``alpha``,
-        and the length of tuples appearing in the dictionary ``alpha_c``.
+        gamma = sageopt.coniclifts.Variable()
+        f =  f - gamma
 
-    m : int
-        The number of terms needed to express this Signomial in a basis of monomial functions
-        ``lambda x: exp(a @ x)`` for row vectors ``a``.
-
-    alpha : ndarray
-        Has shape ``(m, n)``. Each row specifies a vector appearing in an exponential function which
-        defines this Signomial. The rows are ordered for consistency with the property ``c``.
-
-    c : ndarray
-        Has shape ``(m,)``. The scalar ``c[i]`` is this Signomial's coefficient on the basis function
-        ``lambda x: exp(alpha[i, :] @ x)``. It is possible to have ``c.dtype == object``.
-
-    alpha_c : dict
-        The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
-        These tuples define linear functions. This Signomial could be evaluated by the code snippet
-        ``lambda x: np.sum([ alpha_c[a] * np.exp(a @ x) for a in alpha_c])``.
-
-    Attributes
-    ----------
-
-    metadata : dict
-        A place for the user to store arbitrary information about this Signomial object.
+    then ``f.c`` would be a coniclifts Expression depending on the variable ``gamma``.
 
     Notes
     -----
 
-    Operator overloading.
-
-        The operators ``+``, ``-``, and ``*`` are defined between pairs of Signomials, and pairs
-        ``{s, t}`` where ``s`` is a Signomial and ``t`` is scalar-like object. Specific examples of
-        scalar-like objects include numeric types, and coniclifts or CVXPY Expressions of size 1.
-
-        A signomial ``s`` can be raised to a numeric power ``p`` by writing ``s**power``; if ``s.c``
-        contains more than one nonzero entry, it can only be raised to nonnegative integer powers.
-
-        The Signomial class also implements ``s1 / s2`` where ``s2`` is a numeric type or Signomial;
-        if ``s2`` is a Signomial, then its coefficient vector ``s2.c`` can only contain one nonzero entry.
-
-    Function evaluations.
-
-        Signomial objects are callable. If ``s`` is a Signomial object and ``x`` is a numpy array of length ``s.n``,
-        then ``s(x)`` computes the Signomial object as though it were any other elementary Python function.
-
-        Signomial objects provide functions to compute gradients (equivalently, Jacobians) and Hessians.
-        These methods operate by caching and evaluating symbolic representations of partial derivatives.
-
+    Signomial objects have a dictionary attribute called ``metadata``. You can store any information
+    you'd like in this dictionary. However, the information in this dictionary will not automatically be
+    propogated when creating new Signomial objects (as happens when performing arithmetic on Signomials).
     """
 
     def __init__(self, alpha, c):
@@ -176,7 +157,7 @@ class Signomial(object):
         if self._grad is None:
             g = np.empty(shape=(self._n,), dtype=object)
             for i in range(self._n):
-                g[i] = self.partial(i)
+                g[i] = self._partial(i)
             self._grad = g
         pass
 
@@ -184,32 +165,53 @@ class Signomial(object):
         if self._hess is None:
             H = np.empty(shape=(self._n, self._n), dtype=object)
             for i in range(self._n):
-                ith_partial = self.partial(i)
+                ith_partial = self._partial(i)
                 for j in range(i+1):
-                    curr_partial = ith_partial.partial(j)
+                    curr_partial = ith_partial._partial(j)
                     H[i, j] = curr_partial
                     H[j, i] = curr_partial
             self._hess = H
         pass
 
     @property
-    def m(self):
-        return self._m
-
-    @property
     def n(self):
+        """
+        The dimension of the space over which this Signomial is defined;
+        this Signomial accepts inputs in :math:`\\mathbb{R}^{n}`.
+        """
         return self._n
 
     @property
+    def m(self):
+        """
+        The number of monomial basis functions :math:`x \\mapsto \\exp(a \\cdot x)`
+        used by this Signomial.
+        """
+        return self._m
+
+    @property
     def alpha(self):
+        """
+        Has shape ``(m, n)``. Each row specifies a vector appearing in an exponential function which
+        defines this Signomial. The rows are ordered for consistency with the property ``c``.
+        """
         return self._alpha
 
     @property
     def c(self):
+        """
+        Has shape ``(m,)``. The scalar ``c[i]`` is this Signomial's coefficient on the basis function
+        ``lambda x: exp(alpha[i, :] @ x)``. It's possible to have ``c.dtype == object``.
+        """
         return self._c
 
     @property
     def alpha_c(self):
+        """
+        The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
+        These tuples define linear functions. This Signomial could be evaluated by the code snippet
+        ``lambda x: np.sum([ alpha_c[a] * np.exp(a @ x) for a in alpha_c])``.
+        """
         if self._alpha_c is None:
             self._build_alpha_c_dict()
         return self._alpha_c
@@ -413,7 +415,7 @@ class Signomial(object):
             s = Signomial(alpha, c)
             return s
 
-    def partial(self, i):
+    def _partial(self, i):
         """
         Compute the symbolic partial derivative of this signomial, at coordinate ``i``.
 

@@ -55,7 +55,11 @@ def standard_poly_monomials(n):
 
 class Polynomial(Signomial):
     """
-    A symbolic representation for polynomials which are sparse in the monomial basis.
+    A concrete representation for a multivariate polynomial
+    :math:`x \\mapsto \\sum_{i=1}^m c_i \\prod_{j=1}^n x_j^{\\alpha_{ij}}`.
+
+    Polynomial objects provide the same operator overloading as the Signomial class.
+    In particular, Polynomials implement ``+``, ``-``, ``*``, ``/``, and ``**``.
 
     Parameters
     ----------
@@ -98,35 +102,14 @@ class Polynomial(Signomial):
         val = f(z)  # val = (1**2) * 3 + 4 * (2 * 3 * 1)
         print(val)  # 27.
 
-    Properties
-    ----------
+    Polynomial objects are not limited to numeric problem data for ``alpha`` and ``c``.
+    In fact, it's very common to have ``c`` contain a coniclifts Expression. For example,
+    if we started with a Polynomial ``f`` and then updated ::
 
-    n : int
-        The dimension of the space over which this Polynomial is defined. The number of columns in ``alpha``,
-        and the length of tuples appearing in the dictionary ``alpha_c``.
+        gamma = sageopt.coniclifts.Variable()
+        f =  f - gamma
 
-    m : int
-        The number of terms needed to express this Polynomial in the standard monomial basis.
-        The number of rows in  ``alpha``.  The length of the dictionary ``alpha_c``.
-
-    alpha : ndarray
-        Has shape ``(m, n)``. Entry ``alpha[i,j]`` is the power of an implicit variable ``x[j]``
-        appearing in the i-th monomial for this Polynomial. The i-th monomial, in turn, has coefficient ``c[i]``.
-
-    c : ndarray
-        Has shape ``(m,)``. The scalar ``c[i]`` is this Polynomial's coefficient on the basis function
-        ``lambda x: np.prod(np.power(alpha[i, :], x))``. It is possible to have ``c.dtype == object``, to allow for
-        coniclifts Variables.
-
-    alpha_c : dict
-        The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
-        These tuples correspond to rows in ``alpha``.
-
-    Attributes
-    ----------
-
-    metadata : dict
-        A place for the user to store arbitrary information about this Polynomial object.
+    then ``f.c`` would be a coniclifts Expression depending on the variable ``gamma``.
 
     Notes
     -----
@@ -134,6 +117,9 @@ class Polynomial(Signomial):
     polynomials and signomials are identical. However it is important to remember that polynomials and signomials
     evaluate in very different ways.
 
+    Polynomial objects have a dictionary attribute called ``metadata``. You can store any information
+    you'd like in this dictionary. However, the information in this dictionary will not automatically be
+    propogated when creating new Polynomial objects (as happens when performing arithmetic on Polynomials).
     """
 
     def __init__(self, alpha, c):
@@ -147,13 +133,81 @@ class Polynomial(Signomial):
         pass
 
     @property
+    def n(self):
+        """
+        The dimension of the space over which this Polynomial is defined;
+        this Polynomial accepts inputs in :math:`\\mathbb{R}^{n}`.
+        """
+        return self._n
+
+    @property
+    def m(self):
+        """
+        The number of monomial basis functions :math:`x \\mapsto \\prod_{j=1}^n x_j^{a_j}`
+        used by this Polynomial.
+        """
+        return self._m
+
+    @property
+    def alpha(self):
+        """
+        Has shape ``(m, n)``. Each row specifies the exponents of a monomial which
+        appear in this Polynomial. The rows are ordered for consistency with the property ``c``.
+        """
+        return self._alpha
+
+    @property
+    def c(self):
+        """
+        Has shape ``(m,)``. The scalar ``c[i]`` is this Polynomial's coefficient on the
+        basis function ``lambda x: np.prod(np.power(x, alpha[i, :]))``.
+        """
+        return self._c
+
+    @property
+    def alpha_c(self):
+        """
+        The keys of ``alpha_c`` are tuples of length ``n``, containing real numeric types (e.g int, float).
+        These tuples define monomial exponents. This Polynomial could be evaluated by the code snippet
+        ``lambda x: np.sum([ alpha_c[a] * np.prod(np.power(x,a)) for a in alpha_c])``.
+        """
+        if self._alpha_c is None:
+            self._build_alpha_c_dict()
+        return self._alpha_c
+
+    @property
+    def sig_rep(self):
+        """
+        Return the signomial representative of the current Polynomial, as well as a list of constraints needed
+        to enforce the relationship between the current Polynomial and the signomial representative.
+
+        Returns
+        -------
+        sr : Signomial
+            If this Signomial is globally nonnegative, then the current Polynomial is also globally nonnegative.
+
+        sr_cons : list of coniclifts Constraints
+            If the current Polynomial has nonconstant coefficients (i.e. some entries of ``c`` are coniclifts
+            Variables), then ``sr`` will also have nonconstant coefficients. In order to enforce the relationship
+            between ``sr`` and the current Polynomial, we may require constraints between ``c`` and ``sr.c``.
+            Any such constraints are in this list.
+
+        """
+        # It is important that self._sig_rep.alpha == self.alpha.
+        if self._sig_rep is None:
+            self._compute_sig_rep()
+        sr = self._sig_rep
+        sr_cons = self._sig_rep_constrs
+        return sr, sr_cons
+
+    @property
     def grad(self):
         """
         A numpy ndarray of shape ``(n,)`` whose entries are Polynomials. For a numpy ndarray ``x``,
         ``grad[i](x)`` is the partial derivative of this Polynomial with respect to coordinate ``i``,
         evaluated at ``x``. This array is constructed only when necessary, and is cached upon construction.
         """
-        Signomial._cache_grad(self)
+        Signomial._cache_grad(self)  # This ends up calling the Polynomial "_partial" function.
         return self._grad
 
     @property
@@ -163,7 +217,7 @@ class Polynomial(Signomial):
         ``hess[i,j](x)`` is the (i,j)-th partial derivative of this Polynomial, evaluated at ``x``.
         This array is constructed only when necessary, and is cached upon construction.
         """
-        Signomial._cache_hess(self)
+        Signomial._cache_hess(self)  # This ends up calling the Polynomial "_partial" function.
         return self._hess
 
     def __mul__(self, other):
@@ -309,7 +363,7 @@ class Polynomial(Signomial):
 
     def query_coeff(self, a):
         """
-        Returns the coefficient of the monomial ``lambda x: np.prod(np.power(a, x))`` for this Polynomial.
+        Returns the coefficient of the monomial ``lambda x: np.prod(np.power(x, a))`` for this Polynomial.
         """
         tup = tuple(a)
         if tup in self.alpha_c:
@@ -331,7 +385,7 @@ class Polynomial(Signomial):
         evens = np.where(~(self.alpha % 2).any(axis=1))[0]
         return evens
 
-    def partial(self, i):
+    def _partial(self, i):
         """
         Compute the symbolic partial derivative of this polynomial, at coordinate ``i``.
 
@@ -375,31 +429,6 @@ class Polynomial(Signomial):
         mult = Polynomial(mult_alpha, mult_c)
         return mult
 
-    @property
-    def sig_rep(self):
-        """
-        Return the signomial representative of the current Polynomial, as well as a list of constraints needed
-        to enforce the relationship between the current Polynomial and the signomial representative.
-
-        Returns
-        -------
-        sr : Signomial
-            If this Signomial is globally nonnegative, then the current Polynomial is also globally nonnegative.
-
-        sr_cons : list of coniclifts Constraints
-            If the current Polynomial has nonconstant coefficients (i.e. some entries of ``c`` are coniclifts
-            Variables), then ``sr`` will also have nonconstant coefficients. In order to enforce the relationship
-            between ``sr`` and the current Polynomial, we may require constraints between ``c`` and ``sr.c``.
-            Any such constraints are in this list.
-
-        """
-        # It is important that self._sig_rep.alpha == self.alpha.
-        if self._sig_rep is None:
-            self._compute_sig_rep()
-        sr = self._sig_rep
-        sr_cons = self._sig_rep_constrs
-        return sr, sr_cons
-
     def _compute_sig_rep(self):
         self._sig_rep = None
         self._sig_rep_constrs = []
@@ -439,6 +468,11 @@ class Polynomial(Signomial):
         f = Signomial(self.alpha, self.c)
         return f
 
+    def upcast_to_polynomial(self, other):
+        s = Signomial.upcast_to_signomial(self, other)
+        p = s.as_polynomial()
+        return p
+
     @staticmethod
     def from_dict(d):
         """
@@ -457,11 +491,6 @@ class Polynomial(Signomial):
         s = Signomial.from_dict(d)
         p = s.as_polynomial()
         p._alpha_c = s.alpha_c
-        return p
-
-    def upcast_to_polynomial(self, other):
-        s = Signomial.upcast_to_signomial(self, other)
-        p = s.as_polynomial()
         return p
 
 

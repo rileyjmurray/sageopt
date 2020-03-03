@@ -38,9 +38,11 @@ def sig_relaxation(f, X=None, form='dual', **kwargs):
 
         f_X^{\\star} \doteq \min\{ f(x) \,:\, x \\in X \}
 
-    where X = :math:`R^{\\texttt{f.n}}` by default.
+    where X = :math:`\\mathbb{R}^{\\texttt{f.n}}` by default.
 
-    If ``form='dual'``, we can also attempt to recover solutions to the above problem.
+    When ``form='dual'``, a solution to this convex relaxation can be used to
+    recover optimal solutions to the problem above. Refer to the Notes for keyword
+    arguments accepted by this function.
 
     Parameters
     ----------

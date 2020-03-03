@@ -144,8 +144,9 @@ First we show the case with the equality constraint. ::
    print(prob.value)
 
 The equality constraint in this problem creates an unnecessary challenge in solution recovery. Since we usually want
-to recover optimal solutions, we reformulate the problem by substituting :math:`P \leftarrow 70.7107 A_3 / (A_1 + A_3)
-`, and clearing the denominator :math:`(A_1 + A_3)` from constraints which involved :math:`P`. ::
+to recover optimal solutions, we reformulate the problem by substituting
+:math:`P \leftarrow 70.7107 A_3 / (A_1 + A_3)`,
+and clearing the denominator :math:`(A_1 + A_3)` from constraints which involved :math:`P`. ::
 
    A = so.standard_sig_monomials(3)
    f = 1e4 * sum(A)
@@ -208,7 +209,7 @@ over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
        print(sol)
 
 You can also try this example with ECOS. When using ECOS, you might want to use local solver refinement, as accessed
-in ``sageopt.local_refinement``.
+in :func:`sageopt.local_refine``.
 
 Nonnegative variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -228,10 +229,10 @@ We want to solve a degree six polynomial optimization problem in six variables.
    \end{align*}
 
 
-The ``sageopt`` approach to this problem is to write it first as a signomial program,
+The sageopt approach to this problem is to write it first as a signomial program,
 and then perform solution recovery with consideration to the underlying polynomial structure.
-The solution recovery starts with ``sig_solrec`` as normal, but then we refine the solution
-with a special function ``local_refine_polys_from_sigs``. ::
+The solution recovery starts with :func:`sageopt.sig_solrec` as normal, but then we refine the solution
+with a special function :func:`sageopt.local_refine_polys_from_sigs`. ::
 
    import sageopt as so
 

@@ -39,6 +39,10 @@ extensions = [
     # 'sphinx.ext.imgmath'
 ]
 
+autodoc_default_options = {
+    'member-order': 'bysource',
+}
+
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     exclusions = ('__weakref__',  # special-members
