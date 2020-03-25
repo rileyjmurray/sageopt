@@ -10,39 +10,34 @@ Signomials look like the following:
 
    x \mapsto \sum_{i=1}^m c_i \exp({\alpha}_i \cdot x)
 
-The section ":ref:`sigobj`" covers sageopt's Signomial class, plus one extra helper function.
-The section on :ref:`condsagesigs` covers the basics of a powerful connection between
+:ref:`Signomial objects <sigobj>` covers sageopt's Signomial class, plus two extra helper functions.
+The section on :ref:`conditioning<condsagesigs>` covers the basics of a powerful connection between
 signomials and convexity.
-Sageopt has pre-built functions for constructing and working with convex relaxations of signomial
+Sageopt has convenience functions for constructing and working with convex relaxations of signomial
 minimization problems (both constrained, and unconstrained).
-Those pre-built functions are described in the section on :ref:`workwithsagesigs`.
-We also address some :ref:`advancedsigs`.
+Those convenience functions are described in the section on :ref:`optimization<workwithsagesigs>`.
+We also address some :ref:`advanced topics<advancedsigs>`.
 
 .. _sigobj:
 
-signomial objects
+Signomial objects
 -----------------
 
-Here we cover the :class:`sageopt.Signomial` class, and the helper function
-:func:`sageopt.standard_sig_monomials`. The helper function
-is very convenient for constructing Signomial objects; you
-might even use it more than the Signomial constructor itself.
-Nevertheless, it is a good idea to review the Signomial class first.
+This section covers how to construct and use instances of the :class:`sageopt.Signomial` class.
 
 .. autoclass:: sageopt.Signomial
     :members:
 
-.. automethod:: sageopt.symbolic.signomials.standard_sig_monomials
+.. autofunction:: sageopt.standard_sig_monomials
 
 .. _condsagesigs:
 
-conditioning
+Conditioning
 ------------
 
-The primary contribution of MCW2019_ was to show that convex sets have a special place
-in the theory of SAGE relaxations.
+Convex sets have a special place in the theory of SAGE relaxations.
 In particular, SAGE can incorporate convex constraints into a problem by a lossless process
-known as *partial dualization*.
+known as *partial dualization* MCW2019_.
 You can think of partial dualization as a type of "conditioning", in the sense of conditional
 probability.
 
@@ -62,14 +57,14 @@ a convex set :math:`X \supset \Omega` which is implied by the constraint signomi
 
 It is possible that the function above cannot capture a convex set of interest. This is
 particularly likely if the desired convex set is not naturally described
-by signomials. If your find yourself in this situation, refer to the :ref:`advancedsigs` section.
+by signomials. If your find yourself in this situation, refer to the :ref:`advanced topics<advancedsigs>` section.
 
 .. _workwithsagesigs:
 
-optimization
+Optimization
 ------------
 
-Here are sageopt's core functions which can assist with signomial optimization:
+Here are sageopt's convenience functions for signomial optimization:
 
  - :func:`sageopt.sig_relaxation`,
  - :func:`sageopt.sig_constrained_relaxation`,
@@ -82,12 +77,12 @@ one browser window, and keeping our page of :ref:`allexamples` open in an adjace
 It might also be useful to have a copy of MCW2019_ at hand, since that article is
 referenced throughout this section.
 
-A remark: The functions described here are largely reference
-implementations. Depending on the specifics of your problem, it may be beneficial to implement variants of these
-functions by directly working with sageopt's backend: coniclifts.
+A remark: The functions described here are *reference implementations*.
+Depending on the specifics of your problem, it may be beneficial to implement variants of these
+functions by directly working with sageopt's backend: :ref:`coniclifts<coniclifts>`.
 
-convex constraints
-~~~~~~~~~~~~~~~~~~
+Optimization with convex constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 .. autofunction:: sageopt.sig_relaxation
@@ -116,12 +111,12 @@ improve the quality the bound produced on :math:`f_X^\star`.
 The improved bound comes at the expense of solving a larger optimization problem.
 For more discussion, refer to Section 2.3 of MCW2019_.
 
-arbitrary constraints
-~~~~~~~~~~~~~~~~~~~~~
+Optimization with arbitrary signomial constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The next function allows the user to specify their problem not only with convex constraints via a set
-":math:`X`", but also with explicit signomial inequality constraints and equality constraints.
-Such explicit signomial constraints are necessary when the feasible set is nonconvex,
+":math:`X`", but also with explicit signomial equations and inequalities.
+Such signomial constraints are necessary when the feasible set is nonconvex,
 although they can be useful in other contexts.
 
 
@@ -131,8 +126,8 @@ For further explanation of the parameters ``p``, ``q``, and ``ell`` in the funct
 to the :ref:`advancedsigs` section.
 
 
-solution recovery
-~~~~~~~~~~~~~~~~~
+Solution recovery for signomial optimization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Section 3.2 of MCW2019_ introduces two solution recovery algorithms for dual SAGE relaxations.
 The main algorithm ("Algorithm 1") is implemented by sageopt's function ``sig_solrec``, and the second algorithm
@@ -154,7 +149,7 @@ to its output.
 
 .. _advancedsigs:
 
-advanced topics
+Advanced topics
 ---------------
 
 SigDomain objects
@@ -163,18 +158,21 @@ SigDomain objects
 .. autoclass:: sageopt.SigDomain
     :members:
 
-hierarchy parameters
-~~~~~~~~~~~~~~~~~~~~
+reference hierarchy parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here we describe the precise meanings of parameters
-``p`` and ``ell`` in ``sig_constrained_relaxation``.
-In primal form, ``sig_constrained_relaxation`` operates by moving explicit signomial constraints into a Lagrangian,
+``p`` and ``ell`` in :func:`sig_constrained_relaxation<sageopt.sig_constrained_relaxation>`.
+In primal form, :func:`sig_constrained_relaxation<sageopt.sig_constrained_relaxation>` operates by
+moving explicit signomial constraints into a Lagrangian,
 and attempting to certify the Lagrangian as nonnegative over ``X``;
 this is a standard combination of the concepts reviewed in Section 2 of MCW2019_.
-Parameter ``ell`` is essentially the same as in ``sig_relaxation``: to improve the strength of the SAGE
+Parameter ``ell`` is essentially the same as in :func:`sig_relaxation<sageopt.sig_relaxation>`:
+to improve the strength of the SAGE
 proof system, modulate the Lagrangian ``L - gamma`` by powers of the signomial
 ``t = Signomial(L.alpha, np.ones(L.m))``.
-Parameters ``p`` and ``q`` affect the *unmodulated Lagrangian* seen by ``sig_constrained_relaxation``;
+Parameters ``p`` and ``q`` affect the *unmodulated Lagrangian* seen by
+:func:`sig_constrained_relaxation<sageopt.sig_constrained_relaxation>`;
 this unmodulated Lagrangian is constructed with the following function.
 
 .. autofunction:: sageopt.relaxations.sage_sigs.make_sig_lagrangian

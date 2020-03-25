@@ -4,18 +4,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Installation &#8212; sageopt 0.4.0 documentation</title>
+    <title>Installation &#8212; sageopt 0.5.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Examples" href="examples/examples.html" />
+    <link rel="next" title="Overview of sageopt" href="documentation/sageopt.html" />
     <link rel="prev" title="Sageopt enables proof-based signomial and polynomial optimization" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -36,7 +36,7 @@
 
 
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=star&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
 
@@ -52,9 +52,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#installation-from-source">Installation from source</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples/examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="documentation/sageopt.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasehistory.html">Release History</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="background.html">Background</a></li>
 </ul>
@@ -64,7 +65,7 @@
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Sageopt enables proof-based signomial and polynomial optimization</a></li>
-      <li>Next: <a href="examples/examples.html" title="next chapter">Examples</a></li>
+      <li>Next: <a href="documentation/sageopt.html" title="next chapter">Overview of sageopt</a></li>
   </ul></li>
 </ul>
 </div>
@@ -77,7 +78,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -96,9 +97,8 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>Sageopt requires Python version 3.5 or higher. There is no way around this: we make heavy use of the <code class="docutils literal notranslate"><span class="pre">&#64;</span></code>
-operator for matrix multiplication, and this operator was only introduced in Python 3.5.
-We also require the following packages:</p>
+<p>Sageopt requires Python version 3.5 or higher;
+we also require the following packages:</p>
 <ol class="arabic simple">
 <li><p>SciPy, version &gt;= 1.1.</p></li>
 <li><p>Numpy, version &gt;= 1.14.</p></li>
@@ -150,7 +150,7 @@ sageopt’s <code class="docutils literal notranslate"><span class="pre">setup.p
       &copy;2019, Riley J. Murray.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

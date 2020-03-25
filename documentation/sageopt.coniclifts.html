@@ -4,15 +4,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>coniclifts is sageopt’s backend &#8212; sageopt 0.4.0 documentation</title>
+    <title>coniclifts is sageopt’s backend &#8212; sageopt 0.5.0 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Nonnegativity" href="sageopt.nonnegativity.html" />
@@ -36,7 +36,7 @@
 
 
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=star&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
 
@@ -47,7 +47,6 @@
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/examples.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="sageopt.html">Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="sageopt.signomials.html">Signomials</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sageopt.polynomials.html">Polynomials</a></li>
@@ -63,7 +62,9 @@
 <li class="toctree-l2"><a class="reference internal" href="sageopt.nonnegativity.html">Nonnegativity</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releasehistory.html">Release History</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../background.html">Background</a></li>
 </ul>
@@ -88,7 +89,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -106,7 +107,7 @@
           <div class="body" role="main">
             
   <div class="section" id="coniclifts-is-sageopt-s-backend">
-<h1><code class="docutils literal notranslate"><span class="pre">coniclifts</span></code> is <code class="docutils literal notranslate"><span class="pre">sageopt</span></code>’s backend<a class="headerlink" href="#coniclifts-is-sageopt-s-backend" title="Permalink to this headline">¶</a></h1>
+<span id="coniclifts"></span><h1><code class="docutils literal notranslate"><span class="pre">coniclifts</span></code> is <code class="docutils literal notranslate"><span class="pre">sageopt</span></code>’s backend<a class="headerlink" href="#coniclifts-is-sageopt-s-backend" title="Permalink to this headline">¶</a></h1>
 <p>Sageopt does not solve SAGE relaxations on its own; it relies on third party convex optimization solvers, such as
 ECOS or MOSEK. These solvers require input in very specific standard-forms. <em>Coniclifts</em>
 provides abstractions that allow us to state SAGE relaxations in high-level syntax, and manage
@@ -253,17 +254,9 @@ be possible to recover the original Variable object with <code class="docutils l
 </pre></div>
 </div>
 <dl class="method">
-<dt id="sageopt.coniclifts.Variable.generation">
-<em class="property">property </em><code class="sig-name descname">generation</code><a class="headerlink" href="#sageopt.coniclifts.Variable.generation" title="Permalink to this definition">¶</a></dt>
-<dd><p>An internally-maintained index. Variable objects of different “generation” cannot
-participate in a common optimization problem.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Variable.name">
-<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#sageopt.coniclifts.Variable.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>A string which should uniquely identify this object in all models
-where it appears, provided <code class="docutils literal notranslate"><span class="pre">self.is_proper()</span> <span class="pre">==</span> <span class="pre">True</span></code>.</p>
+<dt id="sageopt.coniclifts.Variable.scalar_variables">
+<code class="sig-name descname">scalar_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Variable.scalar_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all ScalarVariables appearing in this Expression.</p>
 </dd></dl>
 
 <dl class="method">
@@ -275,9 +268,17 @@ Return the list of these indices.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="sageopt.coniclifts.Variable.scalar_variables">
-<code class="sig-name descname">scalar_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Variable.scalar_variables" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of all ScalarVariables appearing in this Expression.</p>
+<dt id="sageopt.coniclifts.Variable.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#sageopt.coniclifts.Variable.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A string which should uniquely identify this object in all models
+where it appears, provided <code class="docutils literal notranslate"><span class="pre">self.is_proper()</span> <span class="pre">==</span> <span class="pre">True</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Variable.generation">
+<em class="property">property </em><code class="sig-name descname">generation</code><a class="headerlink" href="#sageopt.coniclifts.Variable.generation" title="Permalink to this definition">¶</a></dt>
+<dd><p>An internally-maintained index. Variable objects of different “generation” cannot
+participate in a common optimization problem.</p>
 </dd></dl>
 
 <dl class="method">
@@ -298,7 +299,7 @@ for this class. If you want to understand all the attributes of a Problem object
 you will need to read <a class="reference internal" href="#cl-expression-system"><span class="std std-ref">The Expression system</span></a> and <a class="reference internal" href="#cl-compilerinterface"><span class="std std-ref">The compiler interface</span></a>.</p>
 <dl class="class">
 <dt id="sageopt.coniclifts.Problem">
-<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">Problem</code><span class="sig-paren">(</span><em class="sig-param">objective_sense</em>, <em class="sig-param">objective_expr</em>, <em class="sig-param">constraints</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">Problem</code><span class="sig-paren">(</span><em class="sig-param">objective_sense</em>, <em class="sig-param">objective_expr</em>, <em class="sig-param">constraints</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem" title="Permalink to this definition">¶</a></dt>
 <dd><p>A representation for a convex optimization problem. When this Problem object is constructed,
 the constraints are immediately compiled into a flattened conic representation. This compilation
 process may take some time for large problems.</p>
@@ -488,11 +489,10 @@ Either <code class="docutils literal notranslate"><span class="pre">coniclifts.S
 <p class="rubric">Notes</p>
 <p>Problem status being <code class="docutils literal notranslate"><span class="pre">coniclifts.SOLVED</span></code> does not mean that the decision variables have
 been assigned specific values. It only means that the solver returned a normal status code
-(i.e. that the solver didn’t run into numerical difficulties). If a solver return code
-indicates the problem is “infeasible” or “unbounded”, we still set
-<code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">=</span> <span class="pre">coniclifts.SOLVED</span></code>. Therefore it is important to check that
-<code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">==</span> <span class="pre">coniclifts.SOLVED</span></code> and that <code class="docutils literal notranslate"><span class="pre">-np.inf</span> <span class="pre">&lt;</span> <span class="pre">self.value</span> <span class="pre">&lt;</span> <span class="pre">np.inf</span></code> before
-accessing a Variable’s value.</p>
+(i.e. that the solver didn’t run into numerical difficulties). If a solver indicates the
+problem is infeasible or unbounded, we still set <code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">=</span> <span class="pre">coniclifts.SOLVED</span></code>.
+Therefore it is important to check that <code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">==</span> <span class="pre">coniclifts.SOLVED</span></code> and that
+<code class="docutils literal notranslate"><span class="pre">-np.inf</span> <span class="pre">&lt;</span> <span class="pre">self.value</span> <span class="pre">&lt;</span> <span class="pre">np.inf</span></code> before accessing a Variable’s value.</p>
 <dl class="method">
 <dt id="sageopt.coniclifts.Problem.solve">
 <code class="sig-name descname">solve</code><span class="sig-paren">(</span><em class="sig-param">solver=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem.solve" title="Permalink to this definition">¶</a></dt>
@@ -579,6 +579,75 @@ numpy, but only for arguments which have up to two dimensions.</p>
 <p>The operations <code class="docutils literal notranslate"><span class="pre">&gt;&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;&lt;</span></code> produce linear matrix inequality constraints.</p>
 </div></blockquote>
 <dl class="method">
+<dt id="sageopt.coniclifts.Expression.scalar_atoms">
+<code class="sig-name descname">scalar_atoms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.scalar_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all ScalarAtoms appearing in this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.scalar_variables">
+<code class="sig-name descname">scalar_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.scalar_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all ScalarVariables appearing in this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.variables">
+<code class="sig-name descname">variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all Variable objects appearing in this Expression.
+You can assume that all Variable objects will be “proper”.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_affine">
+<code class="sig-name descname">is_affine</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_affine" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if the Expression is an affine function of Variables within its scope.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_constant">
+<code class="sig-name descname">is_constant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if no Variables appear in this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_convex">
+<code class="sig-name descname">is_convex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_convex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an ndarray of booleans. For a fixed component index, the value
+of the returned array indicates if that component of the current Expression
+is a convex function of Variables within its scope.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.is_concave">
+<code class="sig-name descname">is_concave</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_concave" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an ndarray of booleans. For a fixed component index, the value
+of the returned array indicates if that component of the current Expression
+is a concave function of Variables within its scope.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.factor">
+<code class="sig-name descname">factor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tuple <code class="docutils literal notranslate"><span class="pre">(A,</span> <span class="pre">x,</span> <span class="pre">B)</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">A</span></code> is a tensor of one order higher than the current Expression object, i.e.
+<code class="docutils literal notranslate"><span class="pre">A.ndim</span> <span class="pre">==</span> <span class="pre">self.ndim</span> <span class="pre">+</span> <span class="pre">1</span></code>. The dimensions of <code class="docutils literal notranslate"><span class="pre">A</span></code> and <code class="docutils literal notranslate"><span class="pre">self</span></code> agree up until
+<code class="docutils literal notranslate"><span class="pre">self.ndim</span></code>, i.e. <code class="docutils literal notranslate"><span class="pre">A.shape[:-1]</span> <span class="pre">==</span> <span class="pre">self.shape</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">x</span></code> is a list of ScalarAtom objects, with <code class="docutils literal notranslate"><span class="pre">len(x)</span> <span class="pre">==</span> <span class="pre">A.shape[-1]</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">B</span></code> is a numpy array of the same shape as <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>The purpose of this function is to enable faster matrix multiplications of Expression
+objects. The idea is that if you tensor-contract <code class="docutils literal notranslate"><span class="pre">A</span></code> along its final dimension according
+to <code class="docutils literal notranslate"><span class="pre">x</span></code>, and then add <code class="docutils literal notranslate"><span class="pre">B</span></code>, you recover this Expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.Expression.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Expression.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>An ndarray containing numeric entries, of shape equal to <code class="docutils literal notranslate"><span class="pre">self.shape</span></code>.
+This is the result of propagating the value of ScalarVariable objects
+through the symbolic operations tracked by this Expression.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="sageopt.coniclifts.Expression.are_equivalent">
 <em class="property">static </em><code class="sig-name descname">are_equivalent</code><span class="sig-paren">(</span><em class="sig-param">expr1</em>, <em class="sig-param">expr2</em>, <em class="sig-param">rtol=1e-05</em>, <em class="sig-param">atol=1e-08</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.are_equivalent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform a check that <code class="docutils literal notranslate"><span class="pre">expr1</span></code> and <code class="docutils literal notranslate"><span class="pre">expr2</span></code> are symbolically equivalent, in the
@@ -607,82 +676,12 @@ might return False even when <code class="docutils literal notranslate"><span cl
 due to nondeterministic behavior of <code class="docutils literal notranslate"><span class="pre">Expression.factor</span></code> in such situations.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.factor">
-<code class="sig-name descname">factor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.factor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple <code class="docutils literal notranslate"><span class="pre">(A,</span> <span class="pre">x,</span> <span class="pre">B)</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">A</span></code> is a tensor of one order higher than the current Expression object, i.e.
-<code class="docutils literal notranslate"><span class="pre">A.ndim</span> <span class="pre">==</span> <span class="pre">self.ndim</span> <span class="pre">+</span> <span class="pre">1</span></code>. The dimensions of <code class="docutils literal notranslate"><span class="pre">A</span></code> and <code class="docutils literal notranslate"><span class="pre">self</span></code> agree up until
-<code class="docutils literal notranslate"><span class="pre">self.ndim</span></code>, i.e. <code class="docutils literal notranslate"><span class="pre">A.shape[:-1]</span> <span class="pre">==</span> <span class="pre">self.shape</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">x</span></code> is a list of ScalarAtom objects, with <code class="docutils literal notranslate"><span class="pre">len(x)</span> <span class="pre">==</span> <span class="pre">A.shape[-1]</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">B</span></code> is a numpy array of the same shape as <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
-<p>The purpose of this function is to enable faster matrix multiplications of Expression
-objects. The idea is that if you tensor-contract <code class="docutils literal notranslate"><span class="pre">A</span></code> along its final dimension according
-to <code class="docutils literal notranslate"><span class="pre">x</span></code>, and then add <code class="docutils literal notranslate"><span class="pre">B</span></code>, you recover this Expression.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.is_affine">
-<code class="sig-name descname">is_affine</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_affine" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if the Expression is an affine function of Variables within its scope.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.is_concave">
-<code class="sig-name descname">is_concave</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_concave" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return an ndarray of booleans. For a fixed component index, the value
-of the returned array indicates if that component of the current Expression
-is a concave function of Variables within its scope.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.is_constant">
-<code class="sig-name descname">is_constant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_constant" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if no Variables appear in this Expression.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.is_convex">
-<code class="sig-name descname">is_convex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.is_convex" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return an ndarray of booleans. For a fixed component index, the value
-of the returned array indicates if that component of the current Expression
-is a convex function of Variables within its scope.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.scalar_atoms">
-<code class="sig-name descname">scalar_atoms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.scalar_atoms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of all ScalarAtoms appearing in this Expression.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.scalar_variables">
-<code class="sig-name descname">scalar_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.scalar_variables" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of all ScalarVariables appearing in this Expression.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.value">
-<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Expression.value" title="Permalink to this definition">¶</a></dt>
-<dd><p>An ndarray containing numeric entries, of shape equal to <code class="docutils literal notranslate"><span class="pre">self.shape</span></code>.
-This is the result of propagating the value of ScalarVariable objects
-through the symbolic operations tracked by this Expression.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sageopt.coniclifts.Expression.variables">
-<code class="sig-name descname">variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Expression.variables" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of all Variable objects appearing in this Expression.
-You can assume that all Variable objects will be “proper”.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
 <div class="section" id="sage-constraint-classes">
 <h2>SAGE constraint classes<a class="headerlink" href="#sage-constraint-classes" title="Permalink to this headline">¶</a></h2>
-<p>Coniclifts provides direct implementations of the primal and dual signomial SAGE cones. The implementation details
-between ordinary-SAGE and conditional-SAGE versions of the primal and dual cones are abstracted away by the classes</p>
+<p>Coniclifts provides direct implementations of the primal and dual signomial SAGE cones:</p>
 <blockquote>
 <div><ul class="simple">
 <li><p><a class="reference internal" href="#sageopt.coniclifts.PrimalSageCone" title="sageopt.coniclifts.PrimalSageCone"><code class="xref py py-class docutils literal notranslate"><span class="pre">sageopt.coniclifts.PrimalSageCone</span></code></a>, and</p></li>
@@ -693,7 +692,7 @@ between ordinary-SAGE and conditional-SAGE versions of the primal and dual cones
 require
 an argument <code class="docutils literal notranslate"><span class="pre">X</span></code>, which can be <code class="docutils literal notranslate"><span class="pre">None</span></code> or a <code class="docutils literal notranslate"><span class="pre">SigDomain</span></code>.
 Ordinary SAGE constraints are obtained by setting <code class="docutils literal notranslate"><span class="pre">X=None</span></code>.
-Conditional SAGE constraints assume the feasible set represented by induced by <code class="docutils literal notranslate"><span class="pre">X</span></code> is feasible, and it is the user’s
+Conditional SAGE constraints assume the set represented by induced by <code class="docutils literal notranslate"><span class="pre">X</span></code> is nonempty, and it’s the user’s
 responsibility to ensure this is the case.
 The main difference in these classes’ attributes is
 that <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> instances have a dict called <code class="docutils literal notranslate"><span class="pre">age_vectors</span></code> (which represent the certificates of nonnegativity)
@@ -978,7 +977,7 @@ system, its <code class="docutils literal notranslate"><span class="pre">id</spa
       &copy;2019, Riley J. Murray.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

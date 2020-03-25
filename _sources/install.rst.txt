@@ -1,9 +1,8 @@
 Installation
 ============
 
-Sageopt requires Python version 3.5 or higher. There is no way around this: we make heavy use of the ``@``
-operator for matrix multiplication, and this operator was only introduced in Python 3.5.
-We also require the following packages:
+Sageopt requires Python version 3.5 or higher;
+we also require the following packages:
 
 1. SciPy, version >= 1.1.
 2. Numpy, version >= 1.14.

@@ -10,7 +10,7 @@ The conceptual components here are:
     are restricted.
 
  2. A high-level modeling interface (called "coniclifts") for convex optimization problems.
-    This interface includes native primal and dual "SAGE constraints."
+    This interface includes primal and dual "SAGE constraints."
 
 Sageopt then takes these two components, and defines various functions to reduce user's barrier to
 entry in working with SAGE relaxations.
@@ -22,7 +22,7 @@ The documentation below will bring you up to speed on the basics of sageopt's si
 and polynomial optimization features, as well as the most crucial prerequisites.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    Signomials <sageopt.signomials>
    Polynomials <sageopt.polynomials>
@@ -36,3 +36,6 @@ Documentation for coniclifts is given below.
 
    Coniclifts <sageopt.coniclifts>
    Nonnegativity <sageopt.nonnegativity>
+
+Finally, sageopt provides some basic features for interacting with optimization packages
+in the python ecosystem: GPKit and CVXPY.

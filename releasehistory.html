@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Release History &#8212; sageopt 0.5.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Background" href="background.html" />
+    <link rel="prev" title="Examples" href="examples/examples.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sageopt</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=star&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documentation/sageopt.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Release History</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased">[0.5.0] - unreleased</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">[0.4.2] - 2019-11-18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">[0.4.1] - 2019-10-13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">[0.4.0] - 2019-10-06</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">[0.3.4] - 2019-09-09</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">[0.3.3] - 2019-08-10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">[0.3.2] - 2019-07-12</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">[0.3.1] - 2019-07-09</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">[0.3.0] - 2019-06-30</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">[0.2.0] - 2019-05-24</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="examples/examples.html" title="previous chapter">Examples</a></li>
+      <li>Next: <a href="background.html" title="next chapter">Background</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="release-history">
+<h1>Release History<a class="headerlink" href="#release-history" title="Permalink to this headline">¶</a></h1>
+<p>The notes here are a summary from Sageopt’s changelog. Each item in the lists that follow is prefaced by
+a term like “coniclifts”, “symbolic”, or “relaxations”; these terms indicate the primary subpackage of sageopt which
+was affected.</p>
+<div class="section" id="unreleased">
+<h2>[0.5.0] - unreleased<a class="headerlink" href="#unreleased" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Removed</dt><dd><ul class="simple">
+<li><p>coniclifts: private compilation constants (e.g. <code class="docutils literal notranslate"><span class="pre">_REDUCTION_SOLVER_</span></code>) in <code class="docutils literal notranslate"><span class="pre">sage_cones.py</span></code></p></li>
+<li><p>coniclifts: private solver parameters (e.g. <code class="docutils literal notranslate"><span class="pre">_DEACTIVATE_SCALING</span></code>) in <code class="docutils literal notranslate"><span class="pre">mosek.py</span></code></p></li>
+</ul>
+</dd>
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>symbolic: Signomials are now represented primarily by arrays, rather than a dictionary.</p></li>
+<li><p>symbolic: Signomial and Polynomial constructors: both parameters <code class="docutils literal notranslate"><span class="pre">alpha</span></code> and <code class="docutils literal notranslate"><span class="pre">c</span></code> are <em>required</em>.</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>symbolic: <code class="docutils literal notranslate"><span class="pre">Signomial.from_dict</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial.from_dict</span></code> convenience functions for construction.</p></li>
+<li><p>relaxations: keyword argument checking in <code class="docutils literal notranslate"><span class="pre">sig_constrained_relaxation</span></code> and <code class="docutils literal notranslate"><span class="pre">poly_constrained_relaxation</span></code>.</p></li>
+<li><p>coniclifts: an option to reduce epigraph variable usage in dual SAGE relaxations.</p></li>
+<li><p>coniclifts: mixed-integer support for MOSEK.</p></li>
+<li><p>coniclifts: <code class="docutils literal notranslate"><span class="pre">PrimalSageCone.settings</span></code> and <code class="docutils literal notranslate"><span class="pre">DualSageCone.settings</span></code>: dictionary-valued properties which record
+compilation settings (e.g. pre-solve behavior)</p></li>
+<li><p>coniclifts: Properly expose all MOSEK solver options.</p></li>
+<li><p>interop: Proper tests for GPKit integration.</p></li>
+<li><p>interop: CVXPY integration.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id1">
+<h2>[0.4.2] - 2019-11-18<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>symbolic: <code class="docutils literal notranslate"><span class="pre">Signomial.partial</span></code> and <code class="docutils literal notranslate"><span class="pre">Polynomial.partial</span></code> to correctly work with nonconstant coefficients.</p></li>
+<li><p>symbolic: Essentially all “attributes” of Signomial or Polynomial objects have become “properties”.</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>sageopt: <code class="docutils literal notranslate"><span class="pre">sageopt.interop</span></code> a subpackage for interacting with other python projects.</p></li>
+<li><p>symbolic: A <code class="docutils literal notranslate"><span class="pre">metadata</span></code> field to Signomial and Polynomial objects.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id2">
+<h2>[0.4.1] - 2019-10-13<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Removed</dt><dd><ul class="simple">
+<li><p>coniclifts: <code class="docutils literal notranslate"><span class="pre">Variable.set_scalar_variables</span></code>.</p></li>
+<li><p>coniclifts: The <code class="docutils literal notranslate"><span class="pre">name</span></code> field of the ScalarVariable class.</p></li>
+<li><p>coniclifts: Some unused functions in <code class="docutils literal notranslate"><span class="pre">coniclifts.base.ScalarAtom</span></code>.</p></li>
+</ul>
+</dd>
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>symbolic: Fixed a bug in SigDomain and PolyDomain.</p></li>
+<li><p>relaxations: Fixed a bug in the function <code class="docutils literal notranslate"><span class="pre">clcons_from_standard_gprep</span></code>.</p></li>
+<li><p>coniclifts: <code class="docutils literal notranslate"><span class="pre">Variable.value</span></code> is now a settable property.</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>coniclifts: An <code class="docutils literal notranslate"><span class="pre">index</span></code> field to the ScalarVariable class.</p></li>
+<li><p>coniclifts: A <code class="docutils literal notranslate"><span class="pre">_DEACTIVATE_SCALING_</span></code> static attribute in the <code class="docutils literal notranslate"><span class="pre">Mosek</span></code> class.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id3">
+<h2>[0.4.0] - 2019-10-06<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Removed</dt><dd><ul class="simple">
+<li><p>sageopt: sig_primal, sig_dual, poly_primal, poly_dual (and the four constrained variations thereof)
+as top-level imports within sageopt. These should have been removed in v0.3.4.</p></li>
+<li><p>coniclifts: conditional_sage_cone.py</p></li>
+<li><p>coniclifts: sage_cone.py.</p></li>
+</ul>
+</dd>
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>relaxations: <code class="docutils literal notranslate"><span class="pre">conditional_sage_data</span></code> is now <code class="docutils literal notranslate"><span class="pre">infer_domain</span></code>.</p></li>
+<li><p>relaxations: The signature of <code class="docutils literal notranslate"><span class="pre">sig_relaxation</span></code> and <code class="docutils literal notranslate"><span class="pre">sig_constrained_relaxation</span></code>.</p></li>
+<li><p>relaxations: Fixed a bug in <code class="docutils literal notranslate"><span class="pre">conditional_sage_data</span></code> (now, <code class="docutils literal notranslate"><span class="pre">infer_domain</span></code>). Equality constraints were being
+incorrectly compiled into weaker forms.</p></li>
+<li><p>coniclifts: Conditional SAGE constraints now assume that the “conditioning” is feasible.</p></li>
+<li><p>coniclifts: The <code class="docutils literal notranslate"><span class="pre">var_name_to_locs</span></code> dict from <code class="docutils literal notranslate"><span class="pre">coniclifts.compilers.compile_constrained_system</span></code>.</p></li>
+<li><p>coniclifts: Several fields in the <code class="docutils literal notranslate"><span class="pre">coniclifts.Problem</span></code> class.</p></li>
+<li><p>coniclifts: How <code class="docutils literal notranslate"><span class="pre">ElementwiseConstraint</span></code> objects report their variables.</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>symbolic: SigDomain and PolyDomain classes, to represent “X” with conditional SAGE cones.</p></li>
+<li><p>coniclifts: sage_cones.py.</p></li>
+<li><p>coniclifts: the option to eliminate trivial AGE cones from SAGE relaxations.</p></li>
+<li><p>coniclifts: the option to allow AGE vectors to sum &lt;= c, or == c. The default is &lt;= c.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id4">
+<h2>[0.3.4] - 2019-09-09<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>coniclifts: Major changes to the compilation process. Refer to commit 7cb07866e55c6618ce17d090d52281512ea2351f.</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>relaxations: sig_relaxation and sig_constrained_relaxation (and variants for polynomial problems).</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id5">
+<h2>[0.3.3] - 2019-08-10<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>relaxations: Updated polynomial magnitude recovery to be consistent with the latest version of the arXiv paper.</p></li>
+<li><p>coniclifts: Constraint violation computations (to resolve several syntax bugs which showed up in version 0.3.2).</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>relaxations: An option for the user to specify skipping constrained least-squares step of solution recovery.</p></li>
+<li><p>coniclifts: unittests for primal and dual SAGE cone constraint violations.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id6">
+<h2>[0.3.2] - 2019-07-12<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>coniclifts: Expression objects get value by <code class="docutils literal notranslate"><span class="pre">.value</span></code> instead of <code class="docutils literal notranslate"><span class="pre">.value()</span></code></p></li>
+<li><p>coniclifts: fixed a bug in <code class="docutils literal notranslate"><span class="pre">__contains__</span></code> for coniclifts PrimalCondSageCone</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id7">
+<h2>[0.3.1] - 2019-07-09<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>relaxations: least-squares solution recovery for polynomial problems.</p></li>
+<li><p>coniclifts: conditional SAGE cones with m=2 were being compiled into overly restrictive terms,
+this is now fixed.</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>relaxations: Documentation to helper functions defined in <code class="docutils literal notranslate"><span class="pre">sageopt.relaxations</span></code> init file.</p></li>
+<li><p>relaxations: Some unittests for conditional sage polynomials.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id8">
+<h2>[0.3.0] - 2019-06-30<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Removed</dt><dd><ul class="simple">
+<li><p>symbolic: Removed the ability to call signomials in geometric format.</p></li>
+<li><p>relaxations: Removed the local_refine implementation for polynomials.</p></li>
+</ul>
+</dd>
+<dt>Changed</dt><dd><ul class="simple">
+<li><p>relaxations: Changed references to “AbK” and “logAbK” in user-facing functions to “X”.</p></li>
+</ul>
+</dd>
+<dt>Added</dt><dd><ul class="simple">
+<li><p>Several functions as top-level imports in <code class="docutils literal notranslate"><span class="pre">sageopt</span></code>.</p></li>
+<li><p>symbolic: Added <code class="docutils literal notranslate"><span class="pre">as_signomial</span></code> function to Polynomial objects.</p></li>
+<li><p>symbolic: Added <code class="docutils literal notranslate"><span class="pre">log_domain_converter</span></code> to <code class="docutils literal notranslate"><span class="pre">sage_polys.py</span></code>.</p></li>
+<li><p>relaxations: a function <code class="docutils literal notranslate"><span class="pre">local_refine_polys_from_sigs</span></code>.</p></li>
+<li><p>relaxations: Track the constraint functions which generate the set <code class="docutils literal notranslate"><span class="pre">X</span></code> in conditional SAGE
+relaxations.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="id9">
+<h2>[0.2.0] - 2019-05-24<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>Bumping version from 0.1 to 0.2, because I’ve made a ton of changes to 0.1 without noting them in a changelog.
+This is effectively me starting from scratch with version numbers, in preparation for a public release.</p>
+<dl class="simple">
+<dt>Added</dt><dd><ul class="simple">
+<li><p>This changelog.md file.</p></li>
+<li><p>A README file.</p></li>
+<li><p>License information.</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2019, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/releasehistory.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
