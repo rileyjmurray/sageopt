@@ -116,9 +116,10 @@ arising from structural engineering design.
    \end{align*}
 
 
-It is straightforward to compute a tight bound on the problem's optimal objective, however solution recovery is
-difficult. Thus we show this problem in two forms: once with the equality constraint, and once where the inequality
-constraint is used to *define* a value of :math:`P` (which we can then substitute into the rest of the formulation).
+It's straightforward to compute a tight bound on the problem's optimal objective using Sageopt, however the equality
+constraint makes solution recovery default.
+Thus we show this problem in two forms: once with the equality constraint, and once where the inequality constraint
+is used to *define* a value of :math:`P` (which we can then substitute into the rest of the formulation).
 First we show the case with the equality constraint. ::
 
    import sageopt as so
@@ -179,7 +180,7 @@ Polynomial optimization
 -----------------------
 
 
-Exploiting symmetry
+Constraint symmetry
 ~~~~~~~~~~~~~~~~~~~
 
 In this example, we minimize
@@ -188,7 +189,13 @@ In this example, we minimize
 
    f(x) = -64 \sum_{i=1}^7 \prod_{j \neq i} x_j
 
-over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
+over :math:`x \in [-1/2, 1/2]^7`.
+Notice how if constraints are satisfied for a given value of :math:`x`, then they will also be satisfied
+by another solution :math:`\hat{x}` obtained by initializing :math:`\hat{x} \leftarrow x` and then updating
+:math:`\hat{x}_i = -x_i` for any index :math:`i`.
+We say that such constraints are *sign-symmetric*.
+
+Sign-symmetric constraints are one thing Sageopt can handle quite well. ::
 
    import numpy as np
    import sageopt as so
@@ -209,12 +216,12 @@ over :math:`x \in [-1/2, 1/2]^7`. We also want to recover optimal solutions. ::
        print(sol)
 
 You can also try this example with ECOS. When using ECOS, you might want to use local solver refinement, as accessed
-in :func:`sageopt.local_refine``.
+in :func:`sageopt.local_refine`.
 
 Nonnegative variables
 ~~~~~~~~~~~~~~~~~~~~~
 
-We want to solve a degree six polynomial optimization problem in six variables.
+We want to solve a degree six polynomial optimization problem in six nonnegative variables.
 
 .. math::
    \begin{align*}
@@ -229,7 +236,7 @@ We want to solve a degree six polynomial optimization problem in six variables.
    \end{align*}
 
 
-The sageopt approach to this problem is to write it first as a signomial program,
+The sageopt approach to this problem is to write it first as a geometric-form signomial program,
 and then perform solution recovery with consideration to the underlying polynomial structure.
 The solution recovery starts with :func:`sageopt.sig_solrec` as normal, but then we refine the solution
 with a special function :func:`sageopt.local_refine_polys_from_sigs`. ::
