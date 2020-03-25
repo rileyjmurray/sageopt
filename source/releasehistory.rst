@@ -6,7 +6,7 @@ The notes here are a summary from Sageopt's changelog. Each item in the lists th
 a term like "coniclifts", "symbolic", or "relaxations"; these terms indicate the primary subpackage of sageopt which
 was affected.
 
-[0.5.0] - unreleased
+[0.5.0] - 2020-03-25
 --------------------
 Removed
  - coniclifts: private compilation constants (e.g. ``_REDUCTION_SOLVER_``) in ``sage_cones.py``
