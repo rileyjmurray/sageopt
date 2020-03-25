@@ -1,3 +1,5 @@
+.. _coniclifts:
+
 ``coniclifts`` is ``sageopt``'s backend
 =======================================
 
@@ -164,8 +166,7 @@ SAGE constraint classes
 .. _MCW2018: https://arxiv.org/abs/1810.01614
 
 
-Coniclifts provides direct implementations of the primal and dual signomial SAGE cones. The implementation details
-between ordinary-SAGE and conditional-SAGE versions of the primal and dual cones are abstracted away by the classes
+Coniclifts provides direct implementations of the primal and dual signomial SAGE cones:
 
  - :class:`sageopt.coniclifts.PrimalSageCone`, and
  - :class:`sageopt.coniclifts.DualSageCone`.
@@ -174,7 +175,7 @@ These classes have virtually identical constructors and public attributes. In pa
 require
 an argument ``X``, which can be ``None`` or a ``SigDomain``.
 Ordinary SAGE constraints are obtained by setting ``X=None``.
-Conditional SAGE constraints assume the feasible set represented by induced by ``X`` is feasible, and it is the user's
+Conditional SAGE constraints assume the set represented by induced by ``X`` is nonempty, and it's the user's
 responsibility to ensure this is the case.
 The main difference in these classes' attributes is
 that ``PrimalSageCone`` instances have a dict called ``age_vectors`` (which represent the certificates of nonnegativity)
