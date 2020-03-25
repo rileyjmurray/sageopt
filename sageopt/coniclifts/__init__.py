@@ -51,8 +51,7 @@ def presolve_trivial_age_cones(true_or_false=False):
     sageopt's default behavior for this setting.
     """
     import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
-    sc._ELIMINATE_TRIVIAL_AGE_CONES_ = true_or_false
-    pass
+    sc.SETTINGS['presolve_trivial_age_cones'] = true_or_false
 
 
 def heuristic_reduce_cond_age_cones(true_or_false=True):
@@ -67,8 +66,7 @@ def heuristic_reduce_cond_age_cones(true_or_false=True):
     sageopt's default behavior for this setting.
     """
     import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
-    sc._AGGRESSIVE_REDUCTION_ = true_or_false
-    pass
+    sc.SETTINGS['heuristic_reduction'] = true_or_false
 
 
 def age_cone_reduction_solver(solver_str='ECOS'):
@@ -80,7 +78,7 @@ def age_cone_reduction_solver(solver_str='ECOS'):
     sageopt's default behavior for this setting.
     """
     import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
-    sc._REDUCTION_SOLVER_ = solver_str
+    sc.SETTINGS['reduction_solver'] = solver_str
 
 
 def sum_age_force_equality(true_or_false=False):
@@ -97,7 +95,7 @@ def sum_age_force_equality(true_or_false=False):
     sageopt's default behavior for this setting.
     """
     import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
-    sc._SUM_AGE_FORCE_EQUALITY_ = true_or_false
+    sc.SETTINGS['sum_age_force_equality'] = true_or_false
 
 
 def compact_sage_duals(true_or_false=False):
@@ -117,4 +115,4 @@ def compact_sage_duals(true_or_false=False):
     sageopt's default behavior for this setting.
     """
     import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
-    sc._COMPACT_DUAL_CONE_ = true_or_false
+    sc.SETTINGS['compact_dual'] = true_or_false

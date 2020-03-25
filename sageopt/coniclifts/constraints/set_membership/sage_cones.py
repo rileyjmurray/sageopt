@@ -30,22 +30,13 @@ import scipy.special as special_functions
 
 _ALLOWED_CONES_ = {'+', 'S', 'e', '0'}
 
-_AGGRESSIVE_REDUCTION_ = True
-
-_ELIMINATE_TRIVIAL_AGE_CONES_ = False
-
-_REDUCTION_SOLVER_ = 'ECOS'
-
-_SUM_AGE_FORCE_EQUALITY_ = False
-
-_COMPACT_DUAL_CONE_ = False
 
 SETTINGS = {
-    'heuristic_reduction': _AGGRESSIVE_REDUCTION_,
-    'presolve_trivial_age_cones': _ELIMINATE_TRIVIAL_AGE_CONES_,
-    'reduction_solver': _REDUCTION_SOLVER_,
-    'sum_age_force_equality': _SUM_AGE_FORCE_EQUALITY_,
-    'compact_dual': _COMPACT_DUAL_CONE_
+    'heuristic_reduction': True,
+    'presolve_trivial_age_cones': False,
+    'reduction_solver': 'ECOS',
+    'sum_age_force_equality': False,
+    'compact_dual': False
 }
 
 
