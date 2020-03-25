@@ -25,14 +25,6 @@ class Mosek(Solver):
 
     _SDP_SUPPORT_ = False
 
-    _CO_TOL_NEAR_REL_ = 1000
-
-    _TOL_PATH_ = 1e-8
-
-    _TOL_STEP_SIZE_ = 1e-6
-
-    _DEACTIVATE_SCALING_ = False
-
     @staticmethod
     def apply(c, A, b, K):
         # This function is analogous to "apply(...)" in cvxpy's mosek_conif.py.
@@ -82,7 +74,8 @@ class Mosek(Solver):
         task = env.Task(0, 0)
         if params['verbose']:
             Mosek.set_verbosity_params(env, task)
-        Mosek.set_default_solver_settings(task)
+        if 'mosek_params' in params:
+            Mosek.set_task_params(task, params['mosek_params'])
 
         # The following lines recover problem parameters, and define helper constants.
         c, A, b, K, sep_K = data['c'], data['A'], data['b'], data['K'], data['sep_K']
@@ -199,37 +192,6 @@ class Mosek(Solver):
         task.set_Stream(mosek.streamtype.log, stream_printer)
         task.putintparam(mosek.iparam.log_presolve, 2)
 
-    # noinspection SpellCheckingInspection
-    @staticmethod
-    def set_default_solver_settings(task):
-        import mosek
-        task.putintparam(mosek.iparam.num_threads, 0)
-        task.putdouparam(mosek.dparam.intpnt_co_tol_near_rel, Mosek._CO_TOL_NEAR_REL_)
-        # pdsafe = 1e1
-        # task.putdouparam(mosek.dparam.intpnt_tol_psafe, pdsafe)
-        # task.putdouparam(mosek.dparam.intpnt_tol_dsafe, pdsafe)
-        # task.putdouparam(mosek.dparam.intpnt_co_tol_infeas, 1e-8)
-        task.putdouparam(mosek.dparam.intpnt_tol_path, Mosek._TOL_PATH_)
-        if Mosek._DEACTIVATE_SCALING_:
-            task.putintparam(mosek.iparam.intpnt_scaling, mosek.scalingtype.none)
-        task.putdouparam(mosek.dparam.intpnt_tol_step_size, Mosek._TOL_STEP_SIZE_)
-        # task.putintparam(mosek.iparam.intpnt_solve_form, mosek.solveform.primal)
-        # task.putintparam(mosek.iparam.intpnt_max_num_cor, int(1e8))
-        # task.putintparam(mosek.iparam.intpnt_max_num_refinement_steps, int(1e8))
-        # task.putintparam(mosek.iparam.intpnt_regularization_use, mosek.onoffkey.on)
-        # task.putdouparam(mosek.dparam.intpnt_co_tol_rel_gap, 1.0)
-        # task.putdouparam(mosek.dparam.intpnt_co_tol_mu_red, 1.0)
-        # task.putintparam(mosek.iparam.intpnt_off_col_trh, 5)
-        # task.putintparam(mosek.iparam.presolve_use, mosek.presolvemode.on)
-        # task.putintparam(mosek.iparam.presolve_eliminator_max_num_tries, 10)
-        # task.putintparam(mosek.iparam.presolve_lindep_use, mosek.onoffkey.on)
-        # task.putintparam(mosek.iparam.presolve_lindep_abs_work_trh, int(1e8))
-        # task.putintparam(mosek.iparam.presolve_lindep_rel_work_trh, int(1e8))
-        # task.putintparam(mosek.iparam.presolve_eliminator_max_fill, int(1e8))
-        # task.putintparam(mosek.iparam.log_response, 3)
-        # task.putintparam(mosek.iparam.log_feas_repair, 3)
-        pass
-
     @staticmethod
     def load_variable_values(x0, inv_data, var_mapping):
         x = np.hstack([x0[:inv_data['n']], 0])
@@ -240,3 +202,58 @@ class Mosek(Solver):
         for var_name in var_mapping:
             var_values[var_name] = x[var_mapping[var_name]]
         return var_values
+
+    @staticmethod
+    def set_task_params(task, params):
+        if params is None:
+            return
+
+        import mosek
+
+        params = params.copy()
+        task.putintparam(mosek.iparam.num_threads, 0)  # default to all threads.
+        if 'NUM_THREADS' in params:
+            task.putintparam(mosek.iparam.num_threads, params['NUM_THREADS'])
+            del params['NUM_THREADS']
+        if 'CO_TOL_NEAR_REL' in params:
+            ctnr_param = params['CO_TOL_NEAR_REL']  # multiplicative factor; MOSEK default is 1000
+            task.putdouparam(mosek.dparam.intpnt_co_tol_near_rel, ctnr_param)
+            del params['CO_TOL_NEAR_REL']
+        if 'TOL_PATH' in params:
+            tol_path_param = params['TOL_PATH']  # double, in interval (0, 1)
+            task.putdouparam(mosek.dparam.intpnt_tol_path, tol_path_param)
+            del params['TOL_PATH']
+        if 'TOL_STEP_SIZE' in params:
+            tol_step_param = params['TOL_STEP_SIZE']  # double, in interval (0, 1)
+            task.putdouparam(mosek.dparam.intpnt_tol_step_size, tol_step_param)
+            del params['TOL_STEP_SIZE']
+        if 'DEACTIVATE_SCALING' in params:
+            if params['DEACTIVATE_SCALING'] and isinstance(params['DEACTIVATE_SCALING'], bool):
+                task.putintparam(mosek.iparam.intpnt_scaling, mosek.scalingtype.none)
+            del params['DEACTIVATE_SCALING']
+
+        def _handle_str_param(param, value):
+            if param.startswith("MSK_DPAR_"):
+                task.putnadouparam(param, value)
+            elif param.startswith("MSK_IPAR_"):
+                task.putnaintparam(param, value)
+            elif param.startswith("MSK_SPAR_"):
+                task.putnastrparam(param, value)
+            else:
+                raise ValueError("Invalid MOSEK parameter '%s'." % param)
+
+        def _handle_enum_param(param, value):
+            if isinstance(param, mosek.dparam):
+                task.putdouparam(param, value)
+            elif isinstance(param, mosek.iparam):
+                task.putintparam(param, value)
+            elif isinstance(param, mosek.sparam):
+                task.putstrparam(param, value)
+            else:
+                raise ValueError("Invalid MOSEK parameter '%s'." % param)
+
+        for param, value in params.items():
+            if isinstance(param, str):
+                _handle_str_param(param.strip(), value)
+            else:
+                _handle_enum_param(param, value)

@@ -40,6 +40,14 @@ _SUM_AGE_FORCE_EQUALITY_ = False
 
 _COMPACT_DUAL_CONE_ = False
 
+SETTINGS = {
+    'heuristic_reduction': _AGGRESSIVE_REDUCTION_,
+    'presolve_trivial_age_cones': _ELIMINATE_TRIVIAL_AGE_CONES_,
+    'reduction_solver': _REDUCTION_SOLVER_,
+    'sum_age_force_equality': _SUM_AGE_FORCE_EQUALITY_,
+    'compact_dual': _COMPACT_DUAL_CONE_
+}
+
 
 def check_cones(K):
     if any([co.type not in _ALLOWED_CONES_ for co in K]):
@@ -120,7 +128,10 @@ class PrimalSageCone(SetMembership):
     """
 
     def __init__(self, c, alpha, X, name, **kwargs):
+        self.settings = SETTINGS.copy()
         covers = kwargs['covers'] if 'covers' in kwargs else None
+        if 'settings' in kwargs:
+            self.settings.update(kwargs['settings'])
         self._n = alpha.shape[1]
         self._m = alpha.shape[0]
         self.name = name
@@ -130,10 +141,10 @@ class PrimalSageCone(SetMembership):
         if X is not None:
             check_cones(X.K)
             self._lifted_n = X.A.shape[1]
-            self.ech = ExpCoverHelper(self.alpha, self.c, (X.A, X.b, X.K), covers)
+            self.ech = ExpCoverHelper(self.alpha, self.c, (X.A, X.b, X.K), covers, self.settings)
         else:
             self._lifted_n = self._n
-            self.ech = ExpCoverHelper(self.alpha, self.c, None, covers)
+            self.ech = ExpCoverHelper(self.alpha, self.c, None, covers, self.settings)
         self.age_vectors = dict()
         self._nu_vars = dict()
         self._c_vars = dict()
@@ -197,7 +208,7 @@ class PrimalSageCone(SetMembership):
         aux_c_vars = aux_c_vars[nonconst_locs, :]
         main_c_var = self.c[nonconst_locs]
         A_vals, A_rows, A_cols, b = comp_aff.columns_sum_leq_vec(aux_c_vars, main_c_var)
-        conetype = '0' if _SUM_AGE_FORCE_EQUALITY_ else '+'
+        conetype = '0' if self.settings['sum_age_force_equality'] else '+'
         K = [Cone(conetype, b.size)]
         return A_vals, A_rows, A_cols, b, K
 
@@ -431,6 +442,9 @@ class DualSageCone(SetMembership):
     """
 
     def __init__(self, v, alpha, X, name, **kwargs):
+        self.settings = SETTINGS.copy()
+        if 'settings' in kwargs:
+            self.settings.update(kwargs['settings'])
         covers = kwargs['covers'] if 'covers' in kwargs else None
         c = kwargs['c'] if 'c' in kwargs else None
         self.alpha = alpha
@@ -441,10 +455,10 @@ class DualSageCone(SetMembership):
         if X is not None:
             check_cones(X.K)
             self._lifted_n = X.A.shape[1]
-            self.ech = ExpCoverHelper(self.alpha, self.c, (X.A, X.b, X.K), covers)
+            self.ech = ExpCoverHelper(self.alpha, self.c, (X.A, X.b, X.K), covers, self.settings)
         else:
             self._lifted_n = self._n
-            self.ech = ExpCoverHelper(self.alpha, self.c, None, covers)
+            self.ech = ExpCoverHelper(self.alpha, self.c, None, covers, self.settings)
         self.X = X
         self.mu_vars = dict()
         self.name = name
@@ -462,7 +476,7 @@ class DualSageCone(SetMembership):
                 self._variables.append(self._lifted_mu_vars[i])
                 self.mu_vars[i] = self._lifted_mu_vars[i][:self._n]
                 num_cover = self.ech.expcover_counts[i]
-                if num_cover > 0 and not _COMPACT_DUAL_CONE_:
+                if num_cover > 0 and not self.settings['compact_dual']:
                     var_name = '_relent_epi_[' + str(i) + ']_{' + self.name + '}'
                     epi = Variable(shape=(num_cover,), name=var_name)
                     self._relent_epi_vars[i] = epi
@@ -488,7 +502,7 @@ class DualSageCone(SetMembership):
                 expr = np.tile(self.v[i], num_cover).view(Expression)
                 mat = self.alpha[i, :] - self.alpha[idx_set, :]
                 vecvar = self._lifted_mu_vars[i][:self._n]
-                if _COMPACT_DUAL_CONE_:
+                if self.settings['compact_dual']:
                     epi = mat @ vecvar
                     cd = elementwise_relent(expr, self.v[idx_set], epi)
                     cone_data.append(cd)
@@ -559,7 +573,10 @@ class DualSageCone(SetMembership):
 
 class ExpCoverHelper(object):
 
-    def __init__(self, alpha, c, AbK, expcovers=None):
+    def __init__(self, alpha, c, AbK, expcovers=None, settings=None):
+        self.settings = SETTINGS.copy()
+        if settings is not None:
+            self.settings.update(settings)
         if c is not None and not isinstance(c, Expression):
             raise RuntimeError()
         self.m = alpha.shape[0]
@@ -619,7 +636,7 @@ class ExpCoverHelper(object):
             cov[self.N_I] = False
             cov[i] = False
             expcovers[i] = cov
-        if self.AbK is None or _AGGRESSIVE_REDUCTION_:
+        if self.AbK is None or self.settings['heuristic_reduction']:
             row_sums = np.sum(self.alpha, 1)
             if np.all(self.alpha >= 0) and np.min(row_sums) == 0:
                 # Then apply the reduction.
@@ -684,7 +701,7 @@ class ExpCoverHelper(object):
             for i in self.U_I:
                 if np.count_nonzero(expcovers[i]) == 1:
                     expcovers[i][:] = False
-        if _ELIMINATE_TRIVIAL_AGE_CONES_:
+        if self.settings['presolve_trivial_age_cones']:
             if self.AbK is None:
                 for i in self.U_I:
                     if np.any(expcovers[i]):
@@ -693,7 +710,8 @@ class ExpCoverHelper(object):
                         objective = Expression([0])
                         cons = [mat @ x <= -1]
                         prob = Problem(CL_MIN, objective, cons)
-                        prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
+                        prob.solve(verbose=False,
+                                   solver=self.settings['reduction_solver'])
                         if prob.status == CL_SOLVED and abs(prob.value) < 1e-7:
                             expcovers[i][:] = False
             else:
@@ -706,7 +724,8 @@ class ExpCoverHelper(object):
                         A, b, K = self.AbK
                         cons = [mat @ x <= t, PrimalProductCone(A @ x + b, K)]
                         prob = Problem(CL_MIN, objective, cons)
-                        prob.solve(verbose=False, solver=_REDUCTION_SOLVER_)
+                        prob.solve(verbose=False,
+                                   solver=self.settings['reduction_solver'])
                         if prob.status == CL_SOLVED and prob.value < -100:
                             expcovers[i][:] = False
         return expcovers

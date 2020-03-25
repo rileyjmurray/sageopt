@@ -71,6 +71,7 @@ def sig_relaxation(f, X=None, form='dual', **kwargs):
         Only used when ``ell > 0``. If ``mod_supp`` is not None, then the rows of this
         array define the exponents of a positive definite modulating Signomial ``t`` in the reference SAGE hierarchy.
     """
+    _check_kwargs(kwargs, allowed={'ell', 'mod_supp'})
     ell = kwargs['ell'] if 'ell' in kwargs else 0
     mod_supp = kwargs['mod_supp'] if 'mod_supp' in kwargs else None
     if form.lower()[0] == 'd':
@@ -253,6 +254,7 @@ def sig_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
         Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
         ``ell=0``, which means the primal Lagrangian must be an X-SAGE signomial.
     """
+    _check_kwargs(kwargs, allowed={'p', 'q', 'ell'})
     p = kwargs['p'] if 'p' in kwargs else 0
     q = kwargs['q'] if 'q' in kwargs else 1
     ell = kwargs['ell'] if 'ell' in kwargs else 0
@@ -488,3 +490,9 @@ def hierarchy_e_k(sigs, k):
     s = Signomial(alpha, c)
     s = s ** k
     return s.alpha
+
+
+def _check_kwargs(kwargs, allowed):
+    for kw_key in kwargs:
+        if kw_key not in allowed:
+            raise ValueError('Keyword argument "' + kw_key + '" not recognized.')

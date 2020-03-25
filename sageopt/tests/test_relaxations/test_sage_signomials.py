@@ -63,8 +63,8 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       (2) Recover a globally optimal solution at ell == 1.
         #
-        initial_presolve = sage_cones._ELIMINATE_TRIVIAL_AGE_CONES_
-        initial_compactdual = sage_cones._COMPACT_DUAL_CONE_
+        initial_presolve = sage_cones.SETTINGS['presolve_trivial_age_cones']
+        initial_compactdual = sage_cones.SETTINGS['compact_dual']
         cl.presolve_trivial_age_cones(presolve)
         cl.compact_sage_duals(compactdual)
         alpha = np.array([[0, 0],
@@ -165,8 +165,8 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       It may not be obvious, but the signomial "s" is actually convex!
         #
-        initial_presolve = sage_cones._ELIMINATE_TRIVIAL_AGE_CONES_
-        initial_compactdual = sage_cones._COMPACT_DUAL_CONE_
+        initial_presolve = sage_cones.SETTINGS['presolve_trivial_age_cones']
+        initial_compactdual = sage_cones.SETTINGS['compact_dual']
         cl.presolve_trivial_age_cones(presolve)
         cl.compact_sage_duals(compactdual)
         s = Signomial.from_dict({(3,): 1, (2,): -4, (1,): 7, (-1,): 1})

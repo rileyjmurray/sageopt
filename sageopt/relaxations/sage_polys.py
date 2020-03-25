@@ -18,6 +18,7 @@ from sageopt import coniclifts as cl
 from sageopt.symbolic.polynomials import Polynomial, PolyDomain
 from sageopt.symbolic.signomials import Signomial
 from sageopt.relaxations import sage_sigs
+from sageopt.relaxations.sage_sigs import _check_kwargs
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
 
@@ -94,6 +95,7 @@ def poly_relaxation(f, X=None, form='dual', **kwargs):
     by this function. If you want to recover solutions, call ``poly_constrained_relaxation``
     with empty lists ``gts=[]`` and  ``eqs=[]``.
     """
+    _check_kwargs(kwargs, allowed={'poly_ell', 'sigrep_ell'})
     poly_ell = kwargs['poly_ell'] if 'poly_ell' in kwargs else 0
     sigrep_ell = kwargs['sigrep_ell'] if 'sigrep_ell' in kwargs else 0
     form = form.lower()
@@ -279,6 +281,7 @@ def poly_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
         Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
         ``ell=0``, which means the primal Lagrangian must be an X-SAGE polynomial.
     """
+    _check_kwargs(kwargs, allowed={'p', 'q', 'ell'})
     form = form.lower()
     p = kwargs['p'] if 'p' in kwargs else 0
     q = kwargs['q'] if 'q' in kwargs else 1
