@@ -32,9 +32,9 @@ The full map for this site is given below.
 
    Installation <install>
 
-   Examples <examples/examples>
-
    Documentation <documentation/sageopt>
+
+   Examples <examples/examples>
 
    File a Bug Report <https://github.com/rileyjmurray/sageopt/issues>
 
