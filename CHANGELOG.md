@@ -4,22 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# [0.5.0] - unreleased
+# [0.5.0] - 2020-03-25
 ## Added
- - ``Signomial.from_dict`` and ``Polynomial.from_dict`` conveience functions for construction.
- - An option to reduce epigraph variable usage in dual SAGE relaxations. This is accessible
- from the function ``sageopt.coniclifts.compact_sage_duals``.
- - Proper tests for GPKit integration.
- - CVXPY integration.
- - mixed-integer support for MOSEK.
+ - symbolic: ``Signomial.from_dict`` and ``Polynomial.from_dict`` convenience functions for construction.
+ - relaxations: keyword argument checking in ``sig_constrained_relaxation`` and ``poly_constrained_relaxation``.
+ - coniclifts: an option to reduce epigraph variable usage in dual SAGE relaxations.
+ - coniclifts: mixed-integer support for MOSEK.
+ - coniclifts: ``PrimalSageCone.settings`` and ``DualSageCone.settings``: dictionary-valued properties which record
+   compilation settings (e.g. pre-solve behavior)
+ - coniclifts: Properly expose all MOSEK solver options.
+ - interop: Proper tests for GPKit integration.
+ - interop: CVXPY integration.
 ## Changed
- - Signomials are now represented primarily by arrays, rather than a dictionary.
- The dictionary is now only constructed when necessary, and is not used in any signomial
- arithmetic operations.
- - Signomial and Polynomial constructors: both parameters ``alpha`` and ``c`` are *required*.
- The option to provide a dictionary to the constructor has been removed, and replaced
- with a convenience function.
-
+ - symbolic: Signomials are now represented primarily by arrays, rather than a dictionary.
+   The dictionary is now only constructed when necessary, and is not used in any signomial
+   arithmetic operations.
+ - symbolic: Signomial and Polynomial constructors: both parameters ``alpha`` and ``c`` are *required*.
+## Removed
+ - coniclifts: private compilation constants (e.g. ``_REDUCTION_SOLVER_``) in ``sage_cones.py``
+ - coniclifts: private solver parameters (e.g. ``_DEACTIVATE_SCALING``) in ``mosek.py``
 
 
 # [0.4.2] - 2019-11-18
