@@ -38,6 +38,8 @@ The full map for this site is given below.
 
    File a Bug Report <https://github.com/rileyjmurray/sageopt/issues>
 
+   Release History <releasehistory>
+
    Source Code <https://github.com/rileyjmurray/sageopt>
 
    Background <background>
