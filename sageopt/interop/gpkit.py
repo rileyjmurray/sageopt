@@ -23,22 +23,22 @@ def gpkit_hmap_to_sageopt_sig(curhmap, vkmap):
     return s
 
 
-def _gp_con_hmap(con, subs):
-    exprlist = con.as_posyslt1()
+def _gp_con_hmap(con, subs, varkeys):
+    exprlist = con.as_hmapslt1(subs)
     if len(exprlist) == 0:
         return None
     else:
-        hmap = exprlist[0].sub(subs).hmap
+        hmap = exprlist[0].sub(subs, varkeys)
         return hmap
 
 
-def _sp_eq_con_hmap(con, subs):
+def _sp_eq_con_hmap(con, subs, varkeys):
     expr = con.right - con.left
     hmap = expr.sub(subs).hmap
     return hmap
 
 
-def _sp_ineq_con_hmap(con, subs):
+def _sp_ineq_con_hmap(con, subs, varkeys):
     gtzero_rep = (con.right - con.left) * (1. - 2 * (con.oper == '>='))
     hmap = gtzero_rep.sub(subs).hmap
     return hmap
@@ -46,20 +46,20 @@ def _sp_ineq_con_hmap(con, subs):
 
 def gpkit_model_to_sageopt_model(gpk_mod):
     subs = gpk_mod.substitutions
-    constraints = [con for con in gpk_mod.flat(constraintsets=False)]
+    constraints = [con for con in gpk_mod.flat()]
     varkeys = sorted([vk for vk in gpk_mod.varkeys if vk not in subs], key=lambda vk: vk.name)
     vkmap = {vk: i for (i, vk) in enumerate(varkeys)}
     # construct sageopt Signomial objects for each GPKit constraint
     gp_eqs, gp_gts, sp_eqs, sp_gts = [], [], [], []
     for i, constraint in enumerate(constraints):
         if isinstance(constraint, MonomialEquality):
-            hmap = _gp_con_hmap(constraint, subs)
+            hmap = _gp_con_hmap(constraint, subs, gpk_mod.varkeys)
             if hmap is not None:
                 cursig = 1 - gpkit_hmap_to_sageopt_sig(hmap, vkmap)
                 cursig.metadata['GPKit constraint index'] = i
                 gp_eqs.append(cursig)
         elif isinstance(constraint, PosynomialInequality):
-            hmap = _gp_con_hmap(constraint, subs)
+            hmap = _gp_con_hmap(constraint, subs, gpk_mod.varkeys)
             if hmap is not None:
                 cursig = 1 - gpkit_hmap_to_sageopt_sig(hmap, vkmap)
                 cursig.metadata['GPKit constraint index'] = i
@@ -68,12 +68,12 @@ def gpkit_model_to_sageopt_model(gpk_mod):
             # ^ incidentally, these can also be equality constraints
             with SignomialsEnabled():
                 if isinstance(constraint, SingleSignomialEquality):
-                    hmap = _sp_eq_con_hmap(constraint, subs)
+                    hmap = _sp_eq_con_hmap(constraint, subs, gpk_mod.varkeys)
                     cursig = gpkit_hmap_to_sageopt_sig(hmap, vkmap)
                     cursig.metadata['GPKit constraint index'] = i
                     sp_eqs.append(cursig)
                 else:
-                    hmap = _sp_ineq_con_hmap(constraint, subs)
+                    hmap = _sp_ineq_con_hmap(constraint, subs, gpk_mod.varkeys)
                     cursig = gpkit_hmap_to_sageopt_sig(hmap, vkmap)
                     cursig.metadata['GPKit constraint index'] = i
                     sp_gts.append(cursig)

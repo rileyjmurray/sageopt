@@ -61,7 +61,7 @@ class TestGPKitInterop(unittest.TestCase):
         A signomial equality constraint
         """
         from gpkit import Variable, Model, SignomialsEnabled
-        from gpkit.constraints.sigeq import SingleSignomialEquality
+        from gpkit.nomials import SingleSignomialEquality
         #
         # Build GPKit model
         #
@@ -174,7 +174,7 @@ class TestGPKitInterop(unittest.TestCase):
         upper = f(soln)
         assert abs(lower - upper) <= 1e-4
         self.assertAlmostEqual(lower, upper, places=4)
-        self.assertAlmostEqual(lower, gpk_sol['cost'].m)
+        self.assertAlmostEqual(lower, gpk_sol['cost'])
         #
         #   Check the sageopt solution against GPKit solution
         #
