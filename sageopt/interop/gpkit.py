@@ -78,7 +78,9 @@ def gpkit_model_to_sageopt_model(gpk_mod):
                     cursig.metadata['GPKit constraint index'] = i
                     sp_gts.append(cursig)
     # Build a sageopt Signomial from the GPKit objective.
-    f = gpkit_hmap_to_sageopt_sig(gpk_mod.cost.hmap, vkmap)  # should this have a substitution applied first?
+    objective_hmap = gpk_mod.cost.hmap.sub(subs, gpk_mod.varkeys)
+    f = gpkit_hmap_to_sageopt_sig(objective_hmap, vkmap)
+    # first?
     # Somehow aggregate all sageopt problem data. Might make a class for this later.
     so_mod = {
         'f': f,
