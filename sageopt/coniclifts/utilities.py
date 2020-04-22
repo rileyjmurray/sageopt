@@ -25,7 +25,7 @@ def array_index_iterator(shape):
     return product(*[range(d) for d in shape])
 
 
-def sparse_matrix_data_to_csc(data_tuples, index_map=None):
+def sparse_matrix_data_to_csc(data_tuples):
     """
     Parameters
     ----------
@@ -33,10 +33,6 @@ def sparse_matrix_data_to_csc(data_tuples, index_map=None):
         Each tuple is of the form ``(A_vals, A_rows, A_cols, len)``, where ``A_vals`` is a
         list, ``A_rows`` is a 1d numpy array, ``A_cols`` is a list, and ``len`` is the number
         of rows in the matrix block specified by this tuple.
-    index_map : dict
-        If provided, will map ScalarVariable ids to columns of the returned sparse matrix.
-        If none, this function computes and returns an appropriate value for index_map which
-        eliminates all unnecessary ScalarVariables.
 
     Returns
     -------
@@ -59,19 +55,17 @@ def sparse_matrix_data_to_csc(data_tuples, index_map=None):
         A_vals += A_v
         row_index_offset += num_rows
     A_rows = np.hstack([d[1] for d in data_tuples]).astype(int)
-    if index_map is None:
-        unique_cols = np.sort(np.unique(A_cols))
-        index_map = defaultdict(lambda: -1)
-        index_map.update({c: idx for (idx, c) in enumerate(unique_cols)})
-        num_cols = unique_cols.size
-        # We convert to a defaultdict with dummy value.
-        # The dummy value is used to assign values to ScalarVariable objects
-        # whose parent Variable participates in an optimization problem,
-        # even when the ScalarVariable itself does not appear in the problem.
-    else:
-        num_cols = max(index_map.values()) + 1
+
+    unique_cols = np.sort(np.unique(A_cols))
+    index_map = defaultdict(lambda: -1)
+    index_map.update({c: idx for (idx, c) in enumerate(unique_cols)})
+    # ^ We convert to a defaultdict with dummy value.
+    #   The dummy value is used to assign values to ScalarVariable objects
+    #   whose parent Variable participates in an optimization problem,
+    #   even when the ScalarVariable itself does not appear in the problem.
     A_cols = np.array([index_map[ac] for ac in A_cols])
     num_rows = np.max(A_rows) + 1
+    num_cols = unique_cols.size
     A = sp.csc_matrix((A_vals, (A_rows, A_cols)),
                       shape=(int(num_rows), int(num_cols)), dtype=float)
     A.eliminate_zeros()
