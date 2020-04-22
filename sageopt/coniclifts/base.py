@@ -860,6 +860,7 @@ class Variable(Expression):
         return True
 
     def scalar_variables(self):
+        #TODO: make this faster for "proper" Variable objects.
         return [list(se.atoms_to_coeffs)[0] for se in self.flat]
 
     def leading_scalar_variable_id(self):

@@ -34,10 +34,11 @@ def compile_problem(objective, constraints):
     # Generate a conic system that is feasible iff the constraints are feasible.
     A, b, K, variable_map, variables, svid2col = compile_constrained_system(constraints)
     # Generate the vector for the objective function.
-    c, c_offset = compile_linear_expression(objective, svid2col)
+    # c, c_offset = compile_linear_expression(objective, svid2col)
+    c, c_offset = compile_objective(objective, svid2col)
     if c_offset != 0:
         warnings.warn('A constant-term ' + str(c_offset) + ' is being dropped from the objective.')
-    c = np.array(c.todense()).flatten().astype(float)
+    # c = np.array(c.todense()).flatten().astype(float)
     return c, A, b, K, variable_map, variables
 
 
@@ -196,14 +197,19 @@ def epigraph_substitution(elementwise_constrs):
     return nl_cone_data
 
 
-def compile_linear_expression(expr, index_map):
-    dummy_con = expr >= 0
-    dummy_con.epigraph_checked = True
-    lin_cone_data = dummy_con.conic_form()
-    b = lin_cone_data[3]
-    matrix_data = (lin_cone_data[0], lin_cone_data[1], lin_cone_data[2], b.size)
-    A, index_map = util.sparse_matrix_data_to_csc([matrix_data], index_map)
-    return A, b
+def compile_objective(objective, svid2col):
+    obj_sa = objective.ravel()[0]
+    offset = obj_sa.offset
+    n = len([col for col in svid2col.values() if col >= 0])
+    c = np.zeros(n, dtype=float)
+    if len(obj_sa.atoms_to_coeffs) > 0:
+        obj_data = [(svid2col[sv.id], co) for sv, co in obj_sa.atoms_to_coeffs.items()]
+        obj_sv_idxs, obj_sv_coeffs = zip(*obj_data)
+        if min(obj_sv_idxs) < 0:
+            msg = 'The objective Expression contains a ScalarVariable which does not appear in the constraints.'
+            raise ValueError(msg)
+        c[np.array(obj_sv_idxs)] = obj_sv_coeffs
+    return c, offset
 
 
 def make_variable_map(variables, var_indices):

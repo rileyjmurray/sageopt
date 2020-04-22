@@ -20,7 +20,7 @@ from sageopt.coniclifts.cones import Cone
 
 def weighted_sum_exp(c, x):
     """
-    Return a coniclifts ScalarExpression representing the signomial
+    Return a coniclifts Expression of size 1, representing the signomial
 
         sum([ci * e^xi for (ci, xi) in (c, x)])
 

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# [0.5.1] - unreleased
+## Added
+ - coniclifts: "abs" and "pos" NonlinearScalarAtoms.
+ - coniclifts: a field "age_witnesses" to PrimalSageCone objects.
+ - coniclifts: compile_objective.
+## Removed
+ - coniclifts: compile_linear_expression.
+
+
 # [0.5.0] - 2020-03-25
 ## Added
  - symbolic: ``Signomial.from_dict`` and ``Polynomial.from_dict`` convenience functions for construction.

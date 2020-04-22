@@ -15,6 +15,7 @@
 """
 import unittest
 import numpy as np
+from scipy.special import rel_entr
 from sageopt.coniclifts.base import Variable, Expression
 from sageopt.coniclifts.operators.relent import relent
 from sageopt.coniclifts.operators.norms import vector2norm
@@ -95,7 +96,11 @@ class TestConstraints(unittest.TestCase):
     def test_ordinary_sage_primal_2(self):
         n, m = 2, 6
         np.random.seed(0)
-        alpha = 10 * np.random.randn(m, n)
+        alpha = 1 * np.random.randn(m-1, n)
+        conv_comb = np.random.rand(m-1)
+        conv_comb /= np.sum(conv_comb)
+        alpha_last = alpha.T @ conv_comb
+        alpha = np.row_stack([alpha, alpha_last])
         c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
         c = Variable(shape=(m,), name='projected_c0')
         t = Variable(shape=(1,), name='epigraph_var')
@@ -104,10 +109,24 @@ class TestConstraints(unittest.TestCase):
         constraints = [sage_constraint, epi_constraint]
         prob = Problem(CL_MIN, t, constraints)
         prob.solve(solver='ECOS')
+
+        # constraint violations
         v0 = sage_constraint.violation(norm_ord=1, rough=False)
         assert v0 < 1e-6
         v1 = sage_constraint.violation(norm_ord=np.inf, rough=True)
         assert v1 < 1e-6
+
+        # certificates
+        w4 = sage_constraint.age_witnesses[4].value
+        c4 = sage_constraint.age_vectors[4].value
+        drop4 = np.array([True, True, True, True, False, True])
+        level4 = np.sum(rel_entr(w4[drop4], np.exp(1) * c4[drop4])) - c4[4]
+        assert level4 < 1e-6
+        w5 = sage_constraint.age_witnesses[5].value
+        c5 = sage_constraint.age_vectors[5].value
+        drop5 = np.array([True, True, True, True, True, False])
+        level5 = np.sum(rel_entr(w5[drop5], np.exp(1) * c5[drop5])) - c5[5]
+        assert level5 < 1e-6
 
     def test_ordinary_sage_dual_1(self):
         # generate a point which has positive distance from the dual SAGE cone

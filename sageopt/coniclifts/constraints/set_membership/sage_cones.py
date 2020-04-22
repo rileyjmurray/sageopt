@@ -16,9 +16,10 @@
 import numpy as np
 from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
 from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone, DualProductCone
-from sageopt.coniclifts.base import Variable, Expression
+from sageopt.coniclifts.base import Variable, Expression, ScalarExpression
 from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.operators import affine as aff
+from sageopt.coniclifts.operators.pos import pos as pos_operator
 from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementwise_relent
 from sageopt.coniclifts.operators.precompiled import affine as comp_aff
@@ -48,7 +49,18 @@ def check_cones(K):
 
 class PrimalSageCone(SetMembership):
     """
-    Represent the constraint ":math:`c \\in C_{\\mathrm{SAGE}}(\\alpha, X)`".
+    Require that :math:`f(x) = \\sum_{i=1}^m c_i \\exp(\\alpha_i \\cdot x)` is nonnegative on
+    :math:`X`, and furthermore that we can *prove* this nonnegativity by decomposing :math:`f`
+    into a sum of ":math:`X`-AGE functions." It is useful to summarize this constraint by writing
+
+    .. math::
+
+        c \\in C_{\\mathrm{SAGE}}(\\alpha, X).
+
+    Each :math:`X`-AGE function used in the decomposition of :math:`f` can be proven nonnegative
+    by certifying a particular relative entropy inequality. This PrimalSageCone object tracks
+    both coefficients of :math:`X`-AGE functions used in the decomposition of :math:`f`,
+    and the additional variables needed to certify the associated relative entropy inequalities.
 
     Parameters
     ----------
@@ -93,13 +105,43 @@ class PrimalSageCone(SetMembership):
 
     age_vectors : Dict[int, Expression]
 
-        If all Variable objects in the scope of this constraint are assigned feasible,
-        values, then we should have ``age_vectors[i].value`` in the i-th AGE cone with
-        respect to ``alpha``, and ``c.value == sum([av.value for av in age_vectors.values()], axis=0)``.
+        A vector :math:`c^{(i)} = \\mathtt{age{\\_}vectors[i]}` can have at most one negative
+        component :math:`c^{(i)}_i`. Such a vector defines a signomial
+
+        .. math::
+
+          f_i(x) = \\textstyle\\sum_{j=1}^m c^{(i)}_j \\exp(\\alpha_j \\cdot x)
+
+        which is nonnegative for all :math:`x \\in X`.
+        Letting :math:`N \\doteq \\mathtt{self.age\\_vectors.keys()}`, we should have
+
+        .. math::
+
+          \\mathtt{self.c} \\geq \\textstyle\\sum_{i \\in N} \\mathtt{self.age\\_vectors[i]}.
+
+        See also ``age_witnesses``.
+
+    age_witnesses : Dict[int, Expression]
+
+        A vector :math:`w^{(i)} = \\mathtt{age{\\_}witnesses[i]}` should certify that the signomial
+        with coefficients :math:`c^{(i)} = \\mathtt{age{\\_}vectors[i]}` is nonnegative on :math:`X`.
+        Specifically, we should have
+
+        .. math::
+
+          \\sigma_X\\left(-\\alpha w^{(i)}\\right)
+            + D\\left(w^{(i)}_{\\setminus i}, e c^{(i)}_{\\setminus i}\\right)\\leq c^{(i)}_i
+
+        where :math:`\\sigma_X` is the support function of :math:`X`, :math:`e` is Euler's number,
+        :math:`w^{(i)}_{\\setminus i} = ( w^{(i)}_j )_{j \\in [m]\\setminus \\{i\\}}`,
+        :math:`c^{(i)}_{\\setminus i} = ( c^{(i)}_j )_{j \\in [m]\\setminus \\{i\\}}`,
+        and :math:`D(\\cdot,\\cdot)` is the relative entropy function.
+        The validity of this certificate stems from the weak-duality principle in convex optimization.
 
     X : SigDomain or None
 
         If None, then this constraint represents a primal ordinary-SAGE cone.
+        See also the function PrimalSageCone.sigma_x(...)
 
     ech : ExpCoverHelper
 
@@ -137,6 +179,7 @@ class PrimalSageCone(SetMembership):
             self._lifted_n = self._n
             self.ech = ExpCoverHelper(self.alpha, self.c, None, covers, self.settings)
         self.age_vectors = dict()
+        self.age_witnesses = dict()
         self._nu_vars = dict()
         self._c_vars = dict()
         self._relent_epi_vars = dict()
@@ -180,6 +223,14 @@ class PrimalSageCone(SetMembership):
         if self._m > 1:
             for i in self.ech.U_I:
                 ci_expr = Expression(np.zeros(self._m,))
+                wi_expr = Expression(np.zeros(self._m,))
+                # TODO: lazily create wi_exprs, by making age_witnesses a property.
+                num_cover = self.ech.expcover_counts[i]
+                if num_cover > 0:
+                    wi_expr[self.ech.expcovers[i]] = pos_operator(self._nu_vars[i])
+                    wi_expr[i] = ScalarExpression({sv: -1 for sv in self._nu_vars[i].scalar_variables()},
+                                                  0.0, verify=False)
+                self.age_witnesses[i] = wi_expr
                 if i in self.ech.N_I:
                     ci_expr[self.ech.expcovers[i]] = self._c_vars[i]
                     ci_expr[i] = self.c[i]
@@ -189,6 +240,7 @@ class PrimalSageCone(SetMembership):
                 self.age_vectors[i] = ci_expr
         else:
             self.age_vectors[0] = self.c
+            self.age_witnesses[0] = Expression([0])
         pass
 
     def _age_vectors_sum_to_c(self):
@@ -356,6 +408,18 @@ class PrimalSageCone(SetMembership):
             residual = c.reshape((-1,))  # >= 0
             residual[residual >= 0] = 0
             return np.linalg.norm(c, ord=norm_ord)
+
+    def sigma_x(self, y):
+        """
+        The value of the support function of :math:`X`, evaluated at :math:`y`:
+
+        .. math::
+
+            \\sigma_X(y) \\doteq \\max\\{ y^\\intercal x \\,:\\, x \\in X \\}.
+
+        See also, the attribute ``PrimalSageCone.age_witnesses``.
+        """
+        raise NotImplementedError()
 
 
 class DualSageCone(SetMembership):
