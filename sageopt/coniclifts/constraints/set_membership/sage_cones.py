@@ -190,33 +190,34 @@ class PrimalSageCone(SetMembership):
 
     def _initialize_variables(self):
         self._variables = self.c.variables()
-        if self._m > 1:
-            for i in self.ech.U_I:
-                num_cover = self.ech.expcover_counts[i]
-                if num_cover > 0:
-                    var_name = 'nu^{(' + str(i) + ')}_' + self.name
-                    self._nu_vars[i] = Variable(shape=(num_cover,), name=var_name)
-                    var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
-                    self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
-                    if self.X is not None:
-                        var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
-                        self._eta_vars[i] = Variable(shape=(self.X.b.size,), name=var_name)
-                c_len = num_cover
-                if i not in self.ech.N_I:
-                    c_len += 1
-                if c_len == 0:  # pragma: no cover
-                    msg = 'PrimalSageCone constraint "' + self.name + '" encountered an index '
-                    msg += 'i=' + str(i) + '\n where the i-th AGE cone reduces to the nonnegative '
-                    msg += 'orthant, but self.c[i]=' + str(self.c[i].value) + ' is negative. \n\n'
-                    msg += 'This SAGE constraint is infeasible.'
-                    raise RuntimeError(msg)
-                var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
-                self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
-            self._variables += list(self._nu_vars.values())
-            self._variables += list(self._c_vars.values())
-            self._variables += list(self._relent_epi_vars.values())
-            if self.X is not None:
-                self._variables += list(self._eta_vars.values())
+        if self._m == 1:
+            pass
+        for i in self.ech.U_I:
+            num_cover = self.ech.expcover_counts[i]
+            if num_cover > 0:
+                var_name = 'nu^{(' + str(i) + ')}_' + self.name
+                self._nu_vars[i] = Variable(shape=(num_cover,), name=var_name)
+                var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
+                self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
+                if self.X is not None:
+                    var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
+                    self._eta_vars[i] = Variable(shape=(self.X.b.size,), name=var_name)
+            c_len = num_cover
+            if i not in self.ech.N_I:
+                c_len += 1
+            if c_len == 0:  # pragma: no cover
+                msg = 'PrimalSageCone constraint "' + self.name + '" encountered an index '
+                msg += 'i=' + str(i) + '\n where the i-th AGE cone reduces to the nonnegative '
+                msg += 'orthant, but self.c[i]=' + str(self.c[i].value) + ' is negative. \n\n'
+                msg += 'This SAGE constraint is infeasible.'
+                raise RuntimeError(msg)
+            var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
+            self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
+        self._variables += list(self._nu_vars.values())
+        self._variables += list(self._c_vars.values())
+        self._variables += list(self._relent_epi_vars.values())
+        if self.X is not None:
+            self._variables += list(self._eta_vars.values())
         pass
 
     def _build_aligned_age_vectors(self):
