@@ -129,7 +129,7 @@ class PrimalSageCone(SetMembership):
 
         .. math::
 
-          \\sigma_X\\left(-\\alpha w^{(i)}\\right)
+          \\sigma_X\\left(-\\alpha^\\intercal w^{(i)}\\right)
             + D\\left(w^{(i)}_{\\setminus i}, e c^{(i)}_{\\setminus i}\\right)\\leq c^{(i)}_i
 
         where :math:`\\sigma_X` is the support function of :math:`X`, :math:`e` is Euler's number,

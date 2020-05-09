@@ -12,16 +12,16 @@
 #
 import os
 import sys
+sys.path.insert(0, os.path.abspath('/Users/RJMurray/Documents/Research/software/sageopt'))
+
 import inspect
 import sageopt
-
-sys.path.insert(0, os.path.abspath('~/documents/research/software/sageopt'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'sageopt'
-copyright = '2019, Riley J. Murray'
+copyright = '2020, Riley J. Murray'
 author = 'Riley J. Murray'
 
 # The full version, including alpha/beta/rc tags
