@@ -89,3 +89,10 @@ def contiguous_selector_lengths(sel):
         return lengths.tolist()
     else:
         return []
+
+
+def kernel_basis(mat, tol=1e-6):
+    u, s, vh = np.linalg.svd(mat)
+    rank = np.count_nonzero(s > tol)
+    basis = vh[rank:, :].T
+    return basis

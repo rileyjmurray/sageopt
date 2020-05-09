@@ -116,3 +116,19 @@ def compact_sage_duals(true_or_false=False):
     """
     import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
     sc.SETTINGS['compact_dual'] = true_or_false
+
+
+def kernel_basis_age_witnesses(true_or_false=True):
+    """
+    Set coniclifts' behavior for SAGE constraints.
+
+    If ``true_or_false=True``, then coniclifts will represent primal ordinary
+    SAGE constraints using no equality constraints within an AGE cone. This comes
+    at the expense of taking a longer time for coniclifts to setup the problem.
+    It also might affect solver behavior (probably for the better).
+
+    The default value for ``true_or_false`` in this function's signature represents
+    sageopt's default behavior for this setting.
+    """
+    import sageopt.coniclifts.constraints.set_membership.sage_cones as sc
+    sc.SETTINGS['kernel_basis'] = true_or_false

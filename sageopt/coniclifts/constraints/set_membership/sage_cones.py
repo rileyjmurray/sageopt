@@ -25,6 +25,7 @@ from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementw
 from sageopt.coniclifts.operators.precompiled import affine as comp_aff
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.coniclifts.standards.constants import minimize as CL_MIN, solved as CL_SOLVED
+from sageopt.coniclifts.utilities import kernel_basis
 import warnings
 import scipy.special as special_functions
 
@@ -37,7 +38,8 @@ SETTINGS = {
     'presolve_trivial_age_cones': False,
     'reduction_solver': 'ECOS',
     'sum_age_force_equality': False,
-    'compact_dual': False
+    'compact_dual': False,
+    'kernel_basis': False,
 }
 
 
@@ -181,17 +183,20 @@ class PrimalSageCone(SetMembership):
         self.age_vectors = dict()
         self._age_witnesses = None
         self._nu_vars = dict()
+        self._pre_nu_vars = dict()
+        self._nu_bases = dict()
         self._c_vars = dict()
         self._relent_epi_vars = dict()
         self._eta_vars = dict()
-        self._initialize_variables()
+        self._variables = self.c.variables()
+        if self._m > 1 and self.X is None:
+            self._ordsage_init_variables()
+        elif self._m > 1:
+            self._condsage_init_variables()
         self._build_aligned_age_vectors()
         pass
 
-    def _initialize_variables(self):
-        self._variables = self.c.variables()
-        if self._m == 1:
-            pass
+    def _condsage_init_variables(self):
         for i in self.ech.U_I:
             num_cover = self.ech.expcover_counts[i]
             if num_cover > 0:
@@ -199,26 +204,59 @@ class PrimalSageCone(SetMembership):
                 self._nu_vars[i] = Variable(shape=(num_cover,), name=var_name)
                 var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
                 self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
-                if self.X is not None:
-                    var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
-                    self._eta_vars[i] = Variable(shape=(self.X.b.size,), name=var_name)
-            c_len = num_cover
-            if i not in self.ech.N_I:
-                c_len += 1
-            if c_len == 0:  # pragma: no cover
-                msg = 'PrimalSageCone constraint "' + self.name + '" encountered an index '
-                msg += 'i=' + str(i) + '\n where the i-th AGE cone reduces to the nonnegative '
-                msg += 'orthant, but self.c[i]=' + str(self.c[i].value) + ' is negative. \n\n'
-                msg += 'This SAGE constraint is infeasible.'
-                raise RuntimeError(msg)
+                var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
+                self._eta_vars[i] = Variable(shape=(self.X.b.size,), name=var_name)
+            c_len = self._c_len_check_infeas(num_cover, i)
             var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
             self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
         self._variables += list(self._nu_vars.values())
         self._variables += list(self._c_vars.values())
         self._variables += list(self._relent_epi_vars.values())
-        if self.X is not None:
-            self._variables += list(self._eta_vars.values())
+        self._variables += list(self._eta_vars.values())
         pass
+
+    def _ordsage_init_variables(self):
+        for i in self.ech.U_I:
+            num_cover = self.ech.expcover_counts[i]
+            if num_cover > 0:
+                var_name = 'nu^{(' + str(i) + ')}_' + self.name
+                if self.settings['kernel_basis']:
+                    var_name = '_pre_' + var_name
+                    idx_set = self.ech.expcovers[i]
+                    mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
+                    nu_i_basis = kernel_basis(mat)
+                    self._nu_bases[i] = nu_i_basis
+                    pre_nu_i = Variable(shape=(nu_i_basis.shape[1],), name=var_name)
+                    self._pre_nu_vars[i] = pre_nu_i
+                else:
+                    var_name = 'nu^{(' + str(i) + ')}_' + self.name
+                    nu_i = Variable(shape=(num_cover,), name=var_name)
+                    self._nu_vars[i] = nu_i
+                var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
+                self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
+            c_len = self._c_len_check_infeas(num_cover, i)
+            var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
+            self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
+        if self.settings['kernel_basis']:
+            self._variables += list(self._pre_nu_vars.values())
+        else:
+            self._variables += list(self._nu_vars.values())
+        self._variables += list(self._c_vars.values())
+        self._variables += list(self._relent_epi_vars.values())
+        pass
+
+    # pragma: no cover
+    def _c_len_check_infeas(self, num_cover, i):
+        c_len = num_cover
+        if i not in self.ech.N_I:
+            c_len += 1
+        if c_len == 0:  # pragma: no cover
+            msg = 'PrimalSageCone constraint "' + self.name + '" encountered an index '
+            msg += 'i=' + str(i) + '\n where the i-th AGE cone reduces to the nonnegative '
+            msg += 'orthant, but self.c[i]=' + str(self.c[i].value) + ' is negative. \n\n'
+            msg += 'This SAGE constraint is infeasible.'
+            raise RuntimeError(msg)
+        return c_len
 
     def _build_aligned_age_vectors(self):
         if self._m > 1:
@@ -251,7 +289,7 @@ class PrimalSageCone(SetMembership):
         return self._variables
 
     def conic_form(self):
-        if len(self._nu_vars) == 0:
+        if len(self._nu_vars) == 0 and len(self._pre_nu_vars) == 0:
             cd = self._trivial_conic_form()
         else:
             if self.X is None:
@@ -269,23 +307,32 @@ class PrimalSageCone(SetMembership):
 
     def _ordsage_conic_form(self):
         cone_data = []
+        if self.settings['kernel_basis']:
+            nu_keys = self._pre_nu_vars.keys()
+        else:
+            nu_keys = self._nu_vars.keys()
         for i in self.ech.U_I:
-            if i in self._nu_vars:
+            if i in nu_keys:
                 idx_set = self.ech.expcovers[i]
                 # relative entropy inequality constraint
-                x = self._nu_vars[i]
+                if self.settings['kernel_basis']:
+                    x = self._nu_bases[i] @ self._pre_nu_vars[i]
+                    # ^ That's going to be horrifically slow.
+                else:
+                    x = self._nu_vars[i]
                 y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
                 z = -self.age_vectors[i][i]
                 epi = self._relent_epi_vars[i]
                 cd = sum_relent(x, y, z, epi)
                 cone_data.append(cd)
-                # linear equality constraints
-                mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
-                av, ar, ac = comp_aff.mat_times_vecvar(mat, self._nu_vars[i])
-                num_rows = mat.shape[0]
-                curr_b = np.zeros(num_rows, )
-                curr_k = [Cone('0', num_rows)]
-                cone_data.append((av, ar, ac, curr_b, curr_k))
+                if not self.settings['kernel_basis']:
+                    # linear equality constraints
+                    mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
+                    av, ar, ac = comp_aff.mat_times_vecvar(mat, self._nu_vars[i])
+                    num_rows = mat.shape[0]
+                    curr_b = np.zeros(num_rows, )
+                    curr_k = [Cone('0', num_rows)]
+                    cone_data.append((av, ar, ac, curr_b, curr_k))
             else:
                 con = 0 <= self.age_vectors[i][i]
                 con.epigraph_checked = True
@@ -347,59 +394,65 @@ class PrimalSageCone(SetMembership):
 
     def violation(self, norm_ord=np.inf, rough=False):
         c = self.c.value
-        if self._m > 1:
-            if not rough:
-                dist = PrimalSageCone.project(c, self.alpha, self.X)
-                return dist
-            # compute violation for "AGE vectors sum to c"
-            #   Although, we can use the fact that the SAGE cone contains R^m_++.
-            #   and so only compute violation for "AGE vectors sum to <= c"
-            age_vectors = {i: v.value for i, v in self.age_vectors.items()}
-            sum_age_vectors = sum(age_vectors.values())
-            residual = c - sum_age_vectors  # want >= 0
-            residual[residual > 0] = 0
-            sum_to_c_viol = np.linalg.norm(residual, ord=norm_ord)
-            # compute violations for each AGE cone
-            alpha = self.alpha
-            if self._lifted_n > self._n:
-                # Then need to zero-pad alpha
-                zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
-                alpha = np.hstack((alpha, zero_block))
-            age_viols = []
-            for i in self.ech.U_I:
-                if i in self._nu_vars:
-                    eta_vec = 0 if self.X is None else self._eta_vars[i].value
-                    eta_viol = 0 if self.X is None else DualProductCone.project(eta_vec, self.X.K)
-                    c_i = self.age_vectors[i].value
-                    x_i = self._nu_vars[i].value
-                    x_i[x_i < 0] = 0
-                    idx_set = self.ech.expcovers[i]
-                    y_i = np.exp(1) * c_i[idx_set]
-                    condsage_term = 0 if self.X is None else self.X.b @ eta_vec
-                    relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + condsage_term  # <= 0
-                    relent_viol = 0 if relent_res < 0 else relent_res
-                    condsage_term = 0 if self.X is None else self.X.A.T @ eta_vec
-                    eq_res = (alpha[idx_set, :] - alpha[i, :]).T @ x_i - condsage_term  # == 0
-                    eq_res = eq_res.reshape((-1,))
-                    eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
-                    total_viol = relent_viol + eq_viol + eta_viol
-                    age_viols.append(total_viol)
-                else:
-                    c_i = float(self._c_vars[i].value)
-                    relent_viol = 0 if c_i >= 0 else -c_i
-                    age_viols.append(relent_viol)
-            age_viols = np.array(age_viols)
-            # add the max "AGE violation" to the violation for "AGE vectors sum to c".
-            if np.any(age_viols == np.inf):
-                total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
-                total_viol += PrimalSageCone.project(c, self.alpha, self.X)
-            else:
-                total_viol = sum_to_c_viol + np.max(age_viols)
-            return total_viol
-        else:
+        if self._m == 1:
             residual = c.reshape((-1,))  # >= 0
             residual[residual >= 0] = 0
             return np.linalg.norm(c, ord=norm_ord)
+        if not rough:
+            dist = PrimalSageCone.project(c, self.alpha, self.X)
+            return dist
+        # compute violation for "AGE vectors sum to c"
+        #   Although, we can use the fact that the SAGE cone contains R^m_++.
+        #   and so only compute violation for "AGE vectors sum to <= c"
+        age_vectors = {i: v.value for i, v in self.age_vectors.items()}
+        sum_age_vectors = sum(age_vectors.values())
+        residual = c - sum_age_vectors  # want >= 0
+        residual[residual > 0] = 0
+        sum_to_c_viol = np.linalg.norm(residual, ord=norm_ord)
+        # compute violations for each AGE cone
+        alpha = self.alpha
+        if self._lifted_n > self._n:
+            # Then need to zero-pad alpha
+            zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
+            alpha = np.hstack((alpha, zero_block))
+        age_viols = []
+        if self.settings['kernel_basis']:
+            nu_keys = self._pre_nu_vars.keys()
+        else:
+            nu_keys = self._nu_vars.keys()
+        for i in self.ech.U_I:
+            if i in nu_keys:
+                eta_vec = 0 if self.X is None else self._eta_vars[i].value
+                eta_viol = 0 if self.X is None else DualProductCone.project(eta_vec, self.X.K)
+                c_i = self.age_vectors[i].value
+                if self.X is None and self.settings['kernel_basis']:
+                    x_i = self._nu_bases[i] @ self._pre_nu_vars[i].value
+                else:
+                    x_i = self._nu_vars[i].value
+                x_i[x_i < 0] = 0
+                idx_set = self.ech.expcovers[i]
+                y_i = np.exp(1) * c_i[idx_set]
+                temp = 0 if self.X is None else self.X.b @ eta_vec
+                relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + temp  # <= 0
+                relent_viol = 0 if relent_res < 0 else relent_res
+                temp = 0 if self.X is None else self.X.A.T @ eta_vec
+                eq_res = (alpha[idx_set, :] - alpha[i, :]).T @ x_i - temp  # == 0
+                eq_res = eq_res.reshape((-1,))
+                eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
+                total_viol = relent_viol + eq_viol + eta_viol
+                age_viols.append(total_viol)
+            else:
+                c_i = float(self._c_vars[i].value)
+                relent_viol = 0 if c_i >= 0 else -c_i
+                age_viols.append(relent_viol)
+        age_viols = np.array(age_viols)
+        # add the max "AGE violation" to the violation for "AGE vectors sum to c".
+        if np.any(age_viols == np.inf):
+            total_viol = sum_to_c_viol + np.sum(age_viols[age_viols < np.inf])
+            total_viol += PrimalSageCone.project(c, self.alpha, self.X)
+        else:
+            total_viol = sum_to_c_viol + np.max(age_viols)
+        return total_viol
 
     def sigma_x(self, y):
         """
@@ -422,8 +475,12 @@ class PrimalSageCone(SetMembership):
                     wi_expr = Expression(np.zeros(self._m,))
                     num_cover = self.ech.expcover_counts[i]
                     if num_cover > 0:
-                        wi_expr[self.ech.expcovers[i]] = pos_operator(self._nu_vars[i], eval_only=True)
-                        wi_expr[i] =  -aff.sum(wi_expr[self.ech.expcovers[i]])
+                        if self.X is None and self.settings['kernel_basis']:
+                            x_i = self._nu_bases[i] @ self._pre_nu_vars[i]
+                        else:
+                            x_i = self._nu_vars[i]
+                        wi_expr[self.ech.expcovers[i]] = pos_operator(x_i, eval_only=True)
+                        wi_expr[i] = -aff.sum(wi_expr[self.ech.expcovers[i]])
                     self._age_witnesses[i] = wi_expr
             else:
                 self.age_vectors[0] = self.c
