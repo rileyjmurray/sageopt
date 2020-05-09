@@ -19,17 +19,20 @@ from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.utilities import array_index_iterator
 
 
-def pos(x):
+def pos(x, eval_only=False):
     """
     Return a coniclifts Expression representing max(x,0) componentwise.
 
     :param x: a coniclifts Expression.
+
+    :param eval_only: bool. True if the returned Expression will not be used
+    in an optimization problem.
     """
     if not isinstance(x, Expression):
         x = Expression(x)
     expr = np.empty(shape=x.shape, dtype=object)
     for tup in array_index_iterator(expr.shape):
-        expr[tup] = ScalarExpression({Pos(x[tup]): 1}, 0, verify=False)
+        expr[tup] = ScalarExpression({Pos(x[tup], eval_only): 1}, 0, verify=False)
     return expr.view(Expression)
 
 
@@ -41,7 +44,7 @@ class Pos(NonlinearScalarAtom):
     def __atom_text__():
         return 'Pos'
 
-    def __init__(self, x):
+    def __init__(self, x, eval_only=False):
         """
         Used to represent the epigraph of "max(0, x)"
         :param x: Expression-like of size 1.
@@ -49,8 +52,11 @@ class Pos(NonlinearScalarAtom):
         self._args = (self.parse_arg(x),)
         self._id = Pos._POS_COUNTER_
         Pos._POS_COUNTER_ += 1
-        v = Variable(shape=(), name='_pos_epi_[' + str(self.id) + ']_')
-        self._epigraph_variable = v[()].scalar_variables()[0]
+        self._epigraph_variable = None
+        self._eval_only = eval_only
+        if not eval_only:
+            v = Variable(shape=(), name='_pos_epi_[' + str(self.id) + ']_')
+            self._epigraph_variable = v[()].scalar_variables()[0]
         self._evaluator = Pos._pos_evaluator
         pass
 

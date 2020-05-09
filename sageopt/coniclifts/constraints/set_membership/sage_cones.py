@@ -179,7 +179,7 @@ class PrimalSageCone(SetMembership):
             self._lifted_n = self._n
             self.ech = ExpCoverHelper(self.alpha, self.c, None, covers, self.settings)
         self.age_vectors = dict()
-        self.age_witnesses = dict()
+        self._age_witnesses = None
         self._nu_vars = dict()
         self._c_vars = dict()
         self._relent_epi_vars = dict()
@@ -223,14 +223,6 @@ class PrimalSageCone(SetMembership):
         if self._m > 1:
             for i in self.ech.U_I:
                 ci_expr = Expression(np.zeros(self._m,))
-                wi_expr = Expression(np.zeros(self._m,))
-                # TODO: lazily create wi_exprs, by making age_witnesses a property.
-                num_cover = self.ech.expcover_counts[i]
-                if num_cover > 0:
-                    wi_expr[self.ech.expcovers[i]] = pos_operator(self._nu_vars[i])
-                    wi_expr[i] = ScalarExpression({sv: -1 for sv in self._nu_vars[i].scalar_variables()},
-                                                  0.0, verify=False)
-                self.age_witnesses[i] = wi_expr
                 if i in self.ech.N_I:
                     ci_expr[self.ech.expcovers[i]] = self._c_vars[i]
                     ci_expr[i] = self.c[i]
@@ -240,7 +232,6 @@ class PrimalSageCone(SetMembership):
                 self.age_vectors[i] = ci_expr
         else:
             self.age_vectors[0] = self.c
-            self.age_witnesses[0] = Expression([0])
         pass
 
     def _age_vectors_sum_to_c(self):
@@ -420,6 +411,23 @@ class PrimalSageCone(SetMembership):
         See also, the attribute ``PrimalSageCone.age_witnesses``.
         """
         raise NotImplementedError()
+
+    @property
+    def age_witnesses(self):
+        if self._age_witnesses is None:
+            self._age_witnesses = dict()
+            if self._m > 1:
+                for i in self.ech.U_I:
+                    wi_expr = Expression(np.zeros(self._m,))
+                    num_cover = self.ech.expcover_counts[i]
+                    if num_cover > 0:
+                        wi_expr[self.ech.expcovers[i]] = pos_operator(self._nu_vars[i], eval_only=True)
+                        wi_expr[i] =  -aff.sum(wi_expr[self.ech.expcovers[i]])
+                    self._age_witnesses[i] = wi_expr
+            else:
+                self.age_vectors[0] = self.c
+                self._age_witnesses[0] = Expression([0])
+        return self._age_witnesses
 
 
 class DualSageCone(SetMembership):
