@@ -6,6 +6,23 @@ The notes here are a summary from Sageopt's changelog. Each item in the lists th
 a term like "coniclifts", "symbolic", or "relaxations"; these terms indicate the primary subpackage of sageopt which
 was affected.
 
+
+[0.5.1] - 2020-06-21
+--------------------
+Removed
+ - coniclifts: compile_linear_expression.
+
+Changed
+ - symbolic: signomials now broadcast in certain arithmetic with ndarrays
+
+Added
+ - coniclifts: "abs" and "pos" NonlinearScalarAtoms.
+ - coniclifts: a field "age_witnesses" to ``PrimalSageCone`` objects.
+ - coniclifts: ``compile_objective``.
+ - coniclifts: an option to eliminate all equality constraints when compiling a ``PrimalSageCone``.
+ - coniclifts: ``PrimalSageCone`` violation now computed by evaluating the support function of ``X``.
+ - symbolic: SigDomain objects have a ``suppfunc`` method, to evaluate support function.
+
 [0.5.0] - 2020-03-25
 --------------------
 Removed
