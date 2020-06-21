@@ -25,7 +25,7 @@ copyright = '2020, Riley J. Murray'
 author = 'Riley J. Murray'
 
 # The full version, including alpha/beta/rc tags
-# release = sageopt.__version__
+release = sageopt.__version__
 # release = '0.5.1'
 
 # -- General configuration ---------------------------------------------------
