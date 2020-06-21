@@ -16,7 +16,7 @@
 import numpy as np
 from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
 from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone, DualProductCone
-from sageopt.coniclifts.base import Variable, Expression, ScalarExpression
+from sageopt.coniclifts.base import Variable, Expression
 from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.operators import affine as aff
 from sageopt.coniclifts.operators.pos import pos as pos_operator
@@ -181,9 +181,10 @@ class PrimalSageCone(SetMembership):
             self._lifted_n = self._n
             self.ech = ExpCoverHelper(self.alpha, self.c, None, covers, self.settings)
         self.age_vectors = dict()
+        self._sfx = None  # "suppfunc x"; for evaluating support function
         self._age_witnesses = None
-        self._nu_vars = dict()
-        self._pre_nu_vars = dict()
+        self._nus = dict()
+        self._pre_nus = dict()  # if kernel_basis == True, then store certain Variables here.
         self._nu_bases = dict()
         self._c_vars = dict()
         self._relent_epi_vars = dict()
@@ -201,7 +202,7 @@ class PrimalSageCone(SetMembership):
             num_cover = self.ech.expcover_counts[i]
             if num_cover > 0:
                 var_name = 'nu^{(' + str(i) + ')}_' + self.name
-                self._nu_vars[i] = Variable(shape=(num_cover,), name=var_name)
+                self._nus[i] = Variable(shape=(num_cover,), name=var_name)
                 var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
                 self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
                 var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
@@ -209,7 +210,7 @@ class PrimalSageCone(SetMembership):
             c_len = self._c_len_check_infeas(num_cover, i)
             var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
             self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
-        self._variables += list(self._nu_vars.values())
+        self._variables += list(self._nus.values())
         self._variables += list(self._c_vars.values())
         self._variables += list(self._relent_epi_vars.values())
         self._variables += list(self._eta_vars.values())
@@ -227,20 +228,21 @@ class PrimalSageCone(SetMembership):
                     nu_i_basis = kernel_basis(mat)
                     self._nu_bases[i] = nu_i_basis
                     pre_nu_i = Variable(shape=(nu_i_basis.shape[1],), name=var_name)
-                    self._pre_nu_vars[i] = pre_nu_i
+                    self._pre_nus[i] = pre_nu_i
+                    self._nus[i] = self._nu_bases[i] @ pre_nu_i
                 else:
                     var_name = 'nu^{(' + str(i) + ')}_' + self.name
                     nu_i = Variable(shape=(num_cover,), name=var_name)
-                    self._nu_vars[i] = nu_i
+                    self._nus[i] = nu_i
                 var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
                 self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
             c_len = self._c_len_check_infeas(num_cover, i)
             var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
             self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
         if self.settings['kernel_basis']:
-            self._variables += list(self._pre_nu_vars.values())
+            self._variables += list(self._pre_nus.values())
         else:
-            self._variables += list(self._nu_vars.values())
+            self._variables += list(self._nus.values())
         self._variables += list(self._c_vars.values())
         self._variables += list(self._relent_epi_vars.values())
         pass
@@ -289,7 +291,7 @@ class PrimalSageCone(SetMembership):
         return self._variables
 
     def conic_form(self):
-        if len(self._nu_vars) == 0 and len(self._pre_nu_vars) == 0:
+        if len(self._nus) == 0:
             cd = self._trivial_conic_form()
         else:
             if self.X is None:
@@ -307,19 +309,12 @@ class PrimalSageCone(SetMembership):
 
     def _ordsage_conic_form(self):
         cone_data = []
-        if self.settings['kernel_basis']:
-            nu_keys = self._pre_nu_vars.keys()
-        else:
-            nu_keys = self._nu_vars.keys()
+        nu_keys = self._nus.keys()
         for i in self.ech.U_I:
             if i in nu_keys:
                 idx_set = self.ech.expcovers[i]
                 # relative entropy inequality constraint
-                if self.settings['kernel_basis']:
-                    x = self._nu_bases[i] @ self._pre_nu_vars[i]
-                    # ^ That's going to be horrifically slow.
-                else:
-                    x = self._nu_vars[i]
+                x = self._nus[i]
                 y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
                 z = -self.age_vectors[i][i]
                 epi = self._relent_epi_vars[i]
@@ -328,7 +323,7 @@ class PrimalSageCone(SetMembership):
                 if not self.settings['kernel_basis']:
                     # linear equality constraints
                     mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
-                    av, ar, ac = comp_aff.mat_times_vecvar(mat, self._nu_vars[i])
+                    av, ar, ac = comp_aff.mat_times_vecvar(mat, self._nus[i])
                     num_rows = mat.shape[0]
                     curr_b = np.zeros(num_rows, )
                     curr_k = [Cone('0', num_rows)]
@@ -348,10 +343,10 @@ class PrimalSageCone(SetMembership):
             zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
             lifted_alpha = np.hstack((lifted_alpha, zero_block))
         for i in self.ech.U_I:
-            if i in self._nu_vars:
+            if i in self._nus:
                 idx_set = self.ech.expcovers[i]
                 # relative entropy inequality constraint
-                x = self._nu_vars[i]
+                x = self._nus[i]
                 y = np.exp(1) * self.age_vectors[i][idx_set]  # takes weirdly long amount of time.
                 z = -self.age_vectors[i][i] + self._eta_vars[i] @ self.X.b
                 epi = self._relent_epi_vars[i]
@@ -360,7 +355,7 @@ class PrimalSageCone(SetMembership):
                 # linear equality constraints
                 mat1 = (lifted_alpha[idx_set, :] - lifted_alpha[i, :]).T
                 mat2 = -self.X.A.T
-                var1 = self._nu_vars[i]
+                var1 = self._nus[i]
                 var2 = self._eta_vars[i]
                 av, ar, ac = comp_aff.mat_times_vecvar_plus_mat_times_vecvar(mat1, var1, mat2, var2)
                 num_rows = mat1.shape[0]
@@ -416,31 +411,18 @@ class PrimalSageCone(SetMembership):
             zero_block = np.zeros(shape=(self._m, self._lifted_n - self._n))
             alpha = np.hstack((alpha, zero_block))
         age_viols = []
-        if self.settings['kernel_basis']:
-            nu_keys = self._pre_nu_vars.keys()
-        else:
-            nu_keys = self._nu_vars.keys()
+        nu_keys = self._nus.keys()
         for i in self.ech.U_I:
             if i in nu_keys:
-                eta_vec = 0 if self.X is None else self._eta_vars[i].value
-                eta_viol = 0 if self.X is None else DualProductCone.project(eta_vec, self.X.K)
                 c_i = self.age_vectors[i].value
-                if self.X is None and self.settings['kernel_basis']:
-                    x_i = self._nu_bases[i] @ self._pre_nu_vars[i].value
-                else:
-                    x_i = self._nu_vars[i].value
+                x_i = self._nus[i].value
                 x_i[x_i < 0] = 0
                 idx_set = self.ech.expcovers[i]
+                sf_part = self.sigma_x((alpha[i, :] - alpha[idx_set, :]).T @ x_i)
                 y_i = np.exp(1) * c_i[idx_set]
-                temp = 0 if self.X is None else self.X.b @ eta_vec
-                relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + temp  # <= 0
+                relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + sf_part # <= 0
                 relent_viol = 0 if relent_res < 0 else relent_res
-                temp = 0 if self.X is None else self.X.A.T @ eta_vec
-                eq_res = (alpha[idx_set, :] - alpha[i, :]).T @ x_i - temp  # == 0
-                eq_res = eq_res.reshape((-1,))
-                eq_viol = np.linalg.norm(eq_res, ord=norm_ord)
-                total_viol = relent_viol + eq_viol + eta_viol
-                age_viols.append(total_viol)
+                age_viols.append(relent_viol)
             else:
                 c_i = float(self._c_vars[i].value)
                 relent_viol = 0 if c_i >= 0 else -c_i
@@ -454,9 +436,11 @@ class PrimalSageCone(SetMembership):
             total_viol = sum_to_c_viol + np.max(age_viols)
         return total_viol
 
-    def sigma_x(self, y):
+    def sigma_x(self, y, tol=1e-8):
         """
-        The value of the support function of :math:`X`, evaluated at :math:`y`:
+        If :math:`X = \\mathbb{R}^n`, then return :math:`\\infty` when :math:`\|y\|_2 > \\texttt{tol}`
+        and :math:`0` otherwise. If :math:`X` is a proper subset of :math:`\\mathbb{R}^n`, then
+        return the value of the support function of :math:`X`, evaluated at :math:`y`:
 
         .. math::
 
@@ -464,7 +448,15 @@ class PrimalSageCone(SetMembership):
 
         See also, the attribute ``PrimalSageCone.age_witnesses``.
         """
-        raise NotImplementedError()
+        if isinstance(y, Expression):
+            y = y.value
+        if self.X is None:
+            res = np.linalg.norm(y)
+            if res > tol:
+                return np.inf
+            return 0.0
+        val = self.X.suppfunc(y)
+        return val
 
     @property
     def age_witnesses(self):
@@ -475,10 +467,7 @@ class PrimalSageCone(SetMembership):
                     wi_expr = Expression(np.zeros(self._m,))
                     num_cover = self.ech.expcover_counts[i]
                     if num_cover > 0:
-                        if self.X is None and self.settings['kernel_basis']:
-                            x_i = self._nu_bases[i] @ self._pre_nu_vars[i]
-                        else:
-                            x_i = self._nu_vars[i]
+                        x_i = self._nus[i]
                         wi_expr[self.ech.expcovers[i]] = pos_operator(x_i, eval_only=True)
                         wi_expr[i] = -aff.sum(wi_expr[self.ech.expcovers[i]])
                     self._age_witnesses[i] = wi_expr

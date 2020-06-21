@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - coniclifts: an option to have ``nu`` (an AGE witness) be defined by substituting
    ``nu = M_k @ u_k`` where ``M_k`` is a matrix whose columns form a basis for the nullspace
    of an appropriate matrix. Eliminates the need for equality constraints in ordinary AGE cones.
+ - coniclifts: PrimalSageCone objects have a ``sigma_x`` method, for evaluating support function.
+   This method is now used when computing constraint violations.
+ - symbolic: SigDomain objects have a ``suppfunc`` method.
 ## Removed
  - coniclifts: compile_linear_expression.
 

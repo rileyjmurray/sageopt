@@ -645,6 +645,7 @@ class SigDomain(object):
         self.check_feas = kwargs['check_feas'] if 'check_feas' in kwargs else True
         self._constraints = None  # optional
         self._x = None  # optional
+        self._lift_x = None  # for computing support function
         self._variables = None  # optional
         if 'AbK' in kwargs:
             self.A, self.b, self.K = kwargs['AbK']
@@ -660,8 +661,9 @@ class SigDomain(object):
 
     def _check_feasibility(self):
         A, b, K = self.A, self.b, self.K
-        temp_x = cl.Variable(shape=(A.shape[1],), name='temp_x')
-        cons = [cl.PrimalProductCone(A @ temp_x + b, K)]
+        if self._lift_x is None:
+            self._lift_x = cl.Variable(shape=(A.shape[1],), name='temp_x')
+        cons = [cl.PrimalProductCone(A @ self._lift_x + b, K)]
         prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
         prob.solve(verbose=False, solver='ECOS')
         if not prob.value < 1e-7:
@@ -738,3 +740,25 @@ class SigDomain(object):
         if any([abs(g(x_val)) > tol for g in self.eqs]):
             return False
         return True
+
+    def suppfunc(self, y):
+        """
+        The support function of the convex set :math:`X` associated with this SigDomain,
+        evaluated at :math:`y`:
+
+        .. math::
+
+            \\sigma_X(y) \\doteq \\max\\{ y^\\intercal x \\,:\\, x \\in X \\}.
+        """
+        if isinstance(y, cl.Expression):
+            y = y.value
+        if self._lift_x is None:
+            self._lift_x = cl.Variable(self.A.shape[1])
+        objective = y @ self._lift_x
+        cons = [cl.PrimalProductCone(self.A @ self._lift_x + self.b, self.K)]
+        prob = cl.Problem(cl.MAX, objective, cons)
+        prob.solve(solver='ECOS', verbose=False)
+        if not prob.status == cl.SOLVED:
+            return np.inf
+        else:
+            return prob.value
