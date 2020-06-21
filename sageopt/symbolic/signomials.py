@@ -758,7 +758,7 @@ class SigDomain(object):
         cons = [cl.PrimalProductCone(self.A @ self._lift_x + self.b, self.K)]
         prob = cl.Problem(cl.MAX, objective, cons)
         prob.solve(solver='ECOS', verbose=False)
-        if not prob.status == cl.SOLVED:
+        if prob.status == cl.FAILED:
             return np.inf
         else:
             return prob.value

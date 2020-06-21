@@ -24,7 +24,11 @@ from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.operators.precompiled.relent import sum_relent, elementwise_relent
 from sageopt.coniclifts.operators.precompiled import affine as comp_aff
 from sageopt.coniclifts.problems.problem import Problem
-from sageopt.coniclifts.standards.constants import minimize as CL_MIN, solved as CL_SOLVED
+from sageopt.coniclifts.standards.constants import (
+    minimize as CL_MIN,
+    solved as CL_SOLVED,
+    inaccurate as CL_INACCURATE
+)
 from sageopt.coniclifts.utilities import kernel_basis
 import warnings
 import scipy.special as special_functions
@@ -720,7 +724,7 @@ class DualSageCone(SetMembership):
                         cons.append(con)
                     prob = Problem(CL_MIN, Expression([0]), cons)
                     status, value = prob.solve(verbose=False)
-                    if status == CL_SOLVED and abs(value) < 1e-7:
+                    if status in {CL_SOLVED, CL_INACCURATE} and abs(value) < 1e-7:
                         curr_viol = 0
                 viols.append(curr_viol)
             else:
@@ -870,7 +874,7 @@ class ExpCoverHelper(object):
                         prob = Problem(CL_MIN, objective, cons)
                         prob.solve(verbose=False,
                                    solver=self.settings['reduction_solver'])
-                        if prob.status == CL_SOLVED and abs(prob.value) < 1e-7:
+                        if prob.status in {CL_SOLVED, CL_INACCURATE} and abs(prob.value) < 1e-7:
                             expcovers[i][:] = False
             else:
                 for i in self.U_I:
@@ -884,7 +888,7 @@ class ExpCoverHelper(object):
                         prob = Problem(CL_MIN, objective, cons)
                         prob.solve(verbose=False,
                                    solver=self.settings['reduction_solver'])
-                        if prob.status == CL_SOLVED and prob.value < -100:
+                        if prob.status == {CL_SOLVED, CL_INACCURATE} and prob.value < -100:
                             expcovers[i][:] = False
         return expcovers
 

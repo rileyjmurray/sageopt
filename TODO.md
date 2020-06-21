@@ -10,8 +10,7 @@ Conceptually, it seems as though these should be in a common place.
 
 ## Web documentation
 
-1. Suggest running nosetests, after installing from pip
-2. Add examples for CVXPY and GPKit integration.
+1. Add examples for CVXPY and GPKit integration.
 
 ## Send a bad problem case to MOSEK devs.
 

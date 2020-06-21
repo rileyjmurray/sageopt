@@ -237,7 +237,7 @@ def _least_squares_magnitude_recovery(con, alpha_reduced, v_reduced, zero_tol):
     prob = cl.Problem(cl.MIN, t, constraints)
     prob.solve(verbose=False)
     cl.clear_variable_indices()
-    if prob.status == cl.SOLVED and prob.value < np.inf:
+    if prob.status in {cl.SOLVED, cl.INACCURATE} and prob.value < np.inf:
         mag = np.exp(y.value.astype(np.longdouble))
         return mag
     else:

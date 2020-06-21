@@ -150,7 +150,7 @@ def _constrained_least_squares(con, alpha, log_v):
     prob = cl.Problem(cl.MIN, t, cons)
     cl.clear_variable_indices()
     res = prob.solve(verbose=False)
-    if res[0] == cl.SOLVED:
+    if res[0] in {cl.SOLVED, cl.INACCURATE}:
         mu_ls = x.value[:n]
         return mu_ls
     else:

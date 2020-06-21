@@ -14,6 +14,7 @@ from sageopt.coniclifts.standards.constants import minimize as MIN
 from sageopt.coniclifts.standards.constants import maximize as MAX
 from sageopt.coniclifts.standards.constants import solved as SOLVED
 from sageopt.coniclifts.standards.constants import inaccurate as INACCURATE
+from sageopt.coniclifts.standards.constants import failed as FAILED
 from sageopt.coniclifts.cones import Cone
 
 

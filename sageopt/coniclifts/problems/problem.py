@@ -133,6 +133,10 @@ class Problem(object):
     problem is infeasible or unbounded, we still set ``self.status = coniclifts.SOLVED``.
     Therefore it is important to check that ``self.status == coniclifts.SOLVED`` and that
     ``-np.inf < self.value < np.inf`` before accessing a Variable's value.
+
+    Accepts a keyword argument ``integer_variables``: a list of Variable objects which should
+    be restricted to integer values in this optimization problem. Only applicable when using
+    MOSEK as the solver.
     """
 
     _SOLVERS_ = {'ECOS': ECOS(), 'MOSEK': Mosek()}
