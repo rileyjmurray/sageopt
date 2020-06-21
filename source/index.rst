@@ -5,7 +5,7 @@ Sageopt enables proof-based signomial and polynomial optimization
 .. image:: https://coveralls.io/repos/github/rileyjmurray/sageopt/badge.svg?branch=master
    :target: https://coveralls.io/github/rileyjmurray/sageopt?branch=master
 
-.. image:: https://travis-ci.org/rileyjmurray/sageopt.svg?branch=master
+.. image:: https://travis-ci.com/rileyjmurray/sageopt.svg?branch=master
    :target: https://travis-ci.org/rileyjmurray/sageopt
 
 .. image:: https://img.shields.io/pypi/wheel/sageopt.svg

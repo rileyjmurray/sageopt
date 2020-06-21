@@ -4,15 +4,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Installation &#8212; sageopt 0.5.0 documentation</title>
+    <title>Installation &#8212; sageopt  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Overview of sageopt" href="documentation/sageopt.html" />
@@ -78,7 +78,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
 
 
 
@@ -105,13 +105,15 @@ we also require the following packages:</p>
 <li><p>ECOS, version &gt;= 2.0.</p></li>
 </ol>
 <p>It is highly recommended that you also install <a class="reference external" href="https://www.mosek.com/">MOSEK</a> (version &gt;= 9).
-MOSEK is a commerical optimization solver, and currently the only solver that is able to handle
-the more intersting convex relaxations needed for optimization with SAGE certificates. If you
+MOSEK is a commercial optimization solver, and currently the only solver that is able to handle
+the more interesting convex relaxations needed for optimization with SAGE certificates. If you
 are in academia you can request a free <a class="reference external" href="https://www.mosek.com/products/academic-licenses/">academic license</a> for
 MOSEK.</p>
 <div class="section" id="pip-users">
 <h2>Pip users<a class="headerlink" href="#pip-users" title="Permalink to this headline">¶</a></h2>
-<p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sageopt</span></code>.</p>
+<p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sageopt</span></code>.
+As an optional second step, install nose (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nose</span></code>) and then run
+<code class="docutils literal notranslate"><span class="pre">nosetests</span> <span class="pre">sageopt</span></code>.</p>
 </div>
 <div class="section" id="conda-users">
 <h2>Conda users<a class="headerlink" href="#conda-users" title="Permalink to this headline">¶</a></h2>
@@ -122,7 +124,9 @@ MOSEK.</p>
 <li><p>run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sageopt</span></code>.</p></li>
 </ol>
 <p>It is important that pip be installed inside your conda environment, or sageopt
-might not be detected by Anaconda Navigator (among other environment management tools).</p>
+might not be detected by Anaconda Navigator (among other environment management tools).
+As an optional final step, install nose (<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">nose</span></code>) and then run
+<code class="docutils literal notranslate"><span class="pre">nosetests</span> <span class="pre">sageopt</span></code>.</p>
 </div>
 <div class="section" id="installation-from-source">
 <h2>Installation from source<a class="headerlink" href="#installation-from-source" title="Permalink to this headline">¶</a></h2>
@@ -131,7 +135,7 @@ might not be detected by Anaconda Navigator (among other environment management 
 <li><p>Download this repository. If needed, change your directory so that you are in the same directory as
 sageopt’s <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p></li>
 <li><p>Activate the Python virtual environment of your choice.</p></li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code> to install sageopt to your current Python environment.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code> to install an editable version of sageopt to your current environment.</p></li>
 <li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">&quot;import</span> <span class="pre">sageopt;</span> <span class="pre">print(sageopt.__version__)&quot;</span></code> to verify that sageopt installed correctly.</p></li>
 <li><p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nose</span></code>  (or <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">nose</span></code>) in preparation for running unittests.</p></li>
 <li><p>Run <code class="docutils literal notranslate"><span class="pre">nosetests</span> <span class="pre">sageopt/tests</span></code>.</p></li>
@@ -147,10 +151,10 @@ sageopt’s <code class="docutils literal notranslate"><span class="pre">setup.p
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2019, Riley J. Murray.
+      &copy;2020, Riley J. Murray.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -4,15 +4,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>coniclifts is sageopt’s backend &#8212; sageopt 0.5.0 documentation</title>
+    <title>coniclifts is sageopt’s backend &#8212; sageopt  documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Nonnegativity" href="sageopt.nonnegativity.html" />
@@ -89,7 +89,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
 
 
 
@@ -299,23 +299,23 @@ for this class. If you want to understand all the attributes of a Problem object
 you will need to read <a class="reference internal" href="#cl-expression-system"><span class="std std-ref">The Expression system</span></a> and <a class="reference internal" href="#cl-compilerinterface"><span class="std std-ref">The compiler interface</span></a>.</p>
 <dl class="class">
 <dt id="sageopt.coniclifts.Problem">
-<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">Problem</code><span class="sig-paren">(</span><em class="sig-param">objective_sense</em>, <em class="sig-param">objective_expr</em>, <em class="sig-param">constraints</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">Problem</code><span class="sig-paren">(</span><em class="sig-param">sense</em>, <em class="sig-param">objective</em>, <em class="sig-param">constraints</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem" title="Permalink to this definition">¶</a></dt>
 <dd><p>A representation for a convex optimization problem. When this Problem object is constructed,
 the constraints are immediately compiled into a flattened conic representation. This compilation
 process may take some time for large problems.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>objective_sense</strong> (<em>str</em>) – Either <code class="docutils literal notranslate"><span class="pre">coniclifts.MIN</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.MAX</span></code></p></li>
-<li><p><strong>objective_expr</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – The function to minimize or maximize. ScalarExpressions and real numeric types
+<li><p><strong>sense</strong> (<em>str</em>) – Either <code class="docutils literal notranslate"><span class="pre">coniclifts.MIN</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.MAX</span></code></p></li>
+<li><p><strong>objective</strong> (<a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression"><em>Expression</em></a>) – The function to minimize or maximize. ScalarExpressions and real numeric types
 are also accepted. The final (cast) expression must be linear in its Variables.</p></li>
-<li><p><strong>constraints</strong> (<em>list of coniclifts.Constraint</em>) – Variables appearing in objective_expr are subject to Constraint objects in this list.</p></li>
+<li><p><strong>constraints</strong> (<em>list of coniclifts.Constraint</em>) – Variables appearing in <code class="docutils literal notranslate"><span class="pre">objective</span></code> are subject to Constraint objects in this list.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.objective_sense">
-<code class="sig-name descname">objective_sense</code><a class="headerlink" href="#sageopt.coniclifts.Problem.objective_sense" title="Permalink to this definition">¶</a></dt>
+<dt id="sageopt.coniclifts.Problem.sense">
+<code class="sig-name descname">sense</code><a class="headerlink" href="#sageopt.coniclifts.Problem.sense" title="Permalink to this definition">¶</a></dt>
 <dd><p>The value passed by the user to the constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -325,8 +325,8 @@ are also accepted. The final (cast) expression must be linear in its Variables.<
 </dd></dl>
 
 <dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.objective_expr">
-<code class="sig-name descname">objective_expr</code><a class="headerlink" href="#sageopt.coniclifts.Problem.objective_expr" title="Permalink to this definition">¶</a></dt>
+<dt id="sageopt.coniclifts.Problem.objective">
+<code class="sig-name descname">objective</code><a class="headerlink" href="#sageopt.coniclifts.Problem.objective" title="Permalink to this definition">¶</a></dt>
 <dd><p>The value passed by the user to the constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -342,6 +342,106 @@ are also accepted. The final (cast) expression must be linear in its Variables.<
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>list of coniclifts.Constraint</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.all_variables">
+<code class="sig-name descname">all_variables</code><a class="headerlink" href="#sageopt.coniclifts.Problem.all_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>All Variable objects needed to represent the feasible set. This includes user-declared
+Variables, and Variables which were required to write the problem in terms of coniclifts
+primitives. It is recommended to access this list by calling <code class="docutils literal notranslate"><span class="pre">self.variables()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of coniclifts.Variable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.status">
+<code class="sig-name descname">status</code><a class="headerlink" href="#sageopt.coniclifts.Problem.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>The problem status from the last call to <code class="docutils literal notranslate"><span class="pre">self.solve</span></code>.
+Either <code class="docutils literal notranslate"><span class="pre">coniclifts.SOLVED</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.INACCURATE</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.FAILED</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.value">
+<code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Problem.value" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>The objective value from the last call to <code class="docutils literal notranslate"><span class="pre">self.solve</span></code>. Can be a float,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">np.inf</span></code>, <code class="docutils literal notranslate"><span class="pre">-np.inf</span></code>, or <code class="docutils literal notranslate"><span class="pre">np.NaN</span></code>.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.variable_values">
+<code class="sig-name descname">variable_values</code><a class="headerlink" href="#sageopt.coniclifts.Problem.variable_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map from a Variable’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field to a numpy array, containing a feasible
+value for that Variable for this problem’s constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str, ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.metadata">
+<code class="sig-name descname">metadata</code><a class="headerlink" href="#sageopt.coniclifts.Problem.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A place for users to store metadata produced when constructing this Problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.timings">
+<code class="sig-name descname">timings</code><a class="headerlink" href="#sageopt.coniclifts.Problem.timings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains runtime (in seconds) for various operations associated with Problem.
+There is always a field <code class="docutils literal notranslate"><span class="pre">timings['compile_time']</span></code>, which is the time spent parsing
+user-specified constraints into a vectorized cone program. Upon a call to
+<code class="docutils literal notranslate"><span class="pre">self.solve(solver=SOLVER)</span></code>, there is also a dict <code class="docutils literal notranslate"><span class="pre">timings[SOLVER]</span></code> which contains
+time spent transforming a coniclifts representation to a solver’s standard form, and
+time spent by the underlying solver itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.solver_apply_data">
+<code class="sig-name descname">solver_apply_data</code><a class="headerlink" href="#sageopt.coniclifts.Problem.solver_apply_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores metadata during a call to <code class="docutils literal notranslate"><span class="pre">self.solve(cache_apply_data=True)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str,dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.Problem.solver_raw_output">
+<code class="sig-name descname">solver_raw_output</code><a class="headerlink" href="#sageopt.coniclifts.Problem.solver_raw_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores metadata during a call to <code class="docutils literal notranslate"><span class="pre">self.solve(cache_raw_output=True)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str,dict]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -381,24 +481,11 @@ in the flattened conic representation of the feasible set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.all_variables">
-<code class="sig-name descname">all_variables</code><a class="headerlink" href="#sageopt.coniclifts.Problem.all_variables" title="Permalink to this definition">¶</a></dt>
-<dd><p>All Variable objects needed to represent the feasible set. This includes user-declared
-Variables, and Variables which were required to write the problem in terms of coniclifts
-primitives. It is recommended to access this list by calling <code class="docutils literal notranslate"><span class="pre">self.variables()</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>list of coniclifts.Variable</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="sageopt.coniclifts.Problem.variable_map">
 <code class="sig-name descname">variable_map</code><a class="headerlink" href="#sageopt.coniclifts.Problem.variable_map" title="Permalink to this definition">¶</a></dt>
-<dd><p>A map from a Variable’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field to a numpy array. If <code class="docutils literal notranslate"><span class="pre">myvar</span></code>
-is a coniclifts Variable appearing in the system defined by <code class="docutils literal notranslate"><span class="pre">constraints</span></code>,
-then a point <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfying <span class="math notranslate nohighlight">\(A x + b \in K\)</span> maps to a feasible value for
+<dd><p>A map from a Variable’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field to a numpy array. If <code class="docutils literal notranslate"><span class="pre">myvar</span></code> is a
+coniclifts Variable appearing in the system defined by <code class="docutils literal notranslate"><span class="pre">constraints</span></code>, then
+a point <code class="docutils literal notranslate"><span class="pre">x</span></code> satisfying <span class="math notranslate nohighlight">\(A x + b \in K\)</span> maps to a feasible value for
 <code class="docutils literal notranslate"><span class="pre">myvar</span></code> by</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">myvar_val</span> <span class="o">=</span> <span class="n">x0</span><span class="p">[</span><span class="n">variable_map</span><span class="p">[</span><span class="n">myvar</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span>
@@ -415,77 +502,6 @@ the value zero.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.variable_values">
-<code class="sig-name descname">variable_values</code><a class="headerlink" href="#sageopt.coniclifts.Problem.variable_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>A map from a Variable’s <code class="docutils literal notranslate"><span class="pre">name</span></code> field to a numpy array, containing a feasible
-value for that Variable for this problem’s constraints.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Dict[str, ndarray]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.solver_apply_data">
-<code class="sig-name descname">solver_apply_data</code><a class="headerlink" href="#sageopt.coniclifts.Problem.solver_apply_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>A place to store metadata during a call to <code class="docutils literal notranslate"><span class="pre">self.solve(cache_apply_data=True)</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Dict[str,dict]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.solver_raw_output">
-<code class="sig-name descname">solver_raw_output</code><a class="headerlink" href="#sageopt.coniclifts.Problem.solver_raw_output" title="Permalink to this definition">¶</a></dt>
-<dd><p>A place to store metadata during a call to <code class="docutils literal notranslate"><span class="pre">self.solve(cache_raw_output=True)</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Dict[str,dict]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.metadata">
-<code class="sig-name descname">metadata</code><a class="headerlink" href="#sageopt.coniclifts.Problem.metadata" title="Permalink to this definition">¶</a></dt>
-<dd><p>A place for users to store metadata produced when constructing this Problem.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.value">
-<code class="sig-name descname">value</code><a class="headerlink" href="#sageopt.coniclifts.Problem.value" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>The objective value from the last call to <code class="docutils literal notranslate"><span class="pre">self.solve</span></code>. Can be a float,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">np.inf</span></code>, <code class="docutils literal notranslate"><span class="pre">-np.inf</span></code>, or <code class="docutils literal notranslate"><span class="pre">np.NaN</span></code>.</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sageopt.coniclifts.Problem.status">
-<code class="sig-name descname">status</code><a class="headerlink" href="#sageopt.coniclifts.Problem.status" title="Permalink to this definition">¶</a></dt>
-<dd><p>The problem status from the last call to <code class="docutils literal notranslate"><span class="pre">self.solve</span></code>.
-Either <code class="docutils literal notranslate"><span class="pre">coniclifts.SOLVED</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.INACCURATE</span></code> or <code class="docutils literal notranslate"><span class="pre">coniclifts.FAILED</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p class="rubric">Notes</p>
 <p>Problem status being <code class="docutils literal notranslate"><span class="pre">coniclifts.SOLVED</span></code> does not mean that the decision variables have
 been assigned specific values. It only means that the solver returned a normal status code
@@ -493,6 +509,9 @@ been assigned specific values. It only means that the solver returned a normal s
 problem is infeasible or unbounded, we still set <code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">=</span> <span class="pre">coniclifts.SOLVED</span></code>.
 Therefore it is important to check that <code class="docutils literal notranslate"><span class="pre">self.status</span> <span class="pre">==</span> <span class="pre">coniclifts.SOLVED</span></code> and that
 <code class="docutils literal notranslate"><span class="pre">-np.inf</span> <span class="pre">&lt;</span> <span class="pre">self.value</span> <span class="pre">&lt;</span> <span class="pre">np.inf</span></code> before accessing a Variable’s value.</p>
+<p>Accepts a keyword argument <code class="docutils literal notranslate"><span class="pre">integer_variables</span></code>: a list of Variable objects which should
+be restricted to integer values in this optimization problem. Only applicable when using
+MOSEK as the solver.</p>
 <dl class="method">
 <dt id="sageopt.coniclifts.Problem.solve">
 <code class="sig-name descname">solve</code><span class="sig-paren">(</span><em class="sig-param">solver=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.Problem.solve" title="Permalink to this definition">¶</a></dt>
@@ -514,7 +533,19 @@ Refer to the Notes of the Problem class for the meanings of these values.</p></l
 <p class="rubric">Notes</p>
 <p>Keyword arguments.</p>
 <blockquote>
-<div><p>cache_apply_data</p>
+<div><p>verbose : bool. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, then suppress solver output from being written to
+standard-out.</p>
+<p>cache_raw_data : bool. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then record the raw output of the solver in
+the dictionary <code class="docutils literal notranslate"><span class="pre">self.solver_raw_output</span></code>. For MOSEK, this raw output includes the
+MOSEK Task object.</p>
+<p>max_iters : int. Maximum number of iterations for ECOS.</p>
+<p>mosek_params : dict. Following CVXPY parameter processing conventions. Also,
+allows options {<code class="docutils literal notranslate"><span class="pre">'NUM_THREADS'</span></code>: int, <code class="docutils literal notranslate"><span class="pre">'CO_TOL_NEAR_REL'</span></code>: float,
+<code class="docutils literal notranslate"><span class="pre">'TOL_PATH'</span></code>: float, <code class="docutils literal notranslate"><span class="pre">'TOL_STEP_SIZE'</span></code>: float, <code class="docutils literal notranslate"><span class="pre">'DEACTIVATE_SCALING':</span></code> bool}.
+Refer to the coniclifts MOSEK interface source code for usage of these parameters.</p>
+<p>cache_apply_data : bool. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then take the put``(data, inv_data)``
+returned by the coniclifts interface to the given solver and record it in the
+dictionary <code class="docutils literal notranslate"><span class="pre">self.solver_apply_data</span></code>. This data is rarely relevant for users.</p>
 </div></blockquote>
 </dd></dl>
 
@@ -692,7 +723,7 @@ due to nondeterministic behavior of <code class="docutils literal notranslate"><
 require
 an argument <code class="docutils literal notranslate"><span class="pre">X</span></code>, which can be <code class="docutils literal notranslate"><span class="pre">None</span></code> or a <code class="docutils literal notranslate"><span class="pre">SigDomain</span></code>.
 Ordinary SAGE constraints are obtained by setting <code class="docutils literal notranslate"><span class="pre">X=None</span></code>.
-Conditional SAGE constraints assume the set represented by induced by <code class="docutils literal notranslate"><span class="pre">X</span></code> is nonempty, and it’s the user’s
+Conditional SAGE constraints assume the set represented by <code class="docutils literal notranslate"><span class="pre">X</span></code> is nonempty, and it’s the user’s
 responsibility to ensure this is the case.
 The main difference in these classes’ attributes is
 that <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> instances have a dict called <code class="docutils literal notranslate"><span class="pre">age_vectors</span></code> (which represent the certificates of nonnegativity)
@@ -714,7 +745,15 @@ constraint constructor to the next.</p>
 <dl class="class">
 <dt id="sageopt.coniclifts.PrimalSageCone">
 <em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">PrimalSageCone</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">alpha</em>, <em class="sig-param">X</em>, <em class="sig-param">name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represent the constraint “<span class="math notranslate nohighlight">\(c \in C_{\mathrm{SAGE}}(\alpha, X)\)</span>”.</p>
+<dd><p>Require that <span class="math notranslate nohighlight">\(f(x) = \sum_{i=1}^m c_i \exp(\alpha_i \cdot x)\)</span> is nonnegative on
+<span class="math notranslate nohighlight">\(X\)</span>, and furthermore that we can <em>prove</em> this nonnegativity by decomposing <span class="math notranslate nohighlight">\(f\)</span>
+into a sum of “<span class="math notranslate nohighlight">\(X\)</span>-AGE functions.” It is useful to summarize this constraint by writing</p>
+<div class="math notranslate nohighlight">
+\[c \in C_{\mathrm{SAGE}}(\alpha, X).\]</div>
+<p>Each <span class="math notranslate nohighlight">\(X\)</span>-AGE function used in the decomposition of <span class="math notranslate nohighlight">\(f\)</span> can be proven nonnegative
+by certifying a particular relative entropy inequality. This PrimalSageCone object tracks
+both coefficients of <span class="math notranslate nohighlight">\(X\)</span>-AGE functions used in the decomposition of <span class="math notranslate nohighlight">\(f\)</span>,
+and the additional variables needed to certify the associated relative entropy inequalities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -727,7 +766,8 @@ for the name of any auxiliary Variable created when compiling to the coniclifts 
 </dd>
 <dt class="field-even">Other Parameters</dt>
 <dd class="field-even"><p><strong>covers</strong> (<em>Dict[int, ndarray]</em>) – <code class="docutils literal notranslate"><span class="pre">covers[i]</span></code> indicates which indices <code class="docutils literal notranslate"><span class="pre">j</span></code> have <code class="docutils literal notranslate"><span class="pre">alpha[j,:]</span></code> participate in
-the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.</p>
+the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.
+See also <code class="docutils literal notranslate"><span class="pre">PrimalSageCone.ech</span></code>.</p>
 </dd>
 </dl>
 <dl class="attribute">
@@ -755,9 +795,36 @@ the i-th AGE cone. Automatically constructed in a presolve phase, if not provide
 <dl class="attribute">
 <dt id="sageopt.coniclifts.PrimalSageCone.age_vectors">
 <code class="sig-name descname">age_vectors</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.age_vectors" title="Permalink to this definition">¶</a></dt>
-<dd><p>If all Variable objects in the scope of this constraint are assigned feasible,
-values, then we should have <code class="docutils literal notranslate"><span class="pre">age_vectors[i].value</span></code> in the i-th AGE cone with
-respect to <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, and <code class="docutils literal notranslate"><span class="pre">c.value</span> <span class="pre">==</span> <span class="pre">sum([av.value</span> <span class="pre">for</span> <span class="pre">av</span> <span class="pre">in</span> <span class="pre">age_vectors.values()],</span> <span class="pre">axis=0)</span></code>.</p>
+<dd><p>A vector <span class="math notranslate nohighlight">\(c^{(i)} = \mathtt{age{\_}vectors[i]}\)</span> can have at most one negative
+component <span class="math notranslate nohighlight">\(c^{(i)}_i\)</span>. Such a vector defines a signomial</p>
+<div class="math notranslate nohighlight">
+\[f_i(x) = \textstyle\sum_{j=1}^m c^{(i)}_j \exp(\alpha_j \cdot x)\]</div>
+<p>which is nonnegative for all <span class="math notranslate nohighlight">\(x \in X\)</span>.
+Letting <span class="math notranslate nohighlight">\(N \doteq \mathtt{self.age\_vectors.keys()}\)</span>, we should have</p>
+<div class="math notranslate nohighlight">
+\[\mathtt{self.c} \geq \textstyle\sum_{i \in N} \mathtt{self.age\_vectors[i]}.\]</div>
+<p>See also <code class="docutils literal notranslate"><span class="pre">age_witnesses</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[int, <a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression">Expression</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.age_witnesses">
+<code class="sig-name descname">age_witnesses</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.age_witnesses" title="Permalink to this definition">¶</a></dt>
+<dd><p>A vector <span class="math notranslate nohighlight">\(w^{(i)} = \mathtt{age{\_}witnesses[i]}\)</span> should certify that the signomial
+with coefficients <span class="math notranslate nohighlight">\(c^{(i)} = \mathtt{age{\_}vectors[i]}\)</span> is nonnegative on <span class="math notranslate nohighlight">\(X\)</span>.
+Specifically, we should have</p>
+<div class="math notranslate nohighlight">
+\[\sigma_X\left(-\alpha^\intercal w^{(i)}\right)
+  + D\left(w^{(i)}_{\setminus i}, e c^{(i)}_{\setminus i}\right)\leq c^{(i)}_i\]</div>
+<p>where <span class="math notranslate nohighlight">\(\sigma_X\)</span> is the support function of <span class="math notranslate nohighlight">\(X\)</span>, <span class="math notranslate nohighlight">\(e\)</span> is Euler’s number,
+<span class="math notranslate nohighlight">\(w^{(i)}_{\setminus i} = ( w^{(i)}_j )_{j \in [m]\setminus \{i\}}\)</span>,
+<span class="math notranslate nohighlight">\(c^{(i)}_{\setminus i} = ( c^{(i)}_j )_{j \in [m]\setminus \{i\}}\)</span>,
+and <span class="math notranslate nohighlight">\(D(\cdot,\cdot)\)</span> is the relative entropy function.
+The validity of this certificate stems from the weak-duality principle in convex optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>Dict[int, <a class="reference internal" href="#sageopt.coniclifts.Expression" title="sageopt.coniclifts.Expression">Expression</a>]</p>
@@ -768,22 +835,11 @@ respect to <code class="docutils literal notranslate"><span class="pre">alpha</s
 <dl class="attribute">
 <dt id="sageopt.coniclifts.PrimalSageCone.X">
 <code class="sig-name descname">X</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.X" title="Permalink to this definition">¶</a></dt>
-<dd><p>If None, then this constraint represents a primal ordinary-SAGE cone.</p>
+<dd><p>If None, then this constraint represents a primal ordinary-SAGE cone.
+See also the function <code class="docutils literal notranslate"><span class="pre">PrimalSageCone.sigma_x</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="sageopt.signomials.html#sageopt.SigDomain" title="sageopt.SigDomain">SigDomain</a> or None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sageopt.coniclifts.PrimalSageCone.ech">
-<code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.ech" title="Permalink to this definition">¶</a></dt>
-<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Manages validation of <code class="docutils literal notranslate"><span class="pre">covers</span></code>
-when provided, and manages construction of <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>ExpCoverHelper</p>
 </dd>
 </dl>
 </dd></dl>
@@ -800,8 +856,55 @@ for the name of any auxiliary Variable created when compiling to the coniclifts 
 </dl>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.ech">
+<code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.ech" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Validates <code class="docutils literal notranslate"><span class="pre">covers</span></code>
+when provided, and constructs <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ExpCoverHelper</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p class="rubric">Notes</p>
 <p>The constructor can raise a RuntimeError if the constraint is deemed infeasible.</p>
+<dl class="method">
+<dt id="sageopt.coniclifts.PrimalSageCone.violation">
+<code class="sig-name descname">violation</code><span class="sig-paren">(</span><em class="sig-param">norm_ord=inf</em>, <em class="sig-param">rough=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a measure of violation for the constraint that <code class="docutils literal notranslate"><span class="pre">self.c</span></code> belongs to
+<span class="math notranslate nohighlight">\(C_{\mathrm{SAGE}}(\alpha, X)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>norm_ord</strong> (<em>int</em>) – The value of <code class="docutils literal notranslate"><span class="pre">ord</span></code> passed to numpy <code class="docutils literal notranslate"><span class="pre">norm</span></code> functions, when reducing
+vector-valued residuals into a scalar residual.</p></li>
+<li><p><strong>rough</strong> (<em>bool</em>) – Setting <code class="docutils literal notranslate"><span class="pre">rough=False</span></code> computes violation by solving an optimization
+problem. Setting <code class="docutils literal notranslate"><span class="pre">rough=True</span></code> computes violation by taking norms of
+residuals of appropriate elementwise equations and inequalities involving
+<code class="docutils literal notranslate"><span class="pre">self.c</span></code> and auxiliary variables.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">rough=False</span></code>, the optimization-based violation is computed by projecting
+the vector <code class="docutils literal notranslate"><span class="pre">self.c</span></code> onto a new copy of a primal SAGE constraint, and then returning
+the L2-norm between <code class="docutils literal notranslate"><span class="pre">self.c</span></code> and that projection. This optimization step essentially
+re-solves for all auxiliary variables used by this constraint.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.PrimalSageCone.sigma_x">
+<code class="sig-name descname">sigma_x</code><span class="sig-paren">(</span><em class="sig-param">y</em>, <em class="sig-param">tol=1e-08</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.sigma_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <span class="math notranslate nohighlight">\(X = \mathbb{R}^n\)</span>, then return <span class="math notranslate nohighlight">\(\infty\)</span> when <span class="math notranslate nohighlight">\(\|y\|_2 &gt; \texttt{tol}\)</span>
+and <span class="math notranslate nohighlight">\(0\)</span> otherwise. If <span class="math notranslate nohighlight">\(X\)</span> is a proper subset of <span class="math notranslate nohighlight">\(\mathbb{R}^n\)</span>, then
+return the value of the support function of <span class="math notranslate nohighlight">\(X\)</span>, evaluated at <span class="math notranslate nohighlight">\(y\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\sigma_X(y) \doteq \max\{ y^\intercal x \,:\, x \in X \}.\]</div>
+<p>See also, the attribute <code class="docutils literal notranslate"><span class="pre">PrimalSageCone.age_witnesses</span></code>.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -877,18 +980,6 @@ the form <code class="docutils literal notranslate"><span class="pre">x</span> <
 </dd></dl>
 
 <dl class="attribute">
-<dt id="sageopt.coniclifts.DualSageCone.ech">
-<code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.ech" title="Permalink to this definition">¶</a></dt>
-<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Manages validation of <code class="docutils literal notranslate"><span class="pre">covers</span></code>
-when provided, and manages construction of <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>ExpCoverHelper</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="sageopt.coniclifts.DualSageCone.name">
 <code class="sig-name descname">name</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
@@ -898,6 +989,42 @@ for the name of any auxiliary Variable created when compiling to the coniclifts 
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sageopt.coniclifts.DualSageCone.ech">
+<code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.ech" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Validates <code class="docutils literal notranslate"><span class="pre">covers</span></code>
+when provided, and constructs <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ExpCoverHelper</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sageopt.coniclifts.DualSageCone.violation">
+<code class="sig-name descname">violation</code><span class="sig-paren">(</span><em class="sig-param">norm_ord=inf</em>, <em class="sig-param">rough=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a measure of violation for the constraint that <code class="docutils literal notranslate"><span class="pre">self.v</span></code> belongs to
+<span class="math notranslate nohighlight">\(C_{\mathrm{SAGE}}(\alpha, X)^{\dagger}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>norm_ord</strong> (<em>int</em>) – The value of <code class="docutils literal notranslate"><span class="pre">ord</span></code> passed to numpy <code class="docutils literal notranslate"><span class="pre">norm</span></code> functions, when reducing
+vector-valued residuals into a scalar residual.</p></li>
+<li><p><strong>rough</strong> (<em>bool</em>) – Setting <code class="docutils literal notranslate"><span class="pre">rough=False</span></code> computes violation by solving an optimization
+problem. Setting <code class="docutils literal notranslate"><span class="pre">rough=True</span></code> computes violation by taking norms of
+residuals of appropriate elementwise equations and inequalities involving
+<code class="docutils literal notranslate"><span class="pre">self.v</span></code> and auxiliary varibles.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">rough=False</span></code>, the optimization-based violation is computed by projecting
+the vector <code class="docutils literal notranslate"><span class="pre">self.v</span></code> onto a new copy of a dual SAGE constraint, and then returning
+the L2-norm between <code class="docutils literal notranslate"><span class="pre">self.v</span></code> and that projection. This optimization step essentially
+re-solves for all auxiliary variables used by this constraint.</p>
 </dd></dl>
 
 </dd></dl>
@@ -974,10 +1101,10 @@ system, its <code class="docutils literal notranslate"><span class="pre">id</spa
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2019, Riley J. Murray.
+      &copy;2020, Riley J. Murray.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

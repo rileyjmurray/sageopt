@@ -12,21 +12,21 @@
 #
 import os
 import sys
+sys.path.insert(0, os.path.abspath('/Users/RJMurray/Documents/Research/software/sageopt'))
+
 import inspect
 import sageopt
-
-sys.path.insert(0, os.path.abspath('~/documents/research/software/sageopt'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'sageopt'
-copyright = '2019, Riley J. Murray'
+copyright = '2020, Riley J. Murray'
 author = 'Riley J. Murray'
 
 # The full version, including alpha/beta/rc tags
-release = sageopt.__version__
-
+# release = sageopt.__version__
+# release = '0.5.1'
 
 # -- General configuration ---------------------------------------------------
 
@@ -54,6 +54,12 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         if func_name in {'Variable.is_constant', 'Variable.is_affine'}:
             return True
         if func_name in {'Expression.as_expr'}:
+            return True
+        # exclusions for PrimalSageCone objects
+        if func_name in {'PrimalSageCone.variables', 'PrimalSageCone.conic_form'}:
+            return True
+        # exclusions for DualSageCone objects
+        if func_name in {'DualSageCone.variables', 'DualSageCone.conic_form'}:
             return True
 
     exclude = name in exclusions

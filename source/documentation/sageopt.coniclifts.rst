@@ -175,7 +175,7 @@ These classes have virtually identical constructors and public attributes. In pa
 require
 an argument ``X``, which can be ``None`` or a ``SigDomain``.
 Ordinary SAGE constraints are obtained by setting ``X=None``.
-Conditional SAGE constraints assume the set represented by induced by ``X`` is nonempty, and it's the user's
+Conditional SAGE constraints assume the set represented by ``X`` is nonempty, and it's the user's
 responsibility to ensure this is the case.
 The main difference in these classes' attributes is
 that ``PrimalSageCone`` instances have a dict called ``age_vectors`` (which represent the certificates of nonnegativity)
@@ -198,8 +198,10 @@ The cost of this presolve can be mitigated by recycling ``covers = constr.ech.ex
 constraint constructor to the next.
 
 .. autoclass:: sageopt.coniclifts.PrimalSageCone
+    :members:
 
 .. autoclass:: sageopt.coniclifts.DualSageCone
+    :members:
 
 
 .. _cl_compilerinterface:
