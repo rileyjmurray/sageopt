@@ -92,6 +92,7 @@ class PrimalSageCone(SetMembership):
 
         ``covers[i]`` indicates which indices ``j`` have ``alpha[j,:]`` participate in
         the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.
+        See also ``PrimalSageCone.ech``.
 
 
     Attributes
@@ -143,17 +144,17 @@ class PrimalSageCone(SetMembership):
     X : SigDomain or None
 
         If None, then this constraint represents a primal ordinary-SAGE cone.
-        See also the function PrimalSageCone.sigma_x(...)
-
-    ech : ExpCoverHelper
-
-        A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
-        when provided, and manages construction of ``covers`` when a user does not provide it.
+        See also the function ``PrimalSageCone.sigma_x``.
 
     name : str
 
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
         for the name of any auxiliary Variable created when compiling to the coniclifts standard.
+
+    ech : ExpCoverHelper
+
+        A simple wrapper around the constructor argument ``covers``. Validates ``covers``
+        when provided, and constructs ``covers`` when a user does not provide it.
 
     Notes
     -----
@@ -388,6 +389,30 @@ class PrimalSageCone(SetMembership):
         return prob.value
 
     def violation(self, norm_ord=np.inf, rough=False):
+        """
+        Return a measure of violation for the constraint that ``self.c`` belongs to
+        :math:`C_{\\mathrm{SAGE}}(\\alpha, X)`.
+
+        Parameters
+        ----------
+        norm_ord : int
+            The value of ``ord`` passed to numpy ``norm`` functions, when reducing
+            vector-valued residuals into a scalar residual.
+
+        rough : bool
+            Setting ``rough=False`` computes violation by solving an optimization
+            problem. Setting ``rough=True`` computes violation by taking norms of
+            residuals of appropriate elementwise equations and inequalities involving
+            ``self.c`` and auxiliary variables.
+
+        Notes
+        -----
+        When ``rough=False``, the optimization-based violation is computed by projecting
+        the vector ``self.c`` onto a new copy of a primal SAGE constraint, and then returning
+        the L2-norm between ``self.c`` and that projection. This optimization step essentially
+        re-solves for all auxiliary variables used by this constraint.
+
+        """
         c = self.c.value
         if self._m == 1:
             residual = c.reshape((-1,))  # >= 0
@@ -420,7 +445,7 @@ class PrimalSageCone(SetMembership):
                 idx_set = self.ech.expcovers[i]
                 sf_part = self.sigma_x((alpha[i, :] - alpha[idx_set, :]).T @ x_i)
                 y_i = np.exp(1) * c_i[idx_set]
-                relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + sf_part # <= 0
+                relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + sf_part  # <= 0
                 relent_viol = 0 if relent_res < 0 else relent_res
                 age_viols.append(relent_viol)
             else:
@@ -540,15 +565,15 @@ class DualSageCone(SetMembership):
         solution recovery algorithm takes these variables, and considers points ``x`` of
         the form ``x = mu_vars[i].value / self.v[i].value``.
 
-    ech : ExpCoverHelper
-
-        A simple wrapper around the constructor argument ``covers``. Manages validation of ``covers``
-        when provided, and manages construction of ``covers`` when a user does not provide it.
-
     name : str
 
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
         for the name of any auxiliary Variable created when compiling to the coniclifts standard.
+
+    ech : ExpCoverHelper
+
+        A simple wrapper around the constructor argument ``covers``. Validates ``covers``
+        when provided, and constructs ``covers`` when a user does not provide it.
     """
 
     def __init__(self, v, alpha, X, name, **kwargs):
@@ -644,6 +669,29 @@ class DualSageCone(SetMembership):
             return cone_data
 
     def violation(self, norm_ord=np.inf, rough=False):
+        """
+        Return a measure of violation for the constraint that ``self.v`` belongs to
+        :math:`C_{\\mathrm{SAGE}}(\\alpha, X)^{\\dagger}`.
+
+        Parameters
+        ----------
+        norm_ord : int
+            The value of ``ord`` passed to numpy ``norm`` functions, when reducing
+            vector-valued residuals into a scalar residual.
+
+        rough : bool
+            Setting ``rough=False`` computes violation by solving an optimization
+            problem. Setting ``rough=True`` computes violation by taking norms of
+            residuals of appropriate elementwise equations and inequalities involving
+            ``self.v`` and auxiliary varibles.
+
+        Notes
+        -----
+        When ``rough=False``, the optimization-based violation is computed by projecting
+        the vector ``self.v`` onto a new copy of a dual SAGE constraint, and then returning
+        the L2-norm between ``self.v`` and that projection. This optimization step essentially
+        re-solves for all auxiliary variables used by this constraint.
+        """
         v = self.v.value
         viols = []
         for i in self.ech.U_I:

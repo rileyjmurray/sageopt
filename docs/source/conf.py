@@ -55,6 +55,12 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
             return True
         if func_name in {'Expression.as_expr'}:
             return True
+        # exclusions for PrimalSageCone objects
+        if func_name in {'PrimalSageCone.variables', 'PrimalSageCone.conic_form'}:
+            return True
+        # exclusions for DualSageCone objects
+        if func_name in {'DualSageCone.variables', 'DualSageCone.conic_form'}:
+            return True
 
     exclude = name in exclusions
     return skip or exclude

@@ -198,8 +198,10 @@ The cost of this presolve can be mitigated by recycling ``covers = constr.ech.ex
 constraint constructor to the next.
 
 .. autoclass:: sageopt.coniclifts.PrimalSageCone
+    :members:
 
 .. autoclass:: sageopt.coniclifts.DualSageCone
+    :members:
 
 
 .. _cl_compilerinterface:
