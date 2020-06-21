@@ -15,6 +15,7 @@
 """
 import numpy as np
 import unittest
+from nose.tools import assert_raises
 from sageopt.symbolic.signomials import Signomial, SigDomain, standard_sig_monomials
 from sageopt.relaxations import infer_domain
 from sageopt import coniclifts as cl
@@ -36,6 +37,21 @@ class TestSignomials(unittest.TestCase):
         for i in range(s.m):
             recovered_alpha_c[tuple(s.alpha[i, :])] = s.c[i]
         assert s.n == 1 and s.m == 3 and alpha_c == recovered_alpha_c
+
+    def test_broadcasting(self):
+        # any signomial will do.
+        alpha_c = {(0,): 1, (1,): -1, (2,): -2}
+        s = Signomial.from_dict(alpha_c)
+        other = np.array([1, 2])
+        t1 = s + other
+        self.assertIsInstance(t1, np.ndarray)
+        t2 = other + s
+        self.assertIsInstance(t2, np.ndarray)
+        delta = t1 - t2
+        d1 = delta[0].without_zeros()
+        d2 = delta[1].without_zeros()
+        self.assertEqual(d1.m, 1)
+        self.assertEqual(d2.m, 1)
 
     def test_exponentiation(self):
         x = standard_sig_monomials(2)

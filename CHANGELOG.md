@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - coniclifts: PrimalSageCone objects have a ``sigma_x`` method, for evaluating support function.
    This method is now used when computing constraint violations.
  - symbolic: SigDomain objects have a ``suppfunc`` method.
+## Changed
+ - symbolic: signomials will now broadcast to meet the size of an ndarray,
+   if the ndarray cannot be coerced into a scalar.
 ## Removed
  - coniclifts: compile_linear_expression.
 

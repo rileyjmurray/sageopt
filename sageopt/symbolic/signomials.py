@@ -267,7 +267,10 @@ class Signomial(object):
             self._alpha_c[tuple(alpha[j, :])] = c[j]
 
     def __add__(self, other):
-        other = self.upcast_to_signomial(other)
+        try:
+            other = self.upcast_to_signomial(other)
+        except ValueError:
+            return other.__radd__(self)
         if not other.n == self._n:
             raise RuntimeError('Cannot add Signomials with different numbers of variables.')
         res = Signomial.sum([self, other])
@@ -278,7 +281,10 @@ class Signomial(object):
         return self.__add__(other)
 
     def __mul__(self, other):
-        other = self.upcast_to_signomial(other)
+        try:
+            other = self.upcast_to_signomial(other)
+        except ValueError:
+            return other.__rmul__(self)
         if not other.n == self._n:
             raise RuntimeError('Cannot multiply Signomials with different numbers of variables.')
         res = Signomial.product(self, other)
