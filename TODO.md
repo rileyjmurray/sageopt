@@ -10,13 +10,8 @@ Conceptually, it seems as though these should be in a common place.
 
 ## Web documentation
 
-1. Rebuild the docs to reflect 0.4 -> 0.5 changes.
-2. Suggest running nosetests, after installing from pip
-3. Add documentation for keyword arguments to Problem.solve()
-4. Add examples for CVXPY and GPKit integration.
-5. Change the badge from "watching" to "starred".
-6. Change the page names from "0.4.0 docs" to something that
-   automatically updates w.r.t. sageopt's version number.
+1. Suggest running nosetests, after installing from pip
+2. Add examples for CVXPY and GPKit integration.
 
 ## Send a bad problem case to MOSEK devs.
 

@@ -30,29 +30,71 @@ class Problem(object):
 
     Parameters
     ----------
-    objective_sense : str
+    sense : str
         Either ``coniclifts.MIN`` or ``coniclifts.MAX``
 
-    objective_expr : Expression
+    objective : Expression
         The function to minimize or maximize. ScalarExpressions and real numeric types
         are also accepted. The final (cast) expression must be linear in its Variables.
 
     constraints : list of coniclifts.Constraint
-        Variables appearing in objective_expr are subject to Constraint objects in this list.
+        Variables appearing in ``objective`` are subject to Constraint objects in this list.
 
     Attributes
     ----------
-    objective_sense: str
+    sense: str
 
         The value passed by the user to the constructor.
 
-    objective_expr : Expression
+    objective : Expression
 
         The value passed by the user to the constructor.
 
     constraints : list of coniclifts.Constraint
 
         The value passed by the user to the constructor.
+
+    all_variables : list of coniclifts.Variable
+
+        All Variable objects needed to represent the feasible set. This includes user-declared
+        Variables, and Variables which were required to write the problem in terms of coniclifts
+        primitives. It is recommended to access this list by calling ``self.variables()``.
+
+    status : str
+
+        The problem status from the last call to ``self.solve``.
+        Either ``coniclifts.SOLVED`` or ``coniclifts.INACCURATE`` or ``coniclifts.FAILED``.
+
+    value : float
+
+        The objective value from the last call to ``self.solve``. Can be a float,
+         ``np.inf``, ``-np.inf``, or ``np.NaN``.
+
+    variable_values : Dict[str, ndarray]
+
+        A map from a Variable's ``name`` field to a numpy array, containing a feasible
+        value for that Variable for this problem's constraints.
+
+    metadata : dict
+
+        A place for users to store metadata produced when constructing this Problem.
+
+    timings : dict
+
+        Contains runtime (in seconds) for various operations associated with Problem.
+        There is always a field ``timings['compile_time']``, which is the time spent parsing
+        user-specified constraints into a vectorized cone program. Upon a call to
+        ``self.solve(solver=SOLVER)``, there is also a dict ``timings[SOLVER]`` which contains
+        time spent transforming a coniclifts representation to a solver's standard form, and
+        time spent by the underlying solver itself.
+
+    solver_apply_data : Dict[str,dict]
+
+        Stores metadata during a call to ``self.solve(cache_apply_data=True)``.
+
+    solver_raw_output : Dict[str,dict]
+
+        Stores metadata during a call to ``self.solve(cache_raw_output=True)``.
 
     A : CSC-format sparse matrix
 
@@ -67,17 +109,11 @@ class Problem(object):
         The cartesian product of these cones (in order) defines the convex cone appearing
         in the flattened conic representation of the feasible set.
 
-    all_variables : list of coniclifts.Variable
-
-        All Variable objects needed to represent the feasible set. This includes user-declared
-        Variables, and Variables which were required to write the problem in terms of coniclifts
-        primitives. It is recommended to access this list by calling ``self.variables()``.
-
     variable_map : Dict[str,ndarray]
 
-        A map from a Variable's ``name`` field to a numpy array. If ``myvar``
-        is a coniclifts Variable appearing in the system defined by ``constraints``,
-        then a point ``x`` satisfying :math:`A x + b \in K` maps to a feasible value for
+        A map from a Variable's ``name`` field to a numpy array. If ``myvar`` is a
+        coniclifts Variable appearing in the system defined by ``constraints``, then
+        a point ``x`` satisfying :math:`A x + b \\in K` maps to a feasible value for
         ``myvar`` by ::
 
             x0 = np.hstack([x, 0])
@@ -87,33 +123,6 @@ class Problem(object):
         Augmenting ``x`` by zero to create ``x0`` reflects a convention that if a component of
         a Variable does not affect the constraints, that component is automatically assigned
         the value zero.
-
-    variable_values : Dict[str, ndarray]
-
-        A map from a Variable's ``name`` field to a numpy array, containing a feasible
-        value for that Variable for this problem's constraints.
-
-    solver_apply_data : Dict[str,dict]
-
-        A place to store metadata during a call to ``self.solve(cache_apply_data=True)``.
-
-    solver_raw_output : Dict[str,dict]
-
-        A place to store metadata during a call to ``self.solve(cache_raw_output=True)``.
-
-    metadata : dict
-
-        A place for users to store metadata produced when constructing this Problem.
-
-    value : float
-
-        The objective value from the last call to ``self.solve``. Can be a float,
-         ``np.inf``, ``-np.inf``, or ``np.NaN``.
-
-    status : str
-
-        The problem status from the last call to ``self.solve``.
-        Either ``coniclifts.SOLVED`` or ``coniclifts.INACCURATE`` or ``coniclifts.FAILED``.
 
     Notes
     -----
@@ -130,16 +139,16 @@ class Problem(object):
 
     _SOLVER_ORDER_ = ['MOSEK', 'ECOS']
 
-    def __init__(self, objective_sense, objective_expr, constraints, **kwargs):
-        self.objective_sense = objective_sense
-        if not isinstance(objective_expr, Expression):
-            objective_expr = Expression(objective_expr)
-        self.objective_expr = objective_expr
+    def __init__(self, sense, objective, constraints, **kwargs):
+        self.objective_sense = sense
+        if not isinstance(objective, Expression):
+            objective = Expression(objective)
+        self.objective_expr = objective
         self.constraints = constraints
         self.timings = dict()
         t = time.time()
-        c, A, b, K, variable_map, all_vars = compile_problem(objective_expr, constraints)
-        if objective_sense == CL_CONSTANTS.minimize:
+        c, A, b, K, variable_map, all_vars = compile_problem(objective, constraints)
+        if sense == CL_CONSTANTS.minimize:
             self.c = c
         else:
             self.c = -c
@@ -188,7 +197,23 @@ class Problem(object):
 
         Keyword arguments.
 
-            cache_apply_data
+            verbose : bool. If ``False``, then suppress solver output from being written to
+            standard-out.
+
+            cache_raw_data : bool. If ``True``, then record the raw output of the solver in
+            the dictionary ``self.solver_raw_output``. For MOSEK, this raw output includes the
+            MOSEK Task object.
+
+            max_iters : int. Maximum number of iterations for ECOS.
+
+            mosek_params : dict. Following CVXPY parameter processing conventions. Also,
+            allows options {``'NUM_THREADS'``: int, ``'CO_TOL_NEAR_REL'``: float,
+            ``'TOL_PATH'``: float, ``'TOL_STEP_SIZE'``: float, ``'DEACTIVATE_SCALING':`` bool}.
+            Refer to the coniclifts MOSEK interface source code for usage of these parameters.
+
+            cache_apply_data : bool. If ``True``, then take the put``(data, inv_data)``
+            returned by the coniclifts interface to the given solver and record it in the
+            dictionary ``self.solver_apply_data``. This data is rarely relevant for users.
         """
         if solver is None:
             for svr in Problem._SOLVER_ORDER_:
