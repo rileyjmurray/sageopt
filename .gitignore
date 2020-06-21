@@ -3,7 +3,7 @@ dist/*
 sageopt.egg-info/*
 .idea/*
 docs/*
-
+sageopt/*
 .DS_STORE
 
 ignore_scripts/*
