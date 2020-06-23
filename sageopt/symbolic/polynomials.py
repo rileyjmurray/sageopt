@@ -224,7 +224,7 @@ class Polynomial(Signomial):
         if not isinstance(other, Polynomial):
             if isinstance(other, Signomial):  # pragma: no cover
                 raise RuntimeError('Cannot multiply signomials and polynomials.')
-            other = self.upcast_to_signomial(other)
+            other = Signomial.cast(self.n, other)
             other = other.as_polynomial()
         self_var_coeffs = (self.c.dtype not in __NUMERIC_TYPES__)
         other_var_coeffs = (other.c.dtype not in __NUMERIC_TYPES__)
@@ -468,8 +468,9 @@ class Polynomial(Signomial):
         f = Signomial(self.alpha, self.c)
         return f
 
-    def upcast_to_polynomial(self, other):
-        s = Signomial.upcast_to_signomial(self, other)
+    @staticmethod
+    def cast(n, other):
+        s = Signomial.cast(n, other)
         p = s.as_polynomial()
         return p
 

@@ -191,7 +191,7 @@ def sage_multiplier_search(f, level=1, X=None):
     """
     f = f.without_zeros()
     constraints = []
-    mult_alpha = hierarchy_e_k([f, f.upcast_to_signomial(1)], k=level)
+    mult_alpha = hierarchy_e_k([f, Signomial.cast(f.n, 1)], k=level)
     c_tilde = cl.Variable(mult_alpha.shape[0], name='c_tilde')
     mult = Signomial(mult_alpha, c_tilde)
     constraints.append(cl.sum(c_tilde) >= 1)
@@ -282,11 +282,11 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     lagrangian, ineq_lag_mults, _, gamma = make_sig_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'X': X}
     if ell > 0:
-        alpha_E_1 = hierarchy_e_k([f, f.upcast_to_signomial(1)] + gts + eqs, k=1)
+        alpha_E_1 = hierarchy_e_k([f, Signomial.cast(f.n, 1)] + gts + eqs, k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
     else:
-        modulator = f.upcast_to_signomial(1)
+        modulator = Signomial.cast(f.n, 1)
     metadata['modulator'] = modulator
     # The Lagrangian (after possible multiplication, as above) must be a SAGE signomial.
     con = primal_sage_cone(lagrangian, name='Lagrangian is SAGE', X=X)
@@ -318,12 +318,12 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
     lagrangian, ineq_lag_mults, eq_lag_mults, _ = make_sig_lagrangian(f, gts, eqs, p=p, q=q)
     metadata = {'lagrangian': lagrangian, 'f': f, 'gts': gts, 'eqs': eqs, 'level': (p, q, ell), 'X': X}
     if ell > 0:
-        alpha_E_1 = hierarchy_e_k([f, f.upcast_to_signomial(1)] + list(gts) + list(eqs), k=1)
+        alpha_E_1 = hierarchy_e_k([f, Signomial.cast(f.n, 1)] + list(gts) + list(eqs), k=1)
         modulator = Signomial(alpha_E_1, np.ones(alpha_E_1.shape[0])) ** ell
         lagrangian = lagrangian * modulator
         f = f * modulator
     else:
-        modulator = f.upcast_to_signomial(1)
+        modulator = Signomial.cast(f.n, 1)
     metadata['modulator'] = modulator
     # In primal form, the Lagrangian is constrained to be a SAGE signomial.
     # Introduce a dual variable "v" for this constraint.

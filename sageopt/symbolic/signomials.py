@@ -268,7 +268,7 @@ class Signomial(object):
 
     def __add__(self, other):
         try:
-            other = self.upcast_to_signomial(other)
+            other = Signomial.cast(self.n, other)
         except ValueError:
             return other.__radd__(self)
         if not other.n == self._n:
@@ -282,7 +282,7 @@ class Signomial(object):
 
     def __mul__(self, other):
         try:
-            other = self.upcast_to_signomial(other)
+            other = Signomial.cast(self.n, other)
         except ValueError:
             return other.__rmul__(self)
         if not other.n == self._n:
@@ -323,7 +323,7 @@ class Signomial(object):
             power = int(power)
             if power == 0:
                 # noinspection PyTypeChecker
-                return self.upcast_to_signomial(1)
+                return Signomial.cast(self.n, 1)
             else:
                 #TODO: implement a faster version of this in utilties.py,
                 # by using multinomial coefficients. Once this is done,
@@ -412,7 +412,7 @@ class Signomial(object):
             return self
         elif len(to_drop) == self.m:
             # noinspection PyTypeChecker
-            return self.upcast_to_signomial(0)
+            return Signomial.cast(self.n, 0)
         else:
             keepers = np.ones(self.m, dtype=bool)
             keepers[to_drop] = False
@@ -485,10 +485,11 @@ class Signomial(object):
         f = Polynomial(self.alpha, self.c)
         return f
 
-    def upcast_to_signomial(self, other):
+    @staticmethod
+    def cast(n, other):
         if isinstance(other, Signomial):
             return other
-        alpha = np.zeros(shape=(1, self.n))
+        alpha = np.zeros(shape=(1, n))
         if isinstance(other, __NUMERIC_TYPES__):
             s = Signomial(alpha, np.array([other]))
             return s

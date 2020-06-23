@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# [0.5.2] - unreleased, lenomials branch
+## Added
+ - symbolic: ``lenomial`` class.
+## Changed
+ - symbolic: ``upcast_to_signomial`` is a now static method, and has been renamed
+   (This affects sageopt.relaxations as well.)
+## Removed
+
+
 # [0.5.1] - 2020-06-21
 ## Added
  - coniclifts: "abs" and "pos" NonlinearScalarAtoms.
