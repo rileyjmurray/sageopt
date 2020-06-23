@@ -49,6 +49,8 @@ class Lenomial(object):
         self.n = len(fs) - 1
         self.sig = Signomial.cast(self.n, fs[0])
         self.xsigs = np.array([Signomial.cast(self.n, fi) for fi in fs[1:]])
+        if any([fi.n != self.n for fi in self.xsigs]):
+            raise ValueError()
         self._rmat = None
         self._smat = None
 
@@ -125,8 +127,21 @@ class Lenomial(object):
     def __radd__(self, other):
         return self.__add__(other)
 
+    def __sub__(self, other):
+        other = -other
+        f = self.__add__(other)
+        return f
+
+    def __rsub__(self, other):
+        f = -self
+        g = f + other
+        return g
+
     def __mul__(self, other):
-        other = Signomial.cast(self.n, other)
+        try:
+            other = Signomial.cast(self.n, other)
+        except ValueError:
+            raise ArithmeticError()
         sig = self.sig * other
         xsigs = self.xsigs * other
         fs = [sig] + xsigs.tolist()
@@ -137,17 +152,27 @@ class Lenomial(object):
         return self.__mul__(other)
 
     def __truediv__(self, other):
-        other = Signomial.cast(self.n, other)
+        try:
+            other = Signomial.cast(self.n, other)
+        except ValueError:
+            raise ArithmeticError()
         other = other ** -1
         f = self * other
         return f
 
     def __pow__(self, power, modulo=None):
         if not self.is_signomial():
-            raise RuntimeError()
+            raise ArithmeticError()
         f = self.sig
-        g = f ** pow
+        g = f ** power
         return g
+
+    def __neg__(self):
+        sig = -self.sig
+        xsigs = -self.xsigs
+        fs = [sig] + xsigs.tolist()
+        f = Lenomial(fs)
+        return f
 
     @staticmethod
     def sig_times_linfunc(sig, linfunc):

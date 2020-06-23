@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
  - symbolic: ``upcast_to_signomial`` is a now static method, and has been renamed
    (This affects sageopt.relaxations as well.)
+ - symbolic: changed RuntimeErrors in Signomial arithmetic to ArithmeticErrors.
 ## Removed
 
 

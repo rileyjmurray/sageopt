@@ -223,33 +223,33 @@ class Polynomial(Signomial):
     def __mul__(self, other):
         if not isinstance(other, Polynomial):
             if isinstance(other, Signomial):  # pragma: no cover
-                raise RuntimeError('Cannot multiply signomials and polynomials.')
+                raise ArithmeticError('Cannot multiply signomials and polynomials.')
             other = Signomial.cast(self.n, other)
             other = other.as_polynomial()
         self_var_coeffs = (self.c.dtype not in __NUMERIC_TYPES__)
         other_var_coeffs = (other.c.dtype not in __NUMERIC_TYPES__)
         if self_var_coeffs and other_var_coeffs:  # pragma: no cover
-            raise RuntimeError('Cannot multiply two polynomials that contain non-numeric coefficients.')
+            raise ArithmeticError('Cannot multiply two polynomials that contain non-numeric coefficients.')
         temp = Signomial.__mul__(self, other)
         temp = temp.as_polynomial()
         return temp
 
     def __truediv__(self, other):
         if not isinstance(other, __NUMERIC_TYPES__):  # pragma: no cover
-            raise RuntimeError('Cannot divide a polynomial by the non-numeric type: ' + type(other) + '.')
+            raise ArithmeticError('Cannot divide a polynomial by the non-numeric type: ' + type(other) + '.')
         other_inv = 1 / other
         return self.__mul__(other_inv)
 
     def __add__(self, other):
         if isinstance(other, Signomial) and not isinstance(other, Polynomial):  # pragma: no cover
-            raise RuntimeError('Cannot add signomials to polynomials.')
+            raise ArithmeticError('Cannot add signomials to polynomials.')
         temp = Signomial.__add__(self, other)
         temp = temp.as_polynomial()
         return temp
 
     def __sub__(self, other):
         if isinstance(other, Signomial) and not isinstance(other, Polynomial):
-            raise RuntimeError('Cannot subtract a signomial from a polynomial (or vice versa).')
+            raise ArithmeticError('Cannot subtract a signomial from a polynomial (or vice versa).')
         temp = Signomial.__sub__(self, other)
         temp = temp.as_polynomial()
         return temp
@@ -275,7 +275,7 @@ class Polynomial(Signomial):
 
     def __pow__(self, power, modulo=None):
         if self.c.dtype not in __NUMERIC_TYPES__:
-            raise RuntimeError('Cannot exponentiate polynomials with symbolic coefficients.')
+            raise ArithmeticError('Cannot exponentiate polynomials with symbolic coefficients.')
         temp = Signomial(self.alpha, self.c)
         temp = temp ** power
         temp = temp.as_polynomial()

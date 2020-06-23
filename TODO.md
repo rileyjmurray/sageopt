@@ -21,3 +21,7 @@ infeasible solution.
 ## sageopt.interop.cvxpy
 Write tests. Setup a continuous-integration environment which
 installs CVXPY.
+
+On the "lenomials" branch: update some polynomial arithmetic to account
+for cvxpy objects as coefficient vectors (right now they still assume
+ndarrays).

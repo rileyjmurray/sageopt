@@ -272,7 +272,7 @@ class Signomial(object):
         except ValueError:
             return other.__radd__(self)
         if not other.n == self._n:
-            raise RuntimeError('Cannot add Signomials with different numbers of variables.')
+            raise ArithmeticError('Cannot add Signomials with different numbers of variables.')
         res = Signomial.sum([self, other])
         res = res.without_zeros()
         return res
@@ -286,7 +286,7 @@ class Signomial(object):
         except ValueError:
             return other.__rmul__(self)
         if not other.n == self._n:
-            raise RuntimeError('Cannot multiply Signomials with different numbers of variables.')
+            raise ArithmeticError('Cannot multiply Signomials with different numbers of variables.')
         res = Signomial.product(self, other)
         res = res.without_zeros()
         return res
@@ -312,13 +312,13 @@ class Signomial(object):
 
     def __pow__(self, power, modulo=None):
         if type(power) not in __NUMERIC_TYPES__:
-            raise RuntimeError('Cannot raise a signomial to non-numeric powers.')
+            raise ArithmeticError('Cannot raise a signomial to non-numeric powers.')
         if self.c.dtype not in __NUMERIC_TYPES__:
             msg = 'Cannot exponentiate signomials with symbolic coefficients.'
             if not isinstance(self.c, cl.Expression):
-                raise RuntimeError(msg)
+                raise ArithmeticError(msg)
             elif not self.c.is_constant():
-                raise RuntimeError(msg)
+                raise ArithmeticError(msg)
         if power % 1 == 0 and power >= 0:
             power = int(power)
             if power == 0:
@@ -336,10 +336,10 @@ class Signomial(object):
         else:
             d = dict((k, v) for (k, v) in self.alpha_c.items() if v != 0)
             if len(d) != 1:
-                raise ValueError('Only signomials with exactly one term can be raised to power %s.', power)
+                raise ArithmeticError('Only signomials with exactly one term can be raised to power %s.', power)
             v = list(d.values())[0]
             if v < 0 and not power % 1 == 0:
-                raise ValueError('Cannot compute non-integer power %s of coefficient %s', power, v)
+                raise ArithmeticError('Cannot compute non-integer power %s of coefficient %s', power, v)
             alpha_tup = tuple(power * ai for ai in list(d.keys())[0])
             c = float(v) ** power
             s = Signomial.from_dict({alpha_tup: c})
@@ -496,6 +496,12 @@ class Signomial(object):
         elif isinstance(other, cl.base.ScalarExpression):
             s = Signomial(alpha, cl.Expression([other]))
             return s
+        elif hasattr(other, 'sig'):
+            # assume "other" is a "Lenomial" object.
+            if other.is_signomial():
+                return other.sig
+            else:
+                raise ValueError()
         elif not hasattr(other, 'size'):
             raise ValueError()
         elif other.size > 1:
