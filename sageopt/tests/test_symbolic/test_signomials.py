@@ -101,20 +101,20 @@ class TestSignomials(unittest.TestCase):
         try:
             s = x[0] + y[0]
             assert False
-        except RuntimeError as err:
+        except ArithmeticError as err:
             err_str = str(err)
             assert 'Cannot add' in err_str
         try:
             s = x[0] * y[0]
             assert False
-        except RuntimeError as err:
+        except ArithmeticError as err:
             err_str = str(err)
             assert 'Cannot multiply' in err_str
         s = sum(x)
         try:
             t = s**0.5
             assert False
-        except ValueError as err:
+        except ArithmeticError as err:
             err_str = str(err)
             assert 'Only signomials with exactly one term' in err_str
         z = cl.Variable()
@@ -122,13 +122,13 @@ class TestSignomials(unittest.TestCase):
         try:
             t = s ** 2
             assert False
-        except RuntimeError as err:
+        except ArithmeticError as err:
             err_str = str(err)
             assert 'Cannot exponentiate signomials with symbolic coefficients' in err_str
         try:
             y = x[0] ** x[1]
             assert False
-        except RuntimeError as err:
+        except ArithmeticError as err:
             err_str = str(err)
             assert 'Cannot raise a signomial to non-numeric powers.' == err_str
         pass

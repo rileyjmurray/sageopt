@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [0.5.2] - unreleased, lenomials branch
 ## Added
- - symbolic: ``lenomial`` class.
+ - symbolic: ``elfs`` module. Contains an ``Elf`` class and a ``spelf`` function.
+ - symbolic: the ``elfs.Elf`` class represents entropy-like functions (in log space)
+ - symbolic: the ``elfs.spelf`` method returns an Elf parameterized by coniclifts Variables.
+ - symbolic: all main classes (Signomial, Polynomial, Elf) have a ``fix_coefficients`` method.
 ## Changed
  - symbolic: ``upcast_to_signomial`` is a now static method, and has been renamed
    (This affects sageopt.relaxations as well.)

@@ -16,8 +16,11 @@
 import numpy as np
 import unittest
 from nose.tools import assert_raises
-from sageopt.symbolic.lenomials import Elf
+from scipy.optimize import basinhopping
+from sageopt.symbolic.elfs import Elf, spelf
 from sageopt.symbolic.signomials import Signomial
+from sageopt.coniclifts import Variable, Problem, vector2norm, MIN, MAX, SOLVED
+from sageopt.coniclifts import PrimalSageCone
 
 
 class TestElfs(unittest.TestCase):
@@ -116,6 +119,56 @@ class TestElfs(unittest.TestCase):
         pass
 
 
+class TestSpelfs(unittest.TestCase):
+
+    def test_pelf1(self):
+        # construct a symbolic positive entropy-like function
+        R = np.ones(shape=(1, 3))
+        S = np.array([[0.2, 0.6, -0.5]])
+        f, pelfcon = spelf(R, S)
+        # create a coniclifts problem, which projects a fixed
+        #   3-vector onto the set of vectors which are feasible for "f"
+        np.random.seed(0)
+        c_ref = np.random.randn(3)
+        c_ref = c_ref.round(decimals=2)
+        c_pelf = pelfcon.variables()[0].ravel()
+        t = Variable(name='epi_norm')
+        cons = [pelfcon, vector2norm(c_pelf - c_ref) <= t]
+        prob = Problem(MIN, t, cons)
+        prob.solve(verbose=False)
+        # Recover the entropy-like function, use a hueristic method
+        #   to check that it's nonnegative.
+        g = f.fix_coefficients()
+        x0 = np.random.randn(3).round(decimals=2)
+        opt_res = basinhopping(g, x0)
+        self.assertGreaterEqual(opt_res.fun, -1e-8)
+
+    def test_spelf1(self):
+        np.random.seed(1)  # seed=0 results no bound produced.
+        # problem data
+        alpha = np.random.randn(4).reshape((-1, 1))
+        f0 = Signomial(alpha, np.ones(4))
+        f1 = Elf.sig_times_linfunc(Signomial.cast(1, 1.0), np.array([1.0]))
+        gamma = Variable(name='gamma')
+        f = f0 + f1 - gamma
+        # constraints
+        g, spelf_con = spelf(f.rmat, f.smat)
+        h = Signomial(alpha, Variable(shape=(4,)))
+        sage_con = PrimalSageCone(h.c, h.alpha, None, 'sage_part')
+        delta = f - (g + h)
+        sum_con = [delta.sig.c == 0, delta.xsigs[0].c == 0]
+        cons = [spelf_con, sage_con] + sum_con
+        # construct and solve coniclifts Problem
+        prob = Problem(MAX, gamma, cons)
+        prob.solve(verbose=False)
+        self.assertEqual(prob.status, SOLVED)
+        self.assertGreater(prob.value, -np.inf)
+        # check that the translated function attains a value near zero.
+        ffixed = f.fix_coefficients()
+        x0 = np.array([1])
+        opt_res = basinhopping(ffixed, x0)
+        attained_val = opt_res.fun
+        self.assertLessEqual(attained_val, 1e-6)
 
 
 

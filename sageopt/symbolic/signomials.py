@@ -136,6 +136,8 @@ class Signomial(object):
     def __init__(self, alpha, c):
         if isinstance(alpha, list):
             alpha = np.ndarray(alpha)
+        if isinstance(c, cl.base.ScalarExpression):
+            c = cl.Expression([c])
         if alpha.shape[0] != c.size:  # pragma: no cover
             raise ValueError('alpha and c specify different numbers of terms')
         if isinstance(c, np.ndarray) and not isinstance(c, cl.Expression) and c.dtype == object:
@@ -485,6 +487,12 @@ class Signomial(object):
         f = Polynomial(self.alpha, self.c)
         return f
 
+    def fix_coefficients(self):
+        if hasattr(self.c, 'value'):
+            return Signomial(self.alpha, self.c.value)
+        else:
+            return self
+
     @staticmethod
     def cast(n, other):
         if isinstance(other, Signomial):
@@ -499,7 +507,7 @@ class Signomial(object):
         elif hasattr(other, 'sig'):
             # assume "other" is a "Elf" object.
             if other.is_signomial():
-                return other.sig
+                return other.sig  # TODO: consider removing this
             else:
                 raise ValueError()
         elif not hasattr(other, 'size'):

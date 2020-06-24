@@ -15,6 +15,8 @@
 """
 from sageopt.symbolic.signomials import Signomial
 from sageopt.coniclifts import Variable, Cone, DualProductCone
+from sageopt.coniclifts.base import ScalarExpression, Expression
+from sageopt.coniclifts.operators import affine as aff
 import numpy as np
 import itertools
 
@@ -48,6 +50,9 @@ class Elf(object):
 
     def is_signomial(self):
         for fi in self.xsigs:
+            if isinstance(fi.c, Expression):
+                if not fi.c.is_constant():
+                    return False
             if np.any(fi.c != 0):
                 return False
         return True
@@ -90,23 +95,6 @@ class Elf(object):
         val = self.sig(x)
         val += sum([x[i] * self.xsigs[i](x) for i in range(x.size)])
         return val
-
-    @staticmethod
-    def cast(n, other):
-        if isinstance(other, Elf):
-            return other
-        elif isinstance(other, Signomial):
-            if not other.n == n:
-                raise ValueError()
-            fs = [other] + [0.0] * n
-            f = Elf(fs)
-            return f
-        elif isinstance(other, __NUMERIC_TYPES__):
-            fs = [Signomial.cast(n, other)] + [0.0] * n
-            f = Elf(fs)
-            return f
-        else:
-            raise NotImplementedError()
 
     def __add__(self, other):
         # TODO: create a quick_sum function which operates on iterables
@@ -168,16 +156,42 @@ class Elf(object):
         f = Elf(fs)
         return f
 
+    def fix_coefficients(self):
+        sig = self.sig.fix_coefficients()
+        xsigs = [fi.fix_coefficients() for fi in self.xsigs]
+        f = Elf([sig] + xsigs)
+        return f
+
     @staticmethod
     def sig_times_linfunc(sig, linfunc):
         # sig is a Signomial object, defined on n variables.
         # linfunc is real vector of length n.
         # return the Elf defined by f(x) = sig(x) * (linfunc @ x)
+        linfunc = linfunc.ravel()
         sigx = linfunc * sig  # broadcast elementwise multiplication
         fs = [Signomial.cast(sig.n, 0)]
         fs.extend(sigx)
         f = Elf(fs)
         return f
+
+    @staticmethod
+    def cast(n, other):
+        if isinstance(other, Elf):
+            return other
+        elif isinstance(other, Signomial):
+            if not other.n == n:
+                raise ValueError()
+            fs = [other] + [0.0] * n
+            f = Elf(fs)
+            return f
+        elif isinstance(other, __NUMERIC_TYPES__) or\
+                (hasattr(other, 'size') and other.size == 1) or\
+                isinstance(other, ScalarExpression):
+            fs = [Signomial.cast(n, other)] + [0.0] * n
+            f = Elf(fs)
+            return f
+        else:
+            raise NotImplementedError()
 
 
 def spelf(R, S):
@@ -190,8 +204,10 @@ def spelf(R, S):
         f(x) = a_r\\exp(r\\cdot x) + a_s\\exp(s\\cdot x) + a_{rs}\\exp(r\\cdot x)((r-s)\\cdot x)
 
     We can require nonnegativity of an individual such function by having
-    :math:`(a_[s}, a_{rs}, a_{r}) \\in K_{exp}^{\\dagger}`, where :math:`K_{exp}^{\\dagger}` is
-    the dual exponential cone according to the coniclifts standard.
+    ### :math:`(a_[s}, a_{rs}, a_{r}) \\in K_{exp}^{\\dagger}`,
+    :math:`(-a_{rs}, a_s, a_r) \\in K_{exp}^{\\dagger}`
+
+    where :math:`K_{exp}^{\\dagger}` is the dual exponential cone using the coniclifts standard.
     """
     TOL = 1e-7
     pairs = []
@@ -205,22 +221,22 @@ def spelf(R, S):
     summand_elfs = []
     i = 0
     for (r, s) in pairs:
+        r, s = r.reshape((1, -1)), s.reshape((1, -1))
         if np.linalg.norm(r - s) < TOL:
             continue
         ci = c[i, :]
-        g_r = Signomial(r.reshape((1, -1)), ci[0])
-        g_s = Signomial(s.reshape((1, -1)), ci[1])
-        linfunc = ci[2]*(r-s)
-        g_rs = Elf.sig_times_linfunc(g_r, linfunc)
+        g_r = Signomial(r, ci[0])
+        g_s = Signomial(s, ci[1])
+        g_rs = Elf.sig_times_linfunc(Signomial(r, ci[2]), r-s)
         # TODO: make a function which constructs the
-        # sum of g_r, g_s, g_rs without requiring
-        # signomial arithmetic (i.e. keep things fast).
-        summand_sigs = [g_r, g_s]
-        summand_elfs = [g_rs]
+        #   sum of g_r, g_s, g_rs without requiring
+        #   signomial arithmetic (i.e. keep things fast).
+        summand_sigs += [g_r, g_s]
+        summand_elfs += [g_rs]
         i += 1
     K = [Cone('e', 3) for i in range(num_cross_terms)]
-    c_perm = c[:, [1,2,0]]
-    c_flat = c_perm.ravel(order='C')
+    c_mod = aff.column_stack((-c[:, 2], c[:, 1], c[:, 0]))
+    c_flat = c_mod.ravel(order='C')
     constr = DualProductCone(c_flat, K)
     f = Signomial.sum(summand_sigs) + sum(summand_elfs)
     return f, constr

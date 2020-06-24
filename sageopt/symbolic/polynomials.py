@@ -468,6 +468,12 @@ class Polynomial(Signomial):
         f = Signomial(self.alpha, self.c)
         return f
 
+    def fix_coefficients(self):
+        if hasattr(self.c, 'value'):
+            return Polynomial(self.alpha, self.c.value)
+        else:
+            return self
+
     @staticmethod
     def cast(n, other):
         s = Signomial.cast(n, other)
