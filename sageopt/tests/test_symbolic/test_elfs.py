@@ -143,8 +143,8 @@ class TestSpelfs(unittest.TestCase):
         opt_res = basinhopping(g, x0)
         self.assertGreaterEqual(opt_res.fun, -1e-8)
 
-    def test_spelf1(self):
-        np.random.seed(1)  # seed=0 results no bound produced.
+    def _spelf1(self, sage):
+        np.random.seed(1)  # seed=0 results in an unbounded Elf.
         # problem data
         alpha = np.random.randn(4).reshape((-1, 1))
         f0 = Signomial(alpha, np.ones(4))
@@ -153,11 +153,16 @@ class TestSpelfs(unittest.TestCase):
         f = f0 + f1 - gamma
         # constraints
         g, spelf_con = spelf(f.rmat, f.smat)
-        h = Signomial(alpha, Variable(shape=(4,)))
-        sage_con = PrimalSageCone(h.c, h.alpha, None, 'sage_part')
-        delta = f - (g + h)
+        cons = [spelf_con]
+        if sage:
+            h = Signomial(alpha, Variable(shape=(4,)))
+            sage_con = PrimalSageCone(h.c, h.alpha, None, 'sage_part')
+            cons.append(sage_con)
+            delta = f - (g + h)
+        else:
+            delta = f - g
         sum_con = [delta.sig.c == 0, delta.xsigs[0].c == 0]
-        cons = [spelf_con, sage_con] + sum_con
+        cons += sum_con
         # construct and solve coniclifts Problem
         prob = Problem(MAX, gamma, cons)
         prob.solve(verbose=False)
@@ -170,5 +175,10 @@ class TestSpelfs(unittest.TestCase):
         attained_val = opt_res.fun
         self.assertLessEqual(attained_val, 1e-6)
 
+    def test_spelf1_basic(self):
+        self._spelf1(sage=False)
 
-
+    def test_spelf1_sage(self):
+        # SAGE doesn't actually help here, since the signomial term
+        # of the translated function only has positive coefficients.
+        self._spelf1(sage=True)

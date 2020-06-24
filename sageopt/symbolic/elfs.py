@@ -204,9 +204,7 @@ def spelf(R, S):
         f(x) = a_r\\exp(r\\cdot x) + a_s\\exp(s\\cdot x) + a_{rs}\\exp(r\\cdot x)((r-s)\\cdot x)
 
     We can require nonnegativity of an individual such function by having
-    ### :math:`(a_[s}, a_{rs}, a_{r}) \\in K_{exp}^{\\dagger}`,
     :math:`(-a_{rs}, a_s, a_r) \\in K_{exp}^{\\dagger}`
-
     where :math:`K_{exp}^{\\dagger}` is the dual exponential cone using the coniclifts standard.
     """
     TOL = 1e-7
