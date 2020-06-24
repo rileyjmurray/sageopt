@@ -497,7 +497,7 @@ class Signomial(object):
             s = Signomial(alpha, cl.Expression([other]))
             return s
         elif hasattr(other, 'sig'):
-            # assume "other" is a "Lenomial" object.
+            # assume "other" is a "Elf" object.
             if other.is_signomial():
                 return other.sig
             else:

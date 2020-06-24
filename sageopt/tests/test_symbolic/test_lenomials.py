@@ -16,10 +16,8 @@
 import numpy as np
 import unittest
 from nose.tools import assert_raises
-from sageopt.symbolic.lenomials import Lenomial
+from sageopt.symbolic.lenomials import Elf
 from sageopt.symbolic.signomials import Signomial
-from sageopt.relaxations import infer_domain
-from sageopt import coniclifts as cl
 
 
 class TestLenomials(unittest.TestCase):
@@ -29,14 +27,14 @@ class TestLenomials(unittest.TestCase):
         c = np.array([1, -1, -2])
         s = Signomial(alpha, c)  # s(x) = exp(0 * x) - exp(1 * x) - 2 exp(2 * x)
         # Test 1
-        f = Lenomial([s, 0.333])  # f(x) = s(x) + 0.333 * x
+        f = Elf([s, 0.333])  # f(x) = s(x) + 0.333 * x
         x = np.array([0.75])
         actual = f(x)
         expect = s(x) + 0.333 * x
         delta = (actual - expect).item()
         self.assertAlmostEqual(delta, 0.0, places=6)
         # Test 2
-        f = Lenomial([12, s])  # f(x) = 12 + x * s(x)
+        f = Elf([12, s])  # f(x) = 12 + x * s(x)
         actual = f(x)
         expect = 12 + x * s(x)
         delta = (actual - expect).item()
@@ -46,8 +44,8 @@ class TestLenomials(unittest.TestCase):
         alpha = np.array([[0], [1], [2]])
         c = np.array([1, -1, -2])
         s = Signomial(alpha, c)
-        f1 = Lenomial([s, 0.333])
-        f2 = Lenomial([12, s])
+        f1 = Elf([s, 0.333])
+        f2 = Elf([12, s])
         # test 1: signomial and lenomial
         f3 = s + f1
         x = np.array([1.2345])
@@ -66,8 +64,8 @@ class TestLenomials(unittest.TestCase):
         alpha = np.array([[0], [1], [2]])
         c = np.array([1, -1, -2])
         s = Signomial(alpha, c)
-        f1 = Lenomial([s, 0.333])
-        f2 = Lenomial([12, s])
+        f1 = Elf([s, 0.333])
+        f2 = Elf([12, s])
         x = np.array([-0.98765])
         # test 1: lenomial and lenomial (different)
         f3 = f1 - f2
@@ -90,14 +88,14 @@ class TestLenomials(unittest.TestCase):
         alpha = np.array([[0], [1], [2]])
         c = np.array([1, -1, -2])
         s = Signomial(alpha, c)
-        f1 = Lenomial([s, 0.333])
-        f2 = Lenomial([12, s])
+        f1 = Elf([s, 0.333])
+        f2 = Elf([12, s])
         x = np.array([-0.98765])
         # test 1: lenomial times lenomial (invalid)
         with assert_raises(ArithmeticError):
             f3 = f1 * f2
         # test 2: lenomial times lenomial (valid due to hidden signomial)
-        f3 = Lenomial([s, 0.0])
+        f3 = Elf([s, 0.0])
         f4 = f1 * f3
         actual = f4(x)
         expect = (s(x) + 0.333 * x) * (s(x))

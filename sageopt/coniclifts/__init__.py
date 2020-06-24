@@ -5,7 +5,7 @@ from sageopt.coniclifts.operators.exp import weighted_sum_exp
 from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.compilers import compile_constrained_system, compile_problem
 from sageopt.coniclifts.constraints.constraint import Constraint
-from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone
+from sageopt.coniclifts.constraints.set_membership.product_cone import PrimalProductCone, DualProductCone
 from sageopt.coniclifts.constraints.set_membership.sage_cones import PrimalSageCone, DualSageCone
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.coniclifts.problems.solvers.mosek import Mosek
