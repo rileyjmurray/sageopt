@@ -20,7 +20,7 @@ from sageopt.symbolic.lenomials import Elf
 from sageopt.symbolic.signomials import Signomial
 
 
-class TestLenomials(unittest.TestCase):
+class TestElfs(unittest.TestCase):
 
     def test_construction(self):
         alpha = np.array([[0], [1], [2]])
