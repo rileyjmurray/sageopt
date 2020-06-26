@@ -21,7 +21,7 @@ from sageopt.coniclifts.problems.problem import Problem
 
 class TestToys1(unittest.TestCase):
 
-    def test_geometric_program_1(self):
+    def _geometric_program_1(self, solver, **kwargs):
         """
         Solve a GP with a linear objective and single posynomial constraint.
 
@@ -39,12 +39,25 @@ class TestToys1(unittest.TestCase):
         cons = [expr <= 1]
         obj = - x[0] - 2 * x[1]
         prob = Problem(cl.MIN, obj, cons)
-        status, val = prob.solve(solver='ECOS', verbose=False)
+        status, val = prob.solve(solver=solver, **kwargs)
         assert status == 'solved'
         assert abs(val - 10.4075826) < 1e-6
         x_star = x.value
         expect = np.array([-4.93083, -2.73838])
         assert np.allclose(x_star, expect, atol=1e-4)
+        return prob
+
+    def test_geometric_program_1a(self):
+        _ = self._geometric_program_1('ECOS', verbose=False)
+
+    @unittest.skipUnless(cl.Mosek.is_installed(), 'MOSEK-specific option')
+    def test_geometric_program_1b(self):
+        force_dual = self._geometric_program_1('MOSEK', dualize=True, cache_apply_data=True)
+        force_prim = self._geometric_program_1('MOSEK', dualize=False, cache_apply_data=True)
+        self.assertIn('A', force_prim.solver_apply_data['MOSEK'][0])
+        self.assertNotIn('G', force_prim.solver_apply_data['MOSEK'][0])
+        self.assertIn('G', force_dual.solver_apply_data['MOSEK'][0])
+        self.assertNotIn('A', force_dual.solver_apply_data['MOSEK'][0])
 
     def test_simple_sage_1(self):
         """

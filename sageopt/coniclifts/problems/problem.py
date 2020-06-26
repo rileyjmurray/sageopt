@@ -235,6 +235,8 @@ class Problem(object):
 
         # Finish solver-specific compilation
         t0 = time.time()
+        if self._integer_indices is not None:
+            options['integers'] = True
         data, inv_data = solver_object.apply(self.c, self.A, self.b, self.K, options)
         self.timings[solver]['apply'] = time.time() - t0
         if self._integer_indices is not None:

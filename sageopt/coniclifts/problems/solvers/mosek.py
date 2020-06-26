@@ -26,6 +26,21 @@ class Mosek(Solver):
     _SDP_SUPPORT_ = False
 
     @staticmethod
+    def decide_primal_vs_dual(c, A, b, K, params):
+        RATIO = 50
+        if 'integers' in params:
+            return 'primal'
+        if 'dualize' in params:
+            if params['dualize']:
+                return 'dual'
+            else:
+                return 'primal'
+        if A.shape[0] >= RATIO * A.shape[1]:
+            return 'dual'
+        else:
+            return 'primal'
+
+    @staticmethod
     def apply(c, A, b, K, params):
         # This function is analogous to "apply(...)" in cvxpy's mosek_conif.py.
         """
@@ -46,17 +61,19 @@ class Mosek(Solver):
         if not Mosek._SDP_SUPPORT_:
             if any([co.type == 'P' for co in K]):
                 raise NotImplementedError('This functionality is being put on hold.')
-        dualize = getattr(params, 'dualize', False)
-        if not dualize:
+        form = Mosek.decide_primal_vs_dual(c, A, b, K, params)
+        if form == 'primal':
             data, inv_data = Mosek._primal_apply(c, A, b, K)
         else:
-            data, inv_data = Mosek._dual_apply(c, A, b, K, params)
+            data, inv_data = Mosek._dual_apply(c, A, b, K)
+        data['form'] = form
+        inv_data['form'] = form
         return data, inv_data
 
     @staticmethod
     def solve_via_data(data, params):
         # This function is analogous to "solve_via_data(...)" in cvxpy's mosek_conif.py.
-        if 'A' in data.keys():
+        if data['form'] == 'primal':
             solver_output = Mosek._primal_solve_via_data(data, params)
         else:
             solver_output = Mosek._dual_solve_via_data(data, params)
@@ -79,10 +96,10 @@ class Mosek(Solver):
         from coniclifts Variable names to numpy arrays containing the values of those Variables at
         the returned solution. The last of these is either a real number, or +/-np.Inf, or np.NaN.
         """
-        if 'dual' in inv_data:
-            ps, vv, pv = Mosek._dual_parse_result(solver_output, inv_data, var_mapping)
-        else:
+        if inv_data['form'] == 'primal':
             ps, vv, pv = Mosek._primal_parse_result(solver_output, inv_data, var_mapping)
+        else:
+            ps, vv, pv = Mosek._dual_parse_result(solver_output, inv_data, var_mapping)
         return ps, vv, pv
 
     @staticmethod
@@ -119,8 +136,7 @@ class Mosek(Solver):
 
         # The following lines recover problem parameters, and define helper constants.
         c, A, b, K, sep_K = data['c'], data['A'], data['b'], data['K'], data['sep_K']
-        n = A.shape[1]
-        m = A.shape[0]
+        m, n = A.shape
 
         # Define variables and cone constraints
         task.appendvars(n)
@@ -232,6 +248,8 @@ class Mosek(Solver):
         f, G, h, cone_dims = data['f'], data['G'], data['h'], data['cone_dims']
         n, m = G.shape
         task.appendvars(m)
+        zero = np.zeros(m)
+        task.putvarboundlist(np.arange(m, dtype=int), [mosek.boundkey.fr] * m, zero, zero)
         task.appendcons(n)
         # objective
         task.putclist(np.arange(f.size, dtype=int), f)
@@ -239,17 +257,17 @@ class Mosek(Solver):
         # equality constraints
         rows, cols, vals = sp.find(G)
         task.putaijlist(rows.tolist(), cols.tolist(), vals.tolist())
-        task.putconboundlist(np.arange(m, dtype=int), [mosek.boundkey.fx] * n, h, h)
+        task.putconboundlist(np.arange(n, dtype=int), [mosek.boundkey.fx] * n, h, h)
         # conic constraints
         idx = 0
         m_pos = cone_dims['+']
         if m_pos > 0:
             zero = np.zeros(m_pos)
-            task.putvarboundlist(np.arange(n, dtype=int), [mosek.boundkey.lo] * m_pos, zero, zero)
+            task.putvarboundlist(np.arange(m_pos, dtype=int), [mosek.boundkey.lo] * m_pos, zero, zero)
             idx += m_pos
         num_soc = len(cone_dims['S'])
         if num_soc > 0:
-            task.appendconesseq([mosek.conetype.quad]*num_soc, 0, cone_dims['S'], idx)
+            task.appendconesseq([mosek.conetype.quad]*num_soc, [0]*num_soc, cone_dims['S'], idx)
             idx += sum(cone_dims['S'])
         num_exp = cone_dims['de']
         if num_exp > 0:
