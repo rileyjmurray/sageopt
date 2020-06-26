@@ -328,7 +328,7 @@ class PrimalSageCone(SetMembership):
                 if not self.settings['kernel_basis']:
                     # linear equality constraints
                     mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
-                    av, ar, ac = comp_aff.mat_times_vecvar(mat, self._nus[i])
+                    av, ar, ac, _ = comp_aff.matvec(mat, self._nus[i])
                     num_rows = mat.shape[0]
                     curr_b = np.zeros(num_rows, )
                     curr_k = [Cone('0', num_rows)]
@@ -362,7 +362,7 @@ class PrimalSageCone(SetMembership):
                 mat2 = -self.X.A.T
                 var1 = self._nus[i]
                 var2 = self._eta_vars[i]
-                av, ar, ac = comp_aff.mat_times_vecvar_plus_mat_times_vecvar(mat1, var1, mat2, var2)
+                av, ar, ac, _ = comp_aff.matvec_plus_matvec(mat1, var1, mat2, var2)
                 num_rows = mat1.shape[0]
                 curr_b = np.zeros(num_rows, )
                 curr_k = [Cone('0', num_rows)]
@@ -651,7 +651,7 @@ class DualSageCone(SetMembership):
                     cd = elementwise_relent(expr, self.v[idx_set], epi)
                     cone_data.append(cd)
                     # Linear inequalities
-                    av, ar, ac = comp_aff.mat_times_vecvar_minus_vecvar(mat, vecvar, epi)
+                    av, ar, ac, _ = comp_aff.matvec_minus_vec(mat, vecvar, epi)
                     num_rows = mat.shape[0]
                     curr_b = np.zeros(num_rows)
                     curr_k = [Cone('+', num_rows)]
@@ -661,7 +661,7 @@ class DualSageCone(SetMembership):
                     A, b, K = self.X.A, self.X.b, self.X.K
                     vecvar = self._lifted_mu_vars[i]
                     singlevar = self.v[i]
-                    av, ar, ac = comp_aff.mat_times_vecvar_plus_vec_times_singlevar(A, vecvar, b, singlevar)
+                    av, ar, ac, _ = comp_aff.matvec_plus_vec_times_scalar(A, vecvar, b, singlevar)
                     curr_b = np.zeros(b.size, )
                     cone_data.append((av, ar, ac, curr_b, K))
             return cone_data

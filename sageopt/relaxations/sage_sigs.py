@@ -253,14 +253,18 @@ def sig_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
     ell : int
         Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
         ``ell=0``, which means the primal Lagrangian must be an X-SAGE signomial.
+    slacks : bool
+        For dual relaxations, determines of constraints "mat @ vec in dual SAGE cone" is
+        represented by "mat @ vec == temp, temp in dual SAGE cone". Defaults to True.
     """
-    _check_kwargs(kwargs, allowed={'p', 'q', 'ell'})
+    _check_kwargs(kwargs, allowed={'p', 'q', 'ell', 'slacks'})
     p = kwargs['p'] if 'p' in kwargs else 0
     q = kwargs['q'] if 'q' in kwargs else 1
     ell = kwargs['ell'] if 'ell' in kwargs else 0
+    slacks = kwargs['slacks'] if 'slacks' in kwargs else True
 
     if form.lower()[0] == 'd':
-        prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X)
+        prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X, slacks)
     elif form.lower()[0] == 'p':
         prob = sig_constrained_primal(f, gts, eqs, p, q, ell, X)
     else:
@@ -305,7 +309,7 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     return prob
 
 
-def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
+def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=True):
     """
     Construct the SAGE-(p, q, ell) dual problem for the signomial program
 
@@ -335,14 +339,17 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
         # These generalized Lagrange multipliers "s_h" are SAGE signomials.
         # For each such multiplier, introduce an appropriate dual variable "v_h", along
         # with constraints over that dual variable.
-        v_h = cl.Variable(name='v_' + str(h), shape=(s_h.m, 1))
+        h_m = h * modulator
+        c_h = sym_corr.moment_reduction_array(s_h, h_m, lagrangian)
+        if slacks:
+            v_h = cl.Variable(name='v_' + str(h), shape=(s_h.m, 1))
+            constraints.append(c_h @ v == v_h)
+        else:
+            v_h = c_h @ v
         con_name = 'SAGE dual for signomial inequality # ' + str(i)
         con = relative_dual_sage_cone(s_h, v_h, name=con_name, X=X, expcovers=expcovers)
         expcovers = con.ech.expcovers  # only * really * needed in first iteration, but keeps code flat.
         constraints.append(con)
-        h = h * modulator
-        c_h = sym_corr.moment_reduction_array(s_h, h, lagrangian)
-        constraints.append(c_h @ v == v_h)
     for s_h, h in eq_lag_mults:
         # These generalized Lagrange multipliers "s_h" are arbitrary signomials.
         # They dualize to homogeneous equality constraints.

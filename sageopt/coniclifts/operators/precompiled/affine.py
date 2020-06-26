@@ -14,90 +14,143 @@
    limitations under the License.
 """
 import numpy as np
+from sageopt.coniclifts.base import Variable, Expression, ScalarExpression
+from sageopt.coniclifts.operators.affine import concatenate
 
 
-def mat_times_vecvar(mat, vecvar):
+def matvec(mat, vec):
     """
+    The argument "vec" is an affine image of some coniclifts Variables "x".
+    This function returns sparse data for a map "x |--> A @ x + b" which is
+    equivalent to "vec |--> mat @ vec".
 
-    :param mat: a numpy ndarray of shape (m, n).
-    :param vecvar: a coniclifts Variable of shape (n,) or (n, 1).
+    Parameters
+    ----------
+    mat : ndarray
+        Shape (m, n)
+    vec : Expression
+        Shape (n,)
 
-    :return: A_vals, A_rows, A_cols so that the coniclifts Expression
-        con = (mat @ vecvar >= 0) would compile to
-        A_vals, A_rows, A_cols, np.zeros((m,)), [].
+    Returns
+    -------
+    A_vals : list
+    A_rows : ndarray
+    A_cols : list
+    b : ndarray of shape (m,)
+
+    Notes
+    -----
+    This function will be faster if "vec" is a coniclifts Variable object.
     """
-    ids = vecvar.scalar_variable_ids
+    num_rows = mat.shape[0]
+    b = np.zeros(num_rows)
+    if isinstance(vec, Variable):
+        vec1_ids = vec.scalar_variable_ids
+    else:
+        A1, x1, b1 = vec.ravel().factor()
+        mat = mat @ A1
+        b += mat @ b1
+        vec1_ids = [xi.id for xi in x1]
+    A_vals, A_rows, A_cols = _matvec_by_var_indices(mat, vec1_ids)
+    return A_vals, A_rows, A_cols, b
+
+
+def _matvec_by_var_indices(mat, var_ids):
     A_rows = np.tile(np.arange(mat.shape[0]), reps=mat.shape[1])
-    A_cols = np.repeat(ids, mat.shape[0]).tolist()
+    A_cols = np.repeat(var_ids, mat.shape[0]).tolist()
     A_vals = mat.ravel(order='F').tolist()  # stack columns, then tolist
     return A_vals, A_rows, A_cols
 
 
-def mat_times_vecvar_plus_mat_times_vecvar(mat1, vecvar1, mat2, vecvar2):
+def matvec_plus_matvec(mat1, vec1, mat2, vec2):
     """
 
     :param mat1: a numpy ndarray of shape (m, n1).
-    :param vecvar1: a coniclifts Variable of shape (n1,) or (n1, 1).
+    :param vec1: a coniclifts Variable of shape (n1,) or (n1, 1).
     :param mat2: a numpy ndarray of shape (m, n2)
-    :param vecvar2: a coniclifts Variable of shape (n2,) or (n2, 1).
+    :param vec2: a coniclifts Variable of shape (n2,) or (n2, 1).
 
     :return: A_vals, A_rows, A_cols so that the coniclifts Expression
         expr = mat1 @ vecvar1 + mat2 @ vecvar2 would have "expr >= 0"
         compile to A_vals, A_rows, A_cols, np.zeros((m,)), [].
     """
     mat = np.hstack([mat1, mat2])
-    ids = [v.id for v in vecvar1.scalar_variables()]
-    ids += [v.id for v in vecvar2.scalar_variables()]
-    A_rows = np.tile(np.arange(mat.shape[0]), reps=mat.shape[1])
-    A_cols = np.repeat(ids, mat.shape[0]).tolist()
-    A_vals = mat.ravel(order='F').tolist()  # stack columns, then tolist
-    return A_vals, A_rows, A_cols
+    if isinstance(vec1, Variable) and isinstance(vec2, Variable):
+        num_rows = mat.shape[0]
+        b = np.zeros(num_rows)
+        ids = vec1.scalar_variable_ids + vec2.scalar_variable_ids
+        A_vals, A_rows, A_cols = _matvec_by_var_indices(mat, ids)
+    else:
+        vec = concatenate((vec1, vec2))
+        A_vals, A_rows, A_cols, b = matvec(mat, vec)
+    return A_vals, A_rows, A_cols, b
 
 
-def mat_times_vecvar_minus_vecvar(mat, vecvar1, vecvar2):
+def matvec_minus_vec(mat, vec1, vec2):
     """
 
     :param mat: a numpy ndarray of shape (m, n).
-    :param vecvar1: a coniclifts Variable of shape (n,) or (n, 1).
-    :param vecvar2: a coniclifts Variable of shape (m,) or (m, 1).
+    :param vec1: a coniclifts Variable of shape (n,) or (n, 1).
+    :param vec2: a coniclifts Variable of shape (m,) or (m, 1).
 
     :return: A_vals, A_rows, A_cols so that the coniclifts Expression
         expr = mat @ vecvar1 - vecvar2 would have "expr >= 0"
         compile to A_vals, A_rows, A_cols, np.zeros((m,)), [].
     """
-    A_vals, A_rows, A_cols = [], [], []
     num_rows = mat.shape[0]
-    vec1_ids = vecvar1.scalar_variable_ids
-    vec2_ids = vecvar2.scalar_variable_ids
-    for j in range(num_rows):
-        A_vals += mat[j, :].tolist()
-        A_vals.append(-1)
-        A_cols += vec1_ids
-        A_cols.append(vec2_ids[j])
-        A_rows += [j] * (mat.shape[1] + 1)
-    A_rows = np.array(A_rows)
-    return A_vals, A_rows, A_cols
+    # get the block corresponding to the matvec
+    A_vals, A_rows, A_cols, b = matvec(mat, vec1)
+    # add the information for the "minus vec"
+    if isinstance(vec2, Variable):
+        vec2_ids = vec2.scalar_variable_ids
+        A_vals += [-1.0] * num_rows
+        A_rows = np.concatenate((A_rows, np.arange(num_rows)))
+        A_cols += vec2_ids
+    else:
+        for i in range(num_rows):
+            id2co = [(a.id, co) for a, co in vec2[i].atoms_to_coeffs.items()]
+            A_cols += [aid for aid, _ in id2co]
+            A_vals += [-co for _, co in id2co]
+            A_rows += [i] * len(id2co)
+        b2 = np.array([se.offset for se in vec2])
+        b -= b2
+    return A_vals, A_rows, A_cols, b
 
 
-def mat_times_vecvar_plus_vec_times_singlevar(mat, vecvar, vec, singlevar):
+def matvec_plus_vec_times_scalar(mat1, vec1, vec2, scalar):
     """
 
-    :param mat: a numpy ndarray of shape (m, n).
-    :param vecvar: a coniclifts Variable of shape (n,) or (n, 1)
-    :param vec: a numpy ndarray of shape (m,) or (m, 1).
-    :param singlevar: a coniclifts Variable of size 1.
+    :param mat1: a numpy ndarray of shape (m, n).
+    :param vec1: a coniclifts Variable of shape (n,) or (n, 1)
+    :param vec2: a numpy ndarray of shape (m,) or (m, 1).
+    :param scalar: a coniclifts Variable of size 1.
     :return:
 
     Return A_rows, A_cols, A_vals as if they were generated by a compile() call on
     con = (mat @ vecvar + vec * singlevar >= 0).
     """
-    var_ids = vecvar.scalar_variable_ids.copy() + [singlevar.scalar_variables()[0].id]
-    ids = np.array(var_ids)
-    mat = np.hstack([mat, np.reshape(vec, (-1, 1))])
-    A_rows = np.tile(np.arange(mat.shape[0]), reps=mat.shape[1])
-    A_cols = np.repeat(ids, mat.shape[0]).tolist()
-    A_vals = mat.ravel(order='F').tolist()  # stack columns, then tolist
-    return A_vals, A_rows, A_cols
+    if isinstance(scalar, Expression):
+        if scalar.size == 1:
+            scalar = scalar.item()
+        else:
+            raise ValueError('Argument `scalar` must have size 1.')
+    # We can now assume that "scalar" is a ScalarExpression.
+    if isinstance(vec1, Variable):
+        b = scalar.offset * vec2
+        a2c = scalar.atoms_to_coeffs.items()
+        s_covec = np.array([co for (sv, co) in a2c])
+        s_indices = [sv.id for (sv, co) in a2c]
+        mat2 = np.outer(vec2, s_covec)  # rank 1
+        mat = np.hstack((mat1, mat2))
+        indices = vec1.scalar_variable_ids + s_indices
+        A_vals, A_rows, A_cols = _matvec_by_var_indices(mat, indices)
+    else:
+        mat = np.hstack([mat1, np.reshape(vec2, (-1, 1))])
+        if isinstance(scalar, ScalarExpression):
+            scalar = Expression([scalar])
+        expr = concatenate((vec1, scalar))
+        A_vals, A_rows, A_cols, b = matvec(mat, expr)
+    return A_vals, A_rows, A_cols, b
 
 
 def columns_sum_leq_vec(mat, vec):
