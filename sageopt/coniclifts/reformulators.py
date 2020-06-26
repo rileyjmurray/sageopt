@@ -113,3 +113,39 @@ def separate_cone_constraints(A, b, K, dont_sep=None):
         A = sp.hstack([A, augmenting_matrix], format='csc')
     return A, b, K, slacks_K
 
+
+def dualize_problem(c, A, b, Kp):
+    """
+    min{ c @ x : A @ x + b in K} == max{ -b @ y : c = A.T @ y, y in K^\dagger }
+
+    Parameters
+    ----------
+    c : ndarray with ndim == 1
+    A : csc_matrix
+    b : ndarray with ndim == 1
+    Kp : list of Cone
+
+    Returns
+    -------
+    f : ndarray with ndim == 1
+    G : csc_matrix
+    h : ndarray with ndim == 1
+    Kd : list of Cone
+
+    Notes
+    -----
+    Temporary implementation. Might end up needing to transform A, so that the
+    dual problem can be stated exclusively with primal cones.
+    """
+    Kd = []
+    for Ki in Kp:
+        if Ki.type == 'e':
+            Kd.append(Cone('de', 3))  # dual exponential cone
+        elif Ki.type == '0':
+            Kd.append(Cone('fr', Ki.len))  # free cone
+        else:
+            Kd.append(Ki)  # remaining cones are self-dual
+    f = -b
+    G = A.T
+    h = c
+    return f, G, h, Kd

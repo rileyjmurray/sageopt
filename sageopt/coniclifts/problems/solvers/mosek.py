@@ -15,7 +15,7 @@
 """
 import numpy as np
 import scipy.sparse as sp
-from sageopt.coniclifts.reformulators import separate_cone_constraints
+from sageopt.coniclifts.reformulators import separate_cone_constraints, dualize_problem
 from sageopt.coniclifts.problems.solvers.solver import Solver
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.cones import Cone, build_cone_type_selectors
@@ -26,9 +26,9 @@ class Mosek(Solver):
     _SDP_SUPPORT_ = False
 
     @staticmethod
-    def apply(c, A, b, K):
+    def apply(c, A, b, K, params):
         # This function is analogous to "apply(...)" in cvxpy's mosek_conif.py.
-        #
+        """
         # Main obstacle: even after running (A,b,K) through "separate_cone_constraints", the PSD constraints are
         # still problematic. Reason being, MOSEK doesn't work with vectorized semidefinite variables. It assumes
         # that these are declared separately from the vectorized variable, and the contribution of semidefinite
@@ -42,10 +42,51 @@ class Mosek(Solver):
         # https://github.com/cvxgrp/cvxpy/blob/16ad9adad944d4cb34275e2f7dd0e27788b47b18/ ...
         #       .... cvxpy/reductions/solvers/conic_solvers/mosek_conif.py#L389
         # in order to enforce proper equality constraints on these slack variables.
-        #
+        """
         if not Mosek._SDP_SUPPORT_:
             if any([co.type == 'P' for co in K]):
                 raise NotImplementedError('This functionality is being put on hold.')
+        dualize = getattr(params, 'dualize', False)
+        if not dualize:
+            data, inv_data = Mosek._primal_apply(c, A, b, K)
+        else:
+            data, inv_data = Mosek._dual_apply(c, A, b, K, params)
+        return data, inv_data
+
+    @staticmethod
+    def solve_via_data(data, params):
+        # This function is analogous to "solve_via_data(...)" in cvxpy's mosek_conif.py.
+        if 'A' in data.keys():
+            solver_output = Mosek._primal_solve_via_data(data, params)
+        else:
+            solver_output = Mosek._dual_solve_via_data(data, params)
+        return solver_output
+
+    @staticmethod
+    def parse_result(solver_output, inv_data, var_mapping):
+        """
+        :param solver_output: a dictionary containing the mosek Task and Environment that
+        were constructed at solve-time. Also contains any parameters that were passed at solved-time.
+
+        :param inv_data: a dictionary with key 'n'.
+
+        :param var_mapping: a dictionary mapping names of coniclifts Variables to arrays
+        of indices. The array var_mapping['my_var'] contains the indices in
+        "solver_output['x']" of the coniclifts Variable object named 'my_var'.
+
+        :return: problem_status, variable_values, problem_value. The first of these is a string
+        (coniclifts.solved, coniclifts.inaccurate, or coniclifts.failed). The second is a dictionary
+        from coniclifts Variable names to numpy arrays containing the values of those Variables at
+        the returned solution. The last of these is either a real number, or +/-np.Inf, or np.NaN.
+        """
+        if 'dual' in inv_data:
+            ps, vv, pv = Mosek._dual_parse_result(solver_output, inv_data, var_mapping)
+        else:
+            ps, vv, pv = Mosek._primal_parse_result(solver_output, inv_data, var_mapping)
+        return ps, vv, pv
+
+    @staticmethod
+    def _primal_apply(c, A, b, K):
         inv_data = {'n': A.shape[1]}
         A, b, K, sep_K = separate_cone_constraints(A, b, K, dont_sep={'0', '+'})
         c = np.hstack([c, np.zeros(shape=(A.shape[1] - len(c)))])
@@ -67,8 +108,7 @@ class Mosek(Solver):
         return data, inv_data
 
     @staticmethod
-    def solve_via_data(data, params):
-        # This function is analogous to "solve_via_data(...)" in cvxpy's mosek_conif.py.
+    def _primal_solve_via_data(data, params):
         import mosek
         env = mosek.Env()
         task = env.Task(0, 0)
@@ -120,25 +160,11 @@ class Mosek(Solver):
 
         solver_output = {'env': env, 'task': task, 'params': params,
                          'integer': 'integer_indices' in data}
+
         return solver_output
 
     @staticmethod
-    def parse_result(solver_output, inv_data, var_mapping):
-        """
-        :param solver_output: a dictionary containing the mosek Task and Environment that
-        were constructed at solve-time. Also contains any parameters that were passed at solved-time.
-
-        :param inv_data: a dictionary with key 'n'.
-
-        :param var_mapping: a dictionary mapping names of coniclifts Variables to arrays
-        of indices. The array var_mapping['my_var'] contains the indices in
-        "solver_output['x']" of the coniclifts Variable object named 'my_var'.
-
-        :return: problem_status, variable_values, problem_value. The first of these is a string
-        (coniclifts.solved, coniclifts.inaccurate, or coniclifts.failed). The second is a dictionary
-        from coniclifts Variable names to numpy arrays containing the values of those Variables at
-        the returned solution. The last of these is either a real number, or +/-np.Inf, or np.NaN.
-        """
+    def _primal_parse_result(solver_output, inv_data, var_mapping):
         import mosek
         task = solver_output['task']
         if solver_output['integer']:
@@ -163,6 +189,104 @@ class Mosek(Solver):
             # infeasible
             problem_status = CL_CONSTANTS.solved
             problem_value = np.Inf
+        else:
+            # some kind of solver failure.
+            problem_status = CL_CONSTANTS.failed
+            variable_values = dict()
+            problem_value = np.NaN
+        return problem_status, variable_values, problem_value
+
+    @staticmethod
+    def _dual_apply(c, A, b, K):
+        f, G, h, Kd = dualize_problem(c, A, b, K)  # max{ f @ y : G @ y == h, y in Kd}
+        type_selectors = build_cone_type_selectors(Kd)
+        G_ineq = G[:, type_selectors['+']]
+        f_ineq = f[type_selectors['+']]
+        G_free = G[:, type_selectors['fr']]
+        f_free = f[type_selectors['fr']]
+        G_dexp = G[:, type_selectors['de']]
+        f_dexp = f[type_selectors['de']]
+        G_soc = G[:, type_selectors['S']]
+        f_soc = f[type_selectors['S']]
+        f = np.concatenate((f_ineq, f_soc, f_dexp, f_free))
+        G = sp.hstack((G_ineq, G_soc, G_dexp, G_free), format='csc')
+        cones = {'+': np.count_nonzero(type_selectors['+']),
+                 'S': [Ki.len for Ki in Kd if Ki.type == 'S'],
+                 'de': len([Ki for Ki in Kd if Ki.type == 'de']),
+                 'fr': np.count_nonzero(type_selectors['fr'])}
+        inv_data = {'A': A, 'b': b, 'K': K, 'c': c,
+                    'type_selectors': type_selectors, 'dual': True, 'n': A.shape[1]}
+        data = {'f': f, 'G': G, 'h': h, 'cone_dims': cones}
+        return data, inv_data
+
+    @staticmethod
+    def _dual_solve_via_data(data, params):
+        import mosek
+        env = mosek.Env()
+        task = env.Task(0, 0)
+        if params['verbose']:
+            Mosek.set_verbosity_params(env, task)
+        if 'mosek_params' in params:
+            Mosek.set_task_params(task, params['mosek_params'])
+        # problem data
+        f, G, h, cone_dims = data['f'], data['G'], data['h'], data['cone_dims']
+        n, m = G.shape
+        task.appendvars(m)
+        task.appendcons(n)
+        # objective
+        task.putclist(np.arange(f.size, dtype=int), f)
+        task.putobjsense(mosek.objsense.maximize)
+        # equality constraints
+        rows, cols, vals = sp.find(G)
+        task.putaijlist(rows.tolist(), cols.tolist(), vals.tolist())
+        task.putconboundlist(np.arange(m, dtype=int), [mosek.boundkey.fx] * n, h, h)
+        # conic constraints
+        idx = 0
+        m_pos = cone_dims['+']
+        if m_pos > 0:
+            zero = np.zeros(m_pos)
+            task.putvarboundlist(np.arange(n, dtype=int), [mosek.boundkey.lo] * m_pos, zero, zero)
+            idx += m_pos
+        num_soc = len(cone_dims['S'])
+        if num_soc > 0:
+            task.appendconesseq([mosek.conetype.quad]*num_soc, 0, cone_dims['S'], idx)
+            idx += sum(cone_dims['S'])
+        num_exp = cone_dims['de']
+        if num_exp > 0:
+            for i in range(num_exp):
+                # in coniclifts standard, apply constraint to [idx, idx+1, idx+2]
+                task.appendcone(mosek.conetype.dexp, 0, [idx+1, idx+2, idx])
+                idx += 3
+        # Optimize the Mosek Task and return the result.
+        task.optimize()
+        if params['verbose']:
+            task.solutionsummary(mosek.streamtype.msg)
+        solver_output = {'env': env, 'task': task, 'params': params}
+        return solver_output
+
+    @staticmethod
+    def _dual_parse_result(solver_output, inv_data, var_mapping):
+        import mosek
+        task = solver_output['task']
+        sol = mosek.soltype.itr
+        solution_status = task.getsolsta(sol)
+        variable_values = dict()
+        if solution_status in [mosek.solsta.optimal, mosek.solsta.integer_optimal]:
+            # optimal
+            problem_status = CL_CONSTANTS.solved
+            problem_value = task.getprimalobj(sol)
+            x0 = [0.] * inv_data['n']
+            task.gety(sol, x0)
+            x0 = np.array(x0)
+            variable_values = Mosek.load_variable_values(x0, inv_data, var_mapping)
+        elif solution_status == mosek.solsta.dual_infeas_cer:
+            # unbounded
+            problem_status = CL_CONSTANTS.solved
+            problem_value = np.Inf
+        elif solution_status == mosek.solsta.prim_infeas_cer:
+            # infeasible
+            problem_status = CL_CONSTANTS.solved
+            problem_value = -np.Inf
         else:
             # some kind of solver failure.
             problem_status = CL_CONSTANTS.failed
