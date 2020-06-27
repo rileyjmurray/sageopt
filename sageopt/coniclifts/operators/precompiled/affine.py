@@ -63,6 +63,7 @@ def _matvec_by_var_indices(mat, var_ids):
 
 
 def matvec_plus_matvec(mat1, vec1, mat2, vec2):
+    # TODO: fix docstring
     """
 
     :param mat1: a numpy ndarray of shape (m, n1).
@@ -87,6 +88,7 @@ def matvec_plus_matvec(mat1, vec1, mat2, vec2):
 
 
 def matvec_minus_vec(mat, vec1, vec2):
+    # TODO: fix docstring
     """
 
     :param mat: a numpy ndarray of shape (m, n).
@@ -118,6 +120,7 @@ def matvec_minus_vec(mat, vec1, vec2):
 
 
 def matvec_plus_vec_times_scalar(mat1, vec1, vec2, scalar):
+    # TODO: fix docstring
     """
 
     :param mat1: a numpy ndarray of shape (m, n).
