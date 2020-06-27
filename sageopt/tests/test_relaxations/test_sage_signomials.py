@@ -34,15 +34,15 @@ def primal_dual_vals(f, ell, X=None, solver='ECOS'):
     return [prim, dual], prob
 
 
-def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='ECOS'):
+def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='ECOS'):
     # primal
     prob = sig_constrained_relaxation(f, gts, eqs,
-                                      form='primal', p=p, q=q, ell=ell, X=AbK)
+                                      form='primal', p=p, q=q, ell=ell, X=X)
     status, value = prob.solve(solver=solver, verbose=False)
     prim = value
     # dual
     prob = sig_constrained_relaxation(f, gts, eqs,
-                                      form='dual', p=p, q=q, ell=ell, X=AbK)
+                                      form='dual', p=p, q=q, ell=ell, X=X)
     status, value = prob.solve(solver=solver, verbose=False)
     dual = value
     return [prim, dual], prob
@@ -51,7 +51,7 @@ def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='ECOS'):
 # noinspection SpellCheckingInspection
 class TestSAGERelaxations(unittest.TestCase):
 
-    def test_unconstrained_sage_1(self, presolve=False, compactdual=False, kernel_basis=False):
+    def test_unconstrained_sage_1(self, presolve=False, compactdual=True, kernel_basis=False):
         # Background
         #
         #       This is Example 1 from a 2018 paper by Murray, Chandrasekaran, and Wierman
@@ -91,10 +91,10 @@ class TestSAGERelaxations(unittest.TestCase):
         cl.kernel_basis_age_witnesses(initial_kb)
 
     def test_unconstrained_sage_1a(self):
-        self.test_unconstrained_sage_1(True, False, False)
+        self.test_unconstrained_sage_1(True, True, False)
 
     def test_unconstrained_sage_1b(self):
-        self.test_unconstrained_sage_1(False, True, True)
+        self.test_unconstrained_sage_1(False, False, True)
 
     def test_unconstrained_sage_2(self):
         # Background
@@ -277,18 +277,13 @@ class TestSAGERelaxations(unittest.TestCase):
         val2 = res2[1]
         assert val2 == 0.
 
-    def test_constrained_sage_1(self):
+    @staticmethod
+    def _constrained_sage_1():
         # Background
         #
         #       This is Example 3.3 from Chandraskearan and Shah's original paper on SAGE relaxations.
         #       The problem is to minimize a nonconvex signomial, over a convex set defined by a single
         #       posynomial inequality.
-        #
-        # Tests - (p, q, ell) = (0, 1, 0)
-        #
-        #       (1) Verify that primal and dual objectives are close to a reference value.
-        #
-        #       (2) Recover a solution (feasible up to tol 1e-7) with at most 0.01 percent optimality gap
         #
         s0 = Signomial.from_dict({(10.2, 0, 0): 10, (0, 9.8, 0): 10, (0, 0, 8.2): 10})
         s1 = Signomial.from_dict({(1.5089, 1.0981, 1.3419): -14.6794})
@@ -296,16 +291,40 @@ class TestSAGERelaxations(unittest.TestCase):
         s3 = Signomial.from_dict({(1.0459, 0.0492, 1.6245): 8.7838})
         f = s0 + s1 + s2 + s3
         g = Signomial.from_dict({(10.2, 0, 0): -8,
-                       (0, 9.8, 0): -8,
-                       (0, 0, 8.2): -8,
-                       (1.0857, 1.9069, 1.6192): -6.4,
-                       (0, 0, 0): 1})
+                                 (0, 9.8, 0): -8,
+                                 (0, 0, 8.2): -8,
+                                 (1.0857, 1.9069, 1.6192): -6.4,
+                                 (0, 0, 0): 1})
         gs = [g]
+        return f, gs
+
+    def test_constrained_sage_1a(self):
+        # Tests - (p, q, ell) = (0, 1, 0)
+        #
+        #       (1) Verify that primal and dual objectives are close to a reference value.
+        #
+        #       (2) Recover a solution (feasible up to tol 1e-7) with at most 0.01 percent optimality gap
+        #
+        f, gs = TestSAGERelaxations._constrained_sage_1()
         expected = -0.6147
-        actual, dual = constrained_primal_dual_vals(f, gs, [], p=0, q=1, ell=0, AbK=None)
+        actual, dual = constrained_primal_dual_vals(f, gs, [], p=0, q=1, ell=0, X=None)
         assert abs(actual[0] - expected) < 1e-4 and abs(actual[1] - expected) < 1e-4
         solns = sig_solrec(dual, ineq_tol=1e-7)
         assert (f(solns[0]) - dual.value) / abs(dual.value) < 1e-4
+
+    def test_constrained_sage_1b(self):
+        # Tests - (p, q, ell) = (0, 1, 0)
+        #
+        #       (1) Solve the dual with and without introduction of additional slack variables,
+        #           verify that objectives are similar.
+        #
+        f, gs = TestSAGERelaxations._constrained_sage_1()
+        dual1 = sig_constrained_relaxation(f, gs, [], slacks=False)
+        dual2 = sig_constrained_relaxation(f, gs, [], slacks=True)
+        self.assertLessEqual(dual1.A.shape[0], dual2.A.shape[0])
+        dual1.solve(verbose=False)
+        dual2.solve(verbose=False)
+        self.assertAlmostEqual(dual1.value, dual2.value, places=3)
 
     def test_constrained_sage_2(self):
         # Background
@@ -337,7 +356,7 @@ class TestSAGERelaxations(unittest.TestCase):
         g4 = 2 - x[0]
         g5 = 3 - x[2]
         gts = [g1, g2, g3, g4, g5]
-        res01, _ = constrained_primal_dual_vals(f, gts, [], p=0, q=1, ell=0, AbK=None)
+        res01, _ = constrained_primal_dual_vals(f, gts, [], p=0, q=1, ell=0, X=None)
         expect = -6
         assert abs(res01[0] - expect) < 1e-4
         assert abs(res01[1] - expect) < 1e-4
@@ -409,9 +428,9 @@ class TestSAGERelaxations(unittest.TestCase):
                 15 - y[2], y[2] - 8,
                 1 - y[3], y[3] - 0.01]
         eqs = []
-        AbK = infer_domain(f, gts, eqs)
+        X = infer_domain(f, gts, eqs)
         p, q, ell = 0, 1, 0
-        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK)
+        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X)
         assert abs(vals[0] - vals[1]) < 1e-5
         assert abs(vals[0] - 0.765082) < 1e-4
         solns = sig_solrec(dual, ineq_tol=0)
@@ -430,7 +449,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       (2) Verify that primal objective is within 1 percent of a reference value.
         #
-        #       (3) Recover a strictly feasible solution, within 1 percent of optimality.
+        #       (3) Recover a solution feasible within 1e-8, within 1 percent of optimality.
         #
         n = 2
         y = standard_sig_monomials(n)
@@ -439,12 +458,12 @@ class TestSAGERelaxations(unittest.TestCase):
                5 - y[0],   y[0] - 0.1,
                450 - y[1], y[1] - 380]
         eqs = []
-        AbK = infer_domain(f, gts, eqs)
+        X = infer_domain(f, gts, eqs)
         p, q, ell = 0, 2, 0
-        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
+        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='MOSEK')
         assert abs(vals[0] - vals[1]) < 1e-1
         assert abs(vals[0] - 11.95) / vals[0] < 1e-2
-        solns = sig_solrec(dual, ineq_tol=0)
+        solns = sig_solrec(dual, ineq_tol=1e-8)
         assert (f(solns[0]) - dual.value) / dual.value < 1e-2
 
     @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS takes too long for this problem.')
@@ -477,9 +496,9 @@ class TestSAGERelaxations(unittest.TestCase):
                1e2 - x[0], 1e2 - x[1], 1e2 - x[2],
                x[0] - 1, x[1] - 1, x[2] - 1]
         eqs = []
-        AbK = infer_domain(f, gts, eqs)
+        X = infer_domain(f, gts, eqs)
         p, q, ell = 0, 1, 1
-        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, AbK, solver='MOSEK')
+        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='MOSEK')
         assert abs(vals[0] - vals[1]) < 1e-4
         assert abs(vals[0] - (-83.3235)) < 1e-4
         solns = sig_solrec(dual, ineq_tol=0)

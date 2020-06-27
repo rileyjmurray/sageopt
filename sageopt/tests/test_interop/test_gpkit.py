@@ -183,7 +183,7 @@ class TestGPKitInterop(unittest.TestCase):
         so_sol = {vk: geo_soln[vkmap[vk]] for vk in vkmap}
         for vk, gpk_val in gpk_sol['freevariables'].items():
             so_val = so_sol[vk]
-            self.assertEqual(np.round(so_val, decimals=2),
-                             np.round(gpk_val, decimals=2))
+            delta = so_val - gpk_val
+            self.assertLessEqual(abs(delta), 0.02)
         pass
 

@@ -99,7 +99,7 @@ def sum_age_force_equality(true_or_false=False):
     sc.SETTINGS['sum_age_force_equality'] = true_or_false
 
 
-def compact_sage_duals(true_or_false=False):
+def compact_sage_duals(true_or_false=True):
     """
     Decide how coniclifts compiles constraints
         v[i] * log(v[i] / v[j]) <= (alpha[i,:] - alpha[j,:]) @ mu_i    (*)

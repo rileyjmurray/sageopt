@@ -42,7 +42,7 @@ SETTINGS = {
     'presolve_trivial_age_cones': False,
     'reduction_solver': 'ECOS',
     'sum_age_force_equality': False,
-    'compact_dual': False,
+    'compact_dual': True,
     'kernel_basis': False,
 }
 

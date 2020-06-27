@@ -22,6 +22,7 @@ from sageopt.coniclifts.cones import Cone, build_cone_type_selectors
 
 
 class Mosek(Solver):
+    # TODO: fix the docstrings for functions in this class.
 
     _SDP_SUPPORT_ = False
 

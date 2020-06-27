@@ -254,14 +254,14 @@ def sig_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
         Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
         ``ell=0``, which means the primal Lagrangian must be an X-SAGE signomial.
     slacks : bool
-        For dual relaxations, determines of constraints "mat @ vec in dual SAGE cone" is
-        represented by "mat @ vec == temp, temp in dual SAGE cone". Defaults to True.
+        For dual relaxations, determines if constraints "``mat @ vec`` in dual SAGE cone" is
+        represented by "``mat @ vec == temp``, ``temp`` in dual SAGE cone". Defaults to False.
     """
     _check_kwargs(kwargs, allowed={'p', 'q', 'ell', 'slacks'})
     p = kwargs['p'] if 'p' in kwargs else 0
     q = kwargs['q'] if 'q' in kwargs else 1
     ell = kwargs['ell'] if 'ell' in kwargs else 0
-    slacks = kwargs['slacks'] if 'slacks' in kwargs else True
+    slacks = kwargs['slacks'] if 'slacks' in kwargs else False
 
     if form.lower()[0] == 'd':
         prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X, slacks)
