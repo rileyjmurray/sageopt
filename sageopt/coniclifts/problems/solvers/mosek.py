@@ -28,7 +28,7 @@ class Mosek(Solver):
 
     @staticmethod
     def decide_primal_vs_dual(c, A, b, K, params):
-        RATIO = 50
+        RATIO = 5
         if 'integers' in params:
             return 'primal'
         if 'dualize' in params:
