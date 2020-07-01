@@ -64,6 +64,9 @@ def lift_basis_coeffs(coeff_vecs, lifting_locs, lift_dim):
         if isinstance(c, cl.Expression):
             lifted_c = cl.Expression(np.zeros(lift_dim))
             lifted_c[crs] = c
+        elif isinstance(c, np.ndarray):
+            lifted_c = np.zeros(lift_dim)
+            lifted_c[crs] = c
         else:
             curr_dim = len(crs)
             P = sp.csr_matrix((np.ones(curr_dim), (crs, np.arange(curr_dim))),
@@ -99,14 +102,14 @@ def consolidate_basis_funcs(alpha, c):
     return alpha_reduced, c_reduced
 
 
-def find_zero_entries(c):
+def find_zero_entries(c, tol=0.0):
     to_drop = []
     if isinstance(c, cl.Expression):
         for i, ci in enumerate(c):
-            if ci.is_constant() and ci.value == 0:
+            if ci.is_constant() and abs(ci.value) <= tol:
                 to_drop.append(i)
     elif isinstance(c, np.ndarray) and c.dtype in __REAL_TYPES__:
-        to_drop = list(np.nonzero(c == 0)[0])
+        to_drop = list(np.nonzero(np.abs(c) <= tol)[0])
     else:
         #TODO: implement this properly (it's really the cvxpy-case).
         return []

@@ -483,13 +483,13 @@ class Expression(np.ndarray):
             np.ndarray.__setitem__(self, key, value)
         elif isinstance(value, __REAL_TYPES__):
             np.ndarray.__setitem__(self, key, ScalarExpression(dict(), value, verify=False))
-        elif isinstance(value, ScalarAtom):
-            np.ndarray.__setitem__(self, key, ScalarExpression({value: 1}, 0, verify=False))
+        elif isinstance(value, Expression):
+            if value.size == 1:
+                value = value.item()
+            np.ndarray.__setitem__(self, key, value)
         elif isinstance(value, np.ndarray) and value.size == 1:
             # noinspection PyTypeChecker
-            self[key] = np.asscalar(value)
-        elif isinstance(value, Expression):
-            np.ndarray.__setitem__(self, key, value)
+            self[key] = value.item()  # some casting might be necessary.
         else:  # pragma: no cover
             raise RuntimeError('Can only initialize with numeric, ScalarExpression, or ScalarAtom types.')
 
@@ -674,6 +674,22 @@ class Expression(np.ndarray):
             return False
         else:
             return True
+
+    @staticmethod
+    def cast_scalar_atoms(x):
+        if isinstance(x, np.ndarray):
+            y = x
+        else:
+            y = np.array(x)
+        for tup in array_index_iterator(y.shape):
+            value = y[tup]
+            if isinstance(value, __REAL_TYPES__):
+                se = ScalarExpression(dict(), value, verify=False)
+            else:
+                se = ScalarExpression({value: 1}, 0, verify=False)
+            y[tup] = se
+        y = Expression(y)
+        return y
 
 
 class Variable(Expression):

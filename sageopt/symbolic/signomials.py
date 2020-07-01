@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import sageopt.coniclifts as cl
+from sageopt.coniclifts.base import ScalarExpression
 from sageopt.symbolic import utilities as sym_util
 import numpy as np
 import warnings
@@ -283,15 +284,19 @@ class Signomial(object):
         return self.__add__(other)
 
     def __mul__(self, other):
-        try:
-            other = Signomial.cast(self.n, other)
-        except ValueError:
-            return other.__rmul__(self)
-        if not other.n == self._n:
-            raise ArithmeticError('Cannot multiply Signomials with different numbers of variables.')
-        res = Signomial.product(self, other)
-        res = res.without_zeros()
-        return res
+        if Signomial.valid_scalar(other):
+            res = Signomial.scale(other, self)
+            return res
+        else:
+            try:
+                other = Signomial.cast(self.n, other)
+            except ValueError:
+                return other.__rmul__(self)
+            if not other.n == self._n:
+                raise ArithmeticError('Cannot multiply Signomials with different numbers of variables.')
+            res = Signomial.product(self, other)
+            res = res.without_zeros()
+            return res
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -400,7 +405,7 @@ class Signomial(object):
                 return False
         return True
 
-    def without_zeros(self):
+    def without_zeros(self, tol=0.0):
         """
         Return a Signomial which is symbolically equivalent to ``self``,
         but which doesn't track basis functions ``alpha[i,:]`` for which ``c[i] == 0``.
@@ -409,7 +414,7 @@ class Signomial(object):
             return self
         if isinstance(self.c, cl.Variable):
             return self
-        to_drop = sym_util.find_zero_entries(self.c)
+        to_drop = sym_util.find_zero_entries(self.c, tol)
         if len(to_drop) == 0:
             return self
         elif len(to_drop) == self.m:
@@ -563,6 +568,12 @@ class Signomial(object):
         return s
 
     @staticmethod
+    def scale(s, f):
+        c_sca = s * f.c
+        f_sca = type(f)(f.alpha, c_sca)
+        return f_sca
+
+    @staticmethod
     def from_dict(d):
         """
         Construct a Signomial object which represents the function::
@@ -587,6 +598,20 @@ class Signomial(object):
         s = Signomial(alpha, c)
         s._alpha_c = d
         return s
+
+    @staticmethod
+    def valid_scalar(s):
+        if isinstance(s, __NUMERIC_TYPES__):
+            return True
+        elif isinstance(s, cl.base.ScalarExpression):
+            return True
+        elif not hasattr(s, 'size'):
+            # this catches signomials, polynomials, elfs.
+            return False
+        elif s.size > 1:
+            return False
+        else:
+            return True
 
 
 class SigDomain(object):

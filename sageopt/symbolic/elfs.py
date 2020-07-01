@@ -162,6 +162,30 @@ class Elf(object):
         f = Elf([sig] + xsigs)
         return f
 
+    def without_zeros(self, tol=0.0):
+        sig = self.sig.without_zeros(tol)
+        xsigs = [fi.without_zeros(tol) for fi in self.xsigs]
+        f = Elf([sig] + xsigs)
+        return f
+
+    @staticmethod
+    def sum(funcs):
+        n = 0
+        for f in funcs:
+            if hasattr(f, 'n'):
+                n = f.n
+                break
+        if n == 0:
+            raise ValueError()
+        funcs = [Elf.cast(n, f) for f in funcs]
+        sig = Signomial.sum([f.sig for f in funcs])
+        all_sigs = [sig]
+        for i in range(n):
+            xsig = Signomial.sum([f.xsigs[i] for f in funcs])
+            all_sigs.append(xsig)
+        f = Elf(all_sigs)
+        return f
+
     @staticmethod
     def sig_times_linfunc(sig, linfunc):
         # sig is a Signomial object, defined on n variables.
@@ -236,6 +260,6 @@ def spelf(R, S):
     c_mod = aff.column_stack((-c[:, 2], c[:, 1], c[:, 0]))
     c_flat = c_mod.ravel(order='C')
     constr = DualProductCone(c_flat, K)
-    f = Signomial.sum(summand_sigs) + sum(summand_elfs)
+    f = Signomial.sum(summand_sigs) + Elf.sum(summand_elfs)
     return f, constr
 

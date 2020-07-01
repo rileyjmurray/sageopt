@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import unittest
+from sageopt.tests.test_coniclifts.util import BaseTest
 from sageopt.coniclifts.operators import affine
 from sageopt.coniclifts.operators.exp import weighted_sum_exp
 from sageopt.coniclifts.base import *
@@ -40,13 +41,13 @@ def verify_entries(expected, actual, tol=1e-6):
             return True
 
 
-class TestBase(unittest.TestCase):
+class TestBase(BaseTest):
 
     def test_factorization(self):
         n = 3
         x = Variable(shape=(n, n))
         (A, X, B) = x.factor()
-        X = Expression(X)
+        X = Expression.cast_scalar_atoms(X)
         expr = np.dot(A, X)
 
         assert verify_entries(expr, x)
@@ -54,13 +55,13 @@ class TestBase(unittest.TestCase):
         T1 = np.random.randn(6, 3).round(decimals=4)
         expr1 = affine.tensordot(T1, x, axes=1)
         (A1, X1, B1) = expr1.factor()
-        X1 = Expression(X1)
+        X1 = Expression.cast_scalar_atoms(X1)
         assert verify_entries(affine.tensordot(A1, X1, axes=1) + B1, expr1)
 
         T2 = np.random.randn(2, 6).round(decimals=4)
         expr2 = affine.tensordot(T2, expr1, axes=1)
         (A2, X2, B2) = expr2.factor()
-        X2 = Expression(X2)
+        X2 = Expression.cast_scalar_atoms(X2)
         assert verify_entries(affine.tensordot(A2, X2, axes=1) + B2, expr2)
 
         Tall = affine.tensordot(T2, A1, axes=1)
@@ -172,6 +173,32 @@ class TestBase(unittest.TestCase):
         except RuntimeError as err:
             err_str = str(err)
             assert 'Cannot multiply two non-constant ScalarExpression objects' in err_str
+
+    def test_set_items(self):
+        # slice into an Expression, assign a Variable
+        expr1 = Expression([0]*5)
+        x2 = Variable(shape=(2,))
+        expr1[1:3] = x2
+        for se in expr1:
+            self.assertIsInstance(se, ScalarExpression)
+        x2.value = np.array([1, 2])
+        actual = expr1.value
+        expect = np.array([0, 1, 2, 0, 0])
+        self.assertArraysAlmostEqual(actual, expect, places=4)
+        # Scalar-index into an Expression, assign a Variable
+        y = Variable()
+        expr2 = Expression([y, 1, 2])
+        for se in expr2:
+            self.assertIsInstance(se, ScalarExpression)
+        y.value = 5
+        actual = expr2.value
+        expect = np.array([5, 1, 2])
+        self.assertArraysAlmostEqual(actual, expect, places=4)
+        # slice into an Expression, assign a numeric ndarray:
+        # expr[1:3] = np.array([1, 2])
+        # expect = np.array([0,1,2,0,0])
+        # self.assertArraysAlmostEqual()
+
 
 
 if __name__ == '__main__':

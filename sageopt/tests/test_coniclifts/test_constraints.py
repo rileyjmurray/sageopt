@@ -180,7 +180,7 @@ class TestConstraints(unittest.TestCase):
         v0 = np.exp(alpha @ x0)
         dummy_vars = Variable(shape=(2,)).scalar_variables()
         c = np.array([1, 2, 3, 4, dummy_vars[0], dummy_vars[1]])
-        c = Expression(c)
+        c = Expression.cast_scalar_atoms(c)
         v = Variable(shape=(m,), name='projected_v0')
         t = Variable(shape=(1,), name='epigraph_var')
         sage_constraint = sage_cones.DualSageCone(v, alpha, X=None, name='test_con', c=c)

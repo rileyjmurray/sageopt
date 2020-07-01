@@ -11,10 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - symbolic: the ``elfs.spelf`` method returns an Elf parameterized by coniclifts Variables.
  - symbolic: all main classes (Signomial, Polynomial, Elf) have a ``fix_coefficients`` method.
  - coniclifts: typo in standards.txt exp cone dual comment
+ - coniclifts: a unittest for ``Expression.__setitem__``.
 ## Changed
  - symbolic: ``upcast_to_signomial`` is a now static method, and has been renamed
    (This affects sageopt.relaxations as well.)
  - symbolic: changed RuntimeErrors in Signomial arithmetic to ArithmeticErrors.
+ - symbolc: ``Signomial.without_zeros`` now accepts a tolerance parameter.
+ - coniclifts: order of casting operations in ``coniclifts.base.Expression.__setitem__``.
 ## Removed
 
 
