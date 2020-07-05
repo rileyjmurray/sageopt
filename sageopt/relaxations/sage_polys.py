@@ -280,8 +280,11 @@ def poly_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
     ell : int
         Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
         ``ell=0``, which means the primal Lagrangian must be an X-SAGE polynomial.
+    slacks : bool
+        For dual relaxations, determines if constraints "``mat @ vec`` in dual SAGE cone" is
+        represented by "``mat @ vec == temp``, ``temp`` in dual SAGE cone". Defaults to False.
     """
-    _check_kwargs(kwargs, allowed={'p', 'q', 'ell'})
+    _check_kwargs(kwargs, allowed={'p', 'q', 'ell', 'slacks'})
     form = form.lower()
     p = kwargs['p'] if 'p' in kwargs else 0
     q = kwargs['q'] if 'q' in kwargs else 1
@@ -327,7 +330,7 @@ def poly_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     return prob
 
 
-def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
+def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
     """
     Construct the dual SAGE-(p, q, ell) relaxation for the polynomial optimization problem
 
@@ -356,18 +359,23 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None):
         # These generalized Lagrange multipliers "s_g" are SAGE polynomials.
         # For each such multiplier, introduce an appropriate dual variable "v_g", along
         # with constraints over that dual variable.
-        v_g = cl.Variable(name='v_' + str(g), shape=(s_g.m, 1))
-        constraints += relative_dual_sage_poly_cone(s_g, v_g, name_base=(v_g.name + ' domain'), log_AbK=X)
-        g = g * modulator
-        c_g = sym_corr.moment_reduction_array(s_g, g, lagrangian)
-        con = c_g @ v == v_g
-        con.name += str(g) + ' >= 0'
-        constraints.append(con)
+        g_m = g * modulator
+        c_g = sym_corr.moment_reduction_array(s_g, g_m, lagrangian)
+        name_base = 'v_' + str(g)
+        if slacks:
+            v_g = cl.Variable(name=name_base, shape=(s_g.m, 1))
+            con = c_g @ v == v_g
+            con.name += str(g) + ' >= 0'
+            constraints.append(con)
+        else:
+            v_g = c_g @ v
+        constraints += relative_dual_sage_poly_cone(s_g, v_g,
+                                                    name_base=(name_base + ' domain'), log_AbK=X)
     for z_g, g in eq_lag_mults:
         # These generalized Lagrange multipliers "z_g" are arbitrary polynomials.
         # They dualize to homogeneous equality constraints.
-        g = g * modulator
-        c_g = sym_corr.moment_reduction_array(z_g, g, lagrangian)
+        g_m = g * modulator
+        c_g = sym_corr.moment_reduction_array(z_g, g_m, lagrangian)
         con = c_g @ v == 0
         con.name += str(g) + ' == 0'
         constraints.append(con)
