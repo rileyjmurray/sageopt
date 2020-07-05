@@ -309,7 +309,7 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     return prob
 
 
-def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=True):
+def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
     """
     Construct the SAGE-(p, q, ell) dual problem for the signomial program
 
