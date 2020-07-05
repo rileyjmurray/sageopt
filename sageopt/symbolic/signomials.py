@@ -563,7 +563,10 @@ class Signomial(object):
         num_rows = alpha.shape[0]
         coeff_vecs = [f.c for f in funcs]
         lifted_cs = sym_util.lift_basis_coeffs(coeff_vecs, all_crs, num_rows)
+        # TODO: look at eliminating lift_basis_coeffs, and creating
+        #   a function which can do the final sum of lifted_cs more efficiently.
         c = sum(lifted_cs)
+        #TODO: avoid the built-in "sum" operator. It's insanely slow for coniclifts Expressions
         s = type(funcs[0])(alpha, c)
         return s
 
