@@ -218,6 +218,10 @@ class Problem(object):
             cache_apply_data : bool. If ``True``, then take the put``(data, inv_data)``
             returned by the coniclifts interface to the given solver and record it in the
             dictionary ``self.solver_apply_data``. This data is rarely relevant for users.
+
+            dualize : bool. Overrides coniclifts automatic dualization procedure when using MOSEK
+            Setting ``dualize=True`` forces dualization, and setting ``dualize=False`` prohibits
+            dualization. Not applicable when solving mixed-integer problems.
         """
         if solver is None:
             for svr in Problem._SOLVER_ORDER_:

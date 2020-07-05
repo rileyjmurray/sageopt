@@ -92,6 +92,14 @@ class PrimalSageCone(SetMembership):
     Other Parameters
     ----------------
 
+    settings : Dict[str, Union[str, bool]]
+
+        A dict for overriding default settings which control how this PrimalSageCone is compiled
+        into the coniclifts standard form. Recognized boolean flags are "heuristic_reduction",
+        "presolve_trivial_age_cones", "sum_age_force_equality", and "kernel_basis". The
+        "kernel_basis" flag is only applicable when ``X=None``. The string flag "reduction_solver"
+        must be either "MOSEK" or "ECOS".
+
     covers : Dict[int, ndarray]
 
         ``covers[i]`` indicates which indices ``j`` have ``alpha[j,:]`` participate in
@@ -155,10 +163,17 @@ class PrimalSageCone(SetMembership):
         Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
         for the name of any auxiliary Variable created when compiling to the coniclifts standard.
 
+    settings : Dict[str, Union[str, bool]]
+
+        Specifies compilation options. By default this dict caches global compilation options
+        when this object is constructed. The global compilation options are overridden
+        if a user supplies ``settings`` as an argument when constructing this PrimalSageCone.
+
     ech : ExpCoverHelper
 
-        A simple wrapper around the constructor argument ``covers``. Validates ``covers``
-        when provided, and constructs ``covers`` when a user does not provide it.
+        A data structure which summarizes the results from a presolve phase. The most important
+        properties of ``ech`` can be specified by providing a dict-valued keyword argument
+        "``covers``" to the PrimalSageCone constructor.
 
     Notes
     -----
@@ -534,11 +549,6 @@ class DualSageCone(SetMembership):
     Other Parameters
     ----------------
 
-    covers : Dict[int, ndarray]
-
-        ``covers[i]`` indicates which indices ``j`` have ``alpha[j,:]`` participate in
-        the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.
-
     c : Expression or None
 
         When provided, this DualSageCone instance will compile to a constraint to ensure that ``v``
@@ -546,6 +556,18 @@ class DualSageCone(SetMembership):
         If we have have information about the sign of a component of  ``c``, then it is possible to
         reduce the number of coniclifts primitives needed to represent this constraint.
 
+    settings : Dict[str, Union[str, bool]]
+
+        A dict for overriding default settings which control how this DualSageCone is compiled
+        into the coniclifts standard form. Recognized boolean flags are "heuristic_reduction",
+        "presolve_trivial_age_cones", and "compact_dual". The string flag "reduction_solver"
+        must be either "MOSEK" or "ECOS".
+
+    covers : Dict[int, ndarray]
+
+        ``covers[i]`` indicates which indices ``j`` have ``alpha[j,:]`` participate in
+        the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.
+        See also ``DualSageCone.ech``.
 
     Attributes
     ----------
@@ -569,15 +591,17 @@ class DualSageCone(SetMembership):
         solution recovery algorithm takes these variables, and considers points ``x`` of
         the form ``x = mu_vars[i].value / self.v[i].value``.
 
-    name : str
+    settings : Dict[str, Union[str, bool]]
 
-        Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
-        for the name of any auxiliary Variable created when compiling to the coniclifts standard.
+        Specifies compilation options. By default this dict caches global compilation options
+        when this object is constructed. The global compilation options are overridden
+        if a user supplies ``settings`` as an argument when constructing this DualSageCone.
 
     ech : ExpCoverHelper
 
-        A simple wrapper around the constructor argument ``covers``. Validates ``covers``
-        when provided, and constructs ``covers`` when a user does not provide it.
+        A data structure which summarizes the results from a presolve phase. The most important
+        properties of ``ech`` can be specified by providing a dict-valued keyword argument
+        "``covers``" to the DualSageCone constructor.
     """
 
     def __init__(self, v, alpha, X, name, **kwargs):

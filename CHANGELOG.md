@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [0.5.2] - unreleased
 ## Added
  - coniclifts: the mosek interface now automatically dualizes certain problems.
+ - coniclifts: ``prob.solve`` accepts an argument to override or force dualization (when using MOSEK).
 ## Changed
  - coniclifts: heavily refactor precompiled affine atoms.
  - relaxations: dual SAGE relaxations no longer introduce high-level slack variables
-   by default. (At least for signomials. TODO for polynomials.)
+   by default.
 
 # [0.5.1] - 2020-06-21
 ## Added

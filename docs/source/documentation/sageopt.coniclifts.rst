@@ -203,6 +203,32 @@ constraint constructor to the next.
 .. autoclass:: sageopt.coniclifts.DualSageCone
     :members:
 
+.. _cl_sage_options:
+
+SAGE compilation options
+------------------------
+
+Coniclifts makes several decisions when compiling a SAGE constraint into a form
+which is acceptable to a solver like MOSEK or ECOS. The following functions allow
+you to control the defaults for this compilation process. The defaults can always
+be overridden by providing an appropriate keyword argument to the ``PrimalSageCone``
+or ``DualSageCone`` constructor. Regardless of whether or not the default values
+are overridden, the settings used in a ``PrimalSageCone`` or ``DualSageCone`` object
+are cached upon construction. Therefore it is safe to modify these defaults while
+constructing different constraints for use in the same model.
+
+.. autofunction:: coniclifts.presolve_trivial_age_cones
+
+.. autofunction:: coniclifts.heuristic_reduce_cond_age_cones
+
+.. autofunction:: coniclifts.age_cone_reduction_solver
+
+.. autofunction:: coniclifts.sum_age_force_equality
+
+.. autofunction:: coniclifts.compact_sage_duals
+
+.. autofunction:: coniclifts.kernel_basis_age_witnesses
+
 
 .. _cl_compilerinterface:
 
