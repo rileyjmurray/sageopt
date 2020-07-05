@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Index &#8212; sageopt 0.5.1 documentation</title>
+    <title>Index &#8212; sageopt 0.5.2 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -119,6 +119,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.Problem.A">A (sageopt.coniclifts.Problem attribute)</a>
 </li>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.age_cone_reduction_solver">age_cone_reduction_solver() (in module sageopt.coniclifts)</a>
+</li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.PrimalSageCone.age_vectors">age_vectors (sageopt.coniclifts.PrimalSageCone attribute)</a>
 </li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.PrimalSageCone.age_witnesses">age_witnesses (sageopt.coniclifts.PrimalSageCone attribute)</a>
@@ -181,6 +183,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.compact_sage_duals">compact_sage_duals() (in module sageopt.coniclifts)</a>
+</li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.compilers.compile_constrained_system">compile_constrained_system() (in module sageopt.coniclifts.compilers)</a>
 </li>
       <li><a href="documentation/sageopt.signomials.html#sageopt.Signomial.constant_location">constant_location() (sageopt.Signomial method)</a>
@@ -267,6 +271,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="documentation/sageopt.signomials.html#sageopt.Signomial.hess_val">hess_val() (sageopt.Signomial method)</a>
 </li>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.heuristic_reduce_cond_age_cones">heuristic_reduce_cond_age_cones() (in module sageopt.coniclifts)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -296,6 +302,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.Problem.K">K (sageopt.coniclifts.Problem attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.kernel_basis_age_witnesses">kernel_basis_age_witnesses() (in module sageopt.coniclifts)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -345,12 +355,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.DualSageCone.name">name (sageopt.coniclifts.DualSageCone attribute)</a>
-
-      <ul>
-        <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.PrimalSageCone.name">(sageopt.coniclifts.PrimalSageCone attribute)</a>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.PrimalSageCone.name">name (sageopt.coniclifts.PrimalSageCone attribute)</a>
 </li>
-      </ul></li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.Variable.name">name() (sageopt.coniclifts.Variable property)</a>
 </li>
   </ul></td>
@@ -377,13 +383,15 @@
 </li>
       <li><a href="documentation/sageopt.polynomials.html#sageopt.poly_relaxation">poly_relaxation() (in module sageopt)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="documentation/sageopt.polynomials.html#sageopt.poly_solrec">poly_solrec() (in module sageopt)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="documentation/sageopt.polynomials.html#sageopt.symbolic.polynomials.PolyDomain">PolyDomain (class in sageopt.symbolic.polynomials)</a>
 </li>
       <li><a href="documentation/sageopt.polynomials.html#sageopt.symbolic.polynomials.Polynomial">Polynomial (class in sageopt.symbolic.polynomials)</a>
+</li>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.presolve_trivial_age_cones">presolve_trivial_age_cones() (in module sageopt.coniclifts)</a>
 </li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.PrimalSageCone">PrimalSageCone (class in sageopt.coniclifts)</a>
 </li>
@@ -423,16 +431,22 @@
       </ul></li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.Problem.sense">sense (sageopt.coniclifts.Problem attribute)</a>
 </li>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.DualSageCone.settings">settings (sageopt.coniclifts.DualSageCone attribute)</a>
+
+      <ul>
+        <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.PrimalSageCone.settings">(sageopt.coniclifts.PrimalSageCone attribute)</a>
+</li>
+      </ul></li>
       <li><a href="documentation/sageopt.signomials.html#sageopt.sig_constrained_relaxation">sig_constrained_relaxation() (in module sageopt)</a>
 </li>
       <li><a href="documentation/sageopt.signomials.html#sageopt.sig_relaxation">sig_relaxation() (in module sageopt)</a>
 </li>
       <li><a href="documentation/sageopt.polynomials.html#sageopt.symbolic.polynomials.Polynomial.sig_rep">sig_rep() (sageopt.symbolic.polynomials.Polynomial property)</a>
 </li>
-      <li><a href="documentation/sageopt.signomials.html#sageopt.sig_solrec">sig_solrec() (in module sageopt)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="documentation/sageopt.signomials.html#sageopt.sig_solrec">sig_solrec() (in module sageopt)</a>
+</li>
       <li><a href="documentation/sageopt.signomials.html#sageopt.SigDomain">SigDomain (class in sageopt)</a>
 </li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.PrimalSageCone.sigma_x">sigma_x() (sageopt.coniclifts.PrimalSageCone method)</a>
@@ -452,6 +466,8 @@
       <li><a href="documentation/sageopt.signomials.html#sageopt.standard_sig_monomials">standard_sig_monomials() (in module sageopt)</a>
 </li>
       <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.Problem.status">status (sageopt.coniclifts.Problem attribute)</a>
+</li>
+      <li><a href="documentation/sageopt.coniclifts.html#sageopt.coniclifts.sum_age_force_equality">sum_age_force_equality() (in module sageopt.coniclifts)</a>
 </li>
       <li><a href="documentation/sageopt.signomials.html#sageopt.SigDomain.suppfunc">suppfunc() (sageopt.SigDomain method)</a>
 </li>

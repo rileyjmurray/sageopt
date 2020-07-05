@@ -6,6 +6,17 @@ The notes here are a summary from Sageopt's changelog. Each item in the lists th
 a term like "coniclifts", "symbolic", or "relaxations"; these terms indicate the primary subpackage of sageopt which
 was affected.
 
+[0.5.2] - 2020-07-05
+--------------------
+Changed
+ - coniclifts: heavily refactor precompiled affine atoms.
+ - relaxations: dual SAGE relaxations no longer introduce high-level slack variables
+   by default.
+
+Added
+ - coniclifts: the mosek interface now automatically performs low-level dualization for certain problems.
+ - coniclifts: ``prob.solve`` accepts an argument to override or force dualization (when using MOSEK).
+
 
 [0.5.1] - 2020-06-21
 --------------------

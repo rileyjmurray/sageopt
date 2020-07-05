@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>coniclifts is sageopt’s backend &#8212; sageopt 0.5.1 documentation</title>
+    <title>coniclifts is sageopt’s backend &#8212; sageopt 0.5.2 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -55,7 +55,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#the-variable-class">The Variable class</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-problem-class">The Problem class</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-expression-system">The Expression system</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#sage-constraint-classes">SAGE constraint classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sage-constraints">SAGE constraints</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-compiler-interface">The compiler interface</a></li>
 </ul>
 </li>
@@ -546,6 +546,9 @@ Refer to the coniclifts MOSEK interface source code for usage of these parameter
 <p>cache_apply_data : bool. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then take the put``(data, inv_data)``
 returned by the coniclifts interface to the given solver and record it in the
 dictionary <code class="docutils literal notranslate"><span class="pre">self.solver_apply_data</span></code>. This data is rarely relevant for users.</p>
+<p>dualize : bool. Overrides coniclifts automatic dualization procedure when using MOSEK
+Setting <code class="docutils literal notranslate"><span class="pre">dualize=True</span></code> forces dualization, and setting <code class="docutils literal notranslate"><span class="pre">dualize=False</span></code> prohibits
+dualization. Not applicable when solving mixed-integer problems.</p>
 </div></blockquote>
 </dd></dl>
 
@@ -710,8 +713,8 @@ due to nondeterministic behavior of <code class="docutils literal notranslate"><
 </dd></dl>
 
 </div>
-<div class="section" id="sage-constraint-classes">
-<h2>SAGE constraint classes<a class="headerlink" href="#sage-constraint-classes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sage-constraints">
+<h2>SAGE constraints<a class="headerlink" href="#sage-constraints" title="Permalink to this headline">¶</a></h2>
 <p>Coniclifts provides direct implementations of the primal and dual signomial SAGE cones:</p>
 <blockquote>
 <div><ul class="simple">
@@ -742,6 +745,8 @@ The computational cost of this presolve is borne when the constraint is construc
 dimension of the SAGE constraint (equal to <code class="docutils literal notranslate"><span class="pre">constr.alpha.shape[0]</span></code>).
 The cost of this presolve can be mitigated by recycling <code class="docutils literal notranslate"><span class="pre">covers</span> <span class="pre">=</span> <span class="pre">constr.ech.expcovers</span></code> from one call of a
 constraint constructor to the next.</p>
+<div class="section" id="primal-sage-constraints">
+<h3>Primal SAGE constraints<a class="headerlink" href="#primal-sage-constraints" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="sageopt.coniclifts.PrimalSageCone">
 <em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">PrimalSageCone</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">alpha</em>, <em class="sig-param">X</em>, <em class="sig-param">name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone" title="Permalink to this definition">¶</a></dt>
@@ -765,9 +770,16 @@ for the name of any auxiliary Variable created when compiling to the coniclifts 
 </ul>
 </dd>
 <dt class="field-even">Other Parameters</dt>
-<dd class="field-even"><p><strong>covers</strong> (<em>Dict[int, ndarray]</em>) – <code class="docutils literal notranslate"><span class="pre">covers[i]</span></code> indicates which indices <code class="docutils literal notranslate"><span class="pre">j</span></code> have <code class="docutils literal notranslate"><span class="pre">alpha[j,:]</span></code> participate in
+<dd class="field-even"><ul class="simple">
+<li><p><strong>settings</strong> (<em>Dict[str, Union[str, bool]]</em>) – A dict for overriding default settings which control how this PrimalSageCone is compiled
+into the coniclifts standard form. Recognized boolean flags are “heuristic_reduction”,
+“presolve_trivial_age_cones”, “sum_age_force_equality”, and “kernel_basis”. The
+“kernel_basis” flag is only applicable when <code class="docutils literal notranslate"><span class="pre">X=None</span></code>. The string flag “reduction_solver”
+must be either “MOSEK” or “ECOS”.</p></li>
+<li><p><strong>covers</strong> (<em>Dict[int, ndarray]</em>) – <code class="docutils literal notranslate"><span class="pre">covers[i]</span></code> indicates which indices <code class="docutils literal notranslate"><span class="pre">j</span></code> have <code class="docutils literal notranslate"><span class="pre">alpha[j,:]</span></code> participate in
 the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.
-See also <code class="docutils literal notranslate"><span class="pre">PrimalSageCone.ech</span></code>.</p>
+See also <code class="docutils literal notranslate"><span class="pre">PrimalSageCone.ech</span></code>.</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="attribute">
@@ -857,10 +869,24 @@ for the name of any auxiliary Variable created when compiling to the coniclifts 
 </dd></dl>
 
 <dl class="attribute">
+<dt id="sageopt.coniclifts.PrimalSageCone.settings">
+<code class="sig-name descname">settings</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies compilation options. By default this dict caches global compilation options
+when this object is constructed. The global compilation options are overridden
+if a user supplies <code class="docutils literal notranslate"><span class="pre">settings</span></code> as an argument when constructing this PrimalSageCone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict[str, Union[str, bool]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="sageopt.coniclifts.PrimalSageCone.ech">
 <code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.PrimalSageCone.ech" title="Permalink to this definition">¶</a></dt>
-<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Validates <code class="docutils literal notranslate"><span class="pre">covers</span></code>
-when provided, and constructs <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
+<dd><p>A data structure which summarizes the results from a presolve phase. The most important
+properties of <code class="docutils literal notranslate"><span class="pre">ech</span></code> can be specified by providing a dict-valued keyword argument
+“<code class="docutils literal notranslate"><span class="pre">covers</span></code>” to the PrimalSageCone constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>ExpCoverHelper</p>
@@ -907,6 +933,9 @@ return the value of the support function of <span class="math notranslate nohigh
 
 </dd></dl>
 
+</div>
+<div class="section" id="dual-sage-constraints">
+<h3>Dual SAGE constraints<a class="headerlink" href="#dual-sage-constraints" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="sageopt.coniclifts.DualSageCone">
 <em class="property">class </em><code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">DualSageCone</code><span class="sig-paren">(</span><em class="sig-param">v</em>, <em class="sig-param">alpha</em>, <em class="sig-param">X</em>, <em class="sig-param">name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.DualSageCone" title="Permalink to this definition">¶</a></dt>
@@ -923,12 +952,17 @@ for the name of any auxiliary Variable created when compiling to the coniclifts 
 </dd>
 <dt class="field-even">Other Parameters</dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>covers</strong> (<em>Dict[int, ndarray]</em>) – <code class="docutils literal notranslate"><span class="pre">covers[i]</span></code> indicates which indices <code class="docutils literal notranslate"><span class="pre">j</span></code> have <code class="docutils literal notranslate"><span class="pre">alpha[j,:]</span></code> participate in
-the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.</p></li>
 <li><p><strong>c</strong> (<em>Expression or None</em>) – When provided, this DualSageCone instance will compile to a constraint to ensure that <code class="docutils literal notranslate"><span class="pre">v</span></code>
 is a valid dual variable to the constraint that <span class="math notranslate nohighlight">\(c \in C_{\mathrm{SAGE}}(\alpha, X)\)</span>,
 If we have have information about the sign of a component of  <code class="docutils literal notranslate"><span class="pre">c</span></code>, then it is possible to
 reduce the number of coniclifts primitives needed to represent this constraint.</p></li>
+<li><p><strong>settings</strong> (<em>Dict[str, Union[str, bool]]</em>) – A dict for overriding default settings which control how this DualSageCone is compiled
+into the coniclifts standard form. Recognized boolean flags are “heuristic_reduction”,
+“presolve_trivial_age_cones”, and “compact_dual”. The string flag “reduction_solver”
+must be either “MOSEK” or “ECOS”.</p></li>
+<li><p><strong>covers</strong> (<em>Dict[int, ndarray]</em>) – <code class="docutils literal notranslate"><span class="pre">covers[i]</span></code> indicates which indices <code class="docutils literal notranslate"><span class="pre">j</span></code> have <code class="docutils literal notranslate"><span class="pre">alpha[j,:]</span></code> participate in
+the i-th AGE cone. Automatically constructed in a presolve phase, if not provided.
+See also <code class="docutils literal notranslate"><span class="pre">DualSageCone.ech</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -980,13 +1014,14 @@ the form <code class="docutils literal notranslate"><span class="pre">x</span> <
 </dd></dl>
 
 <dl class="attribute">
-<dt id="sageopt.coniclifts.DualSageCone.name">
-<code class="sig-name descname">name</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uniquely identifies this Constraint in the model where it appears. Serves as a suffix
-for the name of any auxiliary Variable created when compiling to the coniclifts standard.</p>
+<dt id="sageopt.coniclifts.DualSageCone.settings">
+<code class="sig-name descname">settings</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies compilation options. By default this dict caches global compilation options
+when this object is constructed. The global compilation options are overridden
+if a user supplies <code class="docutils literal notranslate"><span class="pre">settings</span></code> as an argument when constructing this DualSageCone.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>str</p>
+<dd class="field-odd"><p>Dict[str, Union[str, bool]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -994,8 +1029,9 @@ for the name of any auxiliary Variable created when compiling to the coniclifts 
 <dl class="attribute">
 <dt id="sageopt.coniclifts.DualSageCone.ech">
 <code class="sig-name descname">ech</code><a class="headerlink" href="#sageopt.coniclifts.DualSageCone.ech" title="Permalink to this definition">¶</a></dt>
-<dd><p>A simple wrapper around the constructor argument <code class="docutils literal notranslate"><span class="pre">covers</span></code>. Validates <code class="docutils literal notranslate"><span class="pre">covers</span></code>
-when provided, and constructs <code class="docutils literal notranslate"><span class="pre">covers</span></code> when a user does not provide it.</p>
+<dd><p>A data structure which summarizes the results from a presolve phase. The most important
+properties of <code class="docutils literal notranslate"><span class="pre">ech</span></code> can be specified by providing a dict-valued keyword argument
+“<code class="docutils literal notranslate"><span class="pre">covers</span></code>” to the DualSageCone constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>ExpCoverHelper</p>
@@ -1029,6 +1065,91 @@ re-solves for all auxiliary variables used by this constraint.</p>
 
 </dd></dl>
 
+</div>
+<div class="section" id="compilation-options">
+<span id="cl-sage-options"></span><h3>Compilation options<a class="headerlink" href="#compilation-options" title="Permalink to this headline">¶</a></h3>
+<p>Coniclifts makes several decisions when compiling a SAGE constraint into a form
+which is acceptable to a solver like MOSEK or ECOS. The following functions allow
+you to control the defaults for this compilation process. The defaults can always
+be overridden by providing an appropriate keyword argument to the <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code>
+or <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> constructor. Regardless of whether or not the default values
+are overridden, the settings used in a <code class="docutils literal notranslate"><span class="pre">PrimalSageCone</span></code> or <code class="docutils literal notranslate"><span class="pre">DualSageCone</span></code> object
+are cached upon construction. Therefore it is safe to modify these defaults while
+constructing different constraints for use in the same model.</p>
+<dl class="function">
+<dt id="sageopt.coniclifts.presolve_trivial_age_cones">
+<code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">presolve_trivial_age_cones</code><span class="sig-paren">(</span><em class="sig-param">true_or_false=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.presolve_trivial_age_cones" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set coniclifts’ behavior for SAGE constraints.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">true_or_false=True</span></code>, then coniclifts will solve a series of small optimization
+problems whenever a SAGE constraint (primal or dual) is declared. This presolve
+behavior reduces the size of the final SAGE relaxation which needs to be solved,
+and in some sense improves problem conditioning.</p>
+<p>The default value for <code class="docutils literal notranslate"><span class="pre">true_or_false</span></code> in this function’s signature represents
+sageopt’s default behavior for this setting.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sageopt.coniclifts.heuristic_reduce_cond_age_cones">
+<code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">heuristic_reduce_cond_age_cones</code><span class="sig-paren">(</span><em class="sig-param">true_or_false=True</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.heuristic_reduce_cond_age_cones" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set coniclifts’ behavior for conditional SAGE constraints.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">true_or_false=True</span></code>, then coniclifts will take a particular reduction that
+is without-loss-of-generality for ordinary SAGE constraints, and apply that
+reduction to conditional SAGE constraints.</p>
+<p>The default value for <code class="docutils literal notranslate"><span class="pre">true_or_false</span></code> in this function’s signature represents
+sageopt’s default behavior for this setting.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sageopt.coniclifts.age_cone_reduction_solver">
+<code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">age_cone_reduction_solver</code><span class="sig-paren">(</span><em class="sig-param">solver_str='ECOS'</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.age_cone_reduction_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the provided string as the solver argument when any optimization-based
+presolve is employed in SAGE constraints.</p>
+<p>The default value for <code class="docutils literal notranslate"><span class="pre">solver_str</span></code> in this function’s signature represents
+sageopt’s default behavior for this setting.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sageopt.coniclifts.sum_age_force_equality">
+<code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">sum_age_force_equality</code><span class="sig-paren">(</span><em class="sig-param">true_or_false=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.sum_age_force_equality" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set coniclifts’ behavior for compiling PrimalSageCone constraints.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">true_or_false=True</span></code>, then a PrimalSageCone constraint <code class="docutils literal notranslate"><span class="pre">con</span></code> will
+tell the solver to require the values of <code class="docutils literal notranslate"><span class="pre">con.age_vectors</span></code> sum to <code class="docutils literal notranslate"><span class="pre">con.c</span></code>.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">true_or_false=False</span></code>, then a PrimalSageCone constraint <code class="docutils literal notranslate"><span class="pre">con</span></code> will
+tell the solver to require the sum of values of <code class="docutils literal notranslate"><span class="pre">con.age_vectors</span></code> is &lt;= <code class="docutils literal notranslate"><span class="pre">con.c</span></code>.</p>
+<p>The default value for <code class="docutils literal notranslate"><span class="pre">true_or_false</span></code> in this function’s signature represents
+sageopt’s default behavior for this setting.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sageopt.coniclifts.compact_sage_duals">
+<code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">compact_sage_duals</code><span class="sig-paren">(</span><em class="sig-param">true_or_false=True</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.compact_sage_duals" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Decide how coniclifts compiles constraints</dt><dd><p><code class="docutils literal notranslate"><span class="pre">v[i]</span> <span class="pre">*</span> <span class="pre">log(v[i]</span> <span class="pre">/</span> <span class="pre">v[j])</span> <span class="pre">&lt;=</span> <span class="pre">(alpha[i,:]</span> <span class="pre">-</span> <span class="pre">alpha[j,:])</span> <span class="pre">&#64;</span> <span class="pre">mu_i</span></code>    (*)</p>
+</dd>
+</dl>
+<p>which appear in DualSageCone objects.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">true_or_false=True</span></code>, then (*) compiles into a constraint that maps
+<code class="docutils literal notranslate"><span class="pre">(v[i],v[j],mu_i)</span></code> into a single exponential cone.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">true_or_false=False</span></code>, then compiling (*) introduces an epigraph
+variable <code class="docutils literal notranslate"><span class="pre">epi</span></code> plus the constraints <code class="docutils literal notranslate"><span class="pre">v[i]</span> <span class="pre">*</span> <span class="pre">log(v[i]/v[j])</span> <span class="pre">&lt;=</span> <span class="pre">epi</span></code>
+and <code class="docutils literal notranslate"><span class="pre">epi</span> <span class="pre">&lt;=</span> <span class="pre">(alpha[i,:]</span> <span class="pre">-</span> <span class="pre">alpha[j,:])</span> <span class="pre">&#64;</span> <span class="pre">mu_i</span></code>.</p>
+<p>The default value for <code class="docutils literal notranslate"><span class="pre">true_or_false</span></code> in this function’s signature represents
+sageopt’s default behavior for this setting.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sageopt.coniclifts.kernel_basis_age_witnesses">
+<code class="sig-prename descclassname">sageopt.coniclifts.</code><code class="sig-name descname">kernel_basis_age_witnesses</code><span class="sig-paren">(</span><em class="sig-param">true_or_false=True</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.coniclifts.kernel_basis_age_witnesses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set coniclifts’ behavior for SAGE constraints.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">true_or_false=True</span></code>, then coniclifts will represent primal ordinary
+SAGE constraints using no equality constraints within an AGE cone. This comes
+at the expense of taking a longer time for coniclifts to setup the problem.
+It also might affect solver behavior (probably for the better).</p>
+<p>The default value for <code class="docutils literal notranslate"><span class="pre">true_or_false</span></code> in this function’s signature represents
+sageopt’s default behavior for this setting.</p>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="the-compiler-interface">
 <span id="cl-compilerinterface"></span><h2>The compiler interface<a class="headerlink" href="#the-compiler-interface" title="Permalink to this headline">¶</a></h2>

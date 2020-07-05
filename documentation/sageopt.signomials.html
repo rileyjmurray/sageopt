@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Signomials &#8212; sageopt 0.5.1 documentation</title>
+    <title>Signomials &#8212; sageopt 0.5.2 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -498,6 +498,9 @@ elements from <code class="docutils literal notranslate"><span class="pre">gts</
 </dd>
 <dt>ell<span class="classifier">int</span></dt><dd><p>Controls the strength of the SAGE proof system, as applied to the Lagrangian. Defaults to
 <code class="docutils literal notranslate"><span class="pre">ell=0</span></code>, which means the primal Lagrangian must be an X-SAGE signomial.</p>
+</dd>
+<dt>slacks<span class="classifier">bool</span></dt><dd><p>For dual relaxations, determines if constraints “<code class="docutils literal notranslate"><span class="pre">mat</span> <span class="pre">&#64;</span> <span class="pre">vec</span></code> in dual SAGE cone” is
+represented by “<code class="docutils literal notranslate"><span class="pre">mat</span> <span class="pre">&#64;</span> <span class="pre">vec</span> <span class="pre">==</span> <span class="pre">temp</span></code>, <code class="docutils literal notranslate"><span class="pre">temp</span></code> in dual SAGE cone”. Defaults to False.</p>
 </dd>
 </dl>
 </dd></dl>
