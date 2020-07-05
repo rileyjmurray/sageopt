@@ -337,3 +337,23 @@ class TestSagePolynomials(unittest.TestCase):
         gap = abs(f(x_star) - opt)
         assert gap < 1e-4
         pass
+
+    @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS fails on this problem')
+    def test_conditional_sage_4(self):
+        n = 4
+        x = standard_poly_monomials(n)
+        f0 = -x[0]*x[2]**3 + 4*x[1]*x[2]**2*x[3] + 4*x[0]*x[2]*x[3]**2
+        f1 = 2*x[1]*x[3]**3 + 4*x[0]*x[2] + 4*x[2]**2 - 10*x[1]*x[3] - 10*x[3]**2 + 2
+        f = f0 + f1
+        sign_sym = [0.25 - x[i]**2 for i in range(n)]
+        X = infer_domain(f, sign_sym, [])
+        gts = [x[i] + 0.5 for i in range(n)] + [0.5 - x[i] for i in range(n)]
+        dual = poly_constrained_relaxation(f, gts, [], X, p=1, q=2)
+        dual.solve()
+        expect = -3.180096
+        self.assertAlmostEqual(dual.value, expect, places=5)
+        solns = poly_solution_recovery.poly_solrec(dual)
+        self.assertGreaterEqual(len(solns), 1)
+        x_star = solns[0]
+        gap = f(x_star) - dual.value
+        self.assertLessEqual(gap, 1e-5)
