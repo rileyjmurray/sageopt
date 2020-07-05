@@ -158,8 +158,8 @@ ScalarAtoms. For most people, all you need to work with is the Expression class.
     :members:
 
 
-SAGE constraint classes
------------------------
+SAGE constraints
+----------------
 
 .. _MCW2019: https://arxiv.org/abs/1907.00814
 
@@ -197,16 +197,22 @@ dimension of the SAGE constraint (equal to ``constr.alpha.shape[0]``).
 The cost of this presolve can be mitigated by recycling ``covers = constr.ech.expcovers`` from one call of a
 constraint constructor to the next.
 
+Primal SAGE constraints
+~~~~~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: sageopt.coniclifts.PrimalSageCone
     :members:
+
+Dual SAGE constraints
+~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: sageopt.coniclifts.DualSageCone
     :members:
 
 .. _cl_sage_options:
 
-SAGE compilation options
-------------------------
+Compilation options
+~~~~~~~~~~~~~~~~~~~
 
 Coniclifts makes several decisions when compiling a SAGE constraint into a form
 which is acceptable to a solver like MOSEK or ECOS. The following functions allow
@@ -217,18 +223,17 @@ are overridden, the settings used in a ``PrimalSageCone`` or ``DualSageCone`` ob
 are cached upon construction. Therefore it is safe to modify these defaults while
 constructing different constraints for use in the same model.
 
-.. autofunction:: coniclifts.presolve_trivial_age_cones
+.. autofunction:: sageopt.coniclifts.presolve_trivial_age_cones
 
-.. autofunction:: coniclifts.heuristic_reduce_cond_age_cones
+.. autofunction:: sageopt.coniclifts.heuristic_reduce_cond_age_cones
 
-.. autofunction:: coniclifts.age_cone_reduction_solver
+.. autofunction:: sageopt.coniclifts.age_cone_reduction_solver
 
-.. autofunction:: coniclifts.sum_age_force_equality
+.. autofunction:: sageopt.coniclifts.sum_age_force_equality
 
-.. autofunction:: coniclifts.compact_sage_duals
+.. autofunction:: sageopt.coniclifts.compact_sage_duals
 
-.. autofunction:: coniclifts.kernel_basis_age_witnesses
-
+.. autofunction:: sageopt.coniclifts.kernel_basis_age_witnesses
 
 .. _cl_compilerinterface:
 
