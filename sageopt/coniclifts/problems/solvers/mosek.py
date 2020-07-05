@@ -28,7 +28,6 @@ class Mosek(Solver):
 
     @staticmethod
     def decide_primal_vs_dual(c, A, b, K, params):
-        RATIO = 5
         if 'integers' in params:
             return 'primal'
         if 'dualize' in params:
@@ -36,7 +35,8 @@ class Mosek(Solver):
                 return 'dual'
             else:
                 return 'primal'
-        if A.shape[0] >= RATIO * A.shape[1]:
+        slack_dim = sum([Ki.len for Ki in K if Ki.type in {'e', 'S'}])
+        if slack_dim > A.shape[1]:
             return 'dual'
         else:
             return 'primal'
