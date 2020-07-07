@@ -241,6 +241,7 @@ def spelf(R, S):
     c = Variable(shape=(num_cross_terms, 3), name='spelf_c')
     summand_sigs = []
     summand_elfs = []
+    summand_melfs = []
     i = 0
     for (r, s) in pairs:
         r, s = r.reshape((1, -1)), s.reshape((1, -1))
@@ -255,11 +256,12 @@ def spelf(R, S):
         #   signomial arithmetic (i.e. keep things fast).
         summand_sigs += [g_r, g_s]
         summand_elfs += [g_rs]
+        summand_melfs.append((g_r, g_s, g_rs))
         i += 1
     K = [Cone('e', 3) for i in range(num_cross_terms)]
     c_mod = aff.column_stack((-c[:, 2], c[:, 1], c[:, 0]))
     c_flat = c_mod.ravel(order='C')
     constr = DualProductCone(c_flat, K)
     f = Signomial.sum(summand_sigs) + Elf.sum(summand_elfs)
-    return f, constr
+    return f, constr, summand_melfs
 
