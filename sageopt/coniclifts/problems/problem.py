@@ -292,6 +292,8 @@ class Problem(object):
         int_vars : List[coniclifts.Variable]
         """
         int_indices = []
+        if len(int_vars) == 0:
+            pass
         for int_var in int_vars:
             if (not isinstance(int_var, Variable)) or (not int_var.is_proper()):
                 msg = 'Only "proper" Variables can be subject to integer constraints.'

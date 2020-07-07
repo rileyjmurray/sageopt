@@ -125,7 +125,7 @@ class TestSpelfs(unittest.TestCase):
         # construct a symbolic positive entropy-like function
         R = np.ones(shape=(1, 3))
         S = np.array([[0.2, 0.6, -0.5]])
-        f, pelfcon, melfs = spelf(R, S)
+        f, pelfcon, melfs = spelf(R, S, zero_origin=False)
         # create a coniclifts problem, which projects a fixed
         #   3-vector onto the set of vectors which are feasible for "f"
         np.random.seed(0)
@@ -152,7 +152,7 @@ class TestSpelfs(unittest.TestCase):
         gamma = Variable(name='gamma')
         f = f0 + f1 - gamma
         # constraints
-        g, spelf_con, melfs = spelf(f.rmat, f.smat)
+        g, spelf_con, melfs = spelf(f.rmat, f.smat, zero_origin=False)
         cons = [spelf_con]
         if sage:
             h = Signomial(alpha, Variable(shape=(4,)))

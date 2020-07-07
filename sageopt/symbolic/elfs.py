@@ -218,7 +218,7 @@ class Elf(object):
             raise NotImplementedError()
 
 
-def spelf(R, S):
+def spelf(R, S, zero_origin=True):
     """
     Return an Elf with symbolic coefficients, obtained by taking sums of nonnegative
     functions of the form
@@ -238,30 +238,45 @@ def spelf(R, S):
             continue
         pairs.append((r, s))
     num_cross_terms = len(pairs)
-    c = Variable(shape=(num_cross_terms, 3), name='spelf_c')
     summand_sigs = []
     summand_elfs = []
     summand_melfs = []
     i = 0
-    for (r, s) in pairs:
-        r, s = r.reshape((1, -1)), s.reshape((1, -1))
-        if np.linalg.norm(r - s) < TOL:
-            continue
-        ci = c[i, :]
-        g_r = Signomial(r, ci[0])
-        g_s = Signomial(s, ci[1])
-        g_rs = Elf.sig_times_linfunc(Signomial(r, ci[2]), r-s)
-        # TODO: make a function which constructs the
-        #   sum of g_r, g_s, g_rs without requiring
-        #   signomial arithmetic (i.e. keep things fast).
-        summand_sigs += [g_r, g_s]
-        summand_elfs += [g_rs]
-        summand_melfs.append((g_r, g_s, g_rs))
-        i += 1
-    K = [Cone('e', 3) for i in range(num_cross_terms)]
-    c_mod = aff.column_stack((-c[:, 2], c[:, 1], c[:, 0]))
-    c_flat = c_mod.ravel(order='C')
-    constr = DualProductCone(c_flat, K)
+    if zero_origin:
+        c = Variable(shape=(num_cross_terms,), name='spelf_c')
+        for (r, s) in pairs:
+            r, s = r.reshape((1, -1)), s.reshape((1, -1))
+            if np.linalg.norm(r - s) < TOL:
+                continue
+            g_r = Signomial(r, -c[i])
+            g_s = Signomial(s, c[i])
+            g_rs = Elf.sig_times_linfunc(Signomial(r, c[i]), r-s)
+            summand_sigs += [g_r, g_s]
+            summand_elfs += [g_rs]
+            summand_melfs.append((g_r, g_s, g_rs))
+            i += 1
+        constr = c >= 0
+    else:
+        c = Variable(shape=(num_cross_terms, 3), name='spelf_c')
+        for (r, s) in pairs:
+            r, s = r.reshape((1, -1)), s.reshape((1, -1))
+            if np.linalg.norm(r - s) < TOL:
+                continue
+            ci = c[i, :]
+            g_r = Signomial(r, ci[0])
+            g_s = Signomial(s, ci[1])
+            g_rs = Elf.sig_times_linfunc(Signomial(r, ci[2]), r-s)
+            # TODO: make a function which constructs the
+            #   sum of g_r, g_s, g_rs without requiring
+            #   signomial arithmetic (i.e. keep things fast).
+            summand_sigs += [g_r, g_s]
+            summand_elfs += [g_rs]
+            summand_melfs.append((g_r, g_s, g_rs))
+            i += 1
+        K = [Cone('e', 3) for i in range(num_cross_terms)]
+        c_mod = aff.column_stack((-c[:, 2], c[:, 1], c[:, 0]))
+        c_flat = c_mod.ravel(order='C')
+        constr = DualProductCone(c_flat, K)
     f = Signomial.sum(summand_sigs) + Elf.sum(summand_elfs)
     return f, constr, summand_melfs
 
