@@ -25,7 +25,8 @@ To interpret this dict it is important to consider a few ways that sageopt diffe
  * Sageopt does not have natively have "Variable" objects for building signomial programs. The
    closest sageopt approximation is :func:`sageopt.standard_sig_monomials`, which takes a
    parameter :math:`n`, and returns a length-:math:`n` array ``y`` of Signomial objects, where
-   ``y[i]`` represents the signomial ``y[i](x) = exp(x[i])``.
+   ``y[i]`` represents the signomial ``y[i](x) = exp(x[i])``. One can say that the variables in
+   sageopt Signomial objects are *implicit*.
 
  * Sageopt works with a single vectorized decision variable, while GPKit allows users to declare
    many named variables of different shapes for use in the same model. The return value
@@ -58,5 +59,5 @@ that general signomial programming is required.
 The suffix ``eqs`` refers to equality constraints, while ``gts`` refers to constraint functions
 which must be greater than or equal to zero.
 
-The :ref:`Examples page <gpkit_ex>` demonstrates how to use this data in an existing
+The :ref:`examples page <gpkit_ex>` demonstrates how to use this data in an existing
 GPKit workflow.
