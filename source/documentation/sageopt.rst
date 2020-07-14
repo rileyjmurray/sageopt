@@ -39,3 +39,8 @@ Documentation for coniclifts is given below.
 
 Finally, sageopt provides some basic features for interacting with optimization packages
 in the python ecosystem: GPKit and CVXPY.
+
+.. toctree::
+  :maxdepth: 2
+
+  GPKit <sageopt.gpkit>

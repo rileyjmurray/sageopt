@@ -16,7 +16,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Release History" href="../releasehistory.html" />
-    <link rel="prev" title="Nonnegativity" href="../documentation/sageopt.nonnegativity.html" />
+    <link rel="prev" title="Using sageopt with GPKit" href="../documentation/sageopt.gpkit.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -63,6 +63,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#local-nonnegativity">Local nonnegativity</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#gpkit-modeling">GPKit modeling</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
@@ -75,7 +76,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="../documentation/sageopt.nonnegativity.html" title="previous chapter">Nonnegativity</a></li>
+      <li>Previous: <a href="../documentation/sageopt.gpkit.html" title="previous chapter">Using sageopt with GPKit</a></li>
       <li>Next: <a href="../releasehistory.html" title="next chapter">Release History</a></li>
   </ul></li>
 </ul>
@@ -411,6 +412,47 @@ convex function, and then solve a constrained convex optimization problem using 
 <p>You should find that no matter how many initial conditions you provide to <code class="docutils literal notranslate"><span class="pre">scipy</span></code>’s solver, the reported optimal
 objective is nonnegative.</p>
 </div>
+</div>
+<div class="section" id="gpkit-modeling">
+<span id="gpkit-ex"></span><h2>GPKit modeling<a class="headerlink" href="#gpkit-modeling" title="Permalink to this headline">¶</a></h2>
+<p>Sageopt can parse signomial data from a GPKit optimization model. The following example builds
+a signomial programming model in GPKit, parses that model to find sageopt data (objective function
+and constraint functions), solves the sageopt model, and then recovers the solution in a form
+expected by GPKit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sageopt</span> <span class="k">as</span> <span class="nn">so</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sageopt.interop.gpkit</span> <span class="k">import</span> <span class="n">gpkit_model_to_sageopt_model</span>
+<span class="kn">from</span> <span class="nn">gpkit</span> <span class="k">import</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">SignomialsEnabled</span>
+<span class="kn">from</span> <span class="nn">gpkit.constraints.sigeq</span> <span class="k">import</span> <span class="n">SingleSignomialEquality</span>
+<span class="c1">#</span>
+<span class="c1"># Build GPKit model</span>
+<span class="c1">#</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">SignomialsEnabled</span><span class="p">():</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.2</span> <span class="o">&lt;=</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">SingleSignomialEquality</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+<span class="n">gpkm</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">y</span><span class="p">,</span> <span class="n">constraints</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="c1">#   Recover data for the sageopt model</span>
+<span class="c1">#</span>
+<span class="n">som</span> <span class="o">=</span> <span class="n">gpkit_model_to_sageopt_model</span><span class="p">(</span><span class="n">gpkm</span><span class="p">)</span>  <span class="c1"># a dict</span>
+<span class="n">sp_eqs</span><span class="p">,</span> <span class="n">gp_gts</span> <span class="o">=</span> <span class="n">som</span><span class="p">[</span><span class="s1">&#39;sp_eqs&#39;</span><span class="p">],</span> <span class="n">som</span><span class="p">[</span><span class="s1">&#39;gp_gts&#39;</span><span class="p">]</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">som</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">infer_domain</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gp_gts</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_constrained_relaxation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gp_gts</span><span class="p">,</span> <span class="n">sp_eqs</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span>  <span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="c1">#   Solve and recover solution</span>
+<span class="c1">#</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s1">&#39;ECOS&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">soln</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">sig_solrec</span><span class="p">(</span><span class="n">prob</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">geo_soln</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">soln</span><span class="p">)</span>
+<span class="n">vkmap</span> <span class="o">=</span> <span class="n">som</span><span class="p">[</span><span class="s1">&#39;vkmap&#39;</span><span class="p">]</span>
+<span class="n">x_val</span> <span class="o">=</span> <span class="n">geo_soln</span><span class="p">[</span><span class="n">vkmap</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">key</span><span class="p">]]</span>
+<span class="n">y_val</span> <span class="o">=</span> <span class="n">geo_soln</span><span class="p">[</span><span class="n">vkmap</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">key</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>The public release of sageopt applies to GPKit versions &lt; 1.0; sageopt’s GitHub repository
+contains a branch to handle GPKit 1.0 and higher.</p>
 </div>
 </div>
 

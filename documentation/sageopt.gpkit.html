@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Using sageopt with GPKit &#8212; sageopt 0.5.2 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="../examples/examples.html" />
+    <link rel="prev" title="Nonnegativity" href="sageopt.nonnegativity.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">sageopt</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=rileyjmurray&repo=sageopt&type=star&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="sageopt.html">Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sageopt.signomials.html">Signomials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.polynomials.html">Polynomials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.coniclifts.html">Coniclifts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sageopt.nonnegativity.html">Nonnegativity</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">GPKit</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt/issues">File a Bug Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releasehistory.html">Release History</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rileyjmurray/sageopt">Source Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../background.html">Background</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="sageopt.html">Overview of sageopt</a><ul>
+      <li>Previous: <a href="sageopt.nonnegativity.html" title="previous chapter">Nonnegativity</a></li>
+      <li>Next: <a href="../examples/examples.html" title="next chapter">Examples</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="using-sageopt-with-gpkit">
+<span id="gpkit"></span><h1>Using sageopt with GPKit<a class="headerlink" href="#using-sageopt-with-gpkit" title="Permalink to this headline">¶</a></h1>
+<p>GPKit is a python package which makes it easy for engineers to use signomial and geometric
+programming models in their design workflow. Sageopt provides basic functionality to
+interact with GPKit.
+At present, this functionality is contained in a single function:
+<code class="docutils literal notranslate"><span class="pre">sageopt.interop.gpkit.gpkit_model_to_sageopt_model</span></code>.
+That function accepts a GPKit Model object, and returns a dict of the form:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">so_mod</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;vkmap&#39;</span><span class="p">:</span> <span class="n">vkmap</span><span class="p">,</span>
+    <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span>
+    <span class="s1">&#39;gp_eqs&#39;</span><span class="p">:</span> <span class="n">gp_eqs</span><span class="p">,</span>
+    <span class="s1">&#39;sp_eqs&#39;</span><span class="p">:</span> <span class="n">sp_eqs</span><span class="p">,</span>
+    <span class="s1">&#39;gp_gts&#39;</span><span class="p">:</span> <span class="n">gp_gts</span><span class="p">,</span>
+    <span class="s1">&#39;sp_gts&#39;</span><span class="p">:</span> <span class="n">sp_gts</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To interpret this dict it is important to consider a few ways that sageopt differs from GPKit.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Sageopt does not have natively have “Variable” objects for building signomial programs. The
+closest sageopt approximation is <a class="reference internal" href="sageopt.signomials.html#sageopt.standard_sig_monomials" title="sageopt.standard_sig_monomials"><code class="xref py py-func docutils literal notranslate"><span class="pre">sageopt.standard_sig_monomials()</span></code></a>, which takes a
+parameter <span class="math notranslate nohighlight">\(n\)</span>, and returns a length-<span class="math notranslate nohighlight">\(n\)</span> array <code class="docutils literal notranslate"><span class="pre">y</span></code> of Signomial objects, where
+<code class="docutils literal notranslate"><span class="pre">y[i]</span></code> represents the signomial <code class="docutils literal notranslate"><span class="pre">y[i](x)</span> <span class="pre">=</span> <span class="pre">exp(x[i])</span></code>. One can say that the variables in
+sageopt Signomial objects are <em>implicit</em>.</p></li>
+<li><p>Sageopt works with a single vectorized decision variable, while GPKit allows users to declare
+many named variables of different shapes for use in the same model. The return value
+<code class="docutils literal notranslate"><span class="pre">so_mod['vkmap']</span></code> helps reconcile this difference. Specifically, <code class="docutils literal notranslate"><span class="pre">vkmap</span></code> is a dict which maps
+a GPKit VarKey object into a numpy array of indices where the GPKit Variable occurs in sageopt’s
+implicit vectorized model.</p></li>
+<li><p>GPKit models are stated with “geometric form” signomials – i.e. expressions like
+<span class="math notranslate nohighlight">\(y_1 \sqrt{y_2} - y_3^{-2/3} + y_4^2 - y_2\)</span>, while sageopt refers to signomials in exponential form.
+It is easy to move back and forth between these two conventions; if you use sageopt to find a
+solution vector <code class="docutils literal notranslate"><span class="pre">x</span></code> to a signomial program, then you can map that into a format GPKit expects
+by working with <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">=</span> <span class="pre">np.exp(x)</span></code>.</p></li>
+</ul>
+</div></blockquote>
+<p>For the remaining key-value pairs in <code class="docutils literal notranslate"><span class="pre">so_mod</span></code>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(f\)</span> is the objective function to minimize.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\phi \in \mathtt{gp{\_}eqs}\)</span> represents a convex constraint
+<span class="math notranslate nohighlight">\(\phi(x) = 0\)</span>. These constraint functions have exactly one positive term and
+exactly one negative term.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\phi \in \mathtt{sp{\_}eqs}\)</span> represents a nonconvex constraint
+<span class="math notranslate nohighlight">\(\phi(x) = 0\)</span>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(g \in \mathtt{gp{\_}gts}\)</span> represents a convex constraint
+<span class="math notranslate nohighlight">\(g(x) \geq 0\)</span>. Each function <span class="math notranslate nohighlight">\(g\)</span> has exactly one positive term,
+with remaining terms being negative.</p></li>
+<li><p><span class="math notranslate nohighlight">\(g \in \mathtt{sp{\_}gts}\)</span> represents a constraint
+<span class="math notranslate nohighlight">\(g(x) \geq 0\)</span> which doesn’t fall into the above category.</p></li>
+</ul>
+</div></blockquote>
+<p>The prefix <code class="docutils literal notranslate"><span class="pre">gp</span></code> indicates compatibility with geometric programming, and the prefix <code class="docutils literal notranslate"><span class="pre">sp</span></code> indicates
+that general signomial programming is required.
+The suffix <code class="docutils literal notranslate"><span class="pre">eqs</span></code> refers to equality constraints, while <code class="docutils literal notranslate"><span class="pre">gts</span></code> refers to constraint functions
+which must be greater than or equal to zero.</p>
+<p>The <a class="reference internal" href="../examples/examples.html#gpkit-ex"><span class="std std-ref">examples page</span></a> demonstrates how to use this data in an existing
+GPKit workflow.</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Riley J. Murray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/documentation/sageopt.gpkit.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
