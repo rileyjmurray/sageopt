@@ -51,7 +51,7 @@ For the remaining key-value pairs in ``so_mod``:
  * :math:`g \in \mathtt{gp{\_}gts}` represents a convex constraint
    :math:`g(x) \geq 0`. Each function :math:`g` has exactly one positive term,
    with remaining terms being negative.
- * :math:`g \in \mathtt{gp{\_}gts}` represents a constraint
+ * :math:`g \in \mathtt{sp{\_}gts}` represents a constraint
    :math:`g(x) \geq 0` which doesn't fall into the above category.
 
 The prefix ``gp`` indicates compatibility with geometric programming, and the prefix ``sp`` indicates
