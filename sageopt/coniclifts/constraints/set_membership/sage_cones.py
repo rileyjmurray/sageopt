@@ -912,7 +912,7 @@ class ExpCoverHelper(object):
                         prob = Problem(CL_MIN, objective, cons)
                         prob.solve(verbose=False,
                                    solver=self.settings['reduction_solver'])
-                        if prob.status == {CL_SOLVED, CL_INACCURATE} and prob.value < -100:
+                        if prob.status in {CL_SOLVED, CL_INACCURATE} and prob.value < -100:
                             expcovers[i][:] = False
         return expcovers
 
