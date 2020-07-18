@@ -51,6 +51,8 @@ class ScalarVariable(ScalarAtom):
 
     _SCALAR_VARIABLE_COUNTER = 0
 
+    __slots__ = ['_id', '_generation', '_value', 'index', 'parent']
+
     @staticmethod
     def curr_variable_count():
         return ScalarVariable._SCALAR_VARIABLE_COUNTER
@@ -113,12 +115,28 @@ class ScalarVariable(ScalarAtom):
     def __getstate__(self):
         # We lose the link to our parent.
         # Our parent will have to restore the link later.
-        d = self.__dict__.copy()
-        d['parent'] = None
+        d = {
+            '_id': self._id,
+            '_generation': self._generation,
+            '_value': self._value,
+            'index': self.index,
+            'parent': None
+        }
         return d
 
     def __setstate__(self, state):
-        self.__dict__.update(state)
+        for k,v in state.items():
+            if k == '_id':
+                self._id = v
+            elif k == '_generation':
+                self._generation = v
+            elif k == '_value':
+                self._value = v
+            elif k == 'index':
+                self.index = v
+            else:
+                self.parent = v
+        # self.__dict__.update(state)
         pass
 
 
@@ -204,6 +222,8 @@ class NonlinearScalarAtom(ScalarAtom):
 class ScalarExpression(object):
 
     __array_priority__ = 100
+
+    __slots__ = ['atoms_to_coeffs', 'offset']
 
     def __init__(self, atoms_to_coeffs, offset, verify=True, copy=True):
         """
