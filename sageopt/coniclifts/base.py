@@ -175,8 +175,8 @@ class NonlinearScalarAtom(ScalarAtom):
     def value(self):
         vals = []
         for arg in self.args:
-            d = dict(arg[:-1])
-            arg_se = ScalarExpression(d, arg[-1][1], verify=False)
+            d = defaultdict(int, arg[:-1])
+            arg_se = ScalarExpression(d, arg[-1][1], verify=False, copy=False)
             arg_val = arg_se.value
             vals.append(arg_val)
         f = self.evaluator
@@ -205,7 +205,7 @@ class ScalarExpression(object):
 
     __array_priority__ = 100
 
-    def __init__(self, atoms_to_coeffs, offset, verify=True):
+    def __init__(self, atoms_to_coeffs, offset, verify=True, copy=True):
         """
 
         :param atoms_to_coeffs: a dictionary mapping ScalarAtoms to numeric types.
@@ -223,8 +223,10 @@ class ScalarExpression(object):
                 if not all(isinstance(v, ScalarAtom) for v in atoms_to_coeffs.keys()):  # pragma: no cover
                     raise RuntimeError('Keys in ScalarExpressions must be ScalarAtoms.')
             self.atoms_to_coeffs.update(atoms_to_coeffs)
-        else:
+        elif copy:
             self.atoms_to_coeffs = atoms_to_coeffs.copy()
+        else:
+            self.atoms_to_coeffs = atoms_to_coeffs
         self.offset = offset
 
     def __add__(self, other):
@@ -234,8 +236,6 @@ class ScalarExpression(object):
         if isinstance(other, __REAL_TYPES__):
             f.offset += other
         else:
-            if isinstance(other, ScalarAtom):
-                other = ScalarExpression({other: 1}, 0)
             for k, v in other.atoms_to_coeffs.items():
                 f.atoms_to_coeffs[k] += v
             f.offset += other.offset
@@ -248,8 +248,6 @@ class ScalarExpression(object):
             f = ScalarExpression(self.atoms_to_coeffs, self.offset, verify=False)
             f.offset -= other
         else:
-            if isinstance(other, ScalarAtom):
-                other = ScalarExpression({other: 1}, 0)
             f = ScalarExpression(self.atoms_to_coeffs, self.offset, verify=False)
             for k, v in other.atoms_to_coeffs.items():
                 f.atoms_to_coeffs[k] -= v
@@ -259,7 +257,7 @@ class ScalarExpression(object):
     def __mul__(self, other):
         if isinstance(other, __REAL_TYPES__):
             if other == 0:
-                return ScalarExpression(dict(), 0)
+                return ScalarExpression(defaultdict(int), 0, verify=False, copy=False)
             f = ScalarExpression(self.atoms_to_coeffs, self.offset, verify=False)
             for k in f.atoms_to_coeffs:
                 f.atoms_to_coeffs[k] *= other
@@ -482,9 +480,11 @@ class Expression(np.ndarray):
         if isinstance(value, ScalarExpression):
             np.ndarray.__setitem__(self, key, value)
         elif isinstance(value, __REAL_TYPES__):
-            np.ndarray.__setitem__(self, key, ScalarExpression(dict(), value, verify=False))
+            np.ndarray.__setitem__(self, key, ScalarExpression(defaultdict(int), value, verify=False, copy=False))
         elif isinstance(value, ScalarAtom):
-            np.ndarray.__setitem__(self, key, ScalarExpression({value: 1}, 0, verify=False))
+            d = defaultdict(int)
+            d[value] = 1.0
+            np.ndarray.__setitem__(self, key, ScalarExpression(d, 0, verify=False, copy=False))
         elif isinstance(value, np.ndarray) and value.size == 1:
             # noinspection PyTypeChecker
             self[key] = np.asscalar(value)
@@ -616,8 +616,8 @@ class Expression(np.ndarray):
             dict_items = []
             for i, a in enumerate(list_of_atoms):
                 dict_items.append((a, array[tup + (i,)]))
-            d = dict(dict_items)
-            expr[tup] = ScalarExpression(d, 0, verify=False)
+            d = defaultdict(int, dict_items)
+            expr[tup] = ScalarExpression(d, 0, verify=False, copy=False)
         return expr.view(Expression)
 
     @staticmethod
@@ -772,13 +772,17 @@ class Variable(Expression):
     def __unstructured_populate__(obj):
         if obj.shape == ():
             v = ScalarVariable(parent=obj, index=tuple())
-            np.ndarray.__setitem__(obj, tuple(), ScalarExpression({v: 1}, 0, verify=False))
+            d = defaultdict(int)
+            d[v] = 1.0
+            np.ndarray.__setitem__(obj, tuple(), ScalarExpression(d, 0, verify=False, copy=False))
             obj._scalar_variable_ids.append(v.id)
         else:
             for tup in array_index_iterator(obj.shape):
                 v = ScalarVariable(parent=obj, index=tup)
                 obj._scalar_variable_ids.append(v.id)
-                np.ndarray.__setitem__(obj, tup, ScalarExpression({v: 1}, 0, verify=False))
+                d = defaultdict(int)
+                d[v] = 1.0
+                np.ndarray.__setitem__(obj, tup, ScalarExpression(d, 0, verify=False, copy=False))
         pass
 
     # noinspection PyProtectedMember
@@ -789,12 +793,16 @@ class Variable(Expression):
         temp_id_array = np.zeros(shape=obj.shape, dtype=int)
         for i in range(obj.shape[0]):
             v = ScalarVariable(parent=obj, index=(i, i))
-            np.ndarray.__setitem__(obj, (i, i), ScalarExpression({v: 1}, 0, verify=False))
+            d = defaultdict(int)
+            d[v] = 1.0
+            np.ndarray.__setitem__(obj, (i, i), ScalarExpression(d, 0, verify=False, copy=False))
             temp_id_array[i, i] = v.id
             for j in range(i+1, obj.shape[1]):
                 v = ScalarVariable(parent=obj, index=(i, j))
-                np.ndarray.__setitem__(obj, (i, j), ScalarExpression({v: 1}, 0, verify=False))
-                np.ndarray.__setitem__(obj, (j, i), ScalarExpression({v: 1}, 0, verify=False))
+                d = defaultdict(int)
+                d[v] = 1.0
+                np.ndarray.__setitem__(obj, (i, j), ScalarExpression(d, 0, verify=False, copy=False))
+                np.ndarray.__setitem__(obj, (j, i), ScalarExpression(d, 0, verify=False, copy=False))
                 temp_id_array[i, j] = v.id
                 temp_id_array[j, i] = v.id
         for tup in array_index_iterator(obj.shape):

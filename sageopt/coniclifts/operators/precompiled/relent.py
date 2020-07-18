@@ -101,20 +101,23 @@ def _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row):
     for i in range(x.size):
         # first entry of exp cone
         id2co = [(a.id, co) for a, co in z[i].atoms_to_coeffs.items()]
+        ids, cos = zip(*id2co)
         A_rows += [curr_row] * len(id2co)
-        A_cols += [aid for aid, _ in id2co]
-        A_vals += [-co for _, co in id2co]
+        A_cols += ids
+        A_vals += [-co for co in cos]
         # third entry of exp cone
         id2co = [(a.id, co) for a, co in x[i].atoms_to_coeffs.items()]
+        ids, cos = zip(*id2co)
         A_rows += [curr_row + 2] * len(id2co)
-        A_cols += [aid for aid, _ in id2co]
-        A_vals += [co for _, co in id2co]
+        A_cols += ids
+        A_vals += cos
         b[curr_row + 2] = x[i].offset
         # third entry of exp cone
         id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
+        ids, cos = zip(*id2co)
         A_rows += [curr_row + 1] * len(id2co)
-        A_cols += [aid for aid, _ in id2co]
-        A_vals += [co for _, co in id2co]
+        A_cols += ids
+        A_vals += cos
         b[curr_row + 1] = y[i].offset
         curr_row += 3
 
