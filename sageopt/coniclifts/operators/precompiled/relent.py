@@ -98,13 +98,15 @@ def _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row):
 
 def _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row):
     # z can be any affine coniclifts Expression
+    Azr, Azc, Azv = [], [], []  # Add the z's last, since we need to flip signs.
     for i in range(x.size):
         # first entry of exp cone
         id2co = [(a.id, co) for a, co in z[i].atoms_to_coeffs.items()]
         ids, cos = zip(*id2co)
-        A_rows += [curr_row] * len(id2co)
-        A_cols += ids
-        A_vals += [-co for co in cos]
+        Azr += [curr_row] * len(id2co)
+        Azc += ids
+        Azv += cos
+        b[curr_row] = z[i].offset
         # third entry of exp cone
         id2co = [(a.id, co) for a, co in x[i].atoms_to_coeffs.items()]
         ids, cos = zip(*id2co)
@@ -120,6 +122,10 @@ def _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row):
         A_vals += cos
         b[curr_row + 1] = y[i].offset
         curr_row += 3
+    A_rows.extend(Azr)
+    A_cols.extend(Azc)
+    Azv = (-np.array(Azv)).tolist()
+    A_vals.extend(Azv)
 
 
 def _align_args(x, y):
