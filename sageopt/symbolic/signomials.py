@@ -646,6 +646,8 @@ class Signomial(object):
             c.append(v)
         alpha = np.array(alpha)
         c = np.array(c)
+        if c.dtype == object:
+            c = cl.Expression(c)
         s = Signomial(alpha, c)
         s._alpha_c = d
         return s
