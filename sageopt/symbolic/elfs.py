@@ -250,7 +250,7 @@ class Elf(object):
             raise NotImplementedError()
 
 
-def spelf(R, S, zero_origin=True):
+def spelf(R, S, zero_origin=True, name='spelf_c'):
     """
     Return an Elf with symbolic coefficients, obtained by taking sums of nonnegative
     functions of the form
@@ -275,7 +275,7 @@ def spelf(R, S, zero_origin=True):
     summand_melfs = []
     i = 0
     if zero_origin:
-        c = Variable(shape=(num_cross_terms,), name='spelf_c')
+        c = Variable(shape=(num_cross_terms,), name=name)
         for (r, s) in pairs:
             r, s = r.reshape((1, -1)), s.reshape((1, -1))
             if np.linalg.norm(r - s) < TOL:
@@ -289,7 +289,7 @@ def spelf(R, S, zero_origin=True):
             i += 1
         constr = c >= 0
     else:
-        c = Variable(shape=(num_cross_terms, 3), name='spelf_c')
+        c = Variable(shape=(num_cross_terms, 3), name=name)
         for (r, s) in pairs:
             r, s = r.reshape((1, -1)), s.reshape((1, -1))
             if np.linalg.norm(r - s) < TOL:
