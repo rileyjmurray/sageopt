@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from sageopt.symbolic.signomials import Signomial
+from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 from sageopt.coniclifts import Variable, Cone, DualProductCone
 from sageopt.coniclifts.base import ScalarExpression, Expression
 from sageopt.coniclifts.operators import affine as aff
@@ -47,6 +47,7 @@ class Elf(object):
             raise ValueError()
         self._rmat = None
         self._smat = None
+        self._exp_grad = None
 
     def is_signomial(self):
         for fi in self.xsigs:
@@ -88,6 +89,33 @@ class Elf(object):
         mats.extend([s.alpha for s in self.xsigs])
         mat = np.vstack(mats)
         self._smat = np.unique(mat, axis=0)
+
+    @property
+    def exp_grad(self):
+        self._cache_exp_grad()
+        return self._exp_grad
+
+    def _cache_exp_grad(self):
+        y = standard_sig_monomials(self.n)
+        self.sig._cache_exp_grad()
+        for g in self.xsigs:
+            g._cache_exp_grad()
+        self._exp_grad = np.empty(shape=(self.n, ), dtype=object)
+        for i in range(self.n):
+            self._exp_grad[i] = self._exp_partial(i, y[i])
+        pass
+
+    def _exp_partial(self, i, yi):
+        eye = np.eye(self.n)
+        summands = [self.sig.exp_grad[i]]
+        for j in range(self.n):
+            summand = Elf.sig_times_linfunc(self.xsigs[j].exp_grad[i], eye[j, :])
+            if i == j:
+                # do something
+                summand = summand + self.xsigs[j]/yi
+            summands.append(summand)
+        g = Elf.sum(summands)
+        return g
 
     def __call__(self, x, **kwargs):
         if not isinstance(x, np.ndarray):
@@ -192,9 +220,13 @@ class Elf(object):
         # linfunc is real vector of length n.
         # return the Elf defined by f(x) = sig(x) * (linfunc @ x)
         linfunc = linfunc.ravel()
-        sigx = linfunc * sig  # broadcast elementwise multiplication
         fs = [Signomial.cast(sig.n, 0)]
-        fs.extend(sigx)
+        for i, val in enumerate(linfunc):
+            if val == 0:
+                sigi = Signomial.cast(sig.n, 0)
+            else:
+                sigi = Signomial(sig.alpha, sig.c * val)
+            fs.append(sigi)
         f = Elf(fs)
         return f
 

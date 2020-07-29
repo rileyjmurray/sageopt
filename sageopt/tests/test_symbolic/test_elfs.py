@@ -18,7 +18,7 @@ import unittest
 from nose.tools import assert_raises
 from scipy.optimize import basinhopping
 from sageopt.symbolic.elfs import Elf, spelf
-from sageopt.symbolic.signomials import Signomial
+from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 from sageopt.coniclifts import Variable, Problem, vector2norm, MIN, MAX, SOLVED
 from sageopt.coniclifts import PrimalSageCone
 
@@ -116,6 +116,36 @@ class TestElfs(unittest.TestCase):
         expect = s(x) * (12 + x * s(x))
         delta = (actual - expect).item()
         self.assertAlmostEqual(delta, 0.0, places=6)
+        pass
+
+    def test_exp_grad(self):
+        x = standard_sig_monomials(2)
+        y = x[1]
+        x = x[0]
+        f0 = x*y + x**-1 + y**2
+        f1 = (x**4)*(y**-2)
+        f2 = y**8
+        f = Elf([f0, f1, f2])
+        actual = f.exp_grad
+
+        # expected values, based on calculation by Wolfram Alpha.
+        expect0 = (x**3)*(y**-2) + y - (x**-2) + Elf.sig_times_linfunc(
+            4*(x**3)*(y**-2), np.array([1, 0])
+        )
+        expect1 = y**7 + 2*y + x - Elf.sig_times_linfunc(
+            2*(x**4)*(y**-3), np.array([1, 0])
+        ) + Elf.sig_times_linfunc(8*y**7, np.array([0, 1]))
+
+        # compare actual vs expected.
+        deltas = [(actual[0] - expect0).without_zeros(),
+                  (actual[1] - expect1).without_zeros()]
+        for delta in deltas:
+            self.assertEqual(delta.sig.m, 1)
+            self.assertEqual(delta.sig.c[0], 0)
+            self.assertEqual(delta.xsigs[0].m, 1)
+            self.assertEqual(delta.xsigs[0].c[0], 0)
+            self.assertEqual(delta.xsigs[1].m, 1)
+            self.assertEqual(delta.xsigs[1].c[0], 0)
         pass
 
 

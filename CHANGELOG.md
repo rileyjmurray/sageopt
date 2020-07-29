@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - symbolic: the ``elfs.Elf`` class represents entropy-like functions (in log space)
  - symbolic: the ``elfs.spelf`` method returns an Elf parameterized by coniclifts Variables.
  - symbolic: all main classes (Signomial, Polynomial, Elf) have a ``fix_coefficients`` method.
+ - symbolic: Signomial and Elf have an ``exp_partial`` function, which computes ``df(x)/dexp(x)``.
+   Enables differentiation as though a Signomial or Elf was represented in exponential form.
  - coniclifts: typo in standards.txt exp cone dual comment
  - coniclifts: a unittest for ``Expression.__setitem__``.
 ## Changed

@@ -152,6 +152,7 @@ class Signomial(object):
         self._m = alpha.shape[0]
         self._alpha_c = None
         self._grad = None
+        self._exp_grad = None
         self._hess = None
         self.metadata = dict()
         pass
@@ -162,6 +163,14 @@ class Signomial(object):
             for i in range(self._n):
                 g[i] = self._partial(i)
             self._grad = g
+        pass
+
+    def _cache_exp_grad(self):
+        if self._exp_grad is None:
+            g = np.empty(shape=(self._n,), dtype=object)
+            for i in range(self._n):
+                g[i] = self._exp_partial(i)
+            self._exp_grad = g
         pass
 
     def _cache_hess(self):
@@ -228,6 +237,16 @@ class Signomial(object):
         """
         self._cache_grad()
         return self._grad
+
+    @property
+    def exp_grad(self):
+        """
+        A numpy ndarray of shape ``(n,)``, whose entries are Signomials. The i-th element of this
+        array is the signomial``g`` is obtained by ``g = d(self)/d(exp(x[i])``. This array is lazily
+        constructed.
+        """
+        self._cache_exp_grad()
+        return self._exp_grad
 
     @property
     def hess(self):
@@ -448,6 +467,35 @@ class Signomial(object):
         for j in range(self._m):
             vec = self.alpha[j, :]
             c = self.c[j] * vec[i]
+            if (not isinstance(c, __NUMERIC_TYPES__)) or c != 0:
+                d[tuple(vec)] = c
+        if len(d) == 0:
+            d[(0,) * self._n] = 0
+        p = Signomial.from_dict(d)
+        return p
+
+    def _exp_partial(self, i):
+        """
+        Compute the symbolic Signomial representing d(f)/d(exp(x[i]).
+        Parameters
+        ----------
+        i : int
+            ``i`` must be an integer from 0 to ``self.n - 1``.
+
+        Returns
+        -------
+        p : Signomial
+            The function obtained by differentiating this signomial with respect to the
+            exponential of its i-th argument.
+        """
+        if i < 0 or i >= self._n:
+            raise RuntimeError('This Signomial does not have an input at index ' + str(i) + '.')
+        d = dict()
+        for j in range(self._m):
+            vec = self.alpha[j, :]
+            c = self.c[j] * vec[i]
+            vec = vec.copy()
+            vec[i] = vec[i] - 1
             if (not isinstance(c, __NUMERIC_TYPES__)) or c != 0:
                 d[tuple(vec)] = c
         if len(d) == 0:

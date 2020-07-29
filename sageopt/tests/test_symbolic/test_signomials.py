@@ -170,6 +170,22 @@ class TestSignomials(unittest.TestCase):
         expect = 4*np.exp(-2*3)
         assert abs(actual[0] - expect) < 1e-8
 
+    def test_signomial_exp_grad(self):
+        x = standard_sig_monomials(2)
+        f = x[0]**2 * x[1]**-0.5 + x[0] + 2*x[1] + x[0]**-2
+        g = f.exp_grad
+        g0, g1 = g[0], g[1]
+        expect0 = 2*x[0]*(x[1]**-0.5) + 1 - 2*x[0]**-3
+        expect1 = -0.5*(x[0]**2)*(x[1]**-1.5) + 2
+        delta0 = (g0 - expect0).without_zeros()
+        delta1 = (g1 - expect1).without_zeros()
+        self.assertEqual(delta0.m, 1)
+        self.assertEqual(delta1.m, 1)
+        self.assertEqual(delta0.c[0], 0.0)
+        self.assertEqual(delta1.c[0], 0.0)
+        self.assertListEqual(delta0.alpha[0, :].tolist(), [0., 0.])
+        self.assertListEqual(delta1.alpha[0, :].tolist(), [0., 0.])
+
 
 class TestSigDomain(unittest.TestCase):
 
