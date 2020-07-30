@@ -312,3 +312,10 @@ def spelf(R, S, zero_origin=True, name='spelf_c'):
     f = Signomial.sum(summand_sigs) + Elf.sum(summand_elfs)
     return f, constr, summand_melfs
 
+
+def equality_constraint_block(elf1, elf2):
+    delta = elf1 - elf2
+    constrs = [delta.sig.c == 0]
+    for i in range(elf1.n):
+        constrs.append(delta.xsigs[i].c == 0)
+    return constrs
