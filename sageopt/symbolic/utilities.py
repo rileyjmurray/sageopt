@@ -19,6 +19,7 @@ import scipy.sparse as sp
 from sageopt import coniclifts as cl
 from sageopt.interop import cvxpy as cp_interop
 from sageopt.coniclifts.base import __REAL_TYPES__
+from itertools import combinations_with_replacement as comb_w_rep, combinations, chain
 
 
 class Labeler(object):
@@ -114,3 +115,49 @@ def find_zero_entries(c, tol=0.0):
         #TODO: implement this properly (it's really the cvxpy-case).
         return []
     return to_drop
+
+
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+
+
+def monolist(n, deg, neg=True):
+    """
+
+    Parameters
+    ----------
+    n : int
+        Return a matrix of exponents for monomials in ``n`` variables.
+    deg : int
+        Exponents vectors ``vec`` satisfy ``np.sum(np.abs(vec)) <= deg``.
+    neg : bool
+        Whether or not returned exponent vectors are allowed to contain negative entries.
+
+    Returns
+    -------
+    monovecs : np.ndarray
+        Rows define all monomials in ``n`` variables of "degree" ``deg``. Negative
+        exponents are allowed, although only integers are used, and negative exponents
+        count towards a monomial's degree according to their absolute value.
+    """
+    monovecs = []
+    homog_idxs = range(n+1)
+    for c in comb_w_rep(homog_idxs, deg):
+        base = np.zeros(n)
+        for i in range(n):
+            base[i] = np.count_nonzero(np.array(c) == i)
+        if not neg:
+            monovecs.append(base)
+        else:
+            nz_idxs = np.nonzero(base)[0]
+            for ss in powerset(nz_idxs):
+                if len(ss) == 0:
+                    monovecs.append(base)
+                else:
+                    temp = base.copy()
+                    temp[list(ss)] *= -1
+                    monovecs.append(temp)
+    monovecs = np.row_stack(monovecs)
+    return monovecs
