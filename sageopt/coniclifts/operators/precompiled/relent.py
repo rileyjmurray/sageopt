@@ -87,7 +87,7 @@ def _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row):
         A_cols += [aid for aid, _ in id2co]
         A_vals += [co for _, co in id2co]
         b[curr_row + 2] = x[i].offset
-        # third entry of exp cone
+        # second entry of exp cone
         id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
         A_rows += [curr_row + 1] * len(id2co)
         A_cols += [aid for aid, _ in id2co]
@@ -104,13 +104,14 @@ def _compact_elemwise_data(A_rows, A_cols, A_vals, b, x, y, z, curr_row):
         A_rows += [curr_row] * len(id2co)
         A_cols += [aid for aid, _ in id2co]
         A_vals += [-co for _, co in id2co]
+        b[curr_row] = -z[i].offset
         # third entry of exp cone
         id2co = [(a.id, co) for a, co in x[i].atoms_to_coeffs.items()]
         A_rows += [curr_row + 2] * len(id2co)
         A_cols += [aid for aid, _ in id2co]
         A_vals += [co for _, co in id2co]
         b[curr_row + 2] = x[i].offset
-        # third entry of exp cone
+        # second entry of exp cone
         id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
         A_rows += [curr_row + 1] * len(id2co)
         A_cols += [aid for aid, _ in id2co]
