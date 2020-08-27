@@ -60,7 +60,7 @@ class Mosek(Solver):
         # in order to enforce proper equality constraints on these slack variables.
         """
         if not Mosek._SDP_SUPPORT_:
-            if any([co.type == 'P' for co in K]):
+            if any([co.type == 'P' for co in K]):  # pragma: no cover
                 raise NotImplementedError('This functionality is being put on hold.')
         form = Mosek.decide_primal_vs_dual(c, A, b, K, params)
         if form == 'primal':
@@ -206,7 +206,7 @@ class Mosek(Solver):
             # infeasible
             problem_status = CL_CONSTANTS.solved
             problem_value = np.Inf
-        else:
+        else:  # pragma: no cover
             # some kind of solver failure.
             problem_status = CL_CONSTANTS.failed
             variable_values = dict()
@@ -306,7 +306,7 @@ class Mosek(Solver):
             # infeasible
             problem_status = CL_CONSTANTS.solved
             problem_value = -np.Inf
-        else:
+        else:  # pragma: no cover
             # some kind of solver failure.
             problem_status = CL_CONSTANTS.failed
             variable_values = dict()
@@ -318,7 +318,7 @@ class Mosek(Solver):
         try:
             import mosek
             return True
-        except ImportError:
+        except ImportError:  # pragma: no cover
             return False
 
     @staticmethod

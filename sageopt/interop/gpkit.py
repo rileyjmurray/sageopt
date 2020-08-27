@@ -1,6 +1,8 @@
 from sageopt.symbolic.signomials import Signomial
 
-
+"""
+This interface only supports GPKit 0.9.9.2.
+"""
 GPKIT_INSTALLED = False
 try:
     from gpkit import SignomialsEnabled

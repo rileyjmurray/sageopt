@@ -739,7 +739,7 @@ class DualSageCone(SetMembership):
                     AbK_viol = PrimalProductCone.project(AbK_val, self.X.K)
                     curr_viol += AbK_viol
                 # as applicable, solve an optimization problem to compute the violation.
-                if curr_viol > 0 and not rough:
+                if curr_viol > 0 or curr_viol == np.NaN and not rough:
                     temp_var = Variable(shape=(self._lifted_n,), name='temp_var')
                     cons = [mat @ temp_var[:self._n] >= lowerbounds]
                     if self.X is not None:

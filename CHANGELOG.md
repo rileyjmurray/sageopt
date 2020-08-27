@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    inadvertently disabled).
  - Remove an unstated assumption in the ``relent.py`` precompiled atom (and ``DualSageCone.compile``)
    that certain inputs had to be linear (rather than affine) expressions of decision variables.
+ - Minor change to how DualSageCones compute violations.
 
 # [0.5.2] - 2020-07-05
 ## Added
