@@ -8,7 +8,7 @@ install:
   - pip install scipy>=1.1 numpy>=1.14 ecos>=2 coveralls
   - pip install nose2[coverage_plugin]
   - pip install pint cvxopt ad
-  - pip install gpkit
+  - pip install gpkit==0.9.9.2
   - python setup.py install
 # command to run tests (import gpkit, since it builds on first import).
 script:
