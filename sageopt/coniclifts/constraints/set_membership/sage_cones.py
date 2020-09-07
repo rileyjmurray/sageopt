@@ -482,7 +482,7 @@ class PrimalSageCone(SetMembership):
 
     def sigma_x(self, y, tol=1e-8):
         """
-        If :math:`X = \\mathbb{R}^n`, then return :math:`\\infty` when :math:`\|y\|_2 > \\texttt{tol}`
+        If :math:`X = \\mathbb{R}^n`, then return :math:`\\infty` when :math:`\\|y\\|_2 > \\texttt{tol}`
         and :math:`0` otherwise. If :math:`X` is a proper subset of :math:`\\mathbb{R}^n`, then
         return the value of the support function of :math:`X`, evaluated at :math:`y`:
 
@@ -710,7 +710,7 @@ class DualSageCone(SetMembership):
             Setting ``rough=False`` computes violation by solving an optimization
             problem. Setting ``rough=True`` computes violation by taking norms of
             residuals of appropriate elementwise equations and inequalities involving
-            ``self.v`` and auxiliary varibles.
+            ``self.v`` and auxiliary variables.
 
         Notes
         -----
@@ -734,12 +734,12 @@ class DualSageCone(SetMembership):
                 residual = mat @ mu_i[:self._n] - lowerbounds
                 residual[residual >= 0] = 0
                 curr_viol = np.linalg.norm(residual, ord=norm_ord)
-                if self.X is not None:
+                if (self.X is not None) and (not np.isnan(curr_viol)):
                     AbK_val = self.X.A @ mu_i + v[i] * self.X.b
                     AbK_viol = PrimalProductCone.project(AbK_val, self.X.K)
                     curr_viol += AbK_viol
                 # as applicable, solve an optimization problem to compute the violation.
-                if curr_viol > 0 or curr_viol == np.NaN and not rough:
+                if (curr_viol > 0 or np.isnan(curr_viol)) and not rough:
                     temp_var = Variable(shape=(self._lifted_n,), name='temp_var')
                     cons = [mat @ temp_var[:self._n] >= lowerbounds]
                     if self.X is not None:
@@ -914,4 +914,3 @@ class ExpCoverHelper(object):
                         if prob.status in {CL_SOLVED, CL_INACCURATE} and prob.value < -100:
                             expcovers[i][:] = False
         return expcovers
-
