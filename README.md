@@ -3,6 +3,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/rileyjmurray/sageopt/badge.svg?branch=master)](https://coveralls.io/github/rileyjmurray/sageopt?branch=master)
 [![Build Status](https://travis-ci.org/rileyjmurray/sageopt.svg?branch=master)](https://travis-ci.com/rileyjmurray/sageopt)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/sageopt.svg)
+[![DOI](https://zenodo.org/badge/182453629.svg)](https://zenodo.org/badge/latestdoi/182453629)
+
 
 Sageopt provides functionality for constructing, solving, and analyzing convex relaxations for
 signomial and polynomial optimization problems. It also provides functionality for recovering feasible
