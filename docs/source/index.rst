@@ -8,8 +8,8 @@ Sageopt enables proof-based signomial and polynomial optimization
 .. image:: https://travis-ci.com/rileyjmurray/sageopt.svg?branch=master
    :target: https://travis-ci.org/rileyjmurray/sageopt
 
-.. image:: https://img.shields.io/pypi/wheel/sageopt.svg
-
+.. image:: https://zenodo.org/badge/182453629.svg
+   :target: https://zenodo.org/badge/latestdoi/182453629
 
 Sageopt provides functionality for constructing, solving, and analyzing convex relaxations for
 signomial and polynomial optimization problems. It also provides functionality for recovering feasible
