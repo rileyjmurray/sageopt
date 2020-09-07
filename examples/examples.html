@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>Examples &#8212; sageopt 0.5.2 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Examples &#8212; sageopt 0.5.3 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Release History" href="../releasehistory.html" />
@@ -90,7 +91,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -397,7 +398,7 @@ convex function, and then solve a constrained convex optimization problem using 
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">suspicious_age</span> <span class="o">=</span> <span class="n">agefunctions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">convexified_suspicious_age</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">suspicious_age</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">fmin_cobyla</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">fmin_cobyla</span>
 <span class="k">def</span> <span class="nf">sample_initial_point</span><span class="p">():</span>
     <span class="n">y1</span> <span class="o">=</span> <span class="mi">70</span> <span class="o">+</span> <span class="mi">80</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span>
     <span class="n">y2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">29</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span>
@@ -421,9 +422,9 @@ and constraint functions), solves the sageopt model, and then recovers the solut
 expected by GPKit.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sageopt</span> <span class="k">as</span> <span class="nn">so</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">sageopt.interop.gpkit</span> <span class="k">import</span> <span class="n">gpkit_model_to_sageopt_model</span>
-<span class="kn">from</span> <span class="nn">gpkit</span> <span class="k">import</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">SignomialsEnabled</span>
-<span class="kn">from</span> <span class="nn">gpkit.constraints.sigeq</span> <span class="k">import</span> <span class="n">SingleSignomialEquality</span>
+<span class="kn">from</span> <span class="nn">sageopt.interop.gpkit</span> <span class="kn">import</span> <span class="n">gpkit_model_to_sageopt_model</span>
+<span class="kn">from</span> <span class="nn">gpkit</span> <span class="kn">import</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">SignomialsEnabled</span>
+<span class="kn">from</span> <span class="nn">gpkit.constraints.sigeq</span> <span class="kn">import</span> <span class="n">SingleSignomialEquality</span>
 <span class="c1">#</span>
 <span class="c1"># Build GPKit model</span>
 <span class="c1">#</span>
@@ -467,7 +468,7 @@ contains a branch to handle GPKit 1.0 and higher.</p>
       &copy;2020, Riley J. Murray.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

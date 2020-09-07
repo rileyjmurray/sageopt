@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>Signomials &#8212; sageopt 0.5.2 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signomials &#8212; sageopt 0.5.3 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Polynomials" href="sageopt.polynomials.html" />
@@ -88,7 +89,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -121,9 +122,9 @@ We also address some <a class="reference internal" href="#advancedsigs"><span cl
 <div class="section" id="signomial-objects">
 <span id="sigobj"></span><h2>Signomial objects<a class="headerlink" href="#signomial-objects" title="Permalink to this headline">¶</a></h2>
 <p>This section covers how to construct and use instances of the <a class="reference internal" href="#sageopt.Signomial" title="sageopt.Signomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">sageopt.Signomial</span></code></a> class.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="sageopt.Signomial">
-<em class="property">class </em><code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">Signomial</code><span class="sig-paren">(</span><em class="sig-param">alpha</em>, <em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">Signomial</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alpha</span></em>, <em class="sig-param"><span class="n">c</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial" title="Permalink to this definition">¶</a></dt>
 <dd><p>A concrete representation for a function of the form
 <span class="math notranslate nohighlight">\(x \mapsto \sum_{i=1}^m c_i \exp(\alpha_i \cdot x)\)</span>.</p>
 <p>Operator overloading.</p>
@@ -187,35 +188,35 @@ if we started with a Signomial <code class="docutils literal notranslate"><span 
 <p>Signomial objects have a dictionary attribute called <code class="docutils literal notranslate"><span class="pre">metadata</span></code>. You can store any information
 you’d like in this dictionary. However, the information in this dictionary will not automatically be
 propogated when creating new Signomial objects (as happens when performing arithmetic on Signomials).</p>
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.n">
 <em class="property">property </em><code class="sig-name descname">n</code><a class="headerlink" href="#sageopt.Signomial.n" title="Permalink to this definition">¶</a></dt>
 <dd><p>The dimension of the space over which this Signomial is defined;
 this Signomial accepts inputs in <span class="math notranslate nohighlight">\(\mathbb{R}^{n}\)</span>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.m">
 <em class="property">property </em><code class="sig-name descname">m</code><a class="headerlink" href="#sageopt.Signomial.m" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of monomial basis functions <span class="math notranslate nohighlight">\(x \mapsto \exp(a \cdot x)\)</span>
 used by this Signomial.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.alpha">
 <em class="property">property </em><code class="sig-name descname">alpha</code><a class="headerlink" href="#sageopt.Signomial.alpha" title="Permalink to this definition">¶</a></dt>
 <dd><p>Has shape <code class="docutils literal notranslate"><span class="pre">(m,</span> <span class="pre">n)</span></code>. Each row specifies a vector appearing in an exponential function which
 defines this Signomial. The rows are ordered for consistency with the property <code class="docutils literal notranslate"><span class="pre">c</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.c">
 <em class="property">property </em><code class="sig-name descname">c</code><a class="headerlink" href="#sageopt.Signomial.c" title="Permalink to this definition">¶</a></dt>
 <dd><p>Has shape <code class="docutils literal notranslate"><span class="pre">(m,)</span></code>. The scalar <code class="docutils literal notranslate"><span class="pre">c[i]</span></code> is this Signomial’s coefficient on the basis function
 <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">exp(alpha[i,</span> <span class="pre">:]</span> <span class="pre">&#64;</span> <span class="pre">x)</span></code>. It’s possible to have <code class="docutils literal notranslate"><span class="pre">c.dtype</span> <span class="pre">==</span> <span class="pre">object</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.alpha_c">
 <em class="property">property </em><code class="sig-name descname">alpha_c</code><a class="headerlink" href="#sageopt.Signomial.alpha_c" title="Permalink to this definition">¶</a></dt>
 <dd><p>The keys of <code class="docutils literal notranslate"><span class="pre">alpha_c</span></code> are tuples of length <code class="docutils literal notranslate"><span class="pre">n</span></code>, containing real numeric types (e.g int, float).
@@ -223,7 +224,7 @@ These tuples define linear functions. This Signomial could be evaluated by the c
 <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">np.sum([</span> <span class="pre">alpha_c[a]</span> <span class="pre">*</span> <span class="pre">np.exp(a</span> <span class="pre">&#64;</span> <span class="pre">x)</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">in</span> <span class="pre">alpha_c])</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.grad">
 <em class="property">property </em><code class="sig-name descname">grad</code><a class="headerlink" href="#sageopt.Signomial.grad" title="Permalink to this definition">¶</a></dt>
 <dd><p>A numpy ndarray of shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> whose entries are Signomials. For a numpy ndarray <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">grad[i](x)</span></code>
@@ -231,7 +232,7 @@ is the partial derivative of this Signomial with respect to coordinate <code cla
 This array is constructed only when necessary, and is cached upon construction.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.hess">
 <em class="property">property </em><code class="sig-name descname">hess</code><a class="headerlink" href="#sageopt.Signomial.hess" title="Permalink to this definition">¶</a></dt>
 <dd><p>A numpy ndarray of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">n)</span></code>, whose entries are Signomials. For a numpy ndarray <code class="docutils literal notranslate"><span class="pre">x</span></code>,
@@ -239,38 +240,38 @@ This array is constructed only when necessary, and is cached upon construction.<
 This array is constructed only when necessary, and is cached upon construction.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.query_coeff">
-<code class="sig-name descname">query_coeff</code><span class="sig-paren">(</span><em class="sig-param">a</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.query_coeff" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">query_coeff</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.query_coeff" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the coefficient of the basis function <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">np.exp(a</span> <span class="pre">&#64;</span> <span class="pre">x)</span></code> for this Signomial.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.constant_location">
 <code class="sig-name descname">constant_location</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.constant_location" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the index <code class="docutils literal notranslate"><span class="pre">i</span></code> so that <code class="docutils literal notranslate"><span class="pre">alpha[i,</span> <span class="pre">:]</span></code> is the zero vector.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.without_zeros">
 <code class="sig-name descname">without_zeros</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.without_zeros" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a Signomial which is symbolically equivalent to <code class="docutils literal notranslate"><span class="pre">self</span></code>,
 but which doesn’t track basis functions <code class="docutils literal notranslate"><span class="pre">alpha[i,:]</span></code> for which <code class="docutils literal notranslate"><span class="pre">c[i]</span> <span class="pre">==</span> <span class="pre">0</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.grad_val">
-<code class="sig-name descname">grad_val</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.grad_val" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">grad_val</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.grad_val" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the gradient of this Signomial (as an ndarray) at the point <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.hess_val">
-<code class="sig-name descname">hess_val</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.hess_val" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">hess_val</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.hess_val" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the Hessian of this Signomial (as an ndarray) at the point <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.as_polynomial">
 <code class="sig-name descname">as_polynomial</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.as_polynomial" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function is only applicable if <code class="docutils literal notranslate"><span class="pre">alpha</span></code> is a matrix of nonnegative integers.</p>
@@ -284,9 +285,9 @@ but which doesn’t track basis functions <code class="docutils literal notransl
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.Signomial.from_dict">
-<em class="property">static </em><code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param">d</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.from_dict" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.Signomial.from_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a Signomial object which represents the function:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span> <span class="n">d</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">a</span> <span class="o">@</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">d</span><span class="p">])</span>
 </pre></div>
@@ -306,9 +307,9 @@ but which doesn’t track basis functions <code class="docutils literal notransl
 
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.standard_sig_monomials">
-<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">standard_sig_monomials</code><span class="sig-paren">(</span><em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.standard_sig_monomials" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">standard_sig_monomials</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.standard_sig_monomials" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return <code class="docutils literal notranslate"><span class="pre">y</span></code> where <code class="docutils literal notranslate"><span class="pre">y[i](x)</span> <span class="pre">=</span> <span class="pre">np.exp(x[i])</span></code> for every numeric <code class="docutils literal notranslate"><span class="pre">x</span></code> of length <code class="docutils literal notranslate"><span class="pre">n</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -345,9 +346,9 @@ If you want to optimize a signomial over the set</p>
 <p>then you just need to focus on constructing the lists of signomials <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code>.
 Once these lists are constructed, you can call the following function to obtain
 a convex set <span class="math notranslate nohighlight">\(X \supset \Omega\)</span> which is implied by the constraint signomials.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.relaxations.sage_sigs.infer_domain">
-<code class="sig-prename descclassname">sageopt.relaxations.sage_sigs.</code><code class="sig-name descname">infer_domain</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">check_feas=True</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.relaxations.sage_sigs.infer_domain" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.relaxations.sage_sigs.</code><code class="sig-name descname">infer_domain</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">gts</span></em>, <em class="sig-param"><span class="n">eqs</span></em>, <em class="sig-param"><span class="n">check_feas</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.relaxations.sage_sigs.infer_domain" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identify a subset of the constraints in <code class="docutils literal notranslate"><span class="pre">gts</span></code> and <code class="docutils literal notranslate"><span class="pre">eqs</span></code> which can be incorporated into
 conditional SAGE relaxations for signomials. Construct a SigDomain object from the inferred constraints.</p>
 <dl class="field-list simple">
@@ -394,9 +395,9 @@ Depending on the specifics of your problem, it may be beneficial to implement va
 functions by directly working with sageopt’s backend: <a class="reference internal" href="sageopt.coniclifts.html#coniclifts"><span class="std std-ref">coniclifts</span></a>.</p>
 <div class="section" id="optimization-with-convex-constraints">
 <h3>Optimization with convex constraints<a class="headerlink" href="#optimization-with-convex-constraints" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.sig_relaxation">
-<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sig_relaxation</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">X=None</em>, <em class="sig-param">form='dual'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sig_relaxation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sig_relaxation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">form</span><span class="o">=</span><span class="default_value">'dual'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sig_relaxation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a coniclifts Problem instance for producing a lower bound on</p>
 <div class="math notranslate nohighlight">
 \[f_X^{\star} \doteq \min\{ f(x) \,:\, x \in X \}\]</div>
@@ -457,9 +458,9 @@ For more discussion, refer to Section 2.3 of <a class="reference external" href=
 “<span class="math notranslate nohighlight">\(X\)</span>”, but also with explicit signomial equations and inequalities.
 Such signomial constraints are necessary when the feasible set is nonconvex,
 although they can be useful in other contexts.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.sig_constrained_relaxation">
-<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sig_constrained_relaxation</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">X=None</em>, <em class="sig-param">form='dual'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sig_constrained_relaxation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sig_constrained_relaxation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">gts</span></em>, <em class="sig-param"><span class="n">eqs</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">form</span><span class="o">=</span><span class="default_value">'dual'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sig_constrained_relaxation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a coniclifts Problem representing a SAGE relaxation for the signomial program</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align*}
@@ -516,9 +517,9 @@ The main algorithm (“Algorithm 1”) is implemented by sageopt’s function <c
 (“Algorithm 1L”) is simply to use a local solver to refine the solution produced by the main algorithm.
 The exact choice of local solver is not terribly important. For completeness, sageopt includes
 a <code class="docutils literal notranslate"><span class="pre">local_refine</span></code> function which relies on the COBYLA solver, as described in <a class="reference external" href="https://arxiv.org/abs/1907.00814">MCW2019</a>.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.sig_solrec">
-<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sig_solrec</code><span class="sig-paren">(</span><em class="sig-param">prob</em>, <em class="sig-param">ineq_tol=1e-08</em>, <em class="sig-param">eq_tol=1e-06</em>, <em class="sig-param">skip_ls=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sig_solrec" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sig_solrec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prob</span></em>, <em class="sig-param"><span class="n">ineq_tol</span><span class="o">=</span><span class="default_value">1e-08</span></em>, <em class="sig-param"><span class="n">eq_tol</span><span class="o">=</span><span class="default_value">1e-06</span></em>, <em class="sig-param"><span class="n">skip_ls</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sig_solrec" title="Permalink to this definition">¶</a></dt>
 <dd><p>Recover a list of candidate solutions from a dual SAGE relaxation. Solutions are
 guaranteed to be feasible up to specified tolerances, but not necessarily optimal.</p>
 <dl class="field-list simple">
@@ -545,9 +546,9 @@ is used to improve performance in more complex SAGE relaxations, such as those f
 <code class="docutils literal notranslate"><span class="pre">sig_constrained_relaxation</span></code> with <code class="docutils literal notranslate"><span class="pre">ell</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>.</p>
 <p>Users can replicate “Algorithm 1L” from <a class="reference external" href="https://arxiv.org/abs/1907.00814">MCW2019</a> by running <code class="docutils literal notranslate"><span class="pre">sig_solrec</span></code>, and then applying the following function
 to its output.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.local_refine">
-<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">local_refine</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">x0</em>, <em class="sig-param">rhobeg=1</em>, <em class="sig-param">rhoend=1e-07</em>, <em class="sig-param">maxfun=10000.0</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.local_refine" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">local_refine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">gts</span></em>, <em class="sig-param"><span class="n">eqs</span></em>, <em class="sig-param"><span class="n">x0</span></em>, <em class="sig-param"><span class="n">rhobeg</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">rhoend</span><span class="o">=</span><span class="default_value">1e-07</span></em>, <em class="sig-param"><span class="n">maxfun</span><span class="o">=</span><span class="default_value">10000.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.local_refine" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use SciPy’s COBYLA solver in an attempt to find a minimizer of <code class="docutils literal notranslate"><span class="pre">f</span></code> subject to
 inequality constraints in <code class="docutils literal notranslate"><span class="pre">gts</span></code> and equality constraints in <code class="docutils literal notranslate"><span class="pre">eqs</span></code>.</p>
 <dl class="field-list simple">
@@ -577,9 +578,9 @@ inequality constraints in <code class="docutils literal notranslate"><span class
 <span id="advancedsigs"></span><h2>Advanced topics<a class="headerlink" href="#advanced-topics" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="sigdomain-objects">
 <h3>SigDomain objects<a class="headerlink" href="#sigdomain-objects" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
+<dl class="py class">
 <dt id="sageopt.SigDomain">
-<em class="property">class </em><code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">SigDomain</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">SigDomain</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represent a convex set <span class="math notranslate nohighlight">\(X \subset R^n\)</span>, for use in signomial conditional SAGE relaxations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -628,9 +629,9 @@ variables.</p>
 </dl>
 <p>Only one of <code class="docutils literal notranslate"><span class="pre">AbK</span></code> and <code class="docutils literal notranslate"><span class="pre">coniclifts_cons</span></code> can be provided upon construction.
 If more than one of these value is provided, the constructor will raise an error.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.SigDomain.parse_coniclifts_constraints">
-<code class="sig-name descname">parse_coniclifts_constraints</code><span class="sig-paren">(</span><em class="sig-param">constraints</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain.parse_coniclifts_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">parse_coniclifts_constraints</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">constraints</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain.parse_coniclifts_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Modify this SigDomain object, so that it represents the set of values
 which satisfy the provided constraints.</p>
 <dl class="field-list simple">
@@ -640,9 +641,9 @@ which satisfy the provided constraints.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.SigDomain.check_membership">
-<code class="sig-name descname">check_membership</code><span class="sig-paren">(</span><em class="sig-param">x_val</em>, <em class="sig-param">tol</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain.check_membership" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">check_membership</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_val</span></em>, <em class="sig-param"><span class="n">tol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain.check_membership" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate <code class="docutils literal notranslate"><span class="pre">self.gts</span></code> and <code class="docutils literal notranslate"><span class="pre">self.eqs</span></code> at <code class="docutils literal notranslate"><span class="pre">x_val</span></code>,
 to check if <code class="docutils literal notranslate"><span class="pre">x_val</span></code> belongs to this SigDomain.</p>
 <dl class="field-list simple">
@@ -662,9 +663,9 @@ to infeasibility tolerance <code class="docutils literal notranslate"><span clas
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="sageopt.SigDomain.suppfunc">
-<code class="sig-name descname">suppfunc</code><span class="sig-paren">(</span><em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain.suppfunc" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">suppfunc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.SigDomain.suppfunc" title="Permalink to this definition">¶</a></dt>
 <dd><p>The support function of the convex set <span class="math notranslate nohighlight">\(X\)</span> associated with this SigDomain,
 evaluated at <span class="math notranslate nohighlight">\(y\)</span>:</p>
 <div class="math notranslate nohighlight">
@@ -689,9 +690,9 @@ proof system, modulate the Lagrangian <code class="docutils literal notranslate"
 Parameters <code class="docutils literal notranslate"><span class="pre">p</span></code> and <code class="docutils literal notranslate"><span class="pre">q</span></code> affect the <em>unmodulated Lagrangian</em> seen by
 <a class="reference internal" href="#sageopt.sig_constrained_relaxation" title="sageopt.sig_constrained_relaxation"><code class="xref py py-func docutils literal notranslate"><span class="pre">sig_constrained_relaxation</span></code></a>;
 this unmodulated Lagrangian is constructed with the following function.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.relaxations.sage_sigs.make_sig_lagrangian">
-<code class="sig-prename descclassname">sageopt.relaxations.sage_sigs.</code><code class="sig-name descname">make_sig_lagrangian</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">gts</em>, <em class="sig-param">eqs</em>, <em class="sig-param">p</em>, <em class="sig-param">q</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.relaxations.sage_sigs.make_sig_lagrangian" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.relaxations.sage_sigs.</code><code class="sig-name descname">make_sig_lagrangian</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">gts</span></em>, <em class="sig-param"><span class="n">eqs</span></em>, <em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.relaxations.sage_sigs.make_sig_lagrangian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a problem</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align*}
@@ -756,7 +757,7 @@ set to all <code class="docutils literal notranslate"><span class="pre">p</span>
       &copy;2020, Riley J. Murray.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

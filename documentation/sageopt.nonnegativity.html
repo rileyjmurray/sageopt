@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>Nonnegativity &#8212; sageopt 0.5.2 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nonnegativity &#8212; sageopt 0.5.3 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Using sageopt with GPKit" href="sageopt.gpkit.html" />
@@ -85,7 +86,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -114,9 +115,9 @@ how you can use sageopt to certify signomial and polynomial nonnegativity.</p>
 <p>Sageopt offers two pre-made functions for certifying nonnegativity and finding SAGE decompositions:
 <code class="docutils literal notranslate"><span class="pre">sage_feasibility</span></code> and <code class="docutils literal notranslate"><span class="pre">sage_multiplier_search</span></code>. These functions are accessible as top-level imports
 <code class="docutils literal notranslate"><span class="pre">sageopt.sage_feasibility</span></code> and <code class="docutils literal notranslate"><span class="pre">sageopt.sage_multiplier_search</span></code>, where they accept Signomial or Polynomial objects.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.sage_feasibility">
-<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sage_feasibility</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">X=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sage_feasibility" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sage_feasibility</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sage_feasibility" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a Problem for checking if <code class="docutils literal notranslate"><span class="pre">f</span></code> admits an  X-SAGE decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -134,9 +135,9 @@ how you can use sageopt to certify signomial and polynomial nonnegativity.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="sageopt.sage_multiplier_search">
-<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sage_multiplier_search</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">level=1</em>, <em class="sig-param">X=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sage_multiplier_search" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sageopt.</code><code class="sig-name descname">sage_multiplier_search</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sageopt.sage_multiplier_search" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a Problem for an attempt to certify that <code class="docutils literal notranslate"><span class="pre">f</span></code> is X-nonnegative.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -172,7 +173,7 @@ of <code class="docutils literal notranslate"><span class="pre">g</span></code>.
       &copy;2020, Riley J. Murray.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

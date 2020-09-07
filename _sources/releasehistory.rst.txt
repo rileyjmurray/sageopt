@@ -6,6 +6,15 @@ The notes here are a summary from Sageopt's changelog. Each item in the lists th
 a term like "coniclifts", "symbolic", or "relaxations"; these terms indicate the primary subpackage of sageopt which
 was affected.
 
+[0.5.3] - 2020-09-07
+--------------------
+Changed
+ - coniclifts: Fix regression introduced in 0.5.2 (optimization based dimension reduction was
+   inadvertently disabled).
+ - coniclifts: Remove an unstated assumption in the ``relent.py`` precompiled atom.
+ - coniclifts: Minor change to how DualSageCones compute violations.
+
+
 [0.5.2] - 2020-07-05
 --------------------
 Changed
