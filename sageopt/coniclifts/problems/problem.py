@@ -16,7 +16,6 @@
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.ecos import ECOS
 from sageopt.coniclifts.problems.solvers.mosek import Mosek
-from sageopt.coniclifts.problems.solvers import cvxpy
 from sageopt.coniclifts.problems.solvers.cvxpy import Cvxpy
 from sageopt.coniclifts.compilers import compile_problem
 from sageopt.coniclifts.base import Expression, Variable
