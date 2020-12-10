@@ -232,7 +232,6 @@ class Problem(object):
             raise RuntimeError('No acceptable solver is installed.')
         options = self.problem_options.copy()
         options.update(kwargs)
-        print(Problem._SOLVERS_)
         solver_object = Problem._SOLVERS_[solver]
         if not solver_object.is_installed():
             raise RuntimeError('Solver "' + solver + '" is not installed.')
