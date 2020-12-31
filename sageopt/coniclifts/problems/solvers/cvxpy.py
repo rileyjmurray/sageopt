@@ -28,8 +28,6 @@ class Cvxpy(Solver):
         x = cp.Variable(n)
         prob = cp.Problem(cp.Minimize(c.T@x), [A @ x <= b])
         prob.solve()
-        print(x.value)
-        print(prob.value)
         return prob
 
     # noinspection SpellCheckingInspection
