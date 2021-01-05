@@ -118,11 +118,13 @@ def sig_primal(f, ell=0, X=None, modulator_support=None):
     if modulator_support is None:
         modulator_support = lagrangian.alpha
     t = Signomial(modulator_support, np.ones(modulator_support.shape[0]))
-    s_mod = lagrangian * (t ** ell)
+    t_mul = t ** ell
+    s_mod = lagrangian * t_mul
     con = primal_sage_cone(s_mod, name=str(s_mod), X=X)
     constraints = [con]
     obj = gamma.as_expr()
     prob = cl.Problem(cl.MAX, obj, constraints)
+    prob.metadata = {'f': f, 'lagrangian': lagrangian, 'modulator': t_mul, 'X': X}
     cl.clear_variable_indices()
     return prob
 

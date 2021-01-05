@@ -170,12 +170,8 @@ def _dual_age_cone_solution_recovery(con, v, M, gts, eqs, ineq_tol, eq_tol):
     if len(mus_exist) == 0:
         return []
     # build a matrix whose columns are simple candidate solutions to an optimization problem.
-    raw_xs = []
-    for i in mus_exist:
-        mu_i = con.mu_vars[i]
-        xi = (mu_i.value / v[i]).reshape((-1, 1))
-        raw_xs.append(xi)
-    raw_xs = np.hstack(raw_xs)
+    raw_xs = [con.mu_vars[i].value / v[i] for i in mus_exist]
+    raw_xs = np.column_stack(raw_xs)
     # build a matrix "weights", whose rows specify convex combination coefficients.
     M_interest = M[:, mus_exist]
     v_interest = v[mus_exist].ravel()

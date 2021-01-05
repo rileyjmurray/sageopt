@@ -49,7 +49,7 @@ def _sp_ineq_con_hmap(con, subs):
 def gpkit_model_to_sageopt_model(gpk_mod):
     subs = gpk_mod.substitutions
     constraints = [con for con in gpk_mod.flat(constraintsets=False)]
-    varkeys = sorted([vk for vk in gpk_mod.varkeys if vk not in subs], key=lambda vk: vk.name)
+    varkeys = sorted([vk for vk in gpk_mod.varkeys if vk not in subs], key=lambda vk: vk.latex())
     vkmap = {vk: i for (i, vk) in enumerate(varkeys)}
     # construct sageopt Signomial objects for each GPKit constraint
     gp_eqs, gp_gts, sp_eqs, sp_gts = [], [], [], []
