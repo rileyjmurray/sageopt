@@ -26,9 +26,9 @@ class Cvxpy(Solver):
         
         m, n = A.shape
         x = cp.Variable(n)
-        prob = cp.Problem(cp.Minimize(c.T@x), [A @ x <= b])
+        prob = cp.Problem(cp.Minimize(c.T@x), [A @ x + b >= 0])
         prob.solve()
-        return prob
+        return. prob
 
     # noinspection SpellCheckingInspection
     @staticmethod
