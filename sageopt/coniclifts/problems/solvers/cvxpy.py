@@ -11,6 +11,7 @@ class Cvxpy(Solver):
     @staticmethod
     def apply(c, A, b, K, params):
         """
+        :return: 
         """
         data = { 'c': c, 'A': A, 'b': b, 'K': K}
         inv_data = dict()
@@ -28,14 +29,15 @@ class Cvxpy(Solver):
         x = cp.Variable(n)
         prob = cp.Problem(cp.Minimize(c.T@x), [A @ x + b >= 0])
         prob.solve()
-        return. prob
+        return x, prob
 
     # noinspection SpellCheckingInspection
     @staticmethod
     def parse_result(solver_output, inv_data, var_mapping):
         """
         :param inv_data: not used for Cvxpy.
-        :param solver_output: the return value for 
+        :param solver_output: the return value for solve_via_data
+            unpacked into two values, x_var and param
 
         :param var_mapping: a dictionary mapping names of coniclifts Variables to arrays
         of indices. The array var_mapping['my_var'] contains the indices in
@@ -47,13 +49,15 @@ class Cvxpy(Solver):
         containing the values of those Variables at the returned solution. The last of
         these is either a real number, or +/-np.Inf, or np.NaN.
         """
-        prob = solver_output
+        x_var, prob = solver_output
+        # x_var is in the form of a cvxpy Variable, needs to be converted to np array
+        x = x_var.value
         variable_values = dict()
         if prob.status in ["infeasible", "unbounded"]:
             if prob.status == "infeasible":
                 # primal optimal
                 problem_status = CL_CONSTANTS.solved
-                problem_value = prob.value
+                problem_value = prob
             elif prob.status == "unbounded":
                 # primal infeasible
                 problem_status = CL_CONSTANTS.solved
@@ -65,13 +69,7 @@ class Cvxpy(Solver):
         else:
             problem_status = CL_CONSTANTS.solved
             problem_value = prob.value
-            for variable in prob.variables():
-                variable_values[variable.name()] = variable.value
-        # else:
-        #     # solver failed, do not record solution
-        #     problem_status = CL_CONSTANTS.failed
-        #     variable_values = dict()
-        #     problem_value = np.NaN
+            variable_values = Cvxpy.load_variable_values(x, var_mapping)
         return problem_status, variable_values, problem_value
 
     @staticmethod

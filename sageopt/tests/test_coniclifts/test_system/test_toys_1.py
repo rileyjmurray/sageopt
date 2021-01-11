@@ -103,8 +103,10 @@ class TestToys1(unittest.TestCase):
         objective = x[1] + 0.5 * x[2] + 0.25 * x[3]
         prob = cl.Problem(cl.MAX, objective, cons)
         prob.solve(solver='CP', verbose=False)
-        print(x.value)
         assert np.allclose(x.value, np.array([0, 1, 0, 0]))
+
         pass
+        
+
 
 unittest.main()
