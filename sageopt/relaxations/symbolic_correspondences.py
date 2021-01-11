@@ -118,8 +118,15 @@ def moment_reduction_array(s_h, h, L):
             raise RuntimeError(msg0 + msg1 + msg2)
     C_rows = []
     for alpha_i in s_h.alpha:
-        temp_func = classname.from_dict({tuple(alpha_i): 1}) * h
+        temp_func = classname(h.alpha + alpha_i, h.c)
         c_row = relative_coeff_vector(temp_func, L.alpha)
         C_rows.append(c_row)
     C = np.vstack(C_rows)
     return C
+
+"""
+C = np.zeros((s_h.m, L.m))
+for i in range(s_h.m):
+    find the row indices J in L.alpha where the rows of alpha_i + h.alpha
+    appear. Then set C[i.J] = h.c
+"""

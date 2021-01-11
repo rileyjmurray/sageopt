@@ -51,6 +51,8 @@ class ScalarVariable(ScalarAtom):
 
     _SCALAR_VARIABLE_COUNTER = 0
 
+    __slots__ = ['_id', '_generation', '_value', 'index', 'parent']
+
     @staticmethod
     def curr_variable_count():
         return ScalarVariable._SCALAR_VARIABLE_COUNTER
@@ -113,12 +115,27 @@ class ScalarVariable(ScalarAtom):
     def __getstate__(self):
         # We lose the link to our parent.
         # Our parent will have to restore the link later.
-        d = self.__dict__.copy()
-        d['parent'] = None
+        d = {
+            '_id': self._id,
+            '_generation': self._generation,
+            '_value': self._value,
+            'index': self.index,
+            'parent': None
+        }
         return d
 
     def __setstate__(self, state):
-        self.__dict__.update(state)
+        for k, v in state.items():
+            if k == '_id':
+                self._id = v
+            elif k == '_generation':
+                self._generation = v
+            elif k == '_value':
+                self._value = v
+            elif k == 'index':
+                self.index = v
+            else:
+                self.parent = v
         pass
 
 
@@ -175,8 +192,8 @@ class NonlinearScalarAtom(ScalarAtom):
     def value(self):
         vals = []
         for arg in self.args:
-            d = dict(arg[:-1])
-            arg_se = ScalarExpression(d, arg[-1][1], verify=False)
+            d = defaultdict(int, arg[:-1])
+            arg_se = ScalarExpression(d, arg[-1][1], verify=False, copy=False)
             arg_val = arg_se.value
             vals.append(arg_val)
         f = self.evaluator
@@ -205,7 +222,9 @@ class ScalarExpression(object):
 
     __array_priority__ = 100
 
-    def __init__(self, atoms_to_coeffs, offset, verify=True):
+    __slots__ = ['atoms_to_coeffs', 'offset']
+
+    def __init__(self, atoms_to_coeffs, offset, verify=True, copy=True):
         """
 
         :param atoms_to_coeffs: a dictionary mapping ScalarAtoms to numeric types.
@@ -223,8 +242,10 @@ class ScalarExpression(object):
                 if not all(isinstance(v, ScalarAtom) for v in atoms_to_coeffs.keys()):  # pragma: no cover
                     raise RuntimeError('Keys in ScalarExpressions must be ScalarAtoms.')
             self.atoms_to_coeffs.update(atoms_to_coeffs)
-        else:
+        elif copy:
             self.atoms_to_coeffs = atoms_to_coeffs.copy()
+        else:
+            self.atoms_to_coeffs = atoms_to_coeffs
         self.offset = offset
 
     def __add__(self, other):
@@ -259,7 +280,7 @@ class ScalarExpression(object):
     def __mul__(self, other):
         if isinstance(other, __REAL_TYPES__):
             if other == 0:
-                return ScalarExpression(dict(), 0)
+                return ScalarExpression(defaultdict(int), 0, verify=False, copy=False)
             f = ScalarExpression(self.atoms_to_coeffs, self.offset, verify=False)
             for k in f.atoms_to_coeffs:
                 f.atoms_to_coeffs[k] *= other
@@ -482,9 +503,13 @@ class Expression(np.ndarray):
         if isinstance(value, ScalarExpression):
             np.ndarray.__setitem__(self, key, value)
         elif isinstance(value, __REAL_TYPES__):
-            np.ndarray.__setitem__(self, key, ScalarExpression(dict(), value, verify=False))
+            se = ScalarExpression(defaultdict(int), value, verify=False, copy=False)
+            np.ndarray.__setitem__(self, key, se)
         elif isinstance(value, ScalarAtom):
-            np.ndarray.__setitem__(self, key, ScalarExpression({value: 1}, 0, verify=False))
+            d = defaultdict(int)
+            d[value] = 1
+            se = ScalarExpression(d, 0, verify=False, copy=False)
+            np.ndarray.__setitem__(self, key, se)
         elif isinstance(value, np.ndarray) and value.size == 1:
             # noinspection PyTypeChecker
             self[key] = np.asscalar(value)
@@ -613,11 +638,12 @@ class Expression(np.ndarray):
             raise RuntimeError('Incompatible dimensions to disjoint_dot.')
         expr = np.empty(shape=array.shape[:-1], dtype=object)
         for tup in array_index_iterator(expr.shape):
-            dict_items = []
+            d = defaultdict(int)
             for i, a in enumerate(list_of_atoms):
-                dict_items.append((a, array[tup + (i,)]))
-            d = dict(dict_items)
-            expr[tup] = ScalarExpression(d, 0, verify=False)
+                v = array[tup + (i,)]
+                if v != 0:
+                    d[a] = v
+            expr[tup] = ScalarExpression(d, 0, verify=False, copy=False)
         return expr.view(Expression)
 
     @staticmethod
@@ -772,13 +798,19 @@ class Variable(Expression):
     def __unstructured_populate__(obj):
         if obj.shape == ():
             v = ScalarVariable(parent=obj, index=tuple())
-            np.ndarray.__setitem__(obj, tuple(), ScalarExpression({v: 1}, 0, verify=False))
+            d = defaultdict(int)
+            d[v] = 1
+            se = ScalarExpression(d, 0, verify=False, copy=False)
+            np.ndarray.__setitem__(obj, tuple(), se)
             obj._scalar_variable_ids.append(v.id)
         else:
             for tup in array_index_iterator(obj.shape):
                 v = ScalarVariable(parent=obj, index=tup)
                 obj._scalar_variable_ids.append(v.id)
-                np.ndarray.__setitem__(obj, tup, ScalarExpression({v: 1}, 0, verify=False))
+                d = defaultdict(int)
+                d[v] = 1
+                se = ScalarExpression(d, 0, verify=False, copy=False)
+                np.ndarray.__setitem__(obj, tup, se)
         pass
 
     # noinspection PyProtectedMember
