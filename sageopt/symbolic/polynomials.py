@@ -236,7 +236,7 @@ class Polynomial(Signomial):
 
     def __truediv__(self, other):
         if not isinstance(other, __NUMERIC_TYPES__):  # pragma: no cover
-            raise RuntimeError('Cannot divide a polynomial by the non-numeric type: ' + type(other) + '.')
+            raise RuntimeError('Cannot divide a polynomial by the non-numeric type: ' + str(type(other)) + '.')
         other_inv = 1 / other
         return self.__mul__(other_inv)
 

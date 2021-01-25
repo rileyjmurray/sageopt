@@ -106,3 +106,129 @@ class TestAffineOperators(unittest.TestCase):
         expr0 = aff.trace(temp)
         expr1 = aff.sum(x)
         assert Expression.are_equivalent(expr0, expr1)
+
+    def test_block(self):
+        A = np.eye(2) * 2
+        B = np.eye(3) * 3
+        expected = np.block([
+            [A, np.zeros((2, 3))],
+            [np.ones((3, 2)), B]
+        ])
+        actual = aff.block([
+            [A, np.zeros((2, 3))],
+            [np.ones((3, 2)), B]
+        ])
+        assert np.allclose(expected, actual)
+
+    def test_concatenate(self):
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array([[5, 6]])
+        expected = np.array([1, 2, 3, 4, 5, 6])
+        actual = aff.concatenate((a, b), axis=None)
+        assert np.allclose(expected, actual)
+        expected1 = aff.concatenate((a, b), axis=0)
+        actual1 = np.array([[1, 2], [3, 4], [5, 6]])
+        assert np.allclose(expected1, actual1)
+
+    def test_stack(self):
+        arrays = [np.random.randn(3, 4) for _ in range(10)]
+        expected = np.stack(arrays, axis=0)
+        actual = aff.stack(arrays, axis=0)
+        assert np.allclose(expected, actual)
+        assert Expression.are_equivalent(expected.shape, actual.shape)
+        expected1 = np.stack(arrays, axis=1)
+        actual1 = aff.stack(arrays, axis=1)
+        assert np.allclose(expected1, actual1)
+        assert Expression.are_equivalent(expected.shape, actual.shape)
+
+    def test_column_stack(self):
+        a = np.array((1, 2, 3))
+        b = np.array((2, 3, 4))
+        expected = np.column_stack((a, b))
+        actual = aff.column_stack((a, b))
+        assert np.allclose(expected, actual)
+
+    def test_dstack(self):
+        a = np.array((1, 2, 3))
+        b = np.array((2, 3, 4))
+        expected = np.dstack((a, b))
+        actual = aff.dstack((a, b))
+        assert np.allclose(expected, actual) 
+        a = np.array([[1], [2], [3]])
+        b = np.array([[2], [3], [4]])
+        expected1 = np.dstack((a, b))
+        actual1 = aff.dstack((a, b))
+        assert np.allclose(expected1, actual1)
+
+    def test_split(self):
+        x = np.arange(9.0)
+        expected = np.split(x, 3)
+        actual = aff.split(x, 3)
+        assert np.allclose(expected, actual)
+
+    def test_hsplit(self):
+        x = np.arange(16.0).reshape(4, 4)
+        expected = np.hsplit(x, 2)
+        actual = aff.hsplit(x, 2)
+        assert np.allclose(expected, actual)
+
+    def test_vsplit(self):
+        x = np.arange(16.0).reshape(4, 4)
+        expected = np.vsplit(x, 2)
+        actual = aff.vsplit(x, 2)
+        assert np.allclose(expected, actual)
+
+    def test_dsplit(self):
+        x = np.arange(16.0).reshape(2, 2, 4)
+        expected = np.dsplit(x, 2)
+        actual = aff.dsplit(x, 2)
+        assert np.allclose(expected, actual)
+
+    def test_array_split(self):
+        x = np.arange(8.0)
+        expected = np.array_split(x, 3)
+        actual = aff.array_split(x, 3)
+        assert np.shape(expected) == np.shape(actual)
+
+    def test_tile(self):
+        x = np.array([0, 1, 2])
+        A = aff.tile(x, 2)
+        assert np.allclose(np.tile(x, 2), A)
+        expr0 = aff.sum(A)
+        expr1 = aff.sum(x) * 2
+        assert Expression.are_equivalent(expr0, expr1)
+
+
+    def test_repeat(self):
+        x = np.array([3])
+        A = aff.repeat(x, 4)
+        assert np.allclose(np.repeat(x, 4), A)
+        expr0 = aff.sum(A)
+        expr1 = aff.sum(x) * 4
+        assert Expression.are_equivalent(expr0, expr1)
+        x1 = np.array([[1, 2], [3, 4]])
+        A1 = aff.repeat(x1, 2)
+        assert np.allclose(np.repeat(x1, 2), A1)
+        expr2 = aff.sum(A1)
+        expr3 = aff.sum(x1) * 2
+        assert Expression.are_equivalent(expr2, expr3)
+        
+    def test_diagflat(self):
+        x = np.array([[1, 2], [3, 4]])
+        expected = np.diagflat(x)
+        actual = aff.diagflat(x)
+        assert np.allclose(expected, actual)
+
+    def test_tril(self):
+        A = np.random.randn(5, 5).round(decimals=3)
+        temp = aff.tril(A)
+        expr0 = aff.sum(temp)
+        expr1 = aff.sum(np.tril(A))
+        assert Expression.are_equivalent(expr0, expr1)
+
+    def test_triu(self):
+        A = np.random.randn(5, 5).round(decimals=3)
+        temp = aff.triu(A)
+        expr0 = aff.sum(temp)
+        expr1 = aff.sum(np.triu(A))
+        assert Expression.are_equivalent(expr0, expr1)
