@@ -10,19 +10,6 @@ from sageopt.coniclifts import Problem, Constraint
 import sageopt.coniclifts as cl
 
 class TestProblem(unittest.TestCase):
-    def test_solve(self):
-        # random problem data
-        G = np.random.randn(3, 6)
-        h = G @ np.random.rand(6)
-        c = np.random.rand(6)
-        # input to coniclift's Problem constructor
-        x = cl.Variable(shape=(6,))
-        constrs = [0 <= x, G @ x == h]
-        objective_expression = c @ x
-        prob = cl.Problem(cl.MIN, objective_expression, constrs)
-        Problem.solve(prob, None)
-        # self.assertRaises(RuntimeError, Problem.solve, prob, None)
-
     def test_parse_integer_constraints(self):
         x = Variable(shape=(3,), name='my_name_x')
         y = Variable(shape=(3,), name='my_name_y')
@@ -31,15 +18,7 @@ class TestProblem(unittest.TestCase):
         self.assertRaises(ValueError, Problem._parse_integer_constraints, x, invalid_lst)
         valid_lst = [x, y, z]
 
-        # random problem data
-        G = np.random.randn(3, 6)
-        h = G @ np.random.rand(6)
-        c = np.random.rand(6)
-        # input to coniclift's Problem constructor
-        x = cl.Variable(shape=(6,))
-        constrs = [0 <= x, G @ x == h]
-        objective_expression = c @ x
-        prob = cl.Problem(cl.MIN, objective_expression, constrs)
+        prob = cl.Problem(cl.MIN, cl.sum(x), [x==1,  y == 0, z == -1])
         prob.variable_map = {'my_name_x': np.array([0, 1]),
             'my_name_y': np.array([1, 2]),
             'my_name_z': np.array([2, 3])
@@ -47,11 +26,10 @@ class TestProblem(unittest.TestCase):
         prob._parse_integer_constraints(valid_lst)
         int_indices_expected = [0, 1, 1, 2, 2, 3]
         assert Expression.are_equivalent(int_indices_expected, prob._integer_indices)
-        prob.variable_map = {'my_name_x': np.array([-1, 1]),
-            'my_name_y': np.array([1, 2]),
-            'my_name_z': np.array([2, 3])
-            }
-        self.assertRaises(ValueError, Problem._parse_integer_constraints, prob, valid_lst)
+        prob1 = cl.Problem(cl.MIN, cl.sum(x), [x==1,  y == 0, z[:-1] == -1])
+        self.assertRaises(ValueError, Problem._parse_integer_constraints, prob1, valid_lst)
+        z_part = z[:-1]
+        self.assertRaises(ValueError, Problem._parse_integer_constraints, prob1, [x, y, z_part])
 
     def test_variables(self):
         # random problem data

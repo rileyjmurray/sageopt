@@ -66,6 +66,10 @@ class TestPolynomials(unittest.TestCase):
         assert s.m == 1 and set(s.c) == {0}
         s = s0 + t0
         assert s.alpha_c == {(0,): 1, (1,): 2, (2,): 3, (4,): 5}
+        alpha = np.array([[1, 0], [0, 1], [1, 1]])
+        c = np.array([1, 2, 3])
+        f = Signomial(alpha, c)
+        self.assertRaises(RuntimeError, Polynomial.__add__, s0, f)
 
     def test_polynomial_multiplication(self):
         # data for tests
@@ -90,6 +94,7 @@ class TestPolynomials(unittest.TestCase):
         s = s.without_zeros()
         assert s.alpha_c == {(0,): 0}
         self.assertRaises(RuntimeError, Polynomial.__sub__, s0, f)
+        self.assertRaises(RuntimeError, Polynomial.__mul__, s0, f)
 
     def test_polynomial_division(self):
         s0 = Polynomial(np.array([[0], [1], [2]]),
@@ -242,8 +247,6 @@ class TestPolyDomains(unittest.TestCase):
         except RuntimeError as err:
             err_str = str(err)
             assert 'seem to be infeasible' in err_str
-        
-        # self.assertRaises(RuntimeError, PolyDomain.__init__, 1, logspace_cons=cons, log_AbK=(A, b, K))
 
     def test_infer_box_polydomain(self):
         bounds = [(-0.1, 0.4), (0.4, 1),
