@@ -247,6 +247,7 @@ class TestPolyDomains(unittest.TestCase):
         except RuntimeError as err:
             err_str = str(err)
             assert 'seem to be infeasible' in err_str
+        self.assertRaises(RuntimeError, PolyDomain, 1, logspace_cons=cons, log_AbK=(A, b, K))
 
     def test_infer_box_polydomain(self):
         bounds = [(-0.1, 0.4), (0.4, 1),
