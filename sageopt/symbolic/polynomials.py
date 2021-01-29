@@ -222,7 +222,7 @@ class Polynomial(Signomial):
 
     def __mul__(self, other):
         if not isinstance(other, Polynomial):
-            if isinstance(other, Signomial):  # pragma: no cover
+            if isinstance(other, Signomial):  
                 raise RuntimeError('Cannot multiply signomials and polynomials.')
             other = self.upcast_to_signomial(other)
             other = other.as_polynomial()
@@ -235,13 +235,13 @@ class Polynomial(Signomial):
         return temp
 
     def __truediv__(self, other):
-        if not isinstance(other, __NUMERIC_TYPES__):  # pragma: no cover
-            raise RuntimeError('Cannot divide a polynomial by the non-numeric type: ' + type(other) + '.')
+        if not isinstance(other, __NUMERIC_TYPES__):  
+            raise RuntimeError('Cannot divide a polynomial by the non-numeric type: ' + str(type(other)) + '.')
         other_inv = 1 / other
         return self.__mul__(other_inv)
 
     def __add__(self, other):
-        if isinstance(other, Signomial) and not isinstance(other, Polynomial):  # pragma: no cover
+        if isinstance(other, Signomial) and not isinstance(other, Polynomial):  
             raise RuntimeError('Cannot add signomials to polynomials.')
         temp = Signomial.__add__(self, other)
         temp = temp.as_polynomial()
