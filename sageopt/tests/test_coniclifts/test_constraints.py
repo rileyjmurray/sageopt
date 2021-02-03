@@ -24,6 +24,7 @@ from sageopt.coniclifts.constraints.set_membership import product_cone, psd_cone
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.coniclifts import MIN as CL_MIN
 from sageopt.symbolic.signomials import SigDomain
+from sageopt.coniclifts.constraints.set_membership.pow_cone import PowCone
 
 
 class TestConstraints(unittest.TestCase):
@@ -248,5 +249,31 @@ class TestConstraints(unittest.TestCase):
         val = prob.value
         assert val < 1e-7
 
+    def test_power_cone(self):
+        n = 4
+        rng = np.random.default_rng(12345)
 
+        # Create w and z in one array, where the last one will be z
+        wz = Variable(shape=(n + 1, 1), name='wz')
+
+        # Make the last element negative to indicate that that element is z in the wz variable
+        lamb = rng.random((n, 1))
+
+        # Check if wrong sizes that error is raised
+        self.assertRaises(RuntimeError, PowCone(wz, lamb))
+
+        # Check if no negative number lamb, error is raised
+        lamb = rng.random((n+1, 1))
+        self.assertRaises(ValueError, PowCone(wz, lamb))
+
+        # Check if not sum to 0, error is raised
+        lamb[-1] = -5 * np.sum(lamb[:-1])
+        self.assertRaises(ValueError, PowCone(wz, lamb))
+
+        lamb[-1] = -1 * np.sum(lamb[:-1])
+
+        pow_cone_constraint = PowCone(wz, lamb)
+
+        #Check if violation is correct
+        v1 = pow_cone_constraint.violation(rough=True)
 
