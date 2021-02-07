@@ -1,6 +1,6 @@
 import numpy as np
 from sageopt.coniclifts.constraints.set_membership.setmem import SetMembership
-from sageopt.coniclifts.base import Expression, ScalarVariable, Variable, ScalarExpression
+from sageopt.coniclifts.base import Expression, ScalarVariable, Variable
 from sageopt.coniclifts.cones import Cone
 from sageopt.coniclifts.operators.norms import vector2norm
 from sageopt.coniclifts.problems.problem import Problem
@@ -78,7 +78,7 @@ class PowCone(SetMembership):
         return var_list
 
     """
-    
+        Returns the sparse form representation of the Power Cone problem (Ax = b)
     """
     def conic_form(self):
         A_rows, A_cols, A_vals = [], [], []
@@ -133,9 +133,12 @@ class PowCone(SetMembership):
 
         return prob.value
 
+    """
+    Returns the violation of the current values of this object 
+    """
     def violation(self, rough = False):
         if rough:
             return np.max([np.abs(self.z_low.value) - np.prod(np.power(self.w_low.value, self.alpha)), 0])
-
-        dist = PowCone.project(self.w, self.lamb)
-        return dist
+        else:
+            dist = PowCone.project(self.w, self.lamb)
+            return dist
