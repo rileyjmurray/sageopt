@@ -32,7 +32,9 @@ class PowCone(SetMembership):
         if np.sum(pos_idxs) == np.size(lamb):
             raise ValueError('No negative number in lamb array')
 
-        if np.sum(lamb[pos_idxs]) == lamb[lamb < 0]:
+        negative = lamb[lamb < 0]
+        posotive = np.sum(lamb[pos_idxs])
+        if np.sum(lamb[pos_idxs]) + lamb[lamb < 0] != 0:
             raise ValueError('lamb does not have sum of 0')
         # Get positive values and normalize
         alpha_low = lamb[pos_idxs]/np.abs(lamb[lamb < 0])
@@ -79,10 +81,13 @@ class PowCone(SetMembership):
 
     """
         Returns the sparse form representation of the Power Cone problem (Ax = b)
+        
+        The returned elements follow the conic form method in constraint.py. Additionally, the cones with K contains an 
+        annotation that store the alpha parameter of this power cone object.
     """
     def conic_form(self):
         A_rows, A_cols, A_vals = [], [], []
-        K = [Cone('pow', self.w.size, annotations=self.alpha)]
+        K = [Cone('pow', self.w.size, annotations={'weights': np.array(self.alpha).tolist()})]
         b = np.zeros(shape=(self.w.size,))
 
         # Loop through w and add every variable
@@ -101,17 +106,19 @@ class PowCone(SetMembership):
 
         # Make final row of matrix the information about z
         i = self.w_low.size
-        if len(self.z_low.atoms_to_coeffs) == 0:
-            b[i] = self.z_low.offset
-            A_rows.append(i)
-            A_cols.append(ScalarVariable.curr_variable_count() - 1)
-            A_vals.append(0)  # make sure scipy infers correct dimensions later on.
-        else:
-            b[i] = self.z_low.offset
-            A_rows += [i] * len(self.z_low.atoms_to_coeffs)
-            col_idx_to_coeff = [(a.id, c) for a, c in self.z_low.atoms_to_coeffs.items()]
-            A_cols += [atom_id for (atom_id, _) in col_idx_to_coeff]
-            A_vals += [c for (_, c) in col_idx_to_coeff]
+        # Loop through w and add every variable
+        for se in self.z_low.flat:
+            if len(se.atoms_to_coeffs) == 0:
+                b[i] = se.offset
+                A_rows.append(i)
+                A_cols.append(ScalarVariable.curr_variable_count() - 1)
+                A_vals.append(0)  # make sure scipy infers correct dimensions later on.
+            else:
+                b[i] = se.offset
+                A_rows += [i] * len(se.atoms_to_coeffs)
+                col_idx_to_coeff = [(a.id, c) for a, c in se.atoms_to_coeffs.items()]
+                A_cols += [atom_id for (atom_id, _) in col_idx_to_coeff]
+                A_vals += [c for (_, c) in col_idx_to_coeff]
 
         return [(A_vals, np.array(A_rows), A_cols, b, K)]
 

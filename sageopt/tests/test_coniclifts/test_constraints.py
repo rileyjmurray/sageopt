@@ -254,26 +254,43 @@ class TestConstraints(unittest.TestCase):
         rng = np.random.default_rng(12345)
 
         # Create w and z in one array, where the last one will be z
-        wz = Variable(shape=(n + 1, 1), name='wz')
+        wz = Variable(shape=(n + 1,), name='wz')
+
 
         # Make the last element negative to indicate that that element is z in the wz variable
-        lamb = rng.random((n, 1))
+        lamb = rng.random((n,))
 
         # Check if wrong sizes that error is raised
-        self.assertRaises(RuntimeError, PowCone(wz, lamb))
+        self.assertRaises(RuntimeError, PowCone, wz, lamb)
 
         # Check if no negative number lamb, error is raised
-        lamb = rng.random((n+1, 1))
-        self.assertRaises(ValueError, PowCone(wz, lamb))
+        lamb = rng.random((n+1,))
+        self.assertRaises(ValueError,  PowCone, wz, lamb)
 
         # Check if not sum to 0, error is raised
         lamb[-1] = -5 * np.sum(lamb[:-1])
-        self.assertRaises(ValueError, PowCone(wz, lamb))
+        self.assertRaises(ValueError,  PowCone, wz, lamb)
 
+        # Check if violation is correct for a point exactly on the power cone defined
+        lamb = np.ones((n+1, ))
         lamb[-1] = -1 * np.sum(lamb[:-1])
+        wz.value = np.array([1, 1, 1, 1, 1])
 
         pow_cone_constraint = PowCone(wz, lamb)
-
-        #Check if violation is correct
         v1 = pow_cone_constraint.violation(rough=True)
+        assert v1 < 1e-15
 
+        #Check if violation is correct for point inside of power cone
+        wz.value = np.array([2, 1, 1, 1, 1])
+
+        pow_cone_constraint = PowCone(wz, lamb)
+        v1 = pow_cone_constraint.violation(rough=True)
+        assert np.allclose(v1, 0)
+
+
+        #Check if violation is correct for point inside of power cone
+        wz.value = np.array([1, 1, 1, 1, 2])
+
+        pow_cone_constraint = PowCone(wz, lamb)
+        v1 = pow_cone_constraint.violation(rough=True)
+        assert np.allclose(v1, 1)
