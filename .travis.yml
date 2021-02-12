@@ -7,7 +7,8 @@ python:
   - "3.9"
 # command to install dependencies (3rd and 4th pip calls just for GPKit integration)
 install:
-  - pip install scipy>=1.1 numpy>=1.16.5 ecos>=2 coveralls
+  - pip install --verbose numpy>=1.16.5
+  - pip install --verbose scipy>=1.1 ecos>=2 coveralls
   - pip install nose2[coverage_plugin]
   - pip install pint cvxopt ad
   - pip install gpkit==0.9.9.2
