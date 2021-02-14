@@ -19,7 +19,8 @@ from collections import defaultdict
 from sageopt.coniclifts.constraints.elementwise import ElementwiseConstraint
 from sageopt.coniclifts.constraints.set_membership.psd_cone import PSD
 from sageopt.coniclifts.utilities import array_index_iterator, __REAL_TYPES__
-
+from sageopt.symbolic.polynomials import Polynomial
+from sageopt.symbolic.signomials import Signomial
 
 class ScalarAtom(object):
 
@@ -278,7 +279,7 @@ class ScalarExpression(object):
         return f
 
     def __mul__(self, other):
-        if isinstance(other, __REAL_TYPES__):
+        if isinstance(other, __REAL_TYPES__) or isinstance(other, Polynomial) or isinstance(other, Signomial):
             if other == 0:
                 return ScalarExpression(defaultdict(int), 0, verify=False, copy=False)
             f = ScalarExpression(self.atoms_to_coeffs, self.offset, verify=False)

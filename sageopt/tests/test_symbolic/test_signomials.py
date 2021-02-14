@@ -148,6 +148,9 @@ class TestSignomials(unittest.TestCase):
         s = s0 * q0
         s = s.without_zeros()
         assert s.alpha_c == {(0,): 0}
+        z = cl.Variable()
+        a = z * s0
+        assert True
 
     def test_signomial_evaluation(self):
         s = Signomial.from_dict({(1,): 1})
