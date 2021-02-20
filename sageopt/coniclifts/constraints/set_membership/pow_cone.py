@@ -9,7 +9,7 @@ from sageopt.coniclifts.problems.problem import Problem
 class PowCone(SetMembership):
     """
     A power cone constraint is defined with an n-dimensional vector
-    :math:'\alpha' which is elementwise positive and
+    :math:'\\alpha' which is elementwise positive and
     sums to 1. The cone can be summarized by writing that
     :math:'(w, z) \\in C_{\\mathrm{power}}' if:
 
