@@ -127,7 +127,7 @@ class TestCompilers(unittest.TestCase):
         assert np.allclose(b[:-1], expected_b[:-1])
         assert K[0] == Cone('pow', n+1, annotations=actual_annotations)
 
-        # Last test reconstrcuted from matrix creation
+        # Last test reconstructed from matrix creation
         x = Variable(shape=(n+1,), name='x')
         M = np.random.rand(n+1, n+1)
         y = M @ x
@@ -136,7 +136,3 @@ class TestCompilers(unittest.TestCase):
         A = A.toarray()
         assert np.allclose(A, M)
         assert K[0] == Cone('pow', n+1, annotations=actual_annotations)
-
-
-
-

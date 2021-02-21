@@ -261,7 +261,7 @@ class TestConstraints(unittest.TestCase):
         lamb = rng.random((n,))
 
         # Check if wrong sizes that error is raised
-        self.assertRaises(RuntimeError, PowCone, wz, lamb)
+        self.assertRaises(ValueError, PowCone, wz, lamb)
 
         # Check if no negative number lamb, error is raised
         lamb = rng.random((n+1,))
@@ -280,7 +280,7 @@ class TestConstraints(unittest.TestCase):
         v1 = pow_cone_constraint.violation(rough=True)
         assert v1 < 1e-15
 
-        #Check if violation is correct for point inside of power cone
+        # Check if violation is correct for point inside of power cone
         wz.value = np.array([2, 1, 1, 1, 1])
 
         pow_cone_constraint = PowCone(wz, lamb)
@@ -288,7 +288,7 @@ class TestConstraints(unittest.TestCase):
         assert np.allclose(v1, 0)
 
 
-        #Check if violation is correct for point inside of power cone
+        # Check if violation is correct for point inside of power cone
         wz.value = np.array([1, 1, 1, 1, 2])
 
         pow_cone_constraint = PowCone(wz, lamb)

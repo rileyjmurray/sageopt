@@ -14,7 +14,7 @@ class PowCone(SetMembership):
     :math:'(w, z) \\in C_{\\mathrm{power}}' if:
 
     .. math::
-        \\prod_{i=0}^n w_i^\\alpha_i > \\| z \\|
+        \\prod_{i=0}^n w_i^{\\alpha_i} \\geq \\| z \\|
 
     where :math:'w' is an n dimensional vector and :math:'z' is a scalar.
 
@@ -28,10 +28,10 @@ class PowCone(SetMembership):
         determined by the elements of
 
     lamb: ndarray
-        An (n+1)-dimensional array with 1 negative entry and n positive entries
-        whose sum is 0. The n positive entries determine the elements of
-        :math:'\\alpha' while the negative entry of lamb determines the index of
-        z within the w parameter.
+        An (n+1)-dimensional array with 1 negative entry and n
+        positive entries whose sum is 0. The n positive entries
+        determine the elements of :math:'\\alpha' while the negative
+        entry of lamb determines the index of z within the w parameter.
 
 
     Attributes
@@ -60,7 +60,8 @@ class PowCone(SetMembership):
     Notes
     -----
 
-    The constructor can raise a RuntimeError if the constraint is deemed infeasible.
+    The constructor can raise a ValueError if the inputted
+    parameters do not follow the required parameter guidelines
     """
     _CONSTRAINT_ID_ = 0
 
@@ -90,7 +91,8 @@ class PowCone(SetMembership):
         # Get positive values and normalize
         alpha_low = lamb[pos_idxs]/np.abs(lamb[neg_idxs])
 
-        # Negative number corresponds to z in power cone and rest of numpy array is w
+        # Negative number corresponds to z in power cone
+        # and rest of numpy array is w
         w_low = w[pos_idxs]
         z_low = w[neg_idxs]
 
@@ -108,17 +110,19 @@ class PowCone(SetMembership):
 
     def variables(self):
         """
-        Return a list of all Variable objects appearing in this Power Cone constraint object
+        Return a list of all Variable objects appearing in this
+        Power Cone constraint object
 
         Returns
         -------
-        - A list of all the variables involved in the Power Cone constraint of this object
+        - A list of all the variables involved in the Power Cone
+        constraint of this object
         """
         var_ids = set()
         var_list = []
 
         # Grab non duplicate elements from w
-        for se in self.w_low.flat():
+        for se in self.w_low.ravel():
             for sv in se.scalar_variables():
                 if id(sv.parent) not in var_ids:
                     var_ids.add(id(sv.parent))
@@ -134,8 +138,9 @@ class PowCone(SetMembership):
 
     def conic_form(self):
         """
-        Returns a sparse matrix representation of the Power cone object. It represents of the object as
-        :math:'Ax+b \\in K' where K is a cone object
+        Returns a sparse matrix representation of the Power
+        cone object. It represents of the object as :math:'Ax+b \\in K'
+        where K is a cone object
 
         Returns
         -------
@@ -155,7 +160,8 @@ class PowCone(SetMembership):
                 b[i] = se.offset
                 A_rows.append(i)
                 A_cols.append(ScalarVariable.curr_variable_count() - 1)
-                A_vals.append(0)  # make sure scipy infers correct dimensions later on.
+                # make sure scipy infers correct dimensions later on.
+                A_vals.append(0)
             else:
                 b[i] = se.offset
                 A_rows += [i] * len(se.atoms_to_coeffs)
@@ -171,7 +177,8 @@ class PowCone(SetMembership):
                 b[i] = se.offset
                 A_rows.append(i)
                 A_cols.append(ScalarVariable.curr_variable_count() - 1)
-                A_vals.append(0)  # make sure scipy infers correct dimensions later on.
+                # make sure scipy infers correct dimensions later on.
+                A_vals.append(0)
             else:
                 b[i] = se.offset
                 A_rows += [i] * len(se.atoms_to_coeffs)
@@ -184,11 +191,14 @@ class PowCone(SetMembership):
     @staticmethod
     def project(item, alpha):
         """
-        Calculates the shortest distance (the projection) of a vector to a cone parametrized by :math:'\\alpha'
+        Calculates the shortest distance (the projection) of a vector
+        to a cone parametrized by :math:'\\alpha'
+
         Parameters
         ----------
         item - the point we are projecting
-        alpha - the :math:'\\alpha' parameter for the Cone that we are projecting to
+        alpha - the :math:'\\alpha' parameter
+                for the Cone that we are projecting to
 
         Returns
         -------
@@ -212,9 +222,11 @@ class PowCone(SetMembership):
 
     def violation(self, rough=False):
         """
-        Returns the violation of stored w and z to being in the Power cone parametrized by alpha. If rough = True, then
-        measures the violation based off the maximum violation of the condition of the Power Cone. If not, it is based
-        off the projection distance between the point and Cone.
+        Returns the violation of stored w and z to being in the
+        Power cone parametrized by alpha. If rough = True, then measures
+        the violation based off the maximum violation of the condition of
+        the Power Cone. If not, it is based off the projection
+        distance between the point and Cone.
 
         Parameters
         ----------
@@ -225,7 +237,8 @@ class PowCone(SetMembership):
         The value of the violation of this object's w and z
         """
         if rough:
-            return np.max([np.abs(self.z_low.value) - np.prod(np.power(self.w_low.value, self.alpha)), 0])
+            viol_vec = np.abs(self.z_low.value) - np.prod(np.power(self.w_low.value, self.alpha))
+            return np.max([viol_vec, 0])
         else:
             dist = PowCone.project(self.w, self.lamb)
             return dist
