@@ -19,8 +19,7 @@ from sageopt.coniclifts.operators import affine
 from sageopt.coniclifts.base import Variable
 from sageopt.coniclifts.compilers import compile_constrained_system
 from sageopt.coniclifts.cones import Cone
-
-
+from sageopt.coniclifts.constraints.set_membership.pow_cone import PowCone
 def var_maps_equal(vm1, vm2):
     if not len(vm1) == len(vm2):
         return False
@@ -82,3 +81,58 @@ class TestCompilers(unittest.TestCase):
         assert np.allclose(expect_rows_3to6, A[3:, :])
         assert np.all(b == np.array([5, -1, -1, 2, 2, 2]))
 
+    def test_power_cone_system(self):
+        n = 4
+        rng = np.random.default_rng(12345)
+
+        # Create w and z in one array, where the last one will be z
+        wz = Variable(shape=(n+1,), name='wz')
+
+        # Make the last element negative to indicate that that element is z in the wz variable
+        lamb = rng.random((n+1,))
+        lamb[-1] = -1*np.sum(lamb[:-1])
+
+        # Create simple constraints
+        constraints1 = [PowCone(wz, lamb)]
+        A, b, K, _, _, _ = compile_constrained_system(constraints1)
+        A = A.toarray()
+        assert np.allclose(A, np.identity(n+1))
+        assert np.allclose(b, np.zeros((n+1,)))
+        actual_annotations = {'weights': np.array(lamb[:-1]/np.sum(lamb[:-1])).tolist()}
+        assert K[0] == Cone('pow', n+1, annotations=actual_annotations)
+
+        # Increment z
+        offset = np.zeros((n+1,))
+        offset[-1] = 1
+        wz1 = wz + offset
+        constraints2 = [PowCone(wz1, lamb)]
+        A, b, K, _, _, _ = compile_constrained_system(constraints2)
+        A = A.toarray()
+        assert np.allclose(A, np.identity(n + 1))
+        expected_b = np.zeros((n + 1,))
+        expected_b[-1] = 1
+        assert np.allclose(b, expected_b)
+        actual_annotations = {'weights': np.array(lamb[:-1] / np.sum(lamb[:-1])).tolist()}
+        assert K[0] == Cone('pow', n + 1, annotations=actual_annotations)
+
+        #Increment w
+        r = rng.random((n+1,))
+        r[-1] = 0
+        wz2 = wz + r
+        constraints3 = [PowCone(wz2, lamb)]
+        A, b, K, _, _, _ = compile_constrained_system(constraints3)
+        A = A.toarray()
+        assert np.allclose(A, np.identity(n + 1))
+        expected_b = r
+        assert np.allclose(b[:-1], expected_b[:-1])
+        assert K[0] == Cone('pow', n+1, annotations=actual_annotations)
+
+        # Last test reconstructed from matrix creation
+        x = Variable(shape=(n+1,), name='x')
+        M = np.random.rand(n+1, n+1)
+        y = M @ x
+        constraints4 = [PowCone(y, lamb)]
+        A, b, K, _, _, _ = compile_constrained_system(constraints4)
+        A = A.toarray()
+        assert np.allclose(A, M)
+        assert K[0] == Cone('pow', n+1, annotations=actual_annotations)

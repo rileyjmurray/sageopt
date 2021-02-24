@@ -37,8 +37,8 @@ class Cone(object):
     """
     Cone types can be '+' for nonnegative orthant, '0' for zero-cone,
     'fr' for the free (unconstrained) cone,  'e' for exponential cone,
-    'de' for dual exponential cone, 'S' for second order cone, and 'P'
-    for positive semidefinite cone.
+    'de' for dual exponential cone, 'S' for second order cone, 'P'
+    for positive semidefinite cone, and 'pow' for power cone.
     """
 
     def __init__(self, cone_type, length, annotations=None):
