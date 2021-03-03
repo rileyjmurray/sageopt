@@ -114,11 +114,14 @@ def compile_constrained_system(constraints):
     variables = find_variables_from_constraints(constraints)
     var_gens = np.array([v.generation for v in variables])
     if not np.all(var_gens == var_gens[0]):
-        msg1 = '\nThe model contains Variable objects of distinct "generation".\n'
-        msg2 = '\nIn between constructing some of these Variables the function \n '
-        msg3 = 'coniclifts.clear_variable_indices was called. Remove this function\n'
-        msg4 = 'call from your program flow and try again.\n'
-        raise RuntimeError(msg1 + msg2 + msg3 + msg4)
+        msg = """
+        This model contains Variable objects of distinct "generation".
+        In between constructing some of these Variables, the function 
+        coniclifts.clear_variable_indices was called. Remove this function
+        call from your program flow and try again.
+        
+        """
+        raise RuntimeError(msg)
     # Construct the "variable map"
     variables.sort(key=lambda v: v.leading_scalar_variable_id())
     var_indices = []
