@@ -16,6 +16,7 @@
 import numpy as np
 import unittest
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials, PolyDomain, Signomial
+from sageopt.symbolic.signomials import standard_sig_monomials
 from sageopt.relaxations.sage_polys import infer_domain
 from sageopt import coniclifts as cl
 
@@ -69,7 +70,7 @@ class TestPolynomials(unittest.TestCase):
         alpha = np.array([[1, 0], [0, 1], [1, 1]])
         c = np.array([1, 2, 3])
         f = Signomial(alpha, c)
-        self.assertRaises(RuntimeError, Polynomial.__add__, s0, f)
+        self.assertRaises(ValueError, Polynomial.__add__, s0, f)
 
     def test_polynomial_multiplication(self):
         # data for tests
@@ -93,8 +94,8 @@ class TestPolynomials(unittest.TestCase):
         s = s0 * q0
         s = s.without_zeros()
         assert s.alpha_c == {(0,): 0}
-        self.assertRaises(RuntimeError, Polynomial.__sub__, s0, f)
-        self.assertRaises(RuntimeError, Polynomial.__mul__, s0, f)
+        self.assertRaises(ValueError, Polynomial.__sub__, s0, f)
+        self.assertRaises(ValueError, Polynomial.__mul__, s0, f)
 
     def test_polynomial_division(self):
         s0 = Polynomial(np.array([[0], [1], [2]]),
@@ -105,7 +106,7 @@ class TestPolynomials(unittest.TestCase):
                         np.array([0]))
         
         #tests
-        self.assertRaises(RuntimeError, Polynomial.__truediv__, s0, t0)
+        self.assertRaises(ValueError, Polynomial.__truediv__, s0, t0)
         s = s0 / 2
         s = s.without_zeros()
         assert s.alpha_c == {(0,): 0.5, (1,): 1, (2,): 1.5}
@@ -144,6 +145,21 @@ class TestPolynomials(unittest.TestCase):
         assert w.n == 2
         assert w(np.array([1, 1])) == 0
         assert w(np.array([1, -2])) == -6
+
+    def test_composition_sigs(self):
+        p = Polynomial.from_dict({(1,): 2, (0,): -1})  # represents lambda x: 2*x - 1
+        s = Signomial.from_dict({(2,): -1, (0,): 1})
+        f = p(s)  # lambda x: -2*exp(x) + 1
+        self.assertAlmostEqual(f(0.5), -2*np.exp(1.0) + 1, places=4)
+        self.assertAlmostEqual(f(1), -2*np.exp(2.0) + 1, places=4)
+        p = np.prod(standard_poly_monomials(3))
+        exp_x = standard_sig_monomials(2)
+        sig_vec = np.array([exp_x[0], exp_x[0] - exp_x[1], 1.0/exp_x[1]])
+        f = p(sig_vec)
+        self.assertEqual(f.n, 2)
+        self.assertEqual(f(np.array([1, 1])), 0)
+        x_test = np.array([-3, 3])
+        self.assertAlmostEqual(f(x_test), np.exp(-6)*(np.exp(-3) - np.exp(3)), places=4)
 
     def test_standard_monomials(self):
         x = standard_poly_monomials(3)
@@ -226,6 +242,7 @@ class TestPolynomials(unittest.TestCase):
         f = s0.as_signomial()
         assert s0.alpha_c == f.alpha_c
 
+
 class TestPolyDomains(unittest.TestCase):
 
     def test_infeasible_poly_domain(self):
@@ -234,7 +251,7 @@ class TestPolyDomains(unittest.TestCase):
         try:
             dom = PolyDomain(1, logspace_cons=cons)
             assert False
-        except RuntimeError as err:
+        except ValueError as err:
             err_str = str(err)
             assert 'seem to be infeasible' in err_str
 
@@ -244,10 +261,10 @@ class TestPolyDomains(unittest.TestCase):
         try:
             dom = PolyDomain(2, log_AbK=(A, b, K))
             assert False
-        except RuntimeError as err:
+        except ValueError as err:
             err_str = str(err)
             assert 'seem to be infeasible' in err_str
-        self.assertRaises(RuntimeError, PolyDomain, 1, logspace_cons=cons, log_AbK=(A, b, K))
+        self.assertRaises(ValueError, PolyDomain, 1, logspace_cons=cons, log_AbK=(A, b, K))
 
     def test_infer_box_polydomain(self):
         bounds = [(-0.1, 0.4), (0.4, 1),

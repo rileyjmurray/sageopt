@@ -125,9 +125,9 @@ class Polynomial(Signomial):
     def __init__(self, alpha, c):
         Signomial.__init__(self, alpha, c)
         if not np.all(self.alpha % 1 == 0):  # pragma: no cover
-            raise RuntimeError('Exponents must belong the the integer lattice.')
+            raise ValueError('Exponents must be integers.')
         if not np.all(self.alpha >= 0):  # pragma: no cover
-            raise RuntimeError('Exponents must be nonnegative.')
+            raise ValueError('Exponents must be nonnegative.')
         self._sig_rep = None
         self._sig_rep_constrs = []
         pass
@@ -223,33 +223,33 @@ class Polynomial(Signomial):
     def __mul__(self, other):
         if not isinstance(other, Polynomial):
             if isinstance(other, Signomial):  
-                raise RuntimeError('Cannot multiply signomials and polynomials.')
+                raise ValueError('Cannot multiply signomials and polynomials.')
             other = self.upcast_to_signomial(other)
             other = other.as_polynomial()
         self_var_coeffs = (self.c.dtype not in __NUMERIC_TYPES__)
         other_var_coeffs = (other.c.dtype not in __NUMERIC_TYPES__)
         if self_var_coeffs and other_var_coeffs:  # pragma: no cover
-            raise RuntimeError('Cannot multiply two polynomials that contain non-numeric coefficients.')
+            raise ValueError('Cannot multiply two polynomials that contain non-numeric coefficients.')
         temp = Signomial.__mul__(self, other)
         temp = temp.as_polynomial()
         return temp
 
     def __truediv__(self, other):
         if not isinstance(other, __NUMERIC_TYPES__):  
-            raise RuntimeError('Cannot divide a polynomial by the non-numeric type: ' + str(type(other)) + '.')
+            raise ValueError('Cannot divide a polynomial by the non-numeric type: ' + str(type(other)) + '.')
         other_inv = 1 / other
         return self.__mul__(other_inv)
 
     def __add__(self, other):
         if isinstance(other, Signomial) and not isinstance(other, Polynomial):  
-            raise RuntimeError('Cannot add signomials to polynomials.')
+            raise ValueError('Cannot add signomials to polynomials.')
         temp = Signomial.__add__(self, other)
         temp = temp.as_polynomial()
         return temp
 
     def __sub__(self, other):
         if isinstance(other, Signomial) and not isinstance(other, Polynomial):
-            raise RuntimeError('Cannot subtract a signomial from a polynomial (or vice versa).')
+            raise ValueError('Cannot subtract a signomial from a polynomial (or vice versa).')
         temp = Signomial.__sub__(self, other)
         temp = temp.as_polynomial()
         return temp
@@ -318,18 +318,17 @@ class Polynomial(Signomial):
         as the current polynomial.
 
         """
-        if np.isscalar(x) or (isinstance(x, np.ndarray) and x.size == 1) or isinstance(x, Polynomial):
-            # noinspection PyTypeChecker
-            x = np.array([np.asscalar(np.array(x))])  # coerce into a 1d array of shape (1,).
+        if not hasattr(x, 'shape'):
+            x = np.array([x])
         if not x.shape[0] == self.n:
             raise ValueError('The point must be in R^' + str(self.n) +
                              ', but the provided point is in R^' + str(x.shape[0]))
         if x.dtype == 'object':
-            ns = np.array([xi.n for xi in x.flat if isinstance(xi, Polynomial)])
+            ns = np.array([xi.n for xi in x.flat if isinstance(xi, Signomial)])
             if ns.size == 0:
                 x = x.astype(np.float)
             elif np.any(ns != ns[0]):
-                raise RuntimeError('The input vector cannot contain Polynomials over different variables.')
+                raise ValueError('The input vector cannot contain functions over different variables.')
         if x.ndim == 1:
             temp1 = np.power(x, self.alpha)
             temp2 = np.prod(temp1, axis=1)
@@ -400,7 +399,7 @@ class Polynomial(Signomial):
             The function obtained by differentiating this polynomial with respect to its i-th argument.
         """
         if i < 0 or i >= self.n:
-            raise RuntimeError('This polynomial does not have an input at index ' + str(i) + '.')
+            raise ValueError('This polynomial does not have an input at index ' + str(i) + '.')
         d = dict()
         for j in range(self.m):
             vec = self.alpha[j, :].copy()
@@ -567,7 +566,7 @@ class PolyDomain(object):
         if 'logspace_cons' in kwargs:
             if self.A is not None:
                 msg = 'Keyword arguments "log_AbK" and "logspace_cons" are mutually exclusive.'
-                raise RuntimeError(msg)
+                raise ValueError(msg)
             else:
                 self.parse_coniclifts_constraints(kwargs['logspace_cons'])
         pass
@@ -589,7 +588,7 @@ class PolyDomain(object):
                 msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
                 msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
                 msg = msg1 + msg2 + msg3 + msg4
-                raise RuntimeError(msg)
+                raise ValueError(msg)
         pass
 
     def check_membership(self, x_val, tol):
@@ -630,13 +629,13 @@ class PolyDomain(object):
         """
         variables = cl.compilers.find_variables_from_constraints(logspace_cons)
         if len(variables) != 1:
-            raise RuntimeError('The system of constraints must be defined over a single Variable object.')
+            raise ValueError('The system of constraints must be defined over a single Variable object.')
         self._logspace_cons = logspace_cons
         self._y = variables[0]
         if self._y.size != self.n:
             msg = 'The provided constraints are over a variable of dimension '
             msg += str(self._y.size) + ', but this SigDomain was declared as dimension ' + str(self.n) + '.'
-            raise RuntimeError(msg)
+            raise ValueError(msg)
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(logspace_cons)
         A = A.toarray()
         selector = variable_map[self._y.name].ravel()

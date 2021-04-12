@@ -365,8 +365,8 @@ class Signomial(object):
         if not isinstance(self.alpha, np.ndarray):
             # assuming cvxpy Expression, could substitute alpha = alpha.value
             raise NotImplementedError()
-        if np.isscalar(x) or (isinstance(x, np.ndarray) and x.size == 1 and x.ndim == 0):
-            x = np.array([np.asscalar(np.array(x))])  # coerce into a 1d array of shape (1,).
+        if not hasattr(x, 'shape'):
+            x = np.array([x])
         if not x.shape[0] == self._n:
             msg = 'Domain is R^' + str(self._n) + 'but x is in R^' + str(x.shape[0])
             raise ValueError(msg)
