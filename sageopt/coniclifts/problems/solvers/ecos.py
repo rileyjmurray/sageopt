@@ -13,13 +13,28 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 from sageopt.coniclifts import utilities as util
 from sageopt.coniclifts.cones import build_cone_type_selectors
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.solver import Solver
-import copy
+from sageopt.coniclifts.problems.solvers.mosek import Mosek
+
+_MOSEK_INSTALL_ = """
+    Warning! The ECOS solver has been invoked without an installation
+    of the MOSEK solver. If you are trying to solve SAGE relaxations or
+    work with SAGE decompositions, then you should install MOSEK.
+    
+        https://www.mosek.com/downloads/
+    
+    The MOSEK algorithm and ECOS algorithm have mathematical differences
+    beyond mere matters of implementation. As a result of these mathematical
+    differences, ECOS often returns an "unknown" status code (i.e., a solver
+    failure) for interesting and otherwise easily solved SAGE relaxations.
+"""
 
 
 class ECOS(Solver):
@@ -58,6 +73,8 @@ class ECOS(Solver):
 
     @staticmethod
     def solve_via_data(data, params):
+        if not Mosek.is_installed():
+            warnings.warn(_MOSEK_INSTALL_)
         import ecos
         if 'max_iters' in params:
             max_iters = params['max_iters']

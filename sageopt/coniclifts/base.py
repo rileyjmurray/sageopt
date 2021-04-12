@@ -512,7 +512,7 @@ class Expression(np.ndarray):
             np.ndarray.__setitem__(self, key, se)
         elif isinstance(value, np.ndarray) and value.size == 1:
             # noinspection PyTypeChecker
-            self[key] = np.asscalar(value)
+            self[key] = value.item()
         elif isinstance(value, Expression):
             np.ndarray.__setitem__(self, key, value)
         else:  # pragma: no cover
@@ -786,7 +786,7 @@ class Variable(Expression):
             raise UserWarning('The variable with name ' + name + ' was declared with an unknown property.')
         if obj.size == 0:  # pragma: no cover
             raise RuntimeError('Cannot declare Variables with zero components.')
-        if obj._scalar_variable_ids[-1] > np.iinfo(np.int).max:  # pragma: no cover
+        if obj._scalar_variable_ids[-1] > np.iinfo(int).max:  # pragma: no cover
             # ScalarVariable objects can no longer be properly tracked
             msg = 'An index used by coniclifts\' backend has overflowed. \n'
             msg += 'Call coniclifts.clear_variable_indices(), and build your model again.'

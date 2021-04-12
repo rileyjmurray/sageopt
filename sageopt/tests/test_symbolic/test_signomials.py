@@ -15,7 +15,6 @@
 """
 import numpy as np
 import unittest
-from nose.tools import assert_raises
 from sageopt.symbolic.signomials import Signomial, SigDomain, standard_sig_monomials
 from sageopt.relaxations import infer_domain
 from sageopt import coniclifts as cl
