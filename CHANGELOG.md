@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 # [0.5.4] - unreleased
+## Added
+ - symbolic: you can now call a ``Polynomial`` object by providing an array of ``Signomial`` objects.
+ - symbolic: the function ``Signomial.shift_coordates``.
 ## Changed
  - coniclifts: how ``disjoint_dot`` is computed in ``coniclifts.base``.
  - interop: GPKit models weren't converted deterministically.

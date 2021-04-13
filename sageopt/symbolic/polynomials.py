@@ -320,20 +320,36 @@ class Polynomial(Signomial):
         """
         if not hasattr(x, 'shape'):
             x = np.array([x])
+        if x.ndim == 0:
+            x = x.ravel()
         if not x.shape[0] == self.n:
             raise ValueError('The point must be in R^' + str(self.n) +
                              ', but the provided point is in R^' + str(x.shape[0]))
+        xi_func = None
         if x.dtype == 'object':
-            ns = np.array([xi.n for xi in x.flat if isinstance(xi, Signomial)])
+            func_xis = [xi for xi in x.flat if isinstance(xi, Signomial)]
+            ns = np.array([xi.n for xi in func_xis])
             if ns.size == 0:
                 x = x.astype(np.float)
             elif np.any(ns != ns[0]):
                 raise ValueError('The input vector cannot contain functions over different variables.')
+            else:
+                xi_func = func_xis[0]
         if x.ndim == 1:
+            x = x.ravel()
             temp1 = np.power(x, self.alpha)
             temp2 = np.prod(temp1, axis=1)
-            val = np.dot(self.c, temp2)
-            return val
+            temp3 = self.c * temp2
+            if temp3.dtype in __NUMERIC_TYPES__:
+                val = np.sum(temp3)
+                return val
+            else:
+                if isinstance(xi_func, Polynomial):
+                    temp3 = [xi_func.upcast_to_polynomial(ti) for ti in temp3]
+                else:
+                    temp3 = [xi_func.upcast_to_signomial(ti) for ti in temp3]
+                val = Signomial.sum(temp3)
+                return val
         elif x.ndim == 2:
             vals = [self.__call__(xi) for xi in x.T]
             val = np.array(vals)

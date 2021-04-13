@@ -351,22 +351,26 @@ class Signomial(object):
 
     def __call__(self, x):
         """
-        Evaluates the mathematical function specified by the current Signomial object.
+        Roughly speaking, we evaluate val = c @ np.exp(self.alpha @ x)
 
-        :param x: either a scalar (if self._n == 1), or a numpy _n-d array with len(x.shape) <= 2
-        and x.shape[0] == self._n.
-        :return:  If x is a scalar or an _n-d array of shape (self._n,), then "val" is a numeric
-        type equal to the signomial evaluated at x. If instead x is of shape (self._n, k) for
-        some positive integer k, then "val" is a numpy _n-d array of shape (k,), with val[i]
-        equal to the current signomial evaluated on the i^th column of x.
+        Parameters
+        ----------
+        x : Union[ndarray,float]
+            Can only be a float if self.n == 1. Otherwise, x must be an ndarray of real
+            numbers with x.ndim <= 2. If x.ndim == 1 then we require x.size == self.n.
+            If x.ndim == 2 then we apply this signomial to the columns of x.
 
-        This function's behavior is undefined when x is not a scalar and has len(x.shape) > 2.
+        Returns
+        -------
+        val : float
         """
         if not isinstance(self.alpha, np.ndarray):
             # assuming cvxpy Expression, could substitute alpha = alpha.value
             raise NotImplementedError()
         if not hasattr(x, 'shape'):
             x = np.array([x])
+        if x.ndim == 0:
+            x = x.ravel()
         if not x.shape[0] == self._n:
             msg = 'Domain is R^' + str(self._n) + 'but x is in R^' + str(x.shape[0])
             raise ValueError(msg)
@@ -378,6 +382,29 @@ class Signomial(object):
         linear_vars = np.exp(exponents).astype(np.longdouble)
         val = np.dot(self.c, linear_vars)
         return val
+
+    def shift_coordinates(self, x0):
+        """
+        Return a signomial "f" representing f(x) = lambda x: self(x + x0).
+
+        Parameters
+        ----------
+        x0 : ndarray
+            Contains real numbers. We require x0.size == self.n.
+
+        Returns
+        -------
+        f : Signomial
+        """
+        if not hasattr(x0, 'shape'):
+            x0 = np.array([x0])
+        if x0.dtype not in __NUMERIC_TYPES__:
+            raise ValueError('x0.dtype must be in %s' % str(__NUMERIC_TYPES__))
+        x0 = x0.flatten()
+        scales = np.exp(self.alpha @ x0)
+        c_sca = self.c * scales
+        f = Signomial(self.alpha, c_sca)
+        return f
 
     def __hash__(self):
         return hash(frozenset(self.alpha_c.items()))

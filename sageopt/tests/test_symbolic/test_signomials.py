@@ -169,6 +169,23 @@ class TestSignomials(unittest.TestCase):
         expect = 4*np.exp(-2*3)
         assert abs(actual[0] - expect) < 1e-8
 
+    def test_signomial_shift_coordinates(self):
+        f = Signomial.from_dict({(0,): 1, (1,): 2, (2,): 3})
+        g = Signomial.from_dict({(-1,): 1})
+        h = Signomial.from_dict({(2, 3): 1,
+                                 (1, -3): -2})
+        x0 = -1.2345
+        x_test = 3.21
+        f_shift = f.shift_coordinates(x0)
+        self.assertAlmostEqual(f(x_test + x0), f_shift(x_test), places=4)
+        g_shift = g.shift_coordinates(x0)
+        self.assertAlmostEqual(g(x_test + x0), g_shift(x_test), places=4)
+        x0 = np.array([1.1, 2.2])
+        x_test = np.array([-0.5, 3])
+        h_shift = h.shift_coordinates(x0)
+        self.assertAlmostEqual(h(x_test + x0), h_shift(x_test), places=4)
+        self.assertRaises(ValueError, f.shift_coordinates, np.array([1, 1j]))
+
 
 class TestSigDomain(unittest.TestCase):
 
