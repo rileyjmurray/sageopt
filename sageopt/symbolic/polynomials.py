@@ -340,7 +340,7 @@ class Polynomial(Signomial):
             temp1 = np.power(x, self.alpha)
             temp2 = np.prod(temp1, axis=1)
             temp3 = self.c * temp2
-            if temp3.dtype is not object:
+            if temp3.dtype != 'object':
                 val = np.sum(temp3)
                 return val
             else:
