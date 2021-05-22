@@ -655,7 +655,6 @@ class PolyDomain(object):
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(logspace_cons)
         A = A.toarray()
         selector = variable_map[self._y.name].ravel()
-        #A0 = np.hstack((A, np.zeros(shape=(A.shape[0], 1))))
         A0 = np.column_stack((A, np.zeros(A.shape[0])))
         A_lift = A0[:, selector]
         aux_len = A.shape[1] - np.count_nonzero(selector != -1)
