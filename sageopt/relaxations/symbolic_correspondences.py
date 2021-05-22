@@ -121,7 +121,7 @@ def moment_reduction_array(s_h, h, L):
         temp_func = classname(h.alpha + alpha_i, h.c)
         c_row = relative_coeff_vector(temp_func, L.alpha)
         C_rows.append(c_row)
-    C = np.vstack(C_rows)
+    C = np.row_stack(C_rows)
     return C
 
 """

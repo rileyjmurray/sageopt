@@ -50,7 +50,7 @@ class TestCompilers(unittest.TestCase):
         #   b0 should be the (m+n)-length vector formed by concatenating h with the zero vector.
         #   Should see K0 == [('0',m), ('+',n)]
         #   var_mapping0 should be a length-1 dictionary with var_mapping0['x'] == np.arange(n).reshape((n,1)).
-        assert np.all(b0 == np.hstack([h.ravel(), np.zeros(shape=(n,))]))
+        assert np.all(b0 == np.hstack([h.ravel(), np.zeros(n)]))
         assert K0 == [Cone('0', m), Cone('+', n)]
         assert var_maps_equal(var_mapping0, {'x': np.arange(0, n).reshape((n, 1))})
         expected_A0 = np.vstack((-G, np.eye(n)))

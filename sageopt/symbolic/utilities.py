@@ -49,7 +49,7 @@ def align_basis_matrices(mats):
                 aligned_rows.append(ri)
         lifting_locs.append(curr_coeff_locs)
     if all(isinstance(r, np.ndarray) and r.dtype in __REAL_TYPES__ for r in aligned_rows):
-        aligned_mat = np.stack(aligned_rows, axis=0)
+        aligned_mat = np.row_stack(aligned_rows)
     elif cp_interop.CVXPY_INSTALLED:
         aligned_mat = cp_interop.vstack(aligned_rows)
     else:

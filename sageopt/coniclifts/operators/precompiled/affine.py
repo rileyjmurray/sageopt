@@ -148,7 +148,7 @@ def matvec_plus_vec_times_scalar(mat1, vec1, vec2, scalar):
         indices = vec1.scalar_variable_ids + s_indices
         A_vals, A_rows, A_cols = _matvec_by_var_indices(mat, indices)
     else:
-        mat = np.hstack([mat1, np.reshape(vec2, (-1, 1))])
+        mat = np.column_stack((mat1, vec2))
         if isinstance(scalar, ScalarExpression):
             scalar = Expression([scalar])
         expr = concatenate((vec1, scalar))

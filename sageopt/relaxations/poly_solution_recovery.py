@@ -424,7 +424,7 @@ def mod2linsolve(A, b):
     :return: solution to A @ x == b (mod 2), or None.
     """
     m, n = A.shape
-    A0 = np.hstack([A, b.reshape((-1, 1))])
+    A0 = np.column_stack((A, b))
     A1, pivcols = mod2rref(A0, forward_only=True)
     augmented_rank = len(pivcols)
     if augmented_rank > 0 and pivcols[-1] == n:

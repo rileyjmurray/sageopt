@@ -45,7 +45,7 @@ class TestPolySolutionRecoveryHelpers(unittest.TestCase):
         # the vector of all ones is in the nullspace of A.
         # we will concatenate the vector of all ones as a column of A,
         # to create a matrix "A1" whose final column should be a pivot column.
-        A1 = np.hstack((A, np.ones(shape=(n, 1)))).astype(int)
+        A1 = np.column_stack((A, np.ones(n))).astype(int)
         a1rref, p1 = mod2rref(A1)
         assert p1[-1] == n
 

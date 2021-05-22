@@ -299,7 +299,7 @@ class PrimalSageCone(SetMembership):
         nonconst_locs = np.ones(self._m, dtype=bool)
         nonconst_locs[self.ech.N_I] = False
         aux_c_vars = list(self.age_vectors.values())
-        aux_c_vars = aff.vstack(aux_c_vars).T
+        aux_c_vars = aff.column_stack(aux_c_vars)
         aux_c_vars = aux_c_vars[nonconst_locs, :]
         main_c_var = self.c[nonconst_locs]
         A_vals, A_rows, A_cols, b = comp_aff.columns_sum_leq_vec(aux_c_vars, main_c_var)
