@@ -17,15 +17,56 @@ import numpy as np
 from sageopt import coniclifts as cl
 from sageopt.symbolic.polynomials import Polynomial, PolyDomain
 from sageopt.symbolic.signomials import Signomial
+from sageopt.coniclifts.base import Expression
 from sageopt.relaxations import sage_sigs
 from sageopt.relaxations.sage_sigs import _check_kwargs
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
 
 
+def create_covers(s):
+    covers = {}
+
+    # If it is an expression, check to see the ScalarExpressions are constant
+    if isinstance(s.c, Expression):
+        for i in range(s.c.size):
+            # If s.c is positive, then do not need covers[i]
+            if s.c[i].is_constant() and s.c[i].value >= 0:
+                pass
+            else:
+                covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
+                covers[i][i] = False
+    # Otherwise it is a numeric ndarray
+    else:
+        for i in range(s.c.size):
+            # Check if positive constant
+            if s.c[i] >= 0:
+                pass
+            else:
+                covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
+                covers[i][i] = False
+
+    # s.alpha is a 2 dimensional numpy array
+
+    # Get the number of rows in s.alpha
+    num_rows = s.alpha.shape[0]
+    for j in range(num_rows):
+        # If s.alpha[i,:]
+        if np.any(np.remainder(s.alpha[j, :], 2)):
+            for i in range(s.c.size):
+                if i in covers:
+                    covers[i][j] = False
+
+    return covers
+
+
 def primal_sage_poly_cone(poly, name, log_AbK):
     poly_sr, poly_sr_cons = poly.sig_rep
-    con = sage_sigs.primal_sage_cone(poly_sr, name, log_AbK)
+
+    # Create covers argument
+    covers = create_covers(poly_sr)
+
+    con = sage_sigs.primal_sage_cone(poly_sr, name, log_AbK, expcovers=covers)
     constrs = [con] + poly_sr_cons
     return constrs
 
@@ -41,16 +82,20 @@ def relative_dual_sage_poly_cone(primal_poly, dual_var, name_base, log_AbK):
     necessary) so that y defines a dual variable to the constraint that "p is a SAGE polynomial."
     """
     sr, sr_cons = primal_poly.sig_rep
+
+    covers = create_covers(sr)
+
+
     evens = [i for i, row in enumerate(sr.alpha) if np.all(row % 2 == 0)]
     if len(evens) < sr.m:
         is_even = np.zeros(shape=(sr.m,), dtype=bool)
         is_even[evens] = True
         aux_v = cl.Variable(shape=(sr.m, 1), name='aux_v_{' + name_base + ' sage poly dual}')
-        constrs = [sage_sigs.relative_dual_sage_cone(sr, aux_v, name_base + ' sigrep sage dual', log_AbK),
+        constrs = [sage_sigs.relative_dual_sage_cone(sr, aux_v, name_base + ' sigrep sage dual', log_AbK, expcovers=covers),
                    aux_v[is_even] == dual_var[is_even],
                    -aux_v[~is_even] <= dual_var[~is_even], dual_var[~is_even] <= aux_v[~is_even]]
     else:
-        constrs = [sage_sigs.relative_dual_sage_cone(sr, dual_var, name_base + ' sigrep sage dual', log_AbK)]
+        constrs = [sage_sigs.relative_dual_sage_cone(sr, dual_var, name_base + ' sigrep sage dual', log_AbK, expcovers=covers)]
     return constrs
 
 
