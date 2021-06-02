@@ -91,15 +91,16 @@ class TestSagePolynomials(unittest.TestCase):
         ms = np.random.randint(10, 50, size=(10,))
 
         for m in ms:
-            #k = np.random.randint(3, m)
-            m = 33
-            k = 15
+            k = np.random.randint(3, m)
             # Create symbolic coefficient vector and polynomial from it
             c_sym = cl.Variable(shape=(m,), name='my_var')
             A = np.random.randint(0, 10, size=(m, 6))
             random_terms_even = np.random.choice(range(m), m-k, replace=False)
-            for i in random_terms_even:
-                A[i, :] = 2 * (A[i, :] // 2)
+            for i in range(m):
+                if i in random_terms_even:
+                    A[i, :] = 2 * (A[i, :] // 2)
+                else:
+                    A[i, :] = 2 * (A[i, :] // 2) + 1
             p = so.Polynomial(A, c_sym)
             # ^ p is now a symbolic Polynomial in 6 variables with 10 terms.
             constrs = primal_sage_poly_cone(p, "all_sym", None)
@@ -114,15 +115,16 @@ class TestSagePolynomials(unittest.TestCase):
         ms = np.random.randint(10, 50, size=(10,))
 
         for m in ms:
-            #k = np.random.randint(3, m)
-            m = 33
-            k = 10
+            k = np.random.randint(3, m)
             # Create symbolic coefficient vector and polynomial from it
             c_sym = np.random.randint(1, 20, size=(m,))
             A = np.random.randint(0, 10, size=(m, 6))
             random_terms_even = np.random.choice(range(m), m - k, replace=False)
-            for i in random_terms_even:
-                A[i, :] = 2 * (A[i, :] // 2)
+            for i in range(m):
+                if i in random_terms_even:
+                    A[i, :] = 2 * (A[i, :] // 2)
+                else:
+                    A[i, :] = 2 * (A[i, :] // 2) + 1
             p = so.Polynomial(A, c_sym)
             # ^ p is now a symbolic Polynomial in 6 variables with 10 terms.
             constrs = primal_sage_poly_cone(p, "all_sym", None)
