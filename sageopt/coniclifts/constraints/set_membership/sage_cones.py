@@ -193,7 +193,7 @@ class PrimalSageCone(SetMembership):
         self.alpha = alpha
         self.X = X
         self.c = Expression(c)
-        if X is not None:
+        if self.X:
             check_cones(X.K)
             self._lifted_n = X.A.shape[1]
             self.ech = ExpCoverHelper(self.alpha, self.c, (X.A, X.b, X.K), covers, self.settings)
@@ -232,7 +232,7 @@ class PrimalSageCone(SetMembership):
             self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
         self._variables += list(self._nus.values())
         self._variables += list(self._c_vars.values())
-        self._variables += list(self._relent_epi_vars.values())
+        self._variables += list(self._relent_epi_varc_lens.values())
         self._variables += list(self._eta_vars.values())
         pass
 
@@ -269,16 +269,18 @@ class PrimalSageCone(SetMembership):
 
     # pragma: no cover
     def _c_len_check_infeas(self, num_cover, i):
-        c_len = num_cover
-        if i not in self.ech.N_I:
-            # Then we can't set this AGE vector's i-th component to self.c[i];
-            # we need one more variable.
-            c_len += 1
+        if i in self.ech.N_I:
+            # Then we can set self.age_vectors[i][i] = self.c[i];
+            # no need to create an additional scalar variable there.
+            c_len = num_cover
+        else:
+            c_len = num_cover + 1
         if c_len == 0:  # pragma: no cover
-            msg = 'PrimalSageCone constraint "' + self.name + '" encountered an index '
-            msg += 'i=' + str(i) + '\n where the i-th AGE cone reduces to the nonnegative '
-            msg += 'orthant, but self.c[i]=' + str(self.c[i].value) + ' is negative. \n\n'
-            msg += 'This SAGE constraint is infeasible.'
+            msg = """
+            PrimalSageCone constraint "'%s'" encountered an index i=%s where the i-th
+            AGE cone reduces to the nonnegative orthant, but self.c[i]=%s is
+            negative. This SAGE constraint is infeasible.
+            """ % (self.name, str(i), str(self.c[i].value))
             raise RuntimeError(msg)
         return c_len
 
@@ -305,7 +307,12 @@ class PrimalSageCone(SetMembership):
 
     def _age_vectors_sum_to_c(self):
         nonconst_locs = np.ones(self._m, dtype=bool)
-        # nonconst_locs[self.ech.N_I] = False
+        # The line of code below had to be disabled when we used special
+        # "covers" for polynomials. TODO: figure out what about the polynomial
+        # covers makes these constraints necessary here when they weren't
+        # necessary before.
+        #
+        #   nonconst_locs[self.ech.N_I] = False
         aux_c_vars = list(self.age_vectors.values())
         aux_c_vars = aff.column_stack(aux_c_vars)
         aux_c_vars = aux_c_vars[nonconst_locs, :]
@@ -619,11 +626,11 @@ class DualSageCone(SetMembership):
         covers = kwargs['covers'] if 'covers' in kwargs else None
         c = kwargs['c'] if 'c' in kwargs else None
         self.alpha = alpha
-        self.c = Expression(c) if c is not None else None
+        self.c = Expression(c) if c else None
         self.v = v
         self._n = alpha.shape[1]
         self._m = alpha.shape[0]
-        if X is not None:
+        if X:
             check_cones(X.K)
             self._lifted_n = X.A.shape[1]
             self.ech = ExpCoverHelper(self.alpha, self.c, (X.A, X.b, X.K), covers, self.settings)
@@ -673,6 +680,13 @@ class DualSageCone(SetMembership):
                 expr = np.tile(self.v[i], num_cover).view(Expression)
                 mat = self.alpha[i, :] - self.alpha[idx_set, :]
                 vecvar = self._lifted_mu_vars[i][:self._n]
+                # TODO: extend DualSageCone to use the "kernel_basis_matrix" option that's already
+                # available in the primal cone for ordinary SAGE (X=R^n).
+                # Here, we'd need a matrix "reduced_mat" where range(reduced_mat) = range(mat),
+                # but reduced_mat has linearly independent columns. If mat already has linearly
+                # independent columns then we use reduced_mat = mat. Otherwise we can get a linearly
+                # independent subset of columns by doing row reduction on mat.T and checking where
+                # the pivots are.
                 if self.settings['compact_dual']:
                     epi = mat @ vecvar
                     cd = elementwise_relent(expr, self.v[idx_set], epi)
@@ -689,7 +703,7 @@ class DualSageCone(SetMembership):
                     curr_k = [Cone('+', num_rows)]
                     cone_data.append((av, ar, ac, curr_b, curr_k))
                 # membership in cone induced by self.AbK
-                if self.X is not None:
+                if self.X:
                     A, b, K = self.X.A, self.X.b, self.X.K
                     vecvar = self._lifted_mu_vars[i]
                     singlevar = self.v[i]
@@ -742,7 +756,7 @@ class DualSageCone(SetMembership):
                 residual = mat @ mu_i[:self._n] - lowerbounds
                 residual[residual >= 0] = 0
                 curr_viol = np.linalg.norm(residual, ord=norm_ord)
-                if (self.X is not None) and (not np.isnan(curr_viol)):
+                if self.X and (not np.isnan(curr_viol)):
                     AbK_val = self.X.A @ mu_i + v[i] * self.X.b
                     AbK_viol = PrimalProductCone.project(AbK_val, self.X.K)
                     curr_viol += AbK_viol
@@ -750,7 +764,7 @@ class DualSageCone(SetMembership):
                 if (curr_viol > 0 or np.isnan(curr_viol)) and not rough:
                     temp_var = Variable(shape=(self._lifted_n,), name='temp_var')
                     cons = [mat @ temp_var[:self._n] >= lowerbounds]
-                    if self.X is not None:
+                    if self.X:
                         con = PrimalProductCone(self.X.A @ temp_var + v[i] * self.X.b, self.X.K)
                         cons.append(con)
                     prob = Problem(CL_MIN, Expression([0]), cons)
@@ -768,12 +782,12 @@ class ExpCoverHelper(object):
 
     def __init__(self, alpha, c, AbK, expcovers=None, settings=None):
         self.settings = SETTINGS.copy()
-        if settings is not None:
+        if settings:
             self.settings.update(settings)
-        if c is not None and not isinstance(c, Expression):
+        if c and not isinstance(c, Expression):
             raise RuntimeError()
         self.m = alpha.shape[0]
-        if AbK is not None:
+        if AbK:
             lifted_n = AbK[0].shape[1]
             n = alpha.shape[1]
             if lifted_n > n:
@@ -783,7 +797,7 @@ class ExpCoverHelper(object):
         self.alpha = alpha
         self.AbK = AbK
         self.c = c
-        if self.c is not None:
+        if self.c:
             self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
             # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
             # this AGE cone might not be used in the final solution to the associated
