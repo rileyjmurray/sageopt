@@ -14,7 +14,7 @@
    limitations under the License.
 """
 import numpy as np
-from sageopt.coniclifts.base import Variable, Expression, ScalarExpression
+from sageopt.coniclifts.base import Variable, Expression, ScalarExpression, ScalarVariable
 from sageopt.coniclifts.operators.affine import concatenate
 
 
@@ -156,7 +156,10 @@ def matvec_plus_vec_times_scalar(mat1, vec1, vec2, scalar):
     return A_vals, A_rows, A_cols, b
 
 
-def columns_sum_leq_vec(mat, vec):
+def columns_sum_leq_vec(mat, vec, mat_offsets=False):
+    # This function assumes that each ScalarExpression in mat
+    # consists of a single ScalarVariable with coefficient one,
+    # and has no offset term.
     A_rows, A_cols, A_vals = [], [], []
     m = mat.shape[0]
     if m != vec.size:
@@ -173,10 +176,19 @@ def columns_sum_leq_vec(mat, vec):
         A_cols += [aid for aid, _ in id2co]
         A_vals += [co for _, co in id2co]
         # update rows with appropriate number of "i"s.
-        A_rows += [i] * (len(svs) + len(id2co))
+        total_len = len(svs) + len(id2co)
+        if total_len > 0:
+            A_rows += [i] * total_len
+        else:
+            A_rows.append(i)
+            A_vals.append(0)
+            A_cols.append(ScalarVariable.curr_variable_count() - 1)
         # update b
         b[i] = vec[i].offset
+        if mat_offsets:
+            b[i] -= sum([matij.offset for matij in mat[i, :]])
     A_rows = np.array(A_rows)
     return A_vals, A_rows, A_cols, b
+
 
 
