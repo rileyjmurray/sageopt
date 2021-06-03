@@ -220,27 +220,29 @@ class PrimalSageCone(SetMembership):
     def _condsage_init_variables(self):
         for i in self.ech.U_I:
             num_cover = self.ech.expcover_counts[i]
+            si = str(i)
             if num_cover > 0:
-                var_name = 'nu^{(' + str(i) + ')}_' + self.name
+                var_name = 'nu^{(%s)}_{%s}' % (si, self.name)
                 self._nus[i] = Variable(shape=(num_cover,), name=var_name)
-                var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
+                var_name = '_relent_epi_^{(%s)}_{%s}' % (si, self.name)
                 self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
-                var_name = 'eta^{(' + str(i) + ')}_{' + self.name + '}'
+                var_name = 'eta^{(%s)}_{%s}' % (si, self.name)
                 self._eta_vars[i] = Variable(shape=(self.X.b.size,), name=var_name)
             c_len = self._c_len_check_infeas(num_cover, i)
-            var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
+            var_name = 'c^{(%s)}_{%s}' % (si, self.name)
             self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
         self._variables += list(self._nus.values())
         self._variables += list(self._c_vars.values())
-        self._variables += list(self._relent_epi_varc_lens.values())
+        self._variables += list(self._relent_epi_vars.values())
         self._variables += list(self._eta_vars.values())
         pass
 
     def _ordsage_init_variables(self):
         for i in self.ech.U_I:
             num_cover = self.ech.expcover_counts[i]
+            si = str(i)
             if num_cover > 0:
-                var_name = 'nu^{(' + str(i) + ')}_' + self.name
+                var_name = 'nu^{(%s)}_{%s}' % (si, self.name)
                 if self.settings['kernel_basis']:
                     var_name = '_pre_' + var_name
                     idx_set = self.ech.expcovers[i]
@@ -251,13 +253,13 @@ class PrimalSageCone(SetMembership):
                     self._pre_nus[i] = pre_nu_i
                     self._nus[i] = self._nu_bases[i] @ pre_nu_i
                 else:
-                    var_name = 'nu^{(' + str(i) + ')}_' + self.name
+                    var_name = 'nu^{(%s)}_{%s}' % (si, self.name)
                     nu_i = Variable(shape=(num_cover,), name=var_name)
                     self._nus[i] = nu_i
-                var_name = '_relent_epi_^{(' + str(i) + ')}_' + self.name
+                var_name = '_relent_epi_^{(%s)}_{%s}' % (si, self.name)
                 self._relent_epi_vars[i] = Variable(shape=(num_cover,), name=var_name)
             c_len = self._c_len_check_infeas(num_cover, i)
-            var_name = 'c^{(' + str(i) + ')}_{' + self.name + '}'
+            var_name = 'c^{(%s)}_{%s}' % (si, self.name)
             self._c_vars[i] = Variable(shape=(c_len,), name=var_name)
         if self.settings['kernel_basis']:
             self._variables += list(self._pre_nus.values())
@@ -350,10 +352,10 @@ class PrimalSageCone(SetMembership):
                 idx_set = self.ech.expcovers[i]
                 # relative entropy inequality constraint
                 x = self._nus[i]
-                y = np.exp(1) * self.age_vectors[i][idx_set]  # This line consumes a large amount of runtime
+                y = self.age_vectors[i][idx_set]
                 z = -self.age_vectors[i][i]
                 epi = self._relent_epi_vars[i]
-                cd = sum_relent(x, y, z, epi)
+                cd = sum_relent(x, y, z, epi, y_scale=np.exp(1))
                 cone_data.append(cd)
                 if not self.settings['kernel_basis']:
                     # linear equality constraints
@@ -382,10 +384,10 @@ class PrimalSageCone(SetMembership):
                 idx_set = self.ech.expcovers[i]
                 # relative entropy inequality constraint
                 x = self._nus[i]
-                y = np.exp(1) * self.age_vectors[i][idx_set]  # takes weirdly long amount of time.
+                y = self.age_vectors[i][idx_set]
                 z = -self.age_vectors[i][i] + self._eta_vars[i] @ self.X.b
                 epi = self._relent_epi_vars[i]
-                cd = sum_relent(x, y, z, epi)
+                cd = sum_relent(x, y, z, epi, y_scale=np.exp(1))
                 cone_data.append(cd)
                 # linear equality constraints
                 mat1 = (lifted_alpha[idx_set, :] - lifted_alpha[i, :]).T
@@ -626,7 +628,7 @@ class DualSageCone(SetMembership):
         covers = kwargs['covers'] if 'covers' in kwargs else None
         c = kwargs['c'] if 'c' in kwargs else None
         self.alpha = alpha
-        self.c = Expression(c) if c else None
+        self.c = Expression(c) if (c is not None) else None
         self.v = v
         self._n = alpha.shape[1]
         self._m = alpha.shape[0]
@@ -649,13 +651,14 @@ class DualSageCone(SetMembership):
         self._variables = self.v.variables()
         if self._m > 1:
             for i in self.ech.U_I:
-                var_name = 'mu[' + str(i) + ']_{' + self.name + '}'
+                si = str(i)
+                var_name = 'mu[%s]_{%s}' % (si, self.name)
                 self._lifted_mu_vars[i] = Variable(shape=(self._lifted_n,), name=var_name)
                 self._variables.append(self._lifted_mu_vars[i])
                 self.mu_vars[i] = self._lifted_mu_vars[i][:self._n]
                 num_cover = self.ech.expcover_counts[i]
                 if num_cover > 0 and not self.settings['compact_dual']:
-                    var_name = '_relent_epi_[' + str(i) + ']_{' + self.name + '}'
+                    var_name = '_relent_epi_[%s]_{%s}' % (si, self.name)
                     epi = Variable(shape=(num_cover,), name=var_name)
                     self._relent_epi_vars[i] = epi
                     self._variables.append(epi)
@@ -784,7 +787,7 @@ class ExpCoverHelper(object):
         self.settings = SETTINGS.copy()
         if settings:
             self.settings.update(settings)
-        if c and not isinstance(c, Expression):
+        if (c is not None) and not isinstance(c, Expression):
             raise RuntimeError()
         self.m = alpha.shape[0]
         if AbK:
@@ -797,7 +800,7 @@ class ExpCoverHelper(object):
         self.alpha = alpha
         self.AbK = AbK
         self.c = c
-        if self.c:
+        if self.c is not None:
             self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
             # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
             # this AGE cone might not be used in the final solution to the associated

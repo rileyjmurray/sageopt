@@ -18,8 +18,8 @@ from sageopt.coniclifts.base import Expression, Variable
 from sageopt.coniclifts.cones import Cone
 
 
-def sum_relent(x, y, z, aux_vars):
-    # represent "sum{x[i] * ln( x[i] / y[i] )} + z <= 0" in conic form.
+def sum_relent(x, y, z, aux_vars, y_scale=1.0):
+    # represent "sum{x[i] * ln( x[i] / y_scale * y[i] )} + z <= 0" in conic form.
     # return the Variable object created for all epigraphs needed in
     # this process, as well as A_data, b, and K.
     x, y = _align_args(x, y)
@@ -44,7 +44,7 @@ def sum_relent(x, y, z, aux_vars):
     b[0] = -z.offset
     # populate the epigraph terms
     curr_row = 1
-    _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row)
+    _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row, y_scale)
     return A_vals, np.array(A_rows), A_cols, b, K
 
 
@@ -74,7 +74,7 @@ def elementwise_relent(x, y, z):
     return A_vals, np.array(A_rows), A_cols, b, K
 
 
-def _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row):
+def _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row, y_scale=1.0):
     # aux_var_ids is a list of ScalarVariable ids for epigraph terms
     for i in range(x.size):
         # first entry of exp cone
@@ -91,8 +91,8 @@ def _fast_elemwise_data(A_rows, A_cols, A_vals, b, x, y, aux_var_ids, curr_row):
         id2co = [(a.id, co) for a, co in y[i].atoms_to_coeffs.items()]
         A_rows += [curr_row + 1] * len(id2co)
         A_cols += [aid for aid, _ in id2co]
-        A_vals += [co for _, co in id2co]
-        b[curr_row + 1] = y[i].offset
+        A_vals += [y_scale * co for _, co in id2co]
+        b[curr_row + 1] = y_scale * y[i].offset
         curr_row += 3
 
 
