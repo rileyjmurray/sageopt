@@ -18,7 +18,10 @@ import numpy as np
 from sageopt.symbolic.polynomials import Polynomial, standard_poly_monomials
 from sageopt.relaxations import poly_relaxation, poly_constrained_relaxation, sage_multiplier_search
 from sageopt.relaxations import poly_solution_recovery, infer_domain
+from sageopt.relaxations.sage_polys import primal_sage_poly_cone, relative_dual_sage_poly_cone
 from sageopt import coniclifts as cl
+from sageopt.coniclifts.base import Expression
+import sageopt as so
 
 
 def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
@@ -84,6 +87,53 @@ class TestSagePolynomials(unittest.TestCase):
             assert v == 'c33' or v == str(p) + ' variable sigrep coefficients'
         assert sr.alpha_c[(1, 1)] == -1
 
+    def test_primal_sage_covers(self):
+        ms = np.random.randint(10, 50, size=(10,))
+
+        for m in ms:
+            k = np.random.randint(3, m)
+            # Create symbolic coefficient vector and polynomial from it
+            c_sym = cl.Variable(shape=(m,), name='my_var')
+            A = np.random.randint(0, 10, size=(m, 6))
+            random_terms_even = np.random.choice(range(m), m-k, replace=False)
+            for i in range(m):
+                if i in random_terms_even:
+                    A[i, :] = 2 * (A[i, :] // 2)
+                else:
+                    A[i, :] = 2 * (A[i, :] // 2) + 1
+            p = so.Polynomial(A, c_sym)
+            # ^ p is now a symbolic Polynomial in 6 variables with 10 terms.
+            constrs = primal_sage_poly_cone(p, "all_sym", None)
+            # Get the Primal Sage Cone Object for this polynomial
+            con = constrs[0]
+            # Checks that the vectors have reduced in length to see if covers was processed correclty
+            for key in con._c_vars:
+                assert con._c_vars[key].size <= m - k + 1
+
+
+    def test_primal_cone_cover2(self):
+        ms = np.random.randint(10, 50, size=(10,))
+
+        for m in ms:
+            k = np.random.randint(3, m)
+            # Create symbolic coefficient vector and polynomial from it
+            c_sym = np.random.randint(1, 20, size=(m,))
+            A = np.random.randint(0, 10, size=(m, 6))
+            random_terms_even = np.random.choice(range(m), m - k, replace=False)
+            for i in range(m):
+                if i in random_terms_even:
+                    A[i, :] = 2 * (A[i, :] // 2)
+                else:
+                    A[i, :] = 2 * (A[i, :] // 2) + 1
+            p = so.Polynomial(A, c_sym)
+            # ^ p is now a symbolic Polynomial in 6 variables with 10 terms.
+            constrs = primal_sage_poly_cone(p, "all_sym", None)
+            # Get the Primal Sage Cone Object for this polynomial
+            con = constrs[0]
+            # Checks that the vectors have reduced in length to see if covers was processed correclty
+            for key in con._c_vars:
+                assert con._c_vars[key].size <= m - k + 1
+
     #
     #   Test unconstrained relaxations
     #
@@ -138,12 +188,12 @@ class TestSagePolynomials(unittest.TestCase):
         #       was (poly_ell=0, sigrep_ell=5). In this case the SAGE bound was 0.8336.
         #
         p = Polynomial.from_dict({(0, 0): 1,
-                        (2, 6): 3,
-                        (6, 2): 2,
-                        (2, 2): 6,
-                        (1, 2): -1,
-                        (2, 1): 2,
-                        (3, 3): -3})
+                                  (2, 6): 3,
+                                  (6, 2): 2,
+                                  (2, 2): 6,
+                                  (1, 2): -1,
+                                  (2, 1): 2,
+                                  (3, 3): -3})
         res00 = primal_dual_unconstrained(p, poly_ell=0, sigrep_ell=0)
         expect00 = 0.6932
         assert abs(res00[0] - res00[1]) <= 1e-6
@@ -162,12 +212,12 @@ class TestSagePolynomials(unittest.TestCase):
     def test_unconstrained_3(self):
         # Minimization of the six-hump camel back function.
         p = Polynomial.from_dict({(0, 0): 0,
-                        (2, 0): 4,
-                        (1, 1): 1,
-                        (0, 2): -4,
-                        (4, 0): -2.1,
-                        (0, 4): 4,
-                        (6, 0): 1.0 / 3.0})
+                                  (2, 0): 4,
+                                  (1, 1): 1,
+                                  (0, 2): -4,
+                                  (4, 0): -2.1,
+                                  (0, 4): 4,
+                                  (6, 0): 1.0 / 3.0})
         # sigrep_ell=0 has a decent bound, and sigrep_ell=1 is nearly optimal.
         # ECOS is unable to solver sigrep_ell=2 due to conditioning problems.
         # MOSEK easily solves sigrep_ell=2, and this is globally optimal
@@ -224,7 +274,7 @@ class TestSagePolynomials(unittest.TestCase):
 
     def test_ordinary_constrained_2(self):
         x = standard_poly_monomials(1)[0]
-        f = -x**2
+        f = -x ** 2
         gts = [1 - x, x - (-1)]
         eqs = []
         res, dual = primal_dual_constrained(f, gts, eqs, 0, 2, 0, None)
@@ -279,8 +329,8 @@ class TestSagePolynomials(unittest.TestCase):
 
     def test_conditional_sage_1(self):
         x = standard_poly_monomials(1)[0]
-        f = -x**2
-        gts = [1 - x**2]
+        f = -x ** 2
+        gts = [1 - x ** 2]
         opt = -1
         X = infer_domain(f, gts, [])
         res_uncon00 = primal_dual_unconstrained(f, 0, 0, X)
@@ -323,7 +373,7 @@ class TestSagePolynomials(unittest.TestCase):
         for i in range(n):
             sel = np.ones(n, dtype=bool)
             sel[i] = False
-            f += 2**(n-1) * np.prod(x[sel])
+            f += 2 ** (n - 1) * np.prod(x[sel])
         gts = [0.25 - x[i] ** 2 for i in range(n)]  # -0.5 <= x[i] <= 0.5 for all i.
         opt = -3
         expect = -5
@@ -342,10 +392,10 @@ class TestSagePolynomials(unittest.TestCase):
     def test_conditional_sage_4(self):
         n = 4
         x = standard_poly_monomials(n)
-        f0 = -x[0]*x[2]**3 + 4*x[1]*x[2]**2*x[3] + 4*x[0]*x[2]*x[3]**2
-        f1 = 2*x[1]*x[3]**3 + 4*x[0]*x[2] + 4*x[2]**2 - 10*x[1]*x[3] - 10*x[3]**2 + 2
+        f0 = -x[0] * x[2] ** 3 + 4 * x[1] * x[2] ** 2 * x[3] + 4 * x[0] * x[2] * x[3] ** 2
+        f1 = 2 * x[1] * x[3] ** 3 + 4 * x[0] * x[2] + 4 * x[2] ** 2 - 10 * x[1] * x[3] - 10 * x[3] ** 2 + 2
         f = f0 + f1
-        sign_sym = [0.25 - x[i]**2 for i in range(n)]
+        sign_sym = [0.25 - x[i] ** 2 for i in range(n)]
         X = infer_domain(f, sign_sym, [])
         gts = [x[i] + 0.5 for i in range(n)] + [0.5 - x[i] for i in range(n)]
         dual = poly_constrained_relaxation(f, gts, [], X, p=1, q=2)
