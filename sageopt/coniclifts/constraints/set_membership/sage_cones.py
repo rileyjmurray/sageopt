@@ -271,6 +271,8 @@ class PrimalSageCone(SetMembership):
     def _c_len_check_infeas(self, num_cover, i):
         c_len = num_cover
         if i not in self.ech.N_I:
+            # Then we can't set this AGE vector's i-th component to self.c[i];
+            # we need one more variable.
             c_len += 1
         if c_len == 0:  # pragma: no cover
             msg = 'PrimalSageCone constraint "' + self.name + '" encountered an index '
@@ -284,12 +286,18 @@ class PrimalSageCone(SetMembership):
         if self._m > 1:
             for i in self.ech.U_I:
                 ci_expr = Expression(np.zeros(self._m,))
+                raw_age_vec = self._c_vars[i]
                 if i in self.ech.N_I:
-                    ci_expr[self.ech.expcovers[i]] = self._c_vars[i]
+                    # Then we didn't create a component for age_vectors[i][i]; need to get
+                    # that component from c[i].
                     ci_expr[i] = self.c[i]
+                    ci_expr[self.ech.expcovers[i]] = raw_age_vec
                 else:
-                    ci_expr[self.ech.expcovers[i]] = self._c_vars[i][:-1]
-                    ci_expr[i] = self._c_vars[i][-1]
+                    # Then we did create an AGE cone (i in U_I) and we also created an i-th
+                    # variable for it (because maybe age_vectors[i][i] = 0 at optimality, when
+                    # c[i] > 0 is needed for some other AGE cone).
+                    ci_expr[i] = raw_age_vec[-1]
+                    ci_expr[self.ech.expcovers[i]] = raw_age_vec[:-1]
                 self.age_vectors[i] = ci_expr
         else:
             self.age_vectors[0] = self.c

@@ -24,14 +24,14 @@ from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
 
 
-def create_covers(s):
+def create_poly_covers(s):
     covers = {}
 
     # If it is an expression, check to see the ScalarExpressions are constant
     if isinstance(s.c, Expression):
         for i in range(s.c.size):
             # If s.c is positive, then do not need covers[i]
-            if s.c[i].is_constant() and s.c[i].value >= 0:
+            if s.c[i].is_constant() and s.c[i].value >= 0 and np.all(s.alpha[i, :] % 2 == 0):
                 pass
             else:
                 covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
@@ -40,7 +40,7 @@ def create_covers(s):
     else:
         for i in range(s.c.size):
             # Check if positive constant
-            if s.c[i] >= 0:
+            if s.c[i] >= 0 and np.all(s.alpha[i, :] % 2 == 0):
                 pass
             else:
                 covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
@@ -64,7 +64,7 @@ def primal_sage_poly_cone(poly, name, log_AbK):
     poly_sr, poly_sr_cons = poly.sig_rep
 
     # Create covers argument
-    covers = create_covers(poly_sr)
+    covers = create_poly_covers(poly_sr)
 
     con = sage_sigs.primal_sage_cone(poly_sr, name, log_AbK, expcovers=covers)
     constrs = [con] + poly_sr_cons
@@ -83,7 +83,7 @@ def relative_dual_sage_poly_cone(primal_poly, dual_var, name_base, log_AbK):
     """
     sr, sr_cons = primal_poly.sig_rep
 
-    covers = create_covers(sr)
+    covers = create_poly_covers(sr)
 
 
     evens = [i for i, row in enumerate(sr.alpha) if np.all(row % 2 == 0)]
