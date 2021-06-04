@@ -31,7 +31,7 @@ def create_covers(s):
     if isinstance(s.c, Expression):
         for i in range(s.c.size):
             # If s.c is positive, then do not need covers[i]
-            if s.c[i].is_constant() and s.c[i].value >= 0:
+            if s.c[i].is_constant() and s.c[i].value >= 0 and np.all(s.alpha[i, :] % 2 == 0):
                 pass
             else:
                 covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
@@ -40,7 +40,7 @@ def create_covers(s):
     else:
         for i in range(s.c.size):
             # Check if positive constant
-            if s.c[i] >= 0:
+            if s.c[i] >= 0 and np.all(s.alpha[i, :] % 2 == 0):
                 pass
             else:
                 covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
