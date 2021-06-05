@@ -27,27 +27,17 @@ from sageopt.relaxations import symbolic_correspondences as sym_corr
 def create_covers(s):
     covers = {}
 
-    # If it is an expression, check to see the ScalarExpressions are constant
-    if isinstance(s.c, Expression):
-        for i in range(s.c.size):
-            # If s.c is positive, then do not need covers[i]
-            if s.c[i].is_constant() and s.c[i].value >= 0 and np.all(s.alpha[i, :] % 2 == 0):
-                pass
-            else:
-                covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
-                covers[i][i] = False
-    # Otherwise it is a numeric ndarray
-    else:
-        for i in range(s.c.size):
-            # Check if positive constant
-            if s.c[i] >= 0 and np.all(s.alpha[i, :] % 2 == 0):
-                pass
-            else:
-                covers[i] = np.full(shape=s.c.size, fill_value=True, dtype=bool)
-                covers[i][i] = False
+    c = Expression(s.c)
+    #Check to see the ScalarExpressions within c are constant
+    for i in range(c.size):
+        # If s.c is positive, then do not need covers[i]
+        if c[i].is_constant() and c[i].value >= 0 and np.all(s.alpha[i, :] % 2 == 0):
+            pass
+        else:
+             covers[i] = np.full(shape=c.size, fill_value=True, dtype=bool)
+             covers[i][i] = False
 
     # s.alpha is a 2 dimensional numpy array
-
     # Get the number of rows in s.alpha
     num_rows = s.alpha.shape[0]
     for j in range(num_rows):
