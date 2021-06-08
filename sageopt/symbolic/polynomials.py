@@ -210,6 +210,16 @@ class Polynomial(Signomial):
         Signomial._cache_grad(self)  # This ends up calling the Polynomial "_partial" function.
         return self._grad
 
+    def grad_val(self, x):
+        """
+        Return the gradient of this Polynomial (as an ndarray) at the point ``x``.
+        """
+        _ = self.grad  # construct the function handles.
+        g = np.zeros(self._n)
+        for i in range(self._n):
+            g[i] = self._grad[i](x)
+        return g
+
     @property
     def hess(self):
         """
@@ -219,6 +229,20 @@ class Polynomial(Signomial):
         """
         Signomial._cache_hess(self)  # This ends up calling the Polynomial "_partial" function.
         return self._hess
+
+    def hess_val(self, x):
+        """
+        Return the Hessian of this Polynomial (as an ndarray) at the point ``x``.
+        """
+        if self._hess is None:
+            _ = self.hess  # ignore the return value
+        H = np.zeros(shape=(self._n, self._n))
+        for i in range(self._n):
+            for j in range(i+1):
+                val = self._hess[i, j](x)
+                H[i, j] = val
+                H[j, i] = val
+        return H
 
     def __mul__(self, other):
         if not isinstance(other, Polynomial):

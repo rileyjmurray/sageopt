@@ -479,24 +479,20 @@ class Signomial(object):
         """
         Return the gradient of this Signomial (as an ndarray) at the point ``x``.
         """
-        _ = self.grad  # construct the function handles.
-        g = np.zeros(self._n)
-        for i in range(self._n):
-            g[i] = self._grad[i](x)
-        return g
+        #_ = self.grad  # construct the function handles.
+        #g = np.zeros(self._n)
+        #for i in range(self._n):
+        #    g[i] = self._grad[i](x)
+        weights = self.c * np.exp(self.alpha @ x)
+        grad = self.alpha.T @ weights
+        return grad
 
     def hess_val(self, x):
         """
         Return the Hessian of this Signomial (as an ndarray) at the point ``x``.
         """
-        if self._hess is None:
-            _ = self.hess  # ignore the return value
-        H = np.zeros(shape=(self._n, self._n))
-        for i in range(self._n):
-            for j in range(i+1):
-                val = self._hess[i, j](x)
-                H[i, j] = val
-                H[j, i] = val
+        weights = self.c * np.exp(self.alpha @ x)
+        H = self.alpha.T @ (self.alpha * weights)
         return H
 
     def as_polynomial(self):

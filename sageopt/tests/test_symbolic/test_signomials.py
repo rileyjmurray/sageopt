@@ -167,7 +167,7 @@ class TestSignomials(unittest.TestCase):
         f = Signomial.from_dict({(-2,): 1, (0,): -1})
         actual = f.hess_val(np.array([3]))
         expect = 4*np.exp(-2*3)
-        assert abs(actual[0] - expect) < 1e-8
+        assert abs(actual[0, 0] - expect) < 1e-8
 
     def test_signomial_shift_coordinates(self):
         f = Signomial.from_dict({(0,): 1, (1,): 2, (2,): 3})
