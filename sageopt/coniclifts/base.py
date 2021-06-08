@@ -89,13 +89,13 @@ class ScalarVariable(ScalarAtom):
         if isinstance(other, ScalarVariable):
             return self._id < other._id
         else:  # pragma: no cover
-            raise RuntimeError('Cannot compare ScalarVariable to ' + str(type(other)))
+            raise RuntimeError('Cannot compare ScalarVariable to %s' % str(type(other)))
 
     def __gt__(self, other):  # pragma: no cover
         if isinstance(other, ScalarVariable):
             return self._id > other._id
         else:
-            raise RuntimeError('Cannot compare ScalarVariable to ' + str(type(other)))
+            raise RuntimeError('Cannot compare ScalarVariable to %s' % str(type(other)))
 
     def is_affine(self):
         return True
@@ -769,7 +769,7 @@ class Variable(Expression):
         if var_properties is None:
             var_properties = []
         if name is None:
-            name = 'unnamed_var_' + str(Variable._UNNAMED_VARIABLE_CALL_COUNT)
+            name = 'unnamed_var_{%s}' % str(Variable._UNNAMED_VARIABLE_CALL_COUNT)
             Variable._UNNAMED_VARIABLE_CALL_COUNT += 1
         obj = np.empty(shape=shape, dtype=object).view(Variable)
         obj._is_proper = True

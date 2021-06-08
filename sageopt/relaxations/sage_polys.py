@@ -396,7 +396,7 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
         # with constraints over that dual variable.
         g_m = g * modulator
         c_g = sym_corr.moment_reduction_array(s_g, g_m, lagrangian)
-        name_base = 'v_' + str(g)
+        name_base = 'v_{%s}' % str(g)
         if slacks:
             v_g = cl.Variable(name=name_base, shape=(s_g.m, 1))
             con = c_g @ v == v_g
@@ -508,14 +508,14 @@ def make_poly_lagrangian(f, gts, eqs, p, q):
     alpha_multiplier = np.unique(alpha_multiplier, axis=0)
     ineq_dual_polys = []
     for g in folded_gt:
-        s_g_coeff = cl.Variable(name='s_' + str(g), shape=(alpha_multiplier.shape[0],))
+        s_g_coeff = cl.Variable(name='s_{%s}' % str(g), shape=(alpha_multiplier.shape[0],))
         s_g = Polynomial(alpha_multiplier, s_g_coeff)
         L -= s_g * g
         ineq_dual_polys.append((s_g, g))
     eq_dual_polys = []
     folded_eq = con_gen.up_to_q_fold_cons(eqs, q)
     for g in folded_eq:
-        z_g_coeff = cl.Variable(name='z_' + str(g), shape=(alpha_multiplier.shape[0],))
+        z_g_coeff = cl.Variable(name='z_{%s}' % str(g), shape=(alpha_multiplier.shape[0],))
         z_g = Polynomial(alpha_multiplier, z_g_coeff)
         L -= z_g * g
         eq_dual_polys.append((z_g, g))

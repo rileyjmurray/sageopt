@@ -55,7 +55,7 @@ class Abs(NonlinearScalarAtom):
         self._epigraph_variable = None
         self._eval_only = eval_only
         if not eval_only:
-            v = Variable(shape=(), name='_abs_epi_[' + str(self.id) + ']_')
+            v = Variable(shape=(), name='_abs_epi_[%s]_' % str(self.id))
             self._epigraph_variable = v[()].scalar_variables()[0]
         self._evaluator = Abs._abs_evaluator
         pass

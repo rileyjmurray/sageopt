@@ -55,7 +55,7 @@ class Pos(NonlinearScalarAtom):
         self._epigraph_variable = None
         self._eval_only = eval_only
         if not eval_only:
-            v = Variable(shape=(), name='_pos_epi_[' + str(self.id) + ']_')
+            v = Variable(shape=(), name='_pos_epi_[%s]_' % str(self.id))
             self._epigraph_variable = v[()].scalar_variables()[0]
         self._evaluator = Pos._pos_evaluator
         pass

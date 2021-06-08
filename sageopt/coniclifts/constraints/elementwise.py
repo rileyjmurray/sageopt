@@ -37,7 +37,7 @@ class ElementwiseConstraint(Constraint):
         self.lhs = lhs
         self.rhs = rhs
         self.initial_operator = operator
-        name_str = 'Elementwise[' + str(self.id) + '] : '
+        name_str = 'Elementwise[%s] : ' % str(self.id)
         self.name = name_str
         if operator == '==':
             self.expr = (self.lhs - self.rhs).ravel()

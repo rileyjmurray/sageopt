@@ -463,7 +463,7 @@ class Signomial(object):
             The function obtained by differentiating this signomial with respect to its i-th argument.
         """
         if i < 0 or i >= self._n:  # pragma: no cover
-            raise RuntimeError('This Signomial does not have an input at index ' + str(i) + '.')
+            raise RuntimeError('This Signomial does not have an input at index %s.' % str(i))
         d = dict()
         for j in range(self._m):
             vec = self.alpha[j, :]
@@ -666,9 +666,12 @@ class SigDomain(object):
     def __init__(self, n, **kwargs):
         for kw in kwargs:
             if kw not in SigDomain.__VALID_KWARGS__:  # pragma: no cover
-                msg = 'Provided keyword argument "' + kw + '" is not in the list'
-                msg += ' of allowed keyword arguments: \n'
-                msg += '\t ' + str(SigDomain.__VALID_KWARGS__)
+                msg = """
+                Provided keyword argument "%s" is not in the list of
+                allowed keyword arguments:
+                    %s.
+                """ % (kw, str(SigDomain.__VALID_KWARGS__))
+                warnings.warn(msg)
         self.n = n
         self.A = None
         self.b = None
@@ -701,15 +704,18 @@ class SigDomain(object):
         prob.solve(verbose=False, solver='ECOS')
         if not prob.value < 1e-7:
             if prob.value is np.NaN:  # pragma: no cover
-                msg = 'SigDomain constraints could not be verified as feasible.'
-                msg += '\n Proceed with caution!'
+                msg = """
+                SigDomain constraints could not be verified as feasible.
+                Proceed with caution!
+                """
                 warnings.warn(msg)
             else:
-                msg1 = 'SigDomain constraints seem to be infeasible.\n'
-                msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'
-                msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
-                msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
-                msg = msg1 + msg2 + msg3 + msg4
+                msg = """
+                SigDomain constraints seem to be infeasible.
+                The feasibility problem's status was "%s"
+                and the feasibility problem's value was %s.
+                The objective was "minimize 0"; we expect problem value < 1e-7.
+                """ % (prob.status, str(prob.value))
                 raise RuntimeError(msg)
         pass
 
@@ -730,8 +736,10 @@ class SigDomain(object):
         self._constraints = constraints
         self._x = variables[0]
         if self._x.size != self.n:
-            msg = 'The provided constraints are over a variable of dimension '
-            msg += str(self._x.size) + ', but this SigDomain was declared as dimension ' + str(self.n) + '.'
+            msg = """
+            The provided constraints are over a variable of dimension %s,
+            but this SigDomain was declared as dimension %s.
+            """ % (str(self._x.size), str(self.n))
             raise RuntimeError(msg)
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(constraints)
         A = A.toarray()

@@ -63,7 +63,7 @@ class Exponential(NonlinearScalarAtom):
         self._args = (self.parse_arg(x),)
         self._id = Exponential._EXPONENTIAL_COUNTER_
         Exponential._EXPONENTIAL_COUNTER_ += 1
-        v = Variable(shape=(), name='_exp_epi_[' + str(self.id) + ']_')
+        v = Variable(shape=(), name='_exp_epi_[%s]_' % str(self.id))
         self._epigraph_variable = v[()].scalar_variables()[0]
         self._evaluator = Exponential._exp_evaluator
         pass

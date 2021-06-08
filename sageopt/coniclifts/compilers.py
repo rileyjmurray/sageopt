@@ -34,11 +34,9 @@ def compile_problem(objective, constraints):
     # Generate a conic system that is feasible iff the constraints are feasible.
     A, b, K, variable_map, variables, svid2col = compile_constrained_system(constraints)
     # Generate the vector for the objective function.
-    # c, c_offset = compile_linear_expression(objective, svid2col)
     c, c_offset = compile_objective(objective, svid2col)
     if c_offset != 0:
-        warnings.warn('A constant-term ' + str(c_offset) + ' is being dropped from the objective.')
-    # c = np.array(c.todense()).flatten().astype(float)
+        warnings.warn('A constant-term %s is being dropped from the objective.' % str(c_offset))
     return c, A, b, K, variable_map, variables
 
 
@@ -271,8 +269,10 @@ def find_variables_from_constraints(constraints):
                     variable_ids.add(vid)
                     variables.append(v)
             else:
-                msg = 'Constraint \n \t' + str(c) + '\n'
-                msg += 'returned an improper Variable \n \t' + str(v) + '\n'
+                msg = """
+                    Constraint \n \t %s
+                    returned an improper Variable \n \t %s
+                """ % (str(c), str(v))
                 raise RuntimeError(msg)
     return variables
 
@@ -280,9 +280,9 @@ def find_variables_from_constraints(constraints):
 def check_dimensions(A, b, K):
     total_K_len = sum([co.len for co in K])
     if total_K_len != A.shape[0]:
-        msg = 'K specifies a ' + str(total_K_len) + ' dimensional space, but A has ' + str(A.shape[0]) + ' rows.'
+        msg = "K specifies a %s dimensional space, but A has %s rows." % (str(total_K_len), str(A.shape[0]))
         raise RuntimeError(msg)
     if total_K_len != b.size:
-        msg = 'K specifies a ' + str(total_K_len) + ' dimensional space, but b is of length ' + str(b.size) + '.'
+        msg = 'K specifies a %s dimensional space, but b is of length %s.' % (str(total_K_len), str(b.size))
         raise RuntimeError(msg)
     pass

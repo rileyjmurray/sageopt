@@ -157,7 +157,7 @@ class Mosek(Solver):
                 indices = [co_cols[1], co_cols[2], co_cols[0]]
                 task.appendcone(mosek.conetype.pexp, 0.0, indices)
             else:
-                raise RuntimeError('Unknown separated cone ' + str(co[0]) + '.')
+                raise RuntimeError('Unknown separated cone %s.' % str(co[0]))
 
         # Define linear inequality and equality constraints.
         task.appendcons(m)

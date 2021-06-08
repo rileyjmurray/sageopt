@@ -56,7 +56,7 @@ class RelEnt(NonlinearScalarAtom):
         self._args = (self.parse_arg(x), self.parse_arg(y))
         self._id = RelEnt._REL_ENT_COUNTER_
         RelEnt._REL_ENT_COUNTER_ += 1
-        v = Variable(shape=(), name='_rel_ent_epi[' + str(self.id) + ']_')
+        v = Variable(shape=(), name='_rel_ent_epi[%s]_' % str(self.id))
         self._epigraph_variable = v[()].scalar_variables()[0]
         self._evaluator = RelEnt._rel_entr_evaluator
 

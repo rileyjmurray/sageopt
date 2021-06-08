@@ -112,10 +112,12 @@ def moment_reduction_array(s_h, h, L):
     minimal_L = s_h * h
     for row in minimal_L.alpha_c:
         if row not in L.alpha_c:
-            msg0 = 'The product s_h * h contains an exponent vector \n'
-            msg1 = '\t ' + str(row) + '\n'
-            msg2 = 'that is not present among the exponent vectors of "L".'
-            raise RuntimeError(msg0 + msg1 + msg2)
+            msg = """
+            The product s_h * h contains an exponent vector
+                %s
+            that is not present amount the exponent vectors of "L".
+            """ % str(row)
+            raise RuntimeError(msg)
     C_rows = []
     for alpha_i in s_h.alpha:
         temp_func = classname(h.alpha + alpha_i, h.c)

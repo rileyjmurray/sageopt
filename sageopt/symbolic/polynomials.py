@@ -236,7 +236,7 @@ class Polynomial(Signomial):
 
     def __truediv__(self, other):
         if not isinstance(other, __NUMERIC_TYPES__):  
-            raise ValueError('Cannot divide a polynomial by the non-numeric type: ' + str(type(other)) + '.')
+            raise ValueError('Cannot divide a polynomial by the non-numeric type: %s.' % str(type(other)))
         other_inv = 1 / other
         return self.__mul__(other_inv)
 
@@ -323,8 +323,8 @@ class Polynomial(Signomial):
         if x.ndim == 0:
             x = x.ravel()
         if not x.shape[0] == self.n:
-            raise ValueError('The point must be in R^' + str(self.n) +
-                             ', but the provided point is in R^' + str(x.shape[0]))
+            msg = 'Domain is R^' + str(self._n) + 'but x is in R^' + str(x.shape[0])
+            raise ValueError(msg)
         xi_func = None
         if x.dtype == 'object':
             func_xis = [xi for xi in x.flat if isinstance(xi, Signomial)]
@@ -332,7 +332,8 @@ class Polynomial(Signomial):
             if ns.size == 0:
                 x = x.astype(np.float)
             elif np.any(ns != ns[0]):
-                raise ValueError('The input vector cannot contain functions over different variables.')
+                msg = 'The input vector cannot contain functions over different variables.'
+                raise ValueError(msg)
             else:
                 xi_func = func_xis[0]
         if x.ndim == 1:
@@ -562,9 +563,12 @@ class PolyDomain(object):
     def __init__(self, n, **kwargs):
         for kw in kwargs:
             if kw not in PolyDomain.__VALID_KWARGS__:  # pragma: no cover
-                msg = 'Provided keyword argument "' + kw + '" is not in the list'
-                msg += ' of allowed keyword arguments: \n'
-                msg += '\t ' + str(PolyDomain.__VALID_KWARGS__)
+                msg = """
+                Provided keyword argument "%s" is not in the list of
+                allowed keyword arguments:
+                    %s.
+                """ % (kw, str(PolyDomain.__VALID_KWARGS__))
+                warnings.warn(msg)
         self.n = n
         self.A = None
         self.b = None
@@ -595,15 +599,18 @@ class PolyDomain(object):
         prob.solve(verbose=False, solver='ECOS')
         if not prob.value < 1e-7:
             if prob.value is np.NaN:  # pragma: no cover
-                msg = 'PolyDomain constraints could not be verified as feasible.'
-                msg += '\n Proceed with caution!'
+                msg = """
+                PolyDomain constraints could not be verified as feasible.
+                Proceed with caution!
+                """
                 warnings.warn(msg)
             else:
-                msg1 = 'PolyDomain constraints seem to be infeasible.\n'
-                msg2 = 'Feasibility problem\'s status: ' + prob.status + '\n'
-                msg3 = 'Feasibility problem\'s  value: ' + str(prob.value) + '\n'
-                msg4 = 'The objective was "minimize 0"; we expect problem value < 1e-7. \n'
-                msg = msg1 + msg2 + msg3 + msg4
+                msg = """
+                PolyDomain constraints seem to be infeasible.
+                The feasibility problem's status was "%s"
+                and the feasibility problem's value was %s.
+                The objective was "minimize 0"; we expect problem value < 1e-7.
+                """ % (prob.status, str(prob.value))
                 raise ValueError(msg)
         pass
 
@@ -649,8 +656,10 @@ class PolyDomain(object):
         self._logspace_cons = logspace_cons
         self._y = variables[0]
         if self._y.size != self.n:
-            msg = 'The provided constraints are over a variable of dimension '
-            msg += str(self._y.size) + ', but this SigDomain was declared as dimension ' + str(self.n) + '.'
+            msg = """
+            The provided constraints are over a variable of dimension %s,
+            but this SigDomain was declared as dimension %s.
+            """ % (str(self._y.size), str(self.n))
             raise ValueError(msg)
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(logspace_cons)
         A = A.toarray()

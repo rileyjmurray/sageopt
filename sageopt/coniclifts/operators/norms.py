@@ -39,7 +39,7 @@ class Vector2Norm(NonlinearScalarAtom):
         self._args = tuple(self.parse_arg(v) for v in args)
         self._id = Vector2Norm._VECTOR_2_NORM_COUNTER_
         Vector2Norm._VECTOR_2_NORM_COUNTER_ += 1
-        v = Variable(shape=(), name='_vec2norm_epi[' + str(self.id) + ']_')
+        v = Variable(shape=(), name='_vec2norm_epi[%s]_' % str(self.id))
         self._epigraph_variable = v[()].scalar_variables()[0]
         self._evaluator = Vector2Norm._vector2norm_evaluator
 

@@ -47,9 +47,11 @@ class ECOS(Solver):
         """
         for co in K:
             if co.type not in {'e', 'S', '+', '0'}:  # pragma: no cover
-                msg1 = 'ECOS only supports cones with labels in the set {"e", "S", "+", "0"}. \n'
-                msg2 = 'The provided data includes an invalid cone labeled "' + str(co[0]) + '".'
-                raise RuntimeError(msg1 + msg2)
+                msg = """
+                ECOS only supports cones with labels in the set {"e", "S", "+", "0"}.
+                The provided data includes an invalid cone labeled %s.
+                """ % str(co[0])
+                raise RuntimeError(msg)
         type_selectors = build_cone_type_selectors(K)
         # find indices of A corresponding to equality constraints
         A_ecos = A[type_selectors['0'], :]

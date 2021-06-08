@@ -22,12 +22,6 @@ infeasible solution.
 Write tests. Setup a continuous-integration environment which
 installs CVXPY.
 
-## String formatting.
-
-When naming Variable objects, I often use explicit string concatenation,
-when code like ``name='symbol_{%s}' % j`` would accomplish the same effect.
-I should switch to the more succinct and readable version.
-
 ## ECOS interface
 
 Need to parse input dict for more solver options (like accuracy tolerances). 

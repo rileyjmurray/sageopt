@@ -344,7 +344,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
         h_m = h * modulator
         c_h = sym_corr.moment_reduction_array(s_h, h_m, lagrangian)
         if slacks:
-            v_h = cl.Variable(name='v_' + str(h), shape=(s_h.m, 1))
+            v_h = cl.Variable(name='v_{%s}' % str(h), shape=(s_h.m, 1))
             constraints.append(c_h @ v == v_h)
         else:
             v_h = c_h @ v
@@ -444,14 +444,14 @@ def make_sig_lagrangian(f, gts, eqs, p, q):
     ineq_dual_sigs = []
     summands = [L]
     for g in folded_gt:
-        s_g_coeff = cl.Variable(name='s_' + str(g), shape=(alpha_E_p.shape[0],))
+        s_g_coeff = cl.Variable(name='s_{%s}' % str(g), shape=(alpha_E_p.shape[0],))
         s_g = Signomial(alpha_E_p, s_g_coeff)
         summands.append(-g * s_g)
         ineq_dual_sigs.append((s_g, g))
     eq_dual_sigs = []
     folded_eq = con_gen.up_to_q_fold_cons(eqs, q)
     for g in folded_eq:
-        z_g_coeff = cl.Variable(name='z_' + str(g), shape=(alpha_E_p.shape[0],))
+        z_g_coeff = cl.Variable(name='z_{%s}' % str(g), shape=(alpha_E_p.shape[0],))
         z_g = Signomial(alpha_E_p, z_g_coeff)
         summands.append(-g * z_g)
         eq_dual_sigs.append((z_g, g))

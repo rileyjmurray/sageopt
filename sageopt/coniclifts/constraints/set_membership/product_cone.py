@@ -32,7 +32,7 @@ class PrimalProductCone(SetMembership):
             y = Expression(y)
         K_size = sum([co.len for co in K])
         if not y.size == K_size:
-            raise RuntimeError('Incompatible dimensions for y (' + str(y.size) + ') and K (' + str(K_size) + ')')
+            raise RuntimeError('Incompatible dimensions for y (%s) and K (%s)' % (str(y.size), str(K_size)))
         if np.any([co.type == 'P' for co in K]):
             raise RuntimeError('This function does not currently support the PSD cone.')
         self.y = y.ravel()
@@ -88,7 +88,7 @@ class DualProductCone(SetMembership):
             y = Expression(y)
         K_size = sum([co.len for co in K])
         if not y.size == K_size:
-            raise RuntimeError('Incompatible dimensions for y (' + str(y.size) + ') and K (' + str(K_size) + ')')
+            raise RuntimeError('Incompatible dimensions for y (%s) and K (%s)' % (str(y.size), str(K_size)))
         if np.any([co.type == 'P' for co in K]):
             raise RuntimeError('This function does not currently support the PSD cone.')
         self.y = y.ravel()
@@ -113,7 +113,7 @@ class DualProductCone(SetMembership):
                                    -self.y[start_row]])
                 y_mod.append(temp_y)
             elif co.type != '0':
-                raise RuntimeError('Unexpected cone type (' + str(co.type) + ').')
+                raise RuntimeError('Unexpected cone type "%s".' % str(co.type))
             start_row = stop_row
         y_mod = np.hstack(y_mod)
         y_mod = Expression(y_mod)
