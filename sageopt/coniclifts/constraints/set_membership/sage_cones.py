@@ -168,7 +168,7 @@ class PrimalSageCone(SetMembership):
 
     def _condsage_init_variables(self):
         for i in self.ech.U_I:
-            num_cover = self.ech.expcover_counts[i]
+            num_cover = self.ech.cover_counts[i]
             si = str(i)
             if num_cover > 0:
                 var_name = 'nu^{(%s)}_{%s}' % (si, self.name)
@@ -188,13 +188,13 @@ class PrimalSageCone(SetMembership):
 
     def _ordsage_init_variables(self):
         for i in self.ech.U_I:
-            num_cover = self.ech.expcover_counts[i]
+            num_cover = self.ech.cover_counts[i]
             si = str(i)
             if num_cover > 0:
                 var_name = 'nu^{(%s)}_{%s}' % (si, self.name)
                 if self.settings['kernel_basis']:
                     var_name = '_pre_' + var_name
-                    idx_set = self.ech.expcovers[i]
+                    idx_set = self.ech.covers[i]
                     mat = (self.alpha[idx_set, :] - self.alpha[i, :]).T
                     nu_i_basis = kernel_basis(mat)
                     self._nu_bases[i] = nu_i_basis
@@ -244,13 +244,13 @@ class PrimalSageCone(SetMembership):
                     # Then we didn't create a component for age_vectors[i][i]; need to get
                     # that component from c[i].
                     ci_expr[i] = self.c[i]
-                    ci_expr[self.ech.expcovers[i]] = raw_age_vec
+                    ci_expr[self.ech.covers[i]] = raw_age_vec
                 else:
                     # Then we did create an AGE cone (i in U_I) and we also created an i-th
                     # variable for it (because maybe age_vectors[i][i] = 0 at optimality, when
                     # c[i] > 0 is needed for some other AGE cone).
                     ci_expr[i] = raw_age_vec[-1]
-                    ci_expr[self.ech.expcovers[i]] = raw_age_vec[:-1]
+                    ci_expr[self.ech.covers[i]] = raw_age_vec[:-1]
                 self.age_vectors[i] = ci_expr
         else:
             self.age_vectors[0] = self.c
@@ -278,7 +278,10 @@ class PrimalSageCone(SetMembership):
 
     def conic_form(self):
         if len(self._nus) == 0:
-            cd = self._trivial_conic_form()
+            con = self.c >= 0
+            con.epigraph_checked = True
+            av, ar, ac, curr_b, curr_k = con.conic_form()
+            cd = [(av, ar, ac, curr_b, curr_k)]
         else:
             if self.X is None:
                 cd = self._ordsage_conic_form()
@@ -286,19 +289,12 @@ class PrimalSageCone(SetMembership):
                 cd = self._condsage_conic_form()
         return cd
 
-    def _trivial_conic_form(self):
-        con = self.c >= 0
-        con.epigraph_checked = True
-        av, ar, ac, curr_b, curr_k = con.conic_form()
-        cone_data = [(av, ar, ac, curr_b, curr_k)]
-        return cone_data
-
     def _ordsage_conic_form(self):
         cone_data = []
         nu_keys = self._nus.keys()
         for i in self.ech.U_I:
             if i in nu_keys:
-                idx_set = self.ech.expcovers[i]
+                idx_set = self.ech.covers[i]
                 # relative entropy inequality constraint
                 x = self._nus[i]
                 y = self.age_vectors[i][idx_set]
@@ -330,7 +326,7 @@ class PrimalSageCone(SetMembership):
             lifted_alpha = np.hstack((lifted_alpha, zero_block))
         for i in self.ech.U_I:
             if i in self._nus:
-                idx_set = self.ech.expcovers[i]
+                idx_set = self.ech.covers[i]
                 # relative entropy inequality constraint
                 x = self._nus[i]
                 y = self.age_vectors[i][idx_set]
@@ -423,7 +419,7 @@ class PrimalSageCone(SetMembership):
                 c_i = self.age_vectors[i].value
                 x_i = self._nus[i].value
                 x_i[x_i < 0] = 0
-                idx_set = self.ech.expcovers[i]
+                idx_set = self.ech.covers[i]
                 sf_part = self.sigma_x((alpha[i, :] - alpha[idx_set, :]).T @ x_i)
                 y_i = np.exp(1) * c_i[idx_set]
                 relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + sf_part  # <= 0
@@ -468,11 +464,11 @@ class PrimalSageCone(SetMembership):
             if self._m > 1:
                 for i in self.ech.U_I:
                     wi_expr = Expression(np.zeros(self._m,))
-                    num_cover = self.ech.expcover_counts[i]
+                    num_cover = self.ech.cover_counts[i]
                     if num_cover > 0:
                         x_i = self._nus[i]
-                        wi_expr[self.ech.expcovers[i]] = pos_operator(x_i, eval_only=True)
-                        wi_expr[i] = -aff.sum(wi_expr[self.ech.expcovers[i]])
+                        wi_expr[self.ech.covers[i]] = pos_operator(x_i, eval_only=True)
+                        wi_expr[i] = -aff.sum(wi_expr[self.ech.covers[i]])
                     self._age_witnesses[i] = wi_expr
             else:
                 self.age_vectors[0] = self.c
@@ -568,7 +564,7 @@ class DualSageCone(SetMembership):
                 self._lifted_mu_vars[i] = Variable(shape=(self._lifted_n,), name=var_name)
                 self._variables.append(self._lifted_mu_vars[i])
                 self.mu_vars[i] = self._lifted_mu_vars[i][:self._n]
-                num_cover = self.ech.expcover_counts[i]
+                num_cover = self.ech.cover_counts[i]
                 if num_cover > 0 and not self.settings['compact_dual']:
                     var_name = '_relent_epi_[%s]_{%s}' % (si, self.name)
                     epi = Variable(shape=(num_cover,), name=var_name)
@@ -588,8 +584,8 @@ class DualSageCone(SetMembership):
             cd = con.conic_form()
             cone_data = [cd]
             for i in self.ech.U_I:
-                idx_set = self.ech.expcovers[i]
-                num_cover = self.ech.expcover_counts[i]
+                idx_set = self.ech.covers[i]
+                num_cover = self.ech.cover_counts[i]
                 if num_cover == 0:
                     continue
                 expr = np.tile(self.v[i], num_cover).view(Expression)
@@ -656,8 +652,8 @@ class DualSageCone(SetMembership):
         v = self.v.value
         viols = []
         for i in self.ech.U_I:
-            selector = self.ech.expcovers[i]
-            num_cover = self.ech.expcover_counts[i]
+            selector = self.ech.covers[i]
+            num_cover = self.ech.cover_counts[i]
             if num_cover > 0:
                 expr1 = np.tile(v[i], num_cover).ravel()
                 expr2 = v[selector].ravel()
@@ -692,7 +688,7 @@ class DualSageCone(SetMembership):
 
 class ExpCoverHelper(object):
 
-    def __init__(self, alpha, c, AbK, expcovers=None, settings=None):
+    def __init__(self, alpha, c, AbK, covers=None, settings=None):
         self.settings = SETTINGS.copy()
         if settings:
             self.settings.update(settings)
@@ -714,7 +710,7 @@ class ExpCoverHelper(object):
             # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
             # this AGE cone might not be used in the final solution to the associated
             # optimization problem. These AGE cones might also be trivial (i.e. reduce to the nonnegative
-            # orthant) if during presolve we set expcovers[i][:] = False.
+            # orthant) if during presolve we set covers[i][:] = False.
             self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
             # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
             # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
@@ -727,111 +723,144 @@ class ExpCoverHelper(object):
             self.U_I = [i for i in range(self.m)]
             self.N_I = []
             self.P_I = []
-        if isinstance(expcovers, dict):
-            self._verify_exp_covers(expcovers)
-        elif expcovers is None:
-            expcovers = self._default_exp_covers()
+        if isinstance(covers, dict):
+            self._verify_covers(covers)
+        elif covers is None:
+            covers = self._default_covers()
         else:
-            raise RuntimeError('Argument "expcovers" must be a dict.')
-        self.expcovers = expcovers
-        expcover_counts = {i: np.count_nonzero(expcovers[i]) for i in self.U_I}
-        self.expcover_counts = expcover_counts
+            raise RuntimeError('Argument "covers" must be a dict.')
+        self.covers = covers
+        cover_counts = {i: np.count_nonzero(covers[i]) for i in self.U_I}
+        self.cover_counts = cover_counts
 
-    def _verify_exp_covers(self, expcovers):
+    def _verify_covers(self, covers):
         for i in self.U_I:
-            if i not in expcovers:
-                raise RuntimeError('Required key missing from "expcovers".')
-            if (not isinstance(expcovers[i], np.ndarray)) or (expcovers[i].dtype != bool):
-                raise RuntimeError('A value in "expcovers" was the wrong datatype.')
-            if expcovers[i][i]:
-                warnings.warn('Nonsensical value in "expcovers"; correcting.')
-                expcovers[i][i] = False
+            if i not in covers:
+                raise RuntimeError('Required key missing from "covers".')
+            if (not isinstance(covers[i], np.ndarray)) or (covers[i].dtype != bool):
+                raise RuntimeError('A value in "covers" was the wrong datatype.')
+            if covers[i][i]:
+                warnings.warn('Nonsensical value in "covers"; correcting.')
+                covers[i][i] = False
         pass
 
-    def _default_exp_covers(self):
-        expcovers = dict()
+    def _default_covers(self):
+        covers = dict()
+        # Apply sign-pattern-based presolve.
         for i in self.U_I:
             cov = np.ones(shape=(self.m,), dtype=bool)
             cov[self.N_I] = False
             cov[i] = False
-            expcovers[i] = cov
+            covers[i] = cov
+        # Simplify individual AGE cones, without optimization
         if self.AbK is None or self.settings['heuristic_reduction']:
             row_sums = np.sum(self.alpha, 1)
             if np.all(self.alpha >= 0) and np.min(row_sums) == 0:
-                # Then apply the reduction.
                 zero_loc = np.nonzero(row_sums == 0)[0][0]
                 for i in self.U_I:
                     if i == zero_loc:
                         continue
-                    curr_cover = expcovers[i]
-                    curr_row = self.alpha[i, :]
-                    for j in range(self.m):
-                        if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
-                            curr_cover[j] = False
-                            """
-                            The above operation is without loss of generality for ordinary SAGE
-                            constraints. For conditional SAGE constraints, the operation may or
-                            may-not be without loss of generality. As a basic check, the above
-                            operation is w.l.o.g. even for conditional SAGE constraints, as long
-                            as the "conditioning" satisfies the following property:
-                                Suppose "y" a geometric-form solution which is feasible w.r.t.
-                                conditioning. Then "y" remains feasible (w.r.t. conditioning)
-                                when we assign "y[k] = 0".
-                            The comments below explain in greater detail.
-                            Observation
-                            -----------
-                            By being in this part of the code, there must exist a "k" where
-                                 alpha[i,k] == 0 and alpha[j,k] > 0.
-                            Also, we have alpha >= 0. These facts tell us that the expression
-                                (alpha[j2,:] - alpha[i,:]) @ mu[:, i] (*)
-                            is (1) non-decreasing in mu[k,i] for all 0 <= j2 < m, and (2)
-                            strictly increasing in mu[k,i] when j2 == j. Therefore by
-                            sending mu[i,k] to -\infty, we do not increase (*) for any
-                            0 <= j2 < m, and in fact (*) goes to -\infty for j2 == j.
-                            Consequence 1
-                            -------------
-                            If mu[:,i] is only subject to constraints of the form
-                                v[i]*log(v[j2]/v[i]) >= (alpha[j2,:] - alpha[i,:]) @ mu[:, i]
-                            with 0 <= j2 < m, then the particular constraint with j2 == j
-                            is never active at any optimal solution. For ordinary SAGE cones,
-                            this means the j-th term of alpha isn't used in the i-th AGE cone.
-                            Consequence 2
-                            -------------
-                            For conditional SAGE cones, there is another constraint:
-                                 A @ mu[:, i] + v[i] * b \in K.      (**)
-                            However, as long as (**) allows us to send mu[k,i] to -\infty
-                            without affecting feasibility, then the we arrive at the same
-                            conclusion: the j-th term of alpha isn't used in the i-th AGE cone.
-                            """
+                    self._simplify_age_cone(zero_loc, covers[i], self.alpha[i, :])
+        # Detect trivial AGE cones, without optimization.
         if self.AbK is None:
+            # This is deliberately placed *after* the simplification of AGE cones.
             for i in self.U_I:
-                if np.count_nonzero(expcovers[i]) == 1:
-                    expcovers[i][:] = False
+                if np.count_nonzero(covers[i]) == 1:
+                    covers[i][:] = False
+        # Optimization-based methods to detect if an AGE cone is trivial,
+        # or in some cases to decide to replace an AGE cone by the nonnegative
+        # orthant if it is deemed that the AGE cone is unlikely to be useful.
         if self.settings['presolve_trivial_age_cones']:
             if self.AbK is None:
                 for i in self.U_I:
-                    if np.any(expcovers[i]):
-                        mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
-                        x = Variable(shape=(mat.shape[1],), name='temp_x')
-                        objective = Expression([0])
-                        cons = [mat @ x <= -1]
-                        prob = Problem(CL_MIN, objective, cons)
-                        prob.solve(verbose=False,
-                                   solver=self.settings['reduction_solver'])
-                        if prob.status in {CL_SOLVED, CL_INACCURATE} and abs(prob.value) < 1e-7:
-                            expcovers[i][:] = False
+                    if np.any(covers[i]):
+                        self._presolve_trivial_ord_age(i, covers)
             else:
                 for i in self.U_I:
-                    if np.any(expcovers[i]):
-                        mat = self.alpha[expcovers[i], :] - self.alpha[i, :]
-                        x = Variable(shape=(mat.shape[1],), name='temp_x')
-                        t = Variable(shape=(1,), name='temp_t')
-                        objective = t
-                        A, b, K = self.AbK
-                        cons = [mat @ x <= t, PrimalProductCone(A @ x + b, K)]
-                        prob = Problem(CL_MIN, objective, cons)
-                        prob.solve(verbose=False,
-                                   solver=self.settings['reduction_solver'])
-                        if prob.status in {CL_SOLVED, CL_INACCURATE} and prob.value < -100:
-                            expcovers[i][:] = False
-        return expcovers
+                    if np.any(covers[i]):
+                        self._presolve_trivial_cond_age(i, covers)
+        return covers
+
+    def _presolve_trivial_ord_age(self, i, covers):
+        """
+        Set covers[i][:] = False if the i-th (ordinary) AGE cone is trivial.
+        """
+        mat = self.alpha[covers[i], :] - self.alpha[i, :]
+        x = Variable(shape=(mat.shape[1],), name='temp_x')
+        objective = Expression([0])
+        cons = [mat @ x <= -1]
+        prob = Problem(CL_MIN, objective, cons)
+        # If prob is feasible, then there exists a sequence x_t where
+        # max(mat @ x_t) diverges to -\infty as t increases. Using this
+        # sequence we can satisfy the constraints for the i-th dual
+        # AGE cone no matter the value of the vector "v" that needs to belong
+        # to the dual AGE cone.
+        prob.solve(verbose=False,
+                   solver=self.settings['reduction_solver'])
+        if prob.status in {CL_SOLVED, CL_INACCURATE} and abs(prob.value) < 1e-7:
+            covers[i][:] = False
+
+    def _presolve_trivial_cond_age(self, i, covers, threshold=-100):
+        """
+        Overwrite covers[i][:] = False if it LOOKS LIKE the i-th X-AGE cone is trivial.
+
+        If X is a cone (which happens if self.AbK[1] is the zero vector), then this method
+        for checking triviality is necessary and sufficient.
+
+        If X is not a cone, then this method might incorrectly identify an AGE cone as trivial.
+        Setting "threshold" to a large negative number decreases the chance that we ignore
+        a useful AGE cone.
+
+        Note: If X is compact, then no X-AGE cone is trivial.
+        """
+        mat = self.alpha[covers[i], :] - self.alpha[i, :]
+        x = Variable(shape=(mat.shape[1],), name='temp_x')
+        t = Variable(shape=(1,), name='temp_t')
+        objective = t
+        A, b, K = self.AbK
+        cons = [mat @ x <= t, PrimalProductCone(A @ x + b, K)]
+        prob = Problem(CL_MIN, objective, cons)
+        prob.solve(verbose=False,
+                   solver=self.settings['reduction_solver'])
+        if prob.status in {CL_SOLVED, CL_INACCURATE} and prob.value < threshold:
+            covers[i][:] = False
+
+    def _simplify_age_cone(self, zero_loc, curr_cover, curr_row):
+        for j in range(self.m):
+            if curr_cover[j] and j != zero_loc and curr_row @ self.alpha[j, :] == 0:
+                curr_cover[j] = False
+                """
+                The above operation is without loss of generality for ordinary SAGE
+                constraints. For conditional SAGE constraints, the operation may or
+                may-not be without loss of generality. As a basic check, the above
+                operation is w.l.o.g. even for conditional SAGE constraints, as long
+                as the "conditioning" satisfies the following property:
+                    Suppose "y" a geometric-form solution which is feasible w.r.t.
+                    conditioning. Then "y" remains feasible (w.r.t. conditioning)
+                    when we assign "y[k] = 0".
+                The comments below explain in greater detail.
+                Observation
+                -----------
+                By being in this part of the code, there must exist a "k" where
+                     alpha[i,k] == 0 and alpha[j,k] > 0.
+                Also, we have alpha >= 0. These facts tell us that the expression
+                    (alpha[j2,:] - alpha[i,:]) @ mu[:, i] (*)
+                is (1) non-decreasing in mu[k,i] for all 0 <= j2 < m, and (2)
+                strictly increasing in mu[k,i] when j2 == j. Therefore by
+                sending mu[i,k] to -\infty, we do not increase (*) for any
+                0 <= j2 < m, and in fact (*) goes to -\infty for j2 == j.
+                Consequence 1
+                -------------
+                If mu[:,i] is only subject to constraints of the form
+                    v[i]*log(v[j2]/v[i]) >= (alpha[j2,:] - alpha[i,:]) @ mu[:, i]
+                with 0 <= j2 < m, then the particular constraint with j2 == j
+                is never active at any optimal solution. For ordinary SAGE cones,
+                this means the j-th term of alpha isn't used in the i-th AGE cone.
+                Consequence 2
+                -------------
+                For conditional SAGE cones, there is another constraint:
+                     A @ mu[:, i] + v[i] * b \in K.      (**)
+                However, as long as (**) allows us to send mu[k,i] to -\infty
+                without affecting feasibility, then the we arrive at the same
+                conclusion: the j-th term of alpha isn't used in the i-th AGE cone.
+                """

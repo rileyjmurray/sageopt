@@ -302,7 +302,7 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     for i, (s_h, _) in enumerate(ineq_lag_mults):
         con_name = 'SAGE multiplier for signomial inequality # ' + str(i)
         con = primal_sage_cone(s_h, name=con_name, X=X, expcovers=expcovers)
-        expcovers = con.ech.expcovers  # only * really * needed in first iteration, but keeps code flat.
+        expcovers = con.ech.covers  # only * really * needed in first iteration, but keeps code flat.
         constrs.append(con)
     # Construct the coniclifts Problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
@@ -350,7 +350,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
             v_h = c_h @ v
         con_name = 'SAGE dual for signomial inequality # ' + str(i)
         con = relative_dual_sage_cone(s_h, v_h, name=con_name, X=X, expcovers=expcovers)
-        expcovers = con.ech.expcovers  # only * really * needed in first iteration, but keeps code flat.
+        expcovers = con.ech.covers  # only * really * needed in first iteration, but keeps code flat.
         constraints.append(con)
     for s_h, h in eq_lag_mults:
         # These generalized Lagrange multipliers "s_h" are arbitrary signomials.
