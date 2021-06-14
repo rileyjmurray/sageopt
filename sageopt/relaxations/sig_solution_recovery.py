@@ -130,7 +130,7 @@ def _least_squares_solution_recovery(alpha_reduced, con, v, M, gts, eqs, ineq_to
         mu_ls = _constrained_least_squares(con, alpha_reduced, log_v_reduced)
     else:
         try:
-            mu_ls = np.linalg.lstsq(alpha_reduced, log_v_reduced, rcond=None)[0]
+            mu_ls = np.linalg.lstsq(alpha_reduced, log_v_reduced, rcond=None)[0].ravel()
         except np.linalg.linalg.LinAlgError:
             mu_ls = None
     if mu_ls is not None and is_feasible(mu_ls, gts, eqs, ineq_tol, eq_tol):

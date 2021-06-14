@@ -69,6 +69,8 @@ class ECOS(Solver):
         cones = {'l': int(np.sum(type_selectors['+'])),
                  'e': int(np.sum(type_selectors['e']) / 3),
                  'q': util.contiguous_selector_lengths(type_selectors['S'])}
+                # ^ The block above probably has a bug. What happens when
+                # two SOC constraints appear back-to-back?
         data = {'G': G, 'h': h, 'cones': cones, 'A': A_ecos, 'b': b_ecos, 'c': c}
         inv_data = dict()
         return data, inv_data

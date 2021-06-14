@@ -21,7 +21,7 @@ from sageopt.coniclifts.base import Expression
 import sageopt as so
 
 
-def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
+def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='CP'):
     prim = poly_relaxation(p, form='primal', X=X,
                            poly_ell=poly_ell, sigrep_ell=sigrep_ell)
     res1 = prim.solve(solver=solver, verbose=False)
@@ -31,7 +31,7 @@ def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
     return [res1[1], res2[1]]
 
 
-def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
+def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='CP'):
     prim = poly_constrained_relaxation(f, gt, eq, form='primal',
                                        p=p, q=q, ell=ell, X=X)
     res1 = prim.solve(solver=solver, verbose=False)

@@ -22,7 +22,7 @@ from sageopt.relaxations import sig_solrec, infer_domain
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 
 
-def primal_dual_vals(f, ell, X=None, solver='ECOS'):
+def primal_dual_vals(f, ell, X=None, solver='CP'):
     # primal
     prob = sig_relaxation(f, X, form='primal', ell=ell)
     status, value = prob.solve(solver=solver, verbose=False)
@@ -34,7 +34,7 @@ def primal_dual_vals(f, ell, X=None, solver='ECOS'):
     return [prim, dual], prob
 
 
-def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='ECOS'):
+def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='CP'):
     # primal
     prob = sig_constrained_relaxation(f, gts, eqs,
                                       form='primal', p=p, q=q, ell=ell, X=X)
@@ -85,7 +85,8 @@ class TestSAGERelaxations(unittest.TestCase):
         self.assertAlmostEqual(pd1[0], expected[1], 4)
         self.assertAlmostEqual(pd1[1], expected[1], 4)
         optsols = sig_solrec(dual)
-        assert (s(optsols[0]) - dual.value) < 1e-6
+        gap = s(optsols[0]) - dual.value
+        self.assertLessEqual(gap, 1e-6)
         cl.presolve_trivial_age_cones(initial_presolve)
         cl.compact_sage_duals(initial_compactdual)
         cl.kernel_basis_age_witnesses(initial_kb)
@@ -120,11 +121,13 @@ class TestSAGERelaxations(unittest.TestCase):
         s = Signomial(alpha, c)
         expected = [-np.inf, -0.122211863]
         pd0, _ = primal_dual_vals(s, 0)
-        assert pd0[0] == expected[0] and pd0[1] == expected[0]
+        self.assertEqual(pd0[0], expected[0])
+        self.assertEqual(pd0[1], expected[0])
         pd1, dual = primal_dual_vals(s, 1)
-        assert abs(pd1[0] - expected[1]) < 1e-5 and abs(pd1[1] - expected[1]) < 1e-5
+        self.assertAlmostEqual(pd1[0], expected[1], 4)
+        self.assertAlmostEqual(pd1[1], expected[1], 4)
         solns = sig_solrec(dual)
-        assert s(solns[0]) < 1e-6 + dual.value
+        self.assertLessEqual(s(solns[0]), 1e-6 + dual.value)
 
     def test_unconstrained_sage_3(self):
         # Background
@@ -149,9 +152,11 @@ class TestSAGERelaxations(unittest.TestCase):
         s = s ** 2
         expected = -np.inf
         pd0, _ = primal_dual_vals(s, 0)
-        assert pd0[0] == expected and pd0[1] == expected
+        self.assertEqual(pd0[0], expected)
+        self.assertEqual(pd0[1], expected)
         pd1, _ = primal_dual_vals(s, 1)
-        assert pd1[0] == expected and pd1[1] == expected
+        self.assertEqual(pd1[0], expected)
+        self.assertEqual(pd1[1], expected)
 
     def test_unconstrained_sage_4(self, presolve=False, compactdual=False, kernel_basis=False):
         # Background
@@ -180,12 +185,12 @@ class TestSAGERelaxations(unittest.TestCase):
         expected = [3.464102, 4.60250026, 4.6217973]
         pds = [primal_dual_vals(s, ell) for ell in range(3)]
         for ell in range(3):
-            assert abs(pds[ell][0][0] - expected[ell]) < 1e-5
-            assert abs(pds[ell][0][1] - expected[ell]) < 1e-5
+            self.assertAlmostEqual(pds[ell][0][0], expected[ell], delta=1e-5)
+            self.assertAlmostEqual(pds[ell][0][1], expected[ell], delta=1e-5)
         dual = sig_relaxation(s, form='dual', ell=3)
         dual.solve(solver='ECOS', verbose=False)
         optsols = sig_solrec(dual)
-        assert s(optsols[0]) < 1e-6 + dual.value
+        self.assertLessEqual(s(optsols[0]), 1e-6 + dual.value)
         cl.presolve_trivial_age_cones(initial_presolve)
         cl.compact_sage_duals(initial_compactdual)
         cl.kernel_basis_age_witnesses(initial_kb)
@@ -216,9 +221,11 @@ class TestSAGERelaxations(unittest.TestCase):
         s = Signomial(alpha, c)
         expected = [-24.054866, -21.31651]
         pd0, _ = primal_dual_vals(s, 0)
-        assert abs(pd0[0] - expected[0]) < 1e-4 and abs(pd0[1] - expected[0]) < 1e-4
+        self.assertAlmostEqual(pd0[0], expected[0], 3)
+        self.assertAlmostEqual(pd0[1], expected[0], 3)
         pd1, _ = primal_dual_vals(s, 1)
-        assert abs(pd1[0] - expected[1]) < 1e-4 and abs(pd1[1] - expected[1]) < 1e-4
+        self.assertAlmostEqual(pd1[0], expected[1], 3)
+        self.assertAlmostEqual(pd1[1], expected[1], 3)
 
     def test_unconstrained_sage_6(self):
         # Background
@@ -240,9 +247,11 @@ class TestSAGERelaxations(unittest.TestCase):
         s = Signomial(alpha, c)
         expected = [0.00354263, 0.13793126]
         pd0, _ = primal_dual_vals(s, 0)
-        assert abs(pd0[0] - expected[0]) < 1e-6 and abs(pd0[1] - expected[0]) < 1e-6
+        self.assertAlmostEqual(pd0[0], expected[0], 5)
+        self.assertAlmostEqual(pd0[1], expected[0], 5)
         pd1, _ = primal_dual_vals(s, 1)
-        assert abs(pd1[0] - expected[1]) < 1e-6 and abs(pd1[1] - expected[1]) < 1e-6
+        self.assertAlmostEqual(pd1[0], expected[1], 5)
+        self.assertAlmostEqual(pd1[1], expected[1], 5)
 
     def test_sage_multiplier_search(self):
         # Background
@@ -266,16 +275,17 @@ class TestSAGERelaxations(unittest.TestCase):
         prob0 = sage_multiplier_search(s, level=1)
         res0 = prob0.solve(solver='ECOS', verbose=False)
         val0 = res0[1]
-        assert val0 == -np.inf
+        self.assertEqual(val0, -np.inf)
         prob1 = sig_relaxation(s, form='primal', ell=1)
         res1 = prob1.solve(solver='ECOS', verbose=False)
         s_bound = res1[1]
-        assert -np.inf < s_bound < 0
+        self.assertLess(-np.inf, s_bound)
+        self.assertLess(s_bound, 0)
         s_shifted = s - 0.5 * s_bound  # shifted_s is nonnegative, and not-SAGE by construction.
         prob2 = sage_multiplier_search(s_shifted, level=1)
         res2 = prob2.solve(solver='ECOS', verbose=False)
         val2 = res2[1]
-        assert val2 == 0.
+        self.assertEqual(val2, 0)
 
     @staticmethod
     def _constrained_sage_1():
@@ -303,14 +313,16 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       (1) Verify that primal and dual objectives are close to a reference value.
         #
-        #       (2) Recover a solution (feasible up to tol 1e-7) with at most 0.01 percent optimality gap
+        #       (2) Recover a solution (feasible up to tol 1e-6) with at most 0.01 percent optimality gap
         #
         f, gs = TestSAGERelaxations._constrained_sage_1()
         expected = -0.6147
         actual, dual = constrained_primal_dual_vals(f, gs, [], p=0, q=1, ell=0, X=None)
-        assert abs(actual[0] - expected) < 1e-4 and abs(actual[1] - expected) < 1e-4
-        solns = sig_solrec(dual, ineq_tol=1e-7)
-        assert (f(solns[0]) - dual.value) / abs(dual.value) < 1e-4
+        self.assertAlmostEqual(actual[0], expected, places=3)
+        self.assertAlmostEqual(actual[1], expected, places=3)
+        solns = sig_solrec(dual, ineq_tol=1e-6)
+        meas_gap = (f(solns[0]) - dual.value) / abs(dual.value)
+        self.assertLessEqual(meas_gap, 1e-4)
 
     def test_constrained_sage_1b(self):
         # Tests - (p, q, ell) = (0, 1, 0)
@@ -358,9 +370,9 @@ class TestSAGERelaxations(unittest.TestCase):
         gts = [g1, g2, g3, g4, g5]
         res01, _ = constrained_primal_dual_vals(f, gts, [], p=0, q=1, ell=0, X=None)
         expect = -6
-        assert abs(res01[0] - expect) < 1e-4
-        assert abs(res01[1] - expect) < 1e-4
-        assert abs(res01[0] - res01[1]) < 1e-5
+        self.assertAlmostEqual(res01[0], expect, places=3)
+        self.assertAlmostEqual(res01[1], expect, places=3)
+        self.assertAlmostEqual(res01[0], res01[1], places=4)
 
     def test_conditional_sage_1(self):
         # Background
@@ -386,20 +398,20 @@ class TestSAGERelaxations(unittest.TestCase):
         X = infer_domain(f, gts, eqs)
         vals, prob = primal_dual_vals(f, 0, X)
         expect = -147.85712
-        assert abs(vals[0] - expect) <= 1e-3
-        assert abs(vals[1] - expect) <= 1e-3
+        self.assertAlmostEqual(vals[0], expect, delta=1e-3)
+        self.assertAlmostEqual(vals[1], expect, delta=1e-3)
         solutions = sig_solrec(prob)
-        assert len(solutions) > 0
+        self.assertGreater(len(solutions), 0)
         if cl.Mosek.is_installed():
             vals, prob = primal_dual_vals(f, 3, X, solver='MOSEK')
             expect = -147.6666
-            assert abs(vals[0] - expect) <= 1e-3
-            assert abs(vals[1] - expect) <= 1e-3
+            self.assertAlmostEqual(vals[0], expect, delta=1e-3)
+            self.assertAlmostEqual(vals[1], expect, delta=1e-3)
             solutions = sig_solrec(prob)
-            assert len(solutions) > 0
+            self.assertGreater(len(solutions), 0)
             x_star = solutions[0]
             gap = f(x_star) - prob.value
-            assert abs(gap) <= 1e-3
+            self.assertLessEqual(abs(gap), 1e-3)
         pass
 
     def test_conditional_constrained_sage_1(self):
@@ -431,10 +443,10 @@ class TestSAGERelaxations(unittest.TestCase):
         X = infer_domain(f, gts, eqs)
         p, q, ell = 0, 1, 0
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X)
-        assert abs(vals[0] - vals[1]) < 1e-5
-        assert abs(vals[0] - 0.765082) < 1e-4
+        self.assertAlmostEqual(vals[0], vals[1], delta=1e-5)
+        self.assertAlmostEqual(vals[0], 0.765082, delta=1e-4)
         solns = sig_solrec(dual, ineq_tol=0)
-        assert f(solns[0]) < 1e-8 + dual.value
+        self.assertLessEqual(f(solns[0]), 1e-8 + dual.value)
 
     @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS takes too long for this problem.')
     def test_conditional_constrained_sage_2(self):
@@ -461,10 +473,12 @@ class TestSAGERelaxations(unittest.TestCase):
         X = infer_domain(f, gts, eqs)
         p, q, ell = 0, 2, 0
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='MOSEK')
-        assert abs(vals[0] - vals[1]) < 1e-1
-        assert abs(vals[0] - 11.95) / vals[0] < 1e-2
+        self.assertAlmostEqual(vals[0], vals[1], delta=1e-1)
+        rel_gap = abs(vals[0] - 11.95) / vals[0]
+        self.assertLessEqual(rel_gap, 1e-2)
         solns = sig_solrec(dual, ineq_tol=1e-8)
-        assert (f(solns[0]) - dual.value) / dual.value < 1e-2
+        meas_gap = (f(solns[0]) - dual.value) / dual.value
+        self.assertLessEqual(meas_gap, 1e-2)
 
     @unittest.skipUnless(cl.Mosek.is_installed(), 'ECOS takes too long for this problem.')
     def test_conditional_constrained_sage_3(self):
@@ -499,7 +513,8 @@ class TestSAGERelaxations(unittest.TestCase):
         X = infer_domain(f, gts, eqs)
         p, q, ell = 0, 1, 1
         vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='MOSEK')
-        assert abs(vals[0] - vals[1]) < 1e-4
-        assert abs(vals[0] - (-83.3235)) < 1e-4
+        self.assertAlmostEqual(vals[0], vals[1], delta=1e-4)
+        self.assertAlmostEqual(vals[0], -83.3235, delta=1e-4)
         solns = sig_solrec(dual, ineq_tol=0)
-        assert (f(solns[0]) - dual.value) / abs(dual.value) < 0.007
+        meas_gap = (f(solns[0]) - dual.value) / abs(dual.value)
+        self.assertLessEqual(meas_gap, 0.007)
