@@ -16,11 +16,11 @@
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.ecos import ECOS
 from sageopt.coniclifts.problems.solvers.mosek import Mosek
+from sageopt.coniclifts.problems.solvers.cvxpy import Cvxpy
 from sageopt.coniclifts.compilers import compile_problem
 from sageopt.coniclifts.base import Expression, Variable
 import numpy as np
 import time
-
 
 class Problem(object):
     """
@@ -139,9 +139,9 @@ class Problem(object):
     MOSEK as the solver.
     """
 
-    _SOLVERS_ = {'ECOS': ECOS(), 'MOSEK': Mosek()}
+    _SOLVERS_ = {'CP': Cvxpy(), 'ECOS': ECOS(), 'MOSEK': Mosek()}
 
-    _SOLVER_ORDER_ = ['MOSEK', 'ECOS']
+    _SOLVER_ORDER_ = ['MOSEK', 'ECOS', 'CP']
 
     def __init__(self, sense, objective, constraints, **kwargs):
         self.objective_sense = sense
