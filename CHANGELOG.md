@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
  - symbolic: you can now call a ``Polynomial`` object by providing an array of ``Signomial`` objects.
  - symbolic: the function ``Signomial.shift_coordates``.
+ - relaxations: polynomial SAGE constraints now use ``covers`` in a way that
+   reflects the signs of a signomial representative coefficient vector.    
+ - coniclifts: CVXPY can be called as a "meta solver" (used to access power cones and solvers other than
+   ECOS/MOSEK).
 ## Changed
  - coniclifts: how ``disjoint_dot`` is computed in ``coniclifts.base``.
  - interop: GPKit models weren't converted deterministically.
