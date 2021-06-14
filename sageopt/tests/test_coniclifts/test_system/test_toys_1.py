@@ -51,7 +51,7 @@ class TestToys1(unittest.TestCase):
         _ = self._geometric_program_1('ECOS', verbose=False)
 
     @unittest.skipUnless(cl.Mosek.is_installed(), 'MOSEK-specific option')
-    def _test_geometric_program_1b(self):
+    def test_geometric_program_1b(self):
         force_dual = self._geometric_program_1('MOSEK', dualize=True, cache_apply_data=True)
         force_prim = self._geometric_program_1('MOSEK', dualize=False, cache_apply_data=True)
         self.assertIn('A', force_prim.solver_apply_data['MOSEK'][0])
@@ -59,7 +59,7 @@ class TestToys1(unittest.TestCase):
         self.assertIn('G', force_dual.solver_apply_data['MOSEK'][0])
         self.assertNotIn('A', force_dual.solver_apply_data['MOSEK'][0])
 
-    def _test_simple_sage_1(self):
+    def test_simple_sage_1(self):
         """
         Solve a simple SAGE relaxation for a signomial minimization problem.
 
@@ -106,7 +106,4 @@ class TestToys1(unittest.TestCase):
         assert np.allclose(x.value, np.array([0, 1, 0, 0]))
 
         pass
-        
-
-
-unittest.main()
+      
