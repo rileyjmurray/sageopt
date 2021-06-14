@@ -22,7 +22,7 @@ from sageopt.relaxations import sig_solrec, infer_domain
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 
 
-def primal_dual_vals(f, ell, X=None, solver='CP'):
+def primal_dual_vals(f, ell, X=None, solver='ECOS'):
     # primal
     prob = sig_relaxation(f, X, form='primal', ell=ell)
     status, value = prob.solve(solver=solver, verbose=False)
@@ -34,7 +34,7 @@ def primal_dual_vals(f, ell, X=None, solver='CP'):
     return [prim, dual], prob
 
 
-def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='CP'):
+def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='ECOS'):
     # primal
     prob = sig_constrained_relaxation(f, gts, eqs,
                                       form='primal', p=p, q=q, ell=ell, X=X)

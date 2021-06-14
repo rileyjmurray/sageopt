@@ -21,7 +21,7 @@ from sageopt.coniclifts.base import Expression
 import sageopt as so
 
 
-def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='CP'):
+def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='ECOS'):
     prim = poly_relaxation(p, form='primal', X=X,
                            poly_ell=poly_ell, sigrep_ell=sigrep_ell)
     res1 = prim.solve(solver=solver, verbose=False)
@@ -31,7 +31,7 @@ def primal_dual_unconstrained(p, poly_ell, sigrep_ell, X=None, solver='CP'):
     return [res1[1], res2[1]]
 
 
-def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='CP'):
+def primal_dual_constrained(f, gt, eq, p, q, ell, X=None, solver='ECOS'):
     prim = poly_constrained_relaxation(f, gt, eq, form='primal',
                                        p=p, q=q, ell=ell, X=X)
     res1 = prim.solve(solver=solver, verbose=False)
@@ -84,7 +84,7 @@ class TestSagePolynomials(unittest.TestCase):
             assert v == 'c33' or v == str(p) + ' variable sigrep coefficients'
         assert sr.alpha_c[(1, 1)] == -1
 
-    def test_primal_sage_covers(self):
+    def test_primal_cone_covers_1(self):
         ms = np.random.randint(10, 50, size=(10,))
 
         for m in ms:
@@ -107,14 +107,13 @@ class TestSagePolynomials(unittest.TestCase):
             for key in con._c_vars:
                 assert con._c_vars[key].size <= m - k + 1
 
-
-    def test_primal_cone_cover2(self):
+    def test_primal_cone_cover_2(self):
         ms = np.random.randint(10, 50, size=(10,))
 
         for m in ms:
             k = np.random.randint(3, m)
             # Create symbolic coefficient vector and polynomial from it
-            c_sym = np.random.randint(1, 20, size=(m,))
+            c = np.random.randint(1, 20, size=(m,))
             A = np.random.randint(0, 10, size=(m, 6))
             random_terms_even = np.random.choice(range(m), m - k, replace=False)
             for i in range(m):
@@ -122,7 +121,7 @@ class TestSagePolynomials(unittest.TestCase):
                     A[i, :] = 2 * (A[i, :] // 2)
                 else:
                     A[i, :] = 2 * (A[i, :] // 2) + 1
-            p = so.Polynomial(A, c_sym)
+            p = so.Polynomial(A, c)
             # ^ p is now a symbolic Polynomial in 6 variables with 10 terms.
             constrs = primal_sage_poly_cone(p, "all_sym", None)
             # Get the Primal Sage Cone Object for this polynomial
