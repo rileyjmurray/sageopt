@@ -26,10 +26,10 @@ class Cvxpy(Solver):
         m, n = A.shape
         x = cp.Variable(n)
         for co in K:
-            if co.type not in {'e', 'S', '+', '0'}:  # pragma: no cover
+            if co.type not in {'e', 'S', '+', '0', 'pow'}:  # pragma: no cover
                 msg = """
                 The CVXPY interface only supports cones with labels in the set
-                    {"e", "S", "+", "0"}.
+                    {"e", "S", "+", "0", "pow"}.
                 The provided data includes an invalid cone labeled %s.
                 """ % str(co[0])
                 raise RuntimeError(msg)
@@ -64,9 +64,9 @@ class Cvxpy(Solver):
                     # final component is hypograph variable
                     stop = idx + (co.len - 1)
                     upper = A[idx:stop, :] @ x + b[idx:stop]
-                    lower = A[idx + co.len, :] @ x + b[idx + co.len]
+                    lower = A[stop, :] @ x + b[stop]  # inclusive
                     weights = co.annotations['weights']
-                    # np.prod(np.power(upper, weights)) >= abs(lower)
+                    # np.prod(np.power(upper, weights)) >= abs(lower); upper >= 0.
                     constraints.append(cp.constraints.PowConeND(upper, lower, weights))
                 idx += co.len
         prob = cp.Problem(cp.Minimize(c @ x), constraints)
