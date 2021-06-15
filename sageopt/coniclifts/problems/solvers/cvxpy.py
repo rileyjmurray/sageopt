@@ -70,7 +70,10 @@ class Cvxpy(Solver):
                     constraints.append(cp.constraints.PowConeND(upper, lower, weights))
                 idx += co.len
         prob = cp.Problem(cp.Minimize(c @ x), constraints)
-        prob.solve()
+        d = params.copy()
+        d.pop('cache_apply_data')
+        d.pop('cache_raw_output')
+        prob.solve(**d)
         return x, prob
 
     # noinspection SpellCheckingInspection

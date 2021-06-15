@@ -84,7 +84,7 @@ class PowCone(SetMembership):
             raise ValueError(msg)
 
         neg_idxs = lamb < 0
-        if np.sum(lamb) != 0:
+        if np.abs(np.sum(lamb)) > 1e-6:
             msg = 'lamb does not have sum of 0'
             raise ValueError(msg)
 

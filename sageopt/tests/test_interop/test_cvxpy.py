@@ -19,6 +19,7 @@ from sageopt import coniclifts as cl
 from sageopt.interop.cvxpy import CVXPY_INSTALLED
 from sageopt.coniclifts.constraints.set_membership.pow_cone import PowCone
 from sageopt.coniclifts.problems.problem import Problem
+from sageopt.tests.test_coniclifts.helper import SolverTestHelper
 
 
 @unittest.skipUnless(CVXPY_INSTALLED, 'These tests are only applicable when CVXPY is installed.')
@@ -101,6 +102,7 @@ class TestCVXPY(unittest.TestCase):
         assert v < 1e-6
 
     def test_pcp_1(self):
+        #TODO: reformulate with SolverTestHelper
         """
         Use a 3D power cone formulation for
         min 3 * x[0] + 2 * x[1] + x[2]
@@ -136,6 +138,7 @@ class TestCVXPY(unittest.TestCase):
         pass
 
     def test_pcp_2(self):
+        # TODO: reformulate with SolverTestHelper
         """
         Reformulate
             max  (x**0.2)*(y**0.8) + z**0.4 - x
@@ -165,3 +168,60 @@ class TestCVXPY(unittest.TestCase):
         prob.solve(solver='CP')
         self.assertAlmostEqual(prob.value, opt_objective)
         assert np.allclose(x.value, opt_x, atol=1e-3)
+
+    @staticmethod
+    def pcp_4(ceei: bool = True):
+        """
+        A power cone formulation of a Fisher market equilibrium pricing model.
+        ceei = Competitive Equilibrium from Equal Incomes
+        """
+        # Generate test data
+        np.random.seed(0)
+        n_buyer = 4
+        n_items = 6
+        V = np.random.rand(n_buyer, n_items)
+        X = cl.Variable(shape=(n_buyer, n_items))
+        u = cl.sum(V * X, axis=1)
+        z = cl.Variable()
+        if ceei:
+            b = np.ones(n_buyer) / n_buyer
+            expect_X = np.array([[9.16311051e-01, 2.71146000e-09, 6.44984275e-10, 0.00000000e+00,
+                                1.85098676e-09, 6.66541059e-01],
+                               [0.00000000e+00, 0.00000000e+00, 5.30793141e-01, 0.00000000e+00,
+                                9.99999995e-01, 1.35828851e-09],
+                               [9.78080132e-10, 9.99999998e-01, 0.00000000e+00, 0.00000000e+00,
+                                1.16278780e-09, 3.33458937e-01],
+                               [8.36889514e-02, 0.00000000e+00, 4.69206858e-01, 1.00000001e+00,
+                                7.80694090e-10, 8.26483799e-10]])
+            pow_objective = (-z, -1.179743761485325)
+        else:
+            b = np.array([0.3, 0.15, 0.2, 0.35])
+            expect_X = np.array([[9.08798195e-01, 0.00000000e+00, 0.00000000e+00, 2.67738456e-10,
+                            3.44073780e-09, 9.58119833e-01],
+                           [0.00000000e+00, 1.92431554e-10, 3.91981663e-09, 0.00000000e+00,
+                            9.99999991e-01, 0.00000000e+00],
+                           [0.00000000e+00, 9.99999993e-01, 0.00000000e+00, 0.00000000e+00,
+                            0.00000000e+00, 4.18801652e-02],
+                           [9.12018094e-02, 1.09687013e-08, 1.00000000e+00, 1.00000001e+00,
+                            5.94724468e-09, 6.99603695e-09]])
+            pow_objective = (-z, -1.2279371987281384)
+        pow_cons = [(cl.sum(X, axis=0) <= 1, None),
+                    (PowCone(cl.hstack((u, z)), np.hstack((b, -1))), None),
+                    (X >= 0, None)]
+        pow_vars = [(X, expect_X)]
+        sth = SolverTestHelper(pow_objective, pow_vars, pow_cons)
+        return sth
+
+    def test_pcp_4a(self):
+        sth = self.pcp_4(ceei=True)
+        sth.solve(solver='CP')
+        sth.verify_objective(places=3)
+        sth.verify_primal_values(places=3)
+        pass
+
+    def test_pcp_4b(self):
+        sth = self.pcp_4(ceei=False)
+        sth.solve(solver='CP')
+        sth.verify_objective(places=3)
+        sth.verify_primal_values(places=3)
+        pass
