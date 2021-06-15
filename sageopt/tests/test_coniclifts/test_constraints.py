@@ -256,7 +256,6 @@ class TestConstraints(unittest.TestCase):
         # Create w and z in one array, where the last one will be z
         wz = Variable(shape=(n + 1,), name='wz')
 
-
         # Make the last element negative to indicate that that element is z in the wz variable
         lamb = rng.random((n,))
 
@@ -286,7 +285,6 @@ class TestConstraints(unittest.TestCase):
         pow_cone_constraint = PowCone(wz, lamb)
         v1 = pow_cone_constraint.violation(rough=True)
         assert np.allclose(v1, 0)
-
 
         # Check if violation is correct for point inside of power cone
         wz.value = np.array([1, 1, 1, 1, 2])

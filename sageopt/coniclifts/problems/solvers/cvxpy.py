@@ -35,10 +35,11 @@ class Cvxpy(Solver):
                 raise RuntimeError(msg)
         type_selectors = build_cone_type_selectors(K)
         constraints = []
-        if '0' in type_selectors.keys():
+        cone_types = type_selectors.keys()
+        if '0' in cone_types:
             tss = type_selectors['0']
             constraints.append(A[tss, :] @ x + b[tss] == 0)
-        if 'e' in type_selectors.keys():
+        if 'e' in cone_types:
             rows = np.where(type_selectors['e'])[0][::3]
             expr1 = A[rows, :] @ x + b[rows]
             rows += 1
@@ -46,18 +47,28 @@ class Cvxpy(Solver):
             rows += 1
             expr3 = A[rows, :] @ x + b[rows]
             constraints.append(cp.constraints.ExpCone(expr1, expr3, expr2))
-        if '+' in type_selectors.keys():
+        if '+' in cone_types:
             tss = type_selectors['+']
             constraints.append(A[tss, :] @ x + b[tss] >= 0)
-        if 'S' in type_selectors.keys():
-            running_idx = 0
+        if 'S' in cone_types or 'pow' in cone_types:
+            idx = 0
             for co in K:
                 if co.type == 'S':
-                    t = A[running_idx, :] @ x + b[running_idx]
-                    idx = running_idx + 1
-                    expr = A[idx:(idx + co.len), :] @ x + b[idx:(idx+co.len)]
-                    constraints.append(cp.constraints.SOC(t, expr))
-                running_idx += co.len
+                    # first component is epigraph variable
+                    upper = A[idx, :] @ x + b[idx]
+                    start = idx + 1
+                    lower = A[start:(idx + co.len), :] @ x + b[start:(idx + co.len)]
+                    # upper >= norm(lower, 2)
+                    constraints.append(cp.constraints.SOC(upper, lower))
+                elif co.type == 'pow':
+                    # final component is hypograph variable
+                    stop = idx + (co.len - 1)
+                    upper = A[idx:stop, :] @ x + b[idx:stop]
+                    lower = A[idx + co.len, :] @ x + b[idx + co.len]
+                    weights = co.annotations['weights']
+                    # np.prod(np.power(upper, weights)) >= abs(lower)
+                    constraints.append(cp.constraints.PowConeND(upper, lower, weights))
+                idx += co.len
         prob = cp.Problem(cp.Minimize(c @ x), constraints)
         prob.solve()
         return x, prob
