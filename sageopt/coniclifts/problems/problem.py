@@ -232,12 +232,22 @@ class Problem(object):
             raise RuntimeError('No acceptable solver is installed.')
         options = self.problem_options.copy()
         options.update(kwargs)
+        if 'cp' in solver.lower():
+            if len(solver) > 2:
+                cp_solver = solver[3:].upper()
+                options['solver'] = cp_solver
+            solver = 'CP'
         solver_object = Problem._SOLVERS_[solver]
         if not solver_object.is_installed():
             raise RuntimeError('Solver "' + solver + '" is not installed.')
         self.timings[solver] = dict()
 
         # Finish solver-specific compilation
+        #   TODO: don't overwrite timings data (or related data) when calling
+        #   the same solver multiple times; a user might call solver='CP-SCS'
+        #   or solver='CP-MOSEK' and want timing information in both cases
+        #   (despite the fact that the dictionary will only contain an entry
+        #   for solver='CP').
         t0 = time.time()
         if self._integer_indices is not None:
             options['integers'] = True

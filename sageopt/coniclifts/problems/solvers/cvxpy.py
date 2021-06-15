@@ -1,10 +1,7 @@
 import numpy as np
-import scipy.sparse as sp
-from sageopt.coniclifts import utilities as util
 from sageopt.coniclifts.cones import build_cone_type_selectors
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.solver import Solver
-import copy
 
 
 class Cvxpy(Solver):

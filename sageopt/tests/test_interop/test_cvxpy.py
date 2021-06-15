@@ -214,14 +214,14 @@ class TestCVXPY(unittest.TestCase):
 
     def test_pcp_4a(self):
         sth = self.pcp_4(ceei=True)
-        sth.solve(solver='CP')
+        sth.solve(solver='CP-SCS', eps=1e-8)
         sth.verify_objective(places=3)
         sth.verify_primal_values(places=3)
         pass
 
     def test_pcp_4b(self):
         sth = self.pcp_4(ceei=False)
-        sth.solve(solver='CP')
+        sth.solve(solver='CP-SCS', eps=1e-8)
         sth.verify_objective(places=3)
         sth.verify_primal_values(places=3)
         pass
