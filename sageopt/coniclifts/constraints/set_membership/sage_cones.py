@@ -150,7 +150,6 @@ class PrimalSageCone(SetMembership):
             self._lifted_n = self._n
             self.ech = ExpCoverHelper(self.alpha, self.c, None, covers, self.settings)
         self.age_vectors = dict()
-        self._sfx = None  # "suppfunc x"; for evaluating support function
         self._age_witnesses = None
         self._nus = dict()
         self._pre_nus = dict()  # if kernel_basis == True, then store certain Variables here.
@@ -420,9 +419,10 @@ class PrimalSageCone(SetMembership):
                 x_i = self._nus[i].value
                 x_i[x_i < 0] = 0
                 idx_set = self.ech.covers[i]
-                sf_part = self.sigma_x((alpha[i, :] - alpha[idx_set, :]).T @ x_i)
+                sf_arg = (alpha[i, :self._n] - alpha[idx_set, :self._n]).T @ x_i
+                sf_val = self.sigma_x(sf_arg)
                 y_i = np.exp(1) * c_i[idx_set]
-                relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + sf_part  # <= 0
+                relent_res = np.sum(special_functions.rel_entr(x_i, y_i)) - c_i[i] + sf_val  # <= 0
                 relent_viol = 0 if relent_res < 0 else relent_res
                 age_viols.append(relent_viol)
             else:

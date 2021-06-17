@@ -688,13 +688,16 @@ class PolyDomain(object):
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(logspace_cons)
         A = A.toarray()
         selector = variable_map[self._y.name].ravel()
-        A0 = np.column_stack((A, np.zeros(A.shape[0])))
-        A_lift = A0[:, selector]
-        aux_len = A.shape[1] - np.count_nonzero(selector != -1)
-        if aux_len > 0:
-            A_aux = A[:, -aux_len:]
-            A_lift = np.hstack((A_lift, A_aux))
-        self.A = A_lift
+        zero_vec = np.zeros(A.shape[0])
+        A0 = np.column_stack((A, zero_vec))
+        A_lead = A0[:, selector]
+        num_aux = A.shape[1] - np.count_nonzero(selector != -1)
+        if num_aux == 0:
+            A_full = A_lead
+        else:
+            A_aux = A[:, -num_aux:]
+            A_full = np.hstack((A_lead, A_aux))
+        self.A = A_full
         self.b = b
         self.K = K
         if self.check_feas:

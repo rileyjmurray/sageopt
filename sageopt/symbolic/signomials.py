@@ -728,25 +728,34 @@ class SigDomain(object):
         """
         variables = cl.compilers.find_variables_from_constraints(constraints)
         if len(variables) != 1:
-            raise RuntimeError('The system of constraints must be defined over a single Variable object.')
+            raise ValueError('The system of constraints must be defined over a single Variable object.')
         self._constraints = constraints
         self._x = variables[0]
+        self._lift_x = None
         if self._x.size != self.n:
             msg = """
             The provided constraints are over a variable of dimension %s,
             but this SigDomain was declared as dimension %s.
             """ % (str(self._x.size), str(self.n))
-            raise RuntimeError(msg)
+            raise ValueError(msg)
         A, b, K, variable_map, all_variables, _ = cl.compile_constrained_system(constraints)
         A = A.toarray()
         selector = variable_map[self._x.name].ravel()
-        A0 = np.column_stack((A, np.zeros(A.shape[0])))
-        A_lift = A0[:, selector]
-        aux_len = A.shape[1] - np.count_nonzero(selector != -1)
-        if aux_len > 0:
-            A_aux = A[:, -aux_len:]
-            A_lift = np.hstack((A_lift, A_aux))
-        self.A = A_lift
+        # Selector might include an index -1, for some ScalarVariables that
+        # don't appear in the constraints. So we need to construct a matrix
+        # "A_full" that includes a column for every ScalarVariable in self._x.
+        # First we'll construct the leading self.n columns of A_full, then
+        # we'll add back columns from A that correspond to auxiliary variables.
+        zero_vec = np.zeros(A.shape[0])
+        A0 = np.column_stack((A, zero_vec))
+        A_lead = A0[:, selector]
+        num_aux = A.shape[1] - np.count_nonzero(selector != -1)
+        if num_aux == 0:
+            A_full = A_lead
+        else:
+            A_aux = A[:, -num_aux:]
+            A_full = np.hstack((A_lead, A_aux))
+        self.A = A_full
         self.b = b
         self.K = K
         if self.check_feas:
@@ -786,12 +795,14 @@ class SigDomain(object):
         .. math::
 
             \\sigma_X(y) \\doteq \\max\\{ y^\\intercal x \\,:\\, x \\in X \\}.
+
+        See also, PrimalSageCone.sigma_x.
         """
         if isinstance(y, cl.Expression):
             y = y.value
         if self._lift_x is None:
             self._lift_x = cl.Variable(self.A.shape[1])
-        objective = y @ self._lift_x
+        objective = y @ self._lift_x[:self.n]
         cons = [cl.PrimalProductCone(self.A @ self._lift_x + self.b, self.K)]
         prob = cl.Problem(cl.MAX, objective, cons)
         prob.solve(solver='ECOS', verbose=False)
