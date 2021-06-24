@@ -28,7 +28,7 @@ class Cvxpy(Solver):
                 The CVXPY interface only supports cones with labels in the set
                     {"e", "S", "+", "0", "pow"}.
                 The provided data includes an invalid cone labeled %s.
-                """ % str(co[0])
+                """ % co.type
                 raise RuntimeError(msg)
         type_selectors = build_cone_type_selectors(K)
         constraints = []

@@ -17,7 +17,7 @@ import warnings
 
 """
 The purpose of this file is to change cvxpy's behavior for the multiplication operator ``*``.
-CVXPY's default behavior is for ``*`` to denote matrix multplication. I need it to mean 
+CVXPY's default behavior is for ``*`` to denote matrix multiplication. I need it to mean 
 elementwise multiplication, for consistency with coniclifts.
 """
 
@@ -31,9 +31,10 @@ try:
         return cp.multiply(a, b)
 
     setattr(cp_exp, '__mul__', overridden_multiply)
-    msg = "\n \nSageopt has modified CVXPY's ``*`` operator. " \
-          + "\nIt now applies ELEMENTWISE multiplication."
-
+    msg = """
+        Sageopt has modified CVXPY's ``*`` operator.
+        It now applies ELEMENTWISE multiplication.
+    """
     warnings.warn(msg)
 
     def vstack(arg_list):

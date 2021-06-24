@@ -50,7 +50,7 @@ class ECOS(Solver):
                 msg = """
                 ECOS only supports cones with labels in the set {"e", "S", "+", "0"}.
                 The provided data includes an invalid cone labeled %s.
-                """ % str(co[0])
+                """ % co.type
                 raise RuntimeError(msg)
         type_selectors = build_cone_type_selectors(K)
         # find indices of A corresponding to equality constraints
