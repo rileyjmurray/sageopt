@@ -148,7 +148,6 @@ def _constrained_least_squares(con, alpha, log_v):
     cons = [cl.vector2norm(log_v - alpha @ x[:n]) <= t,
             cl.PrimalProductCone(A @ x + b, K)]
     prob = cl.Problem(cl.MIN, t, cons)
-    cl.clear_variable_indices()
     res = prob.solve(verbose=False)
     if res[0] in {cl.SOLVED, cl.INACCURATE}:
         mu_ls = x.value[:n]
@@ -208,6 +207,5 @@ def _make_dummy_lagrangian(f, gts, eqs):
     else:
         eq_term = 0
     dummy_L = f - dummy_gamma - ineq_term - eq_term
-    cl.clear_variable_indices()
     return dummy_L
 

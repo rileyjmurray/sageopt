@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
  - coniclifts: how ``disjoint_dot`` is computed in ``coniclifts.base``.
  - interop: GPKit models weren't converted deterministically.
+ - relaxations: ``coniclifts.clear_variable_indices()`` is no longer called by default
+   at the end of generating SAGE relaxations. The old behavior can be restored by setting
+   ``sage_polys.AUTO_CLEAR_INDICES = True`` and ``sage_sigs.AUTO_CLEAR_INDICES = True``.
 
 # [0.5.3] - 2020-09-07
 ## Changed

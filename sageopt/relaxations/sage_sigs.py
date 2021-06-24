@@ -19,6 +19,8 @@ from sageopt.symbolic.signomials import Signomial, SigDomain
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
 
+AUTO_CLEAR_INDICES = False
+
 
 def primal_sage_cone(sig, name, X, expcovers=None):
     con = cl.PrimalSageCone(sig.c, sig.alpha, X, name, covers=expcovers)
@@ -107,7 +109,8 @@ def sig_dual(f, ell=0, X=None, modulator_support=None):
     # Create coniclifts Problem
     prob = cl.Problem(cl.MIN, obj, constraints)
     prob.metadata = metadata
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -125,7 +128,8 @@ def sig_primal(f, ell=0, X=None, modulator_support=None):
     obj = gamma.as_expr()
     prob = cl.Problem(cl.MAX, obj, constraints)
     prob.metadata = {'f': f, 'lagrangian': lagrangian, 'modulator': t_mul, 'X': X}
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -156,7 +160,8 @@ def sage_feasibility(f, X=None, additional_cons=None):
     if additional_cons is not None:
         constraints += additional_cons
     prob = cl.Problem(cl.MAX, cl.Expression([0]), constraints)
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -203,7 +208,8 @@ def sage_multiplier_search(f, level=1, X=None):
     constraints.append(con1)
     constraints.append(con2)
     prob = cl.Problem(cl.MAX, cl.Expression([0]), constraints)
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -307,7 +313,8 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     # Construct the coniclifts Problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
     prob.metadata = metadata
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -367,7 +374,8 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
     # Return the coniclifts Problem.
     prob = cl.Problem(cl.MIN, obj, constraints)
     prob.metadata = metadata
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 

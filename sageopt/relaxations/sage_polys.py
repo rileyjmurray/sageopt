@@ -23,6 +23,8 @@ from sageopt.relaxations.sage_sigs import _check_kwargs
 from sageopt.relaxations import constraint_generators as con_gen
 from sageopt.relaxations import symbolic_correspondences as sym_corr
 
+AUTO_CLEAR_INDICES = False
+
 
 def create_covers(s):
     covers = dict()
@@ -135,7 +137,8 @@ def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
     if poly_ell == 0:
         sr, _ = f.sig_rep
         prob = sage_sigs.sig_dual(sr, sigrep_ell, X=X)
-        cl.clear_variable_indices()
+        if AUTO_CLEAR_INDICES:  # pragma:no cover
+            cl.clear_variable_indices()
         return prob
     elif sigrep_ell == 0:
         modulator = f.standard_multiplier() ** poly_ell
@@ -150,7 +153,8 @@ def poly_dual(f, poly_ell=0, sigrep_ell=0, X=None):
         obj_vec = sym_corr.relative_coeff_vector(f_mod, lagrangian.alpha)
         obj = obj_vec.T @ v
         prob = cl.Problem(cl.MIN, obj, constraints)
-        cl.clear_variable_indices()
+        if AUTO_CLEAR_INDICES:  # pragma:no cover
+            cl.clear_variable_indices()
         return prob
     else:  # pragma: no cover
         raise NotImplementedError()
@@ -160,7 +164,8 @@ def poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
     if poly_ell == 0:
         sr, _ = f.sig_rep
         prob = sage_sigs.sig_primal(sr, sigrep_ell, X=X)
-        cl.clear_variable_indices()
+        if AUTO_CLEAR_INDICES:  # pragma:no cover
+            cl.clear_variable_indices()
         return prob
     else:
         poly_modulator = f.standard_multiplier() ** poly_ell
@@ -178,7 +183,8 @@ def poly_primal(f, poly_ell=0, sigrep_ell=0, X=None):
             constraints = primal_sage_poly_cone(lagrangian, con_name, log_AbK=X)
         obj = gamma
         prob = cl.Problem(cl.MAX, obj, constraints)
-        cl.clear_variable_indices()
+        if AUTO_CLEAR_INDICES:  # pragma:no cover
+            cl.clear_variable_indices()
         return prob
 
 
@@ -201,7 +207,8 @@ def sage_feasibility(f, X=None):
     """
     sr, cons = f.sig_rep
     prob = sage_sigs.sage_feasibility(sr, X=X, additional_cons=cons)
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -249,7 +256,8 @@ def sage_multiplier_search(f, level=1, X=None):
     constraints += temp_cons
     # noinspection PyTypeChecker
     prob = cl.Problem(cl.MAX, 0, constraints)
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -349,7 +357,8 @@ def poly_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
     # Construct the coniclifts problem.
     prob = cl.Problem(cl.MAX, gamma, constrs)
     prob.metadata = metadata
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
@@ -411,7 +420,8 @@ def poly_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
     # Return the coniclifts Problem.
     prob = cl.Problem(cl.MIN, obj, constraints)
     prob.metadata = metadata
-    cl.clear_variable_indices()
+    if AUTO_CLEAR_INDICES:  # pragma:no cover
+        cl.clear_variable_indices()
     return prob
 
 
