@@ -47,7 +47,7 @@ relaxations in the ``sageopt.relaxations`` package. Here is a concrete demonstra
    c = np.array([0, 3, 2, 1, -4, -2])
    # alpha, c define a signomial in the usual way
    gamma = cl.Variable(shape=(), name='gamma')
-   c_expr = cl.Expression(c.copy())
+   c_expr = c.copy()
    c_expr[0] -= gamma   # shift the constant term by -gamma
    constr = cl.PrimalSageCone(c_expr, alpha, X=None, name='example_constraint')
    prob = Problem(cl.MAX, gamma, [constr])
