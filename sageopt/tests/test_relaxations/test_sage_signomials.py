@@ -15,12 +15,14 @@
 """
 import unittest
 import numpy as np
+from importlib.util import find_spec
 from sageopt import coniclifts as cl
 from sageopt.coniclifts.constraints.set_membership import sage_cones
 from sageopt.relaxations import sig_relaxation, sig_constrained_relaxation, sage_multiplier_search
 from sageopt.relaxations import sig_solrec, infer_domain
 from sageopt.symbolic.signomials import Signomial, standard_sig_monomials
 
+DASK_INSTALLED = find_spec('dask') is not None
 
 def primal_dual_vals(f, ell, X=None, solver='ECOS'):
     # primal
@@ -34,15 +36,17 @@ def primal_dual_vals(f, ell, X=None, solver='ECOS'):
     return [prim, dual], prob
 
 
-def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='ECOS'):
+def constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='ECOS', num_threads=0, verbose_compile=False):
     # primal
     prob = sig_constrained_relaxation(f, gts, eqs,
-                                      form='primal', p=p, q=q, ell=ell, X=X)
+                                      form='primal', p=p, q=q, ell=ell, X=X,
+                                      num_threads=num_threads, verbose_compile=verbose_compile)
     status, value = prob.solve(solver=solver, verbose=False)
     prim = value
     # dual
     prob = sig_constrained_relaxation(f, gts, eqs,
-                                      form='dual', p=p, q=q, ell=ell, X=X)
+                                      form='dual', p=p, q=q, ell=ell, X=X,
+                                      num_threads=num_threads, verbose_compile=verbose_compile)
     status, value = prob.solve(solver=solver, verbose=False)
     dual = value
     return [prim, dual], prob
@@ -512,9 +516,33 @@ class TestSAGERelaxations(unittest.TestCase):
         eqs = []
         X = infer_domain(f, gts, eqs)
         p, q, ell = 0, 1, 1
-        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='MOSEK')
+        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='MOSEK', verbose_compile=True)
         self.assertAlmostEqual(vals[0], vals[1], delta=1e-4)
         self.assertAlmostEqual(vals[0], -83.3235, delta=1e-4)
         solns = sig_solrec(dual, ineq_tol=0)
         meas_gap = (f(solns[0]) - dual.value) / abs(dual.value)
         self.assertLessEqual(meas_gap, 0.007)
+
+
+    @unittest.skipUnless(cl.Mosek.is_installed() and DASK_INSTALLED, 'This test needs MOSEK and dask.')
+    def test_conditional_constrained_sage_3_parallel_compile(self):
+        n = 3
+        x = standard_sig_monomials(n)
+        f = 0.5 * x[0] * (x[1] ** -1) - x[0] - 5.0 * (x[1] ** -1)
+        g = 1 - 0.01 * x[1] * (x[2] ** -1) - 0.01 * x[0] - 0.0005 * x[0] * x[2]
+        g = 100.0 * g
+        gts = [g, g * (x[1] ** -2),
+               1e2 - x[0], 1e2 - x[1], 1e2 - x[2],
+               x[0] - 1, x[1] - 1, x[2] - 1]
+        eqs = []
+        X = infer_domain(f, gts, eqs)
+        p, q, ell = 0, 1, 1
+        vals, dual = constrained_primal_dual_vals(f, gts, eqs, p, q, ell, X, solver='MOSEK', num_threads=4)
+        self.assertAlmostEqual(vals[0], vals[1], delta=1e-4)
+        self.assertAlmostEqual(vals[0], -83.3235, delta=1e-4)
+        solns = sig_solrec(dual, ineq_tol=0)
+        meas_gap = (f(solns[0]) - dual.value) / abs(dual.value)
+        self.assertLessEqual(meas_gap, 0.007)
+
+if __name__ == '__main__':
+    unittest.main()

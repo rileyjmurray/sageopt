@@ -73,7 +73,7 @@ def sig_relaxation(f, X=None, form='dual', **kwargs):
         Only used when ``ell > 0``. If ``mod_supp`` is not None, then the rows of this
         array define the exponents of a positive definite modulating Signomial ``t`` in the reference SAGE hierarchy.
     """
-    _check_kwargs(kwargs, allowed={'ell', 'mod_supp'})
+    _check_kwargs(kwargs, allowed={'ell', 'mod_supp', 'verbose_compile', 'num_threads'})
     ell = kwargs['ell'] if 'ell' in kwargs else 0
     mod_supp = kwargs['mod_supp'] if 'mod_supp' in kwargs else None
     if form.lower()[0] == 'd':
@@ -265,23 +265,25 @@ def sig_constrained_relaxation(f, gts, eqs, X=None, form='dual', **kwargs):
         For dual relaxations, determines if constraints "``mat @ vec`` in dual SAGE cone" is
         represented by "``mat @ vec == temp``, ``temp`` in dual SAGE cone". Defaults to False.
     """
-    _check_kwargs(kwargs, allowed={'p', 'q', 'ell', 'slacks'})
+    _check_kwargs(kwargs, allowed={'p', 'q', 'ell', 'slacks', 'verbose_compile', 'num_threads'})
     p = kwargs['p'] if 'p' in kwargs else 0
     q = kwargs['q'] if 'q' in kwargs else 1
     ell = kwargs['ell'] if 'ell' in kwargs else 0
     slacks = kwargs['slacks'] if 'slacks' in kwargs else False
+    verbose_compile = kwargs.get('verbose_compile', False)
+    num_threads = kwargs.get('num_threads', 0)
 
     if form.lower()[0] == 'd':
-        prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X, slacks)
+        prob = sig_constrained_dual(f, gts, eqs, p, q, ell, X, slacks, verbose_compile, num_threads)
     elif form.lower()[0] == 'p':
-        prob = sig_constrained_primal(f, gts, eqs, p, q, ell, X)
+        prob = sig_constrained_primal(f, gts, eqs, p, q, ell, X, verbose_compile, num_threads)
     else:
         raise RuntimeError('Unrecognized form: ' + form + '.')
     return prob
     pass
 
 
-def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
+def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None, verbose_compile=False, num_threads=0):
     """
     Construct the SAGE-(p, q, ell) primal problem for the signomial program
 
@@ -311,14 +313,14 @@ def sig_constrained_primal(f, gts, eqs, p=0, q=1, ell=0, X=None):
         expcovers = con.ech.covers  # only * really * needed in first iteration, but keeps code flat.
         constrs.append(con)
     # Construct the coniclifts Problem.
-    prob = cl.Problem(cl.MAX, gamma, constrs)
+    prob = cl.Problem(cl.MAX, gamma, constrs, verbose_compile=verbose_compile, num_threads=num_threads)
     prob.metadata = metadata
     if AUTO_CLEAR_INDICES:  # pragma:no cover
         cl.clear_variable_indices()
     return prob
 
 
-def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
+def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False, verbose_compile=False, num_threads=0):
     """
     Construct the SAGE-(p, q, ell) dual problem for the signomial program
 
@@ -372,7 +374,7 @@ def sig_constrained_dual(f, gts, eqs, p=0, q=1, ell=0, X=None, slacks=False):
     obj_vec = sym_corr.relative_coeff_vector(f, lagrangian.alpha)
     obj = obj_vec.T @ v
     # Return the coniclifts Problem.
-    prob = cl.Problem(cl.MIN, obj, constraints)
+    prob = cl.Problem(cl.MIN, obj, constraints, verbose_compile=verbose_compile, num_threads=num_threads)
     prob.metadata = metadata
     if AUTO_CLEAR_INDICES:  # pragma:no cover
         cl.clear_variable_indices()

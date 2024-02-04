@@ -4,20 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# [0.5.4] - unreleased
+# [0.6.0] - unreleased
 ## Added
+ - an installation requirement of tqdm
  - symbolic: you can now call a ``Polynomial`` object by providing an array of ``Signomial`` objects.
  - symbolic: the function ``Signomial.shift_coordates``.
  - relaxations: polynomial SAGE constraints now use ``covers`` in a way that
    reflects the signs of a signomial representative coefficient vector.    
  - coniclifts: CVXPY can be called as a "meta solver" (used to access power cones and solvers other than
    ECOS/MOSEK).
+ - coniclifts: added a hotfix to the ``__init__`` function of ``PowCone3D`` objects in CVXPY. This change
+   is needed due to a change in CVXPY in late 2023. This bugfix will be ported to cvxpy in a timely way
+   and so this change can be reverted in the next sageopt release.
+ - coniclifts: parallel compilation of set-membership constraints.
+ - coniclifts: optional verbose compilation (gets you a progress bar on set-membership constraints).
 ## Changed
  - coniclifts: how ``disjoint_dot`` is computed in ``coniclifts.base``.
+ - interop: implementation of the ``__array_priority__`` hotfix for scipy sparse matrices.
  - interop: GPKit models weren't converted deterministically.
+ - interop: CVXPY's ``*`` (star) operator is no longer overridden to use elementwise multiplication.
  - relaxations: ``coniclifts.clear_variable_indices()`` is no longer called by default
    at the end of generating SAGE relaxations. The old behavior can be restored by setting
    ``sage_polys.AUTO_CLEAR_INDICES = True`` and ``sage_sigs.AUTO_CLEAR_INDICES = True``.
+## Removed
+ - symbolic: CVXPY Expression objects can no longer be used as coefficients or exponent vectors in
+   Signomial or Polynomial objects.
+ - interop: in light of the change above, we no longer needed a CVXPY interop file.
 
 # [0.5.3] - 2020-09-07
 ## Changed

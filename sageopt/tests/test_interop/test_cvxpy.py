@@ -16,10 +16,12 @@
 import unittest
 import numpy as np
 from sageopt import coniclifts as cl
-from sageopt.interop.cvxpy import CVXPY_INSTALLED
 from sageopt.coniclifts.constraints.set_membership.pow_cone import PowCone
 from sageopt.coniclifts.problems.problem import Problem
 from sageopt.tests.test_coniclifts.helper import SolverTestHelper
+from importlib.util import find_spec
+
+CVXPY_INSTALLED = find_spec('cvxpy') is not None
 
 
 @unittest.skipUnless(CVXPY_INSTALLED, 'These tests are only applicable when CVXPY is installed.')
@@ -225,3 +227,7 @@ class TestCVXPY(unittest.TestCase):
         sth.verify_objective(places=3)
         sth.verify_primal_values(places=3)
         pass
+
+if __name__ == '__main__':
+    import nose2
+    nose2.main()

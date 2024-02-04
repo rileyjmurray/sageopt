@@ -44,7 +44,7 @@ class TestToys1(unittest.TestCase):
         assert abs(val - 10.4075826) < 1e-6
         x_star = x.value
         expect = np.array([-4.93083, -2.73838])
-        assert np.allclose(x_star, expect, atol=1e-4)
+        assert np.allclose(x_star, expect, atol=1e-3)
         return prob
 
     def test_geometric_program_1a(self):

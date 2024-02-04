@@ -21,6 +21,8 @@ from sageopt.coniclifts.compilers import compile_problem
 from sageopt.coniclifts.base import Expression, Variable
 import numpy as np
 import time
+import warnings
+
 
 class Problem(object):
     """
@@ -151,7 +153,11 @@ class Problem(object):
         self.constraints = constraints
         self.timings = dict()
         t = time.time()
-        c, A, b, K, variable_map, all_vars = compile_problem(objective, constraints)
+        num_threads = kwargs.get('num_threads', 0)
+        verbose_compile = kwargs.get('verbose_compile', False)
+        if verbose_compile and num_threads > 0:
+            warnings.warn('verbose_compile has no effect when the number of threads is set manually.')
+        c, A, b, K, variable_map, all_vars = compile_problem(objective, constraints, num_threads, verbose_compile)
         if sense == CL_CONSTANTS.minimize:
             self.c = c
         else:

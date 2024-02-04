@@ -18,6 +18,11 @@ from sageopt.symbolic import utilities as sym_util
 import numpy as np
 import warnings
 
+try:
+    import cvxpy as cp
+    CVXPY_INSTALLED = True
+except ImportError:
+    CVXPY_INSTALLED = False
 
 __NUMERIC_TYPES__ = (int, float, np.int_, np.float_)
 
@@ -140,6 +145,8 @@ class Signomial(object):
             raise ValueError('alpha and c specify different numbers of terms')
         if isinstance(c, np.ndarray) and not isinstance(c, cl.Expression) and c.dtype == object:
             raise ValueError('If c is an ordinary numpy array, it cannot have dtype == object.')
+        if CVXPY_INSTALLED and (isinstance(c, cp.Expression) or isinstance(alpha, cp.Expression)):
+            raise ValueError('CVXPY Expressions cannot be used in Signomial or Polynomial objects.')
         if isinstance(alpha, np.ndarray):
             alpha = np.round(alpha, decimals=__EXPONENT_VECTOR_DECIMAL_POINTS__)
             alpha, c = sym_util.consolidate_basis_funcs(alpha, c)
