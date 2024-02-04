@@ -17,7 +17,6 @@ from collections import defaultdict
 import numpy as np
 import scipy.sparse as sp
 from sageopt import coniclifts as cl
-from sageopt.interop import cvxpy as cp_interop
 from sageopt.coniclifts.base import __REAL_TYPES__
 
 
@@ -48,12 +47,10 @@ def align_basis_matrices(mats):
             if idx == up_next:
                 aligned_rows.append(ri)
         lifting_locs.append(curr_coeff_locs)
-    if all(isinstance(r, np.ndarray) and r.dtype in __REAL_TYPES__ for r in aligned_rows):
-        aligned_mat = np.row_stack(aligned_rows)
-    elif cp_interop.CVXPY_INSTALLED:
-        aligned_mat = cp_interop.vstack(aligned_rows)
-    else:
-        raise ValueError()
+    for i,r in enumerate(aligned_rows):
+        assert isinstance(r, np.ndarray), f'row {i} is a {type(r)}, but we require a numpy array.'
+        assert r.dtype  in __REAL_TYPES__, f'row {i}\'s contents are not recognized as real numbers.'
+    aligned_mat = np.row_stack(aligned_rows)
     return aligned_mat, lifting_locs
 
 
@@ -74,9 +71,6 @@ def lift_basis_coeffs(coeff_vecs, lifting_locs, lift_dim):
 
 
 def consolidate_basis_funcs(alpha, c):
-    #TODO: extend this to allow alpha to be a constant cvxpy Expression. Note: in order to do this,
-    # cvxpy will need a method to check symbolic equivalence (at least of constant Expressions).
-    # From there, I would need to create a cvxpy analog to ``np.unique``.
     alpha_reduced, inv, counts = np.unique(alpha, axis=0, return_inverse=True, return_counts=True)
     if np.all(counts == 1):
         # then all exponent vectors are unique
@@ -108,6 +102,5 @@ def find_zero_entries(c):
     elif isinstance(c, np.ndarray) and c.dtype in __REAL_TYPES__:
         to_drop = list(np.nonzero(c == 0)[0])
     else:
-        #TODO: implement this properly (it's really the cvxpy-case).
-        return []
+        raise ValueError(f'Argument {c} must be a coniclifts Expression or a numpy array with real entries.')
     return to_drop

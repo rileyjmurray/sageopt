@@ -14,41 +14,56 @@
    limitations under the License.
 """
 
-#TODO: create a PR for SciPy, where scipy.sparse.base.spmatrix.__matmul__
-# and scipy.sparse.base.spmatrix.__rmatmul__ check __array_priority__ before
-# proceding with their own implementations. Until then, we need to override
-# their implementations with this helper file.
 
-# REMARK: this file might not play well with CVXPY (which has a similar file).
+def patch_scipy_array_priority():
+    """Monkey-patch scipy.sparse to make it respect __array_priority__.
 
-
-from scipy.sparse.base import spmatrix
-from sageopt.coniclifts import Expression as cl_exp
-
-EXPR_CLASSES = [cl_exp]
-try:
-    from cvxpy.expressions.expression import Expression as cp_exp
-    EXPR_CLASSES.append(cp_exp)
-except ImportError:
-    pass
-EXPR_CLASSES = tuple(EXPR_CLASSES)
-
-BIN_OPS = ["__div__", "__mul__", "__add__", "__sub__",
-           "__le__", "__eq__", "__lt__", "__gt__", "__matmul__", "__rmatmul__"]
-
-
-def wrap_bin_op(method):
-    """Factory for wrapping binary operators.
+    This works around outstanding issues that remain after
+    https://github.com/scipy/scipy/issues/4819 was resolved, and is adapted from
+    https://github.com/scipy/scipy/issues/4819#issuecomment-920722279
+    to the latest version of scipy.
     """
-    def new_method(self, other):
-        if isinstance(other, EXPR_CLASSES):
-            return NotImplemented
-        else:
-            return method(self, other)
-    return new_method
+    import scipy.sparse
 
+    def teach_array_priority(operator):
+        def respect_array_priority(self, other):
+            if hasattr(other, "__array_priority__") \
+            and self.__array_priority__ < other.__array_priority__:
+                return NotImplemented
+            else:
+                return operator(self, other)
 
-for method_name in BIN_OPS:
-    method = getattr(spmatrix, method_name)
-    new_method = wrap_bin_op(method)
-    setattr(spmatrix, method_name, new_method)
+        return respect_array_priority
+
+    def get_sparse_matrix_types():
+        base_types = [scipy.sparse.spmatrix]
+        try:
+            base_types.append(scipy.sparse._base._spbase)
+        except:  # noqa: E722
+            pass
+        base_types = tuple(base_types)
+        concrete_types = []
+        for val in scipy.sparse.__dict__.values():
+            if not isinstance(val, type):
+                continue
+            if issubclass(val, base_types) and val not in base_types:
+                concrete_types.append(val)
+        
+        concrete_types = tuple(concrete_types)
+        return concrete_types
+
+    concrete_types = get_sparse_matrix_types()
+    BINARY_OPERATIONS = (
+        "__add__", "__div__", "__eq__", "__ge__", "__gt__", "__le__",
+        "__lt__", "__matmul__", "__mul__", "__ne__", "__pow__", "__sub__",
+        "__truediv__",
+    )
+
+    for matrix_type in concrete_types:
+        for operator_name in BINARY_OPERATIONS:
+            if hasattr(matrix_type, operator_name):
+                operator = getattr(matrix_type, operator_name)
+                wrapped_operator = teach_array_priority(operator)
+                setattr(matrix_type, operator_name, wrapped_operator)
+
+patch_scipy_array_priority()

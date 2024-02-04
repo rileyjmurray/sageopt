@@ -32,6 +32,5 @@ from sageopt.relaxations import poly_relaxation, poly_constrained_relaxation
 from sageopt.relaxations import poly_solrec
 
 import sageopt.interop.scipy
-import sageopt.interop.cvxpy
 
-__version__ = '0.5.4'
+__version__ = '0.6.0'

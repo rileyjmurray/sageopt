@@ -3,6 +3,42 @@ from sageopt.coniclifts.cones import build_cone_type_selectors
 from sageopt.coniclifts.standards import constants as CL_CONSTANTS
 from sageopt.coniclifts.problems.solvers.solver import Solver
 
+def fix_cvxpy_pow3d_constructor():
+    from cvxpy.expressions import cvxtypes
+    from cvxpy import PowCone3D
+
+
+    def corrected_pow3d_init(self, x, y, z, alpha, constr_id=None) -> None:
+        Expression = cvxtypes.expression()
+        self.x = Expression.cast_to_const(x)
+        self.y = Expression.cast_to_const(y)
+        self.z = Expression.cast_to_const(z)
+        for val in [self.x, self.y, self.z]:
+            if not (val.is_affine() and val.is_real()):
+                raise ValueError('All arguments must be affine and real.')
+        alpha = Expression.cast_to_const(alpha)
+        if alpha.is_scalar():
+            alpha = cvxtypes.promote()(alpha, self.x.shape)
+        arg_shapes = [self.x.shape, self.y.shape, self.z.shape, alpha.shape]
+        if any(arg_shapes[0] != s for s in arg_shapes[1:]):
+            msg = ("All arguments must have the same shapes. Provided arguments have"
+                    "shapes %s" % str(arg_shapes))
+            raise ValueError(msg)
+        if alpha.is_scalar():
+            # A class called ConeDims that is very far downstream has an 
+            # __init__ function which breaks when alpha has ndim == 0.
+            # So after we've verified that the shapes make sense we need
+            # to promote alpha to 1d. (maybe also x,y,z)
+            alpha = cvxtypes.promote()(alpha, (1,))
+        self.alpha = alpha
+        if np.any(self.alpha.value <= 0) or np.any(self.alpha.value >= 1):
+            msg = "Argument alpha must have entries in the open interval (0, 1)."
+            raise ValueError(msg)
+        super(PowCone3D, self).__init__([self.x, self.y, self.z],
+                                        constr_id)
+    
+    setattr(PowCone3D, '__init__', corrected_pow3d_init)
+    return
 
 class Cvxpy(Solver):
 
@@ -14,6 +50,7 @@ class Cvxpy(Solver):
 
     @staticmethod
     def solve_via_data(data, params):
+        fix_cvxpy_pow3d_constructor()
         import cvxpy as cp
         # linear program solving with cvxpy
         c = data['c']
@@ -57,12 +94,14 @@ class Cvxpy(Solver):
                     lower = A[start:(idx + co.len), :] @ x + b[start:(idx + co.len)]
                     # upper >= norm(lower, 2)
                     constraints.append(cp.constraints.SOC(upper, lower))
-                elif co.type == 'pow':
+                elif co.type == 'pow': 
                     # final component is hypograph variable
                     stop = idx + (co.len - 1)
                     upper = A[idx:stop, :] @ x + b[idx:stop]
                     lower = A[stop, :] @ x + b[stop]  # inclusive
                     weights = co.annotations['weights']
+                    if upper.ndim > 0:
+                        weights = np.atleast_1d(weights)
                     # np.prod(np.power(upper, weights)) >= abs(lower); upper >= 0.
                     constraints.append(cp.constraints.PowConeND(upper, lower, weights))
                 idx += co.len

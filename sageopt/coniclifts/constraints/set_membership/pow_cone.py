@@ -238,7 +238,11 @@ class PowCone(SetMembership):
         """
         if rough:
             viol_vec = np.abs(self.z_low.value) - np.prod(np.power(self.w_low.value, self.alpha))
-            return np.max([viol_vec, 0])
+            if isinstance(viol_vec, np.ndarray):
+                zero = np.zeros(shape=viol_vec.shape)
+            else:
+                zero = 0
+            return np.max([viol_vec, zero])
         else:
             dist = PowCone.project(self.w, self.lamb)
             return dist

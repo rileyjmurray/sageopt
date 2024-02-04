@@ -2,17 +2,14 @@ import setuptools
 
 setuptools.setup(
     name='sageopt',
-    version='0.5.4',
+    version='0.6.0',
     author='Riley John Murray',
     url='https://github.com/rileyjmurray/sageopt',
-    author_email='rmurray@caltech.edu',
+    author_email='rmurray201693@gmail.com',
     description='Signomial and polynomial optimization via SAGE relaxations',
     packages=setuptools.find_packages(),
     classifiers=[
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python',
         'Natural Language :: English',
         'License :: OSI Approved :: Apache Software License',
         'Development Status :: 4 - Beta',
@@ -20,7 +17,7 @@ setuptools.setup(
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Mathematics'
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     install_requires=["ecos >= 2",
                       "numpy >= 1.14",
                       "scipy >= 1.1",
