@@ -21,6 +21,7 @@ setuptools.setup(
     install_requires=["ecos >= 2",
                       "numpy >= 1.14",
                       "scipy >= 1.1",
-                      "nose2"],
+                      "nose2",
+                      'tqdm'],
     test_suite='nose2.collector'
 )

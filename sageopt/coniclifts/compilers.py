@@ -13,9 +13,12 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import os
+import time
 import warnings
 import numpy as np
 from collections import defaultdict
+from tqdm import tqdm
 from sageopt.coniclifts import utilities as util
 from sageopt.coniclifts.constraints.constraint import Constraint
 from sageopt.coniclifts.constraints.elementwise import ElementwiseConstraint
@@ -28,11 +31,11 @@ from sageopt.coniclifts.base import ScalarVariable
 #
 
 
-def compile_problem(objective, constraints):
+def compile_problem(objective, constraints, num_threads=0, verbose_compile=False):
     if not objective.is_affine():
         raise NotImplementedError('The objective function must be affine.')
     # Generate a conic system that is feasible iff the constraints are feasible.
-    A, b, K, variable_map, variables, svid2col = compile_constrained_system(constraints)
+    A, b, K, variable_map, variables, svid2col = compile_constrained_system(constraints, num_threads, verbose_compile)
     # Generate the vector for the objective function.
     c, c_offset = compile_objective(objective, svid2col)
     if c_offset != 0:
@@ -40,7 +43,7 @@ def compile_problem(objective, constraints):
     return c, A, b, K, variable_map, variables
 
 
-def compile_constrained_system(constraints):
+def compile_constrained_system(constraints, num_threads=0, verbose_compile=False):
     """
     Construct a flattened conic representation of the set of variable values which satisfy the
     constraints ("the feasible set"). Return the flattened representation of the feasible set,
@@ -93,6 +96,10 @@ def compile_constrained_system(constraints):
         participates in the conic system. If the given ScalarVariable does not participate in the conic
         system, its ``id`` maps to ``-1``.
 
+    num_threads : int
+        If positive, then we use Dask to parallelize work across a number of parallel subprocesses
+        (roughly) half of num_threads, where each subprocess can use two threads.
+
     """
     if any(not isinstance(c, Constraint) for c in constraints):
         raise RuntimeError('compile_constraints( ... ) only accepts iterables of Constraint objects.')
@@ -106,7 +113,7 @@ def compile_constrained_system(constraints):
         else:
             raise RuntimeError('Unknown argument')
     # Compile into a conic system (substituting epigraph variables as necessary)
-    A, b, K, svid2col = conify_constraints(elementwise_constrs, setmem_constrs)
+    A, b, K, svid2col = conify_constraints(elementwise_constrs, setmem_constrs, num_threads, verbose_compile)
     check_dimensions(A, b, K)
     # Find all variables (user-defined, and auxiliary)
     variables = find_variables_from_constraints(constraints)
@@ -136,7 +143,7 @@ def compile_constrained_system(constraints):
 #
 
 
-def conify_constraints(elementwise_constrs, setmem_constrs):
+def conify_constraints(elementwise_constrs, setmem_constrs, num_threads=0, verbose_compile=False):
     epigraph_cone_data = epigraph_substitution(elementwise_constrs)
     # Elementwise constraint expressions have now been linearized. Any
     # necessary conic constraints on epigraph variables are in "epigraph_cone_data".
@@ -149,8 +156,31 @@ def conify_constraints(elementwise_constrs, setmem_constrs):
     # Now we compile set-membership constraints. Set-membership constraints
     # have customized (possibly sophisticated) compilation functions.
     setmem_cone_data = []
-    for con in setmem_constrs:
-        setmem_cone_data.extend(con.conic_form())
+    if num_threads > 0:
+        num_threads = min(num_threads, len(setmem_constrs))
+        num_threads = min(num_threads, os.cpu_count())
+        num_workers = max(1, num_threads // 2)
+        import dask
+        dask.config.set(scheduler='processes', num_workers=num_workers, threads_per_worker=2)
+        lazy_results = []
+        for con in setmem_constrs:
+            lazy_data = dask.delayed(con.conic_form)()
+            lazy_results.append(lazy_data)
+        results = dask.compute(*lazy_results)
+        for res in results:
+            setmem_cone_data.extend(res)
+        pass
+    else:
+        # single threaded
+        if verbose_compile:
+            tic = time.time()
+            print('(sageopt) Starting to compile set-membership constraints.')
+            for con in tqdm(setmem_constrs):
+                setmem_cone_data.extend(con.conic_form())
+            print(f'(sageopt) Compiled set membership constraints in {time.time() - tic} seconds.')
+        else:
+            for con in setmem_constrs:
+                setmem_cone_data.extend(con.conic_form())
     # All constraints have been converted to conic form.
     #
     # Now we aggregate this data to facilitate subsequent steps in compilation;
