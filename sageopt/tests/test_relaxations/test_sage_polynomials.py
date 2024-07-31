@@ -171,7 +171,7 @@ class TestSagePolynomials(unittest.TestCase):
         #
         # Tests
         #
-        #       (1) primal / dual consistency for (poly_ell, sigrep_ell) \in {(0, 0), (1, 0), (0, 1)}.
+        #       (1) primal / dual consistency for (poly_ell, sigrep_ell) \\in {(0, 0), (1, 0), (0, 1)}.
         #
         #       (2) Show that the bound with (poly_ell=0, sigrep_ell=1) is strong than
         #           the bound with (poly_ell=1, sigrep_ell=0).

@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [0.6.0] - unreleased
 ## Added
- - an installation requirement of tqdm
+ - installation requirement: pytest
+ - installation requirement: tqdm
  - symbolic: you can now call a ``Polynomial`` object by providing an array of ``Signomial`` objects.
  - symbolic: the function ``Signomial.shift_coordates``.
  - relaxations: polynomial SAGE constraints now use ``covers`` in a way that
@@ -16,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - coniclifts: added a hotfix to the ``__init__`` function of ``PowCone3D`` objects in CVXPY. This change
    is needed due to a change in CVXPY in late 2023. This bugfix will be ported to cvxpy in a timely way
    and so this change can be reverted in the next sageopt release.
- - coniclifts: parallel compilation of set-membership constraints.
+ - coniclifts: parallel compilation of set-membership constraints via Dask.
  - coniclifts: optional verbose compilation (gets you a progress bar on set-membership constraints).
 ## Changed
  - coniclifts: how ``disjoint_dot`` is computed in ``coniclifts.base``.
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    at the end of generating SAGE relaxations. The old behavior can be restored by setting
    ``sage_polys.AUTO_CLEAR_INDICES = True`` and ``sage_sigs.AUTO_CLEAR_INDICES = True``.
 ## Removed
+ - installation requirement: nose2
  - symbolic: CVXPY Expression objects can no longer be used as coefficients or exponent vectors in
    Signomial or Polynomial objects.
  - interop: in light of the change above, we no longer needed a CVXPY interop file.

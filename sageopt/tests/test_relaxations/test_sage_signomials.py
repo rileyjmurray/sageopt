@@ -63,7 +63,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         # Tests
         #
-        #       (1) Check that primal / dual objectives are close to a reference values, for ell \in {0, 1}.
+        #       (1) Check that primal / dual objectives are close to a reference values, for ell \\in {0, 1}.
         #
         #       (2) Recover a globally optimal solution at ell == 1.
         #
@@ -109,7 +109,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         # Tests
         #
-        #       (1) Check that primal / dual objective are -\infty for ell == 0.
+        #       (1) Check that primal / dual objective are -\\infty for ell == 0.
         #
         #       (2) Check that primal / dual objectives are close to a reference value, for ell == 1.
         #
@@ -143,7 +143,7 @@ class TestSAGERelaxations(unittest.TestCase):
         # Tests
         #
         #       (1) Show that the standard SAGE hierarchy produces no finite bound on "s",
-        #           for ell \in {0, 1}.
+        #           for ell \\in {0, 1}.
         #
         # Notes
         #
@@ -167,11 +167,11 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         #       This example was constructed soley as a test case for sageopt.
         #
-        #       Minimize s(x) = exp(3*x) - 4*exp(2*x) + 7*exp(x) + exp(-x), over x \in R.
+        #       Minimize s(x) = exp(3*x) - 4*exp(2*x) + 7*exp(x) + exp(-x), over x \\in R.
         #
         # Tests
         #
-        #       (1) Check that primal / dual objectives are close to reference values, for ell \in {0, 1, 2}.
+        #       (1) Check that primal / dual objectives are close to reference values, for ell \\in {0, 1, 2}.
         #
         #       (2) Recover a globally optimal solution from the dual relaxation, when ell == 3.
         #
@@ -213,7 +213,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         # Tests
         #
-        #       (1) check that primal / dual objectives are close to reference values, for ell \in {0, 1}.
+        #       (1) check that primal / dual objectives are close to reference values, for ell \\in {0, 1}.
         #
         alpha = np.array([[0., 1.],
                           [0.21, 0.08],
@@ -239,7 +239,7 @@ class TestSAGERelaxations(unittest.TestCase):
         #
         # Tests
         #
-        #       (1) check that primal / dual objectives are close to reference values, for ell \in {0, 1}.
+        #       (1) check that primal / dual objectives are close to reference values, for ell \\in {0, 1}.
         #
         alpha = np.array([[0., 1.],
                          [0., 0.],

@@ -22,7 +22,7 @@ def build_cone_type_selectors(K):
     :param K: a list of Cones
 
     :return: a map from cone type to indices for (A,b) in the conic system
-    {x : A @ x + b \in K}, and from cone type to a 1darray of cone lengths.
+    {x : A @ x + b \\in K}, and from cone type to a 1darray of cone lengths.
     """
     m = sum(co.len for co in K)
     type_selectors = defaultdict(lambda: (lambda: np.zeros(m, dtype=bool))())

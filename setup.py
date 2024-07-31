@@ -20,8 +20,7 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=["ecos >= 2",
                       "numpy >= 1.14, <1.20",
-                      "scipy >= 1.1, <= 1.10.1",
-                      "nose2",
-                      'tqdm'],
-    test_suite='nose2.collector'
+                      "scipy >= 1.1, <2.0",
+                      "pytest",
+                      'tqdm']
 )

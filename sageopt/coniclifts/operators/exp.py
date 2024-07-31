@@ -81,7 +81,7 @@ class Exponential(NonlinearScalarAtom):
     def epigraph_conic_form(self):
         """
         Refer to coniclifts/standards/cone_standards.txt to see that
-        "(x, y) : e^x <= y" is represented as "(x, y, 1) \in K_{exp}".
+        "(x, y) : e^x <= y" is represented as "(x, y, 1) \\in K_{exp}".
         :return:
         """
         b = np.zeros(3,)

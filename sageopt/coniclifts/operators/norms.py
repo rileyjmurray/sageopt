@@ -60,7 +60,7 @@ class Vector2Norm(NonlinearScalarAtom):
         Generate conic constraint for epigraph
             np.linalg.norm( np.array(self.args), ord=2) <= self._epigraph_variable
         The coniclifts standard for the second order cone (of length n) is
-            { (t,x) : x \in R^{n-1}, t \in R, || x ||_2 <= t }.
+            { (t,x) : x \\in R^{n-1}, t \\in R, || x ||_2 <= t }.
         """
         m = len(self.args) + 1
         b = np.zeros(m,)

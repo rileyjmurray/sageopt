@@ -707,12 +707,12 @@ class ExpCoverHelper(object):
         self.c = c
         if self.c is not None:
             self.U_I = [i for i, c_i in enumerate(self.c) if (not c_i.is_constant()) or (c_i.offset < 0)]
-            # ^ indices of not-necessarily-positive sign; i \in U_I must get an AGE cone.
+            # ^ indices of not-necessarily-positive sign; i \\in U_I must get an AGE cone.
             # this AGE cone might not be used in the final solution to the associated
             # optimization problem. These AGE cones might also be trivial (i.e. reduce to the nonnegative
             # orthant) if during presolve we set covers[i][:] = False.
             self.N_I = [i for i, c_i in enumerate(self.c) if (c_i.is_constant()) and (c_i.offset < 0)]
-            # ^ indices of definitively-negative sign. if j \in N_I, then there is only one AGE
+            # ^ indices of definitively-negative sign. if j \\in N_I, then there is only one AGE
             # cone (indexed by i) with c^{(i)}_j != 0, and that's j == i. These AGE cones will
             # be used in any solution to the associated optimization problem, and we can be
             # certain that c^{(i)}_i == c_i.
@@ -791,7 +791,7 @@ class ExpCoverHelper(object):
         cons = [mat @ x <= -1]
         prob = Problem(CL_MIN, objective, cons)
         # If prob is feasible, then there exists a sequence x_t where
-        # max(mat @ x_t) diverges to -\infty as t increases. Using this
+        # max(mat @ x_t) diverges to -\\infty as t increases. Using this
         # sequence we can satisfy the constraints for the i-th dual
         # AGE cone no matter the value of the vector "v" that needs to belong
         # to the dual AGE cone.
@@ -847,8 +847,8 @@ class ExpCoverHelper(object):
                     (alpha[j2,:] - alpha[i,:]) @ mu[:, i] (*)
                 is (1) non-decreasing in mu[k,i] for all 0 <= j2 < m, and (2)
                 strictly increasing in mu[k,i] when j2 == j. Therefore by
-                sending mu[i,k] to -\infty, we do not increase (*) for any
-                0 <= j2 < m, and in fact (*) goes to -\infty for j2 == j.
+                sending mu[i,k] to -\\infty, we do not increase (*) for any
+                0 <= j2 < m, and in fact (*) goes to -\\infty for j2 == j.
                 Consequence 1
                 -------------
                 If mu[:,i] is only subject to constraints of the form
@@ -859,8 +859,8 @@ class ExpCoverHelper(object):
                 Consequence 2
                 -------------
                 For conditional SAGE cones, there is another constraint:
-                     A @ mu[:, i] + v[i] * b \in K.      (**)
-                However, as long as (**) allows us to send mu[k,i] to -\infty
+                     A @ mu[:, i] + v[i] * b \\in K.      (**)
+                However, as long as (**) allows us to send mu[k,i] to -\\infty
                 without affecting feasibility, then the we arrive at the same
                 conclusion: the j-th term of alpha isn't used in the i-th AGE cone.
                 """

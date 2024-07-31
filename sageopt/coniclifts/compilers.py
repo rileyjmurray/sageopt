@@ -75,7 +75,7 @@ def compile_constrained_system(constraints, num_threads=0, verbose_compile=False
 
         A map from a Variable's ``name`` field to a numpy array. If ``myvar`` is a coniclifts
         Variable appearing in the system defined by ``constraints``, then a point ``x``
-        satisfying :math:`A x + b \in K` maps to a feasible value for ``myvar`` by ::
+        satisfying :math:`A x + b \\in K` maps to a feasible value for ``myvar`` by ::
 
             x0 = np.hstack([x, 0])
             myvar_val = x0[variable_map[myvar.name]]
@@ -156,10 +156,11 @@ def conify_constraints(elementwise_constrs, setmem_constrs, num_threads=0, verbo
     # Now we compile set-membership constraints. Set-membership constraints
     # have customized (possibly sophisticated) compilation functions.
     setmem_cone_data = []
-    if num_threads > 0:
-        num_threads = min(num_threads, len(setmem_constrs))
-        num_threads = min(num_threads, os.cpu_count())
-        num_workers = max(1, num_threads // 2)
+
+    def compile_dask():
+        _num_threads = min(num_threads, len(setmem_constrs))
+        _num_threads = min(_num_threads, os.cpu_count())
+        num_workers = max(1, _num_threads // 2)
         import dask
         dask.config.set(scheduler='processes', num_workers=num_workers, threads_per_worker=2)
         lazy_results = []
@@ -169,9 +170,9 @@ def conify_constraints(elementwise_constrs, setmem_constrs, num_threads=0, verbo
         results = dask.compute(*lazy_results)
         for res in results:
             setmem_cone_data.extend(res)
-        pass
-    else:
-        # single threaded
+        return
+
+    def compile_native():
         if verbose_compile:
             tic = time.time()
             print('(sageopt) Starting to compile set-membership constraints.')
@@ -181,6 +182,16 @@ def conify_constraints(elementwise_constrs, setmem_constrs, num_threads=0, verbo
         else:
             for con in setmem_constrs:
                 setmem_cone_data.extend(con.conic_form())
+        return
+
+    if num_threads > 0:
+        try:
+            compile_dask()
+        except ModuleNotFoundError:
+            compile_native()
+    else:
+        compile_native()
+
     # All constraints have been converted to conic form.
     #
     # Now we aggregate this data to facilitate subsequent steps in compilation;
@@ -246,18 +257,18 @@ def compile_objective(objective, svid2col):
 def make_variable_map(variables, var_indices):
     """
     :param variables: a list of Variable objects with is_proper=True. These variables
-    appear in some vectorized conic system represented by {x : A @ x + b \in K}.
+    appear in some vectorized conic system represented by {x : A @ x + b \\in K}.
 
     :param var_indices: a list of 1darrays. The i^th 1darray in this list contains
     the locations of the i^th Variable's entries with respect to the vectorized
-    conic system {x : A @ x + b \in K}.
+    conic system {x : A @ x + b \\in K}.
 
     :return: a dictionary mapping Variable names to ndarrays of indices. These ndarrays
     of indices allow the user to access a Variable's value from the vectorized conic system
     in a very convenient way.
 
     For example, if "my_var" is the name of a Variable with shape (10, 2, 1, 4), and "x" is
-    feasible for the conic system {x : A @ x + b \in K}, then a feasible value for "my_var"
+    feasible for the conic system {x : A @ x + b \\in K}, then a feasible value for "my_var"
     is the 10-by-2-by-1-by-4 array given by x[variable_map['my_var']].
 
     NOTES:
@@ -267,10 +278,10 @@ def make_variable_map(variables, var_indices):
         by this very important function. Symmetric matrices are supported by this function.
 
         If some but not-all components of a Variable "my_var" participate in a vectorized conic
-        system {x : A @ x + b \in K }, then var_indices is presumed to map these ScalarVariables
+        system {x : A @ x + b \\in K }, then var_indices is presumed to map these ScalarVariables
         to the number -1. The number -1 will then appear as a value in variable_map. When values
-        are set for ScalarVariable objects, the system {x : A @ x + b \in K} is extended to
-        { [x,0] : A @ x + b \in K}. In this way, ScalarVariables which do not participate in a
+        are set for ScalarVariable objects, the system {x : A @ x + b \\in K} is extended to
+        { [x,0] : A @ x + b \\in K}. In this way, ScalarVariables which do not participate in a
         given optimization problem are assigned the value 0.
 
     """
