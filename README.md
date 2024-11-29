@@ -24,8 +24,6 @@ are encouraged to visit [the main sageopt website](https://rileyjmurray.github.i
 
 ## Dependencies
 
-Sageopt requires Python version 3.5 or higher. There is no way around this: we make heavy use of the ``@``
-operator for matrix multiplication, and this operator was only introduced in Python 3.5.
 We also require the following packages
 1. SciPy, version >= 1.1.
 2. Numpy, version >= 1.14.
@@ -52,6 +50,6 @@ To install sageopt from source, do the following:
 1. Activate the Python virtual environment of your choice.
 2. Run ``python setup.py install`` to install sageopt to your current Python environment.
 3. Run ``python -c "import sageopt; print(sageopt.__version__)"`` to verify that sageopt installed correctly.
-4. Run ``pip install nose``  (or ``conda install nose``) in preparation for running unittests.
-5. Run ``nosetests sageopt/tests``.
+4. Run ``pip install pytest``  (or ``conda install pytest``) in preparation for running unittests.
+5. Run ``pytest sageopt/tests``.
 

@@ -50,7 +50,7 @@ def align_basis_matrices(mats):
     for i,r in enumerate(aligned_rows):
         assert isinstance(r, np.ndarray), f'row {i} is a {type(r)}, but we require a numpy array.'
         assert r.dtype  in __REAL_TYPES__, f'row {i}\'s contents are not recognized as real numbers.'
-    aligned_mat = np.row_stack(aligned_rows)
+    aligned_mat = np.vstack(aligned_rows)
     return aligned_mat, lifting_locs
 
 

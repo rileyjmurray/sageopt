@@ -70,7 +70,7 @@ class Problem(object):
     value : float
 
         The objective value from the last call to ``self.solve``. Can be a float,
-         ``np.inf``, ``-np.inf``, or ``np.NaN``.
+         ``np.inf``, ``-np.inf``, or ``np.nan``.
 
     variable_values : Dict[str, ndarray]
 
@@ -172,7 +172,7 @@ class Problem(object):
         self.solver_apply_data = dict()
         self.solver_raw_output = dict()
         self.status = None  # "solved", "inaccurate", or "failed"
-        self.value = np.NaN
+        self.value = np.nan
         self.metadata = dict()
         self.problem_options = {'cache_apply_data': False,
                                 'cache_raw_output': False, 'verbose': True}
@@ -200,7 +200,7 @@ class Problem(object):
         value : float
 
             The optimal objective value reported by the solver. Can be a float, ``-np.inf``,
-            ``np.inf``, or ``np.NaN``.
+            ``np.inf``, or ``np.nan``.
 
         Notes
         -----
@@ -285,7 +285,7 @@ class Problem(object):
                     v.value = var_val
         else:
             for v in self.all_variables:
-                nans = np.NaN * np.empty(v.shape)
+                nans = np.nan * np.empty(v.shape)
                 v.value = nans
 
         # Record objective value
@@ -295,7 +295,7 @@ class Problem(object):
             else:
                 self.value = -parsed_result[2]
         else:
-            self.value = np.NaN
+            self.value = np.nan
 
         self.timings[solver]['total'] = time.time() - t0
         return self.status, self.value

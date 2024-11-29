@@ -65,7 +65,7 @@ class ScalarVariable(ScalarAtom):
         """
         self._id = ScalarVariable._SCALAR_VARIABLE_COUNTER
         self._generation = parent.generation
-        self._value = np.NaN
+        self._value = np.nan
         self.index = index
         self.parent = parent
         ScalarVariable._SCALAR_VARIABLE_COUNTER += 1
@@ -436,7 +436,7 @@ class Expression(np.ndarray):
     __array_priority__ = 100
 
     def __new__(cls, obj):
-        attempt = np.array(obj, dtype=object, copy=False, subok=True)
+        attempt = np.array(obj, dtype=object, subok=True)
         for tup in array_index_iterator(attempt.shape):
             # noinspection PyTypeChecker,PyCallByClass
             Expression.__setitem__(attempt, tup, attempt[tup])

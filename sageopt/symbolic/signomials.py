@@ -24,7 +24,7 @@ try:
 except ImportError:
     CVXPY_INSTALLED = False
 
-__NUMERIC_TYPES__ = (int, float, np.int_, np.float_)
+__NUMERIC_TYPES__ =  (int, float, np.int32, np.int64, np.float32, np.float64, np.longdouble)
 
 __EXPONENT_VECTOR_DECIMAL_POINTS__ = 7
 
@@ -537,11 +537,11 @@ class Signomial(object):
     def product(f1, f2):
         alpha1, c1 = f1.alpha, f1.c
         if isinstance(alpha1, np.ndarray):
-            alpha1 = alpha1.astype(np.float_)
+            alpha1 = alpha1.astype(float)
         m1 = alpha1.shape[0]
         alpha2, c2 = f2.alpha, f2.c
         if isinstance(alpha2, np.ndarray):
-            alpha2 = alpha2.astype(np.float_)
+            alpha2 = alpha2.astype(float)
         m2 = alpha2.shape[0]
         # lift alpha1, c1 into the product basis
         tile_idxs = np.tile(np.arange(m1), reps=m2)
@@ -706,7 +706,7 @@ class SigDomain(object):
         prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
         prob.solve(verbose=False, solver='ECOS')
         if not prob.value < 1e-7:
-            if prob.value is np.NaN:  # pragma: no cover
+            if prob.value is np.nan:  # pragma: no cover
                 msg = """
                 SigDomain constraints could not be verified as feasible.
                 Proceed with caution!

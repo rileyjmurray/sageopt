@@ -128,7 +128,7 @@ class Cvxpy(Solver):
         these is a string (coniclifts.solved, coniclifts.inaccurate, or coniclifts.failed).
         The second of these is a dictionary from coniclifts Variable names to numpy arrays
         containing the values of those Variables at the returned solution. The last of
-        these is either a real number, or +/-np.Inf, or np.NaN.
+        these is either a real number, or +/-np.inf, or np.nan.
         """
         import cvxpy as cp
         x_var, prob = solver_output

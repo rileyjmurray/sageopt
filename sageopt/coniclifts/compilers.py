@@ -18,7 +18,10 @@ import time
 import warnings
 import numpy as np
 from collections import defaultdict
-from tqdm import tqdm
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = lambda x: x
 from sageopt.coniclifts import utilities as util
 from sageopt.coniclifts.constraints.constraint import Constraint
 from sageopt.coniclifts.constraints.elementwise import ElementwiseConstraint

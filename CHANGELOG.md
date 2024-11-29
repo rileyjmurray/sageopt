@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - symbolic: CVXPY Expression objects can no longer be used as coefficients or exponent vectors in
    Signomial or Polynomial objects.
  - interop: in light of the change above, we no longer needed a CVXPY interop file.
+ - setup.py, in favor of pyproject.toml.
 
 # [0.5.3] - 2020-09-07
 ## Changed

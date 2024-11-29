@@ -95,7 +95,7 @@ class Mosek(Solver):
         :return: problem_status, variable_values, problem_value. The first of these is a string
         (coniclifts.solved, coniclifts.inaccurate, or coniclifts.failed). The second is a dictionary
         from coniclifts Variable names to numpy arrays containing the values of those Variables at
-        the returned solution. The last of these is either a real number, or +/-np.Inf, or np.NaN.
+        the returned solution. The last of these is either a real number, or +/-np.inf, or np.nan.
         """
         if inv_data['form'] == 'primal':
             ps, vv, pv = Mosek._primal_parse_result(solver_output, inv_data, var_mapping)
@@ -201,16 +201,16 @@ class Mosek(Solver):
         elif solution_status == mosek.solsta.dual_infeas_cer:
             # unbounded
             problem_status = CL_CONSTANTS.solved
-            problem_value = -np.Inf
+            problem_value = -np.inf
         elif solution_status == mosek.solsta.prim_infeas_cer:
             # infeasible
             problem_status = CL_CONSTANTS.solved
-            problem_value = np.Inf
+            problem_value = np.inf
         else:  # pragma: no cover
             # some kind of solver failure.
             problem_status = CL_CONSTANTS.failed
             variable_values = dict()
-            problem_value = np.NaN
+            problem_value = np.nan
         return problem_status, variable_values, problem_value
 
     @staticmethod
@@ -301,16 +301,16 @@ class Mosek(Solver):
         elif solution_status == mosek.solsta.dual_infeas_cer:
             # unbounded
             problem_status = CL_CONSTANTS.solved
-            problem_value = np.Inf
+            problem_value = np.inf
         elif solution_status == mosek.solsta.prim_infeas_cer:
             # infeasible
             problem_status = CL_CONSTANTS.solved
-            problem_value = -np.Inf
+            problem_value = -np.inf
         else:  # pragma: no cover
             # some kind of solver failure.
             problem_status = CL_CONSTANTS.failed
             variable_values = dict()
-            problem_value = np.NaN
+            problem_value = np.nan
         return problem_status, variable_values, problem_value
 
     @staticmethod

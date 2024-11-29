@@ -101,7 +101,7 @@ class TestConstraints(unittest.TestCase):
         conv_comb = np.random.rand(m-1)
         conv_comb /= np.sum(conv_comb)
         alpha_last = alpha.T @ conv_comb
-        alpha = np.row_stack([alpha, alpha_last])
+        alpha = np.vstack([alpha, alpha_last])
         c0 = np.array([1, 2, 3, 4, -0.5, -0.1])
         c = Variable(shape=(m,), name='projected_c0')
         t = Variable(shape=(1,), name='epigraph_var')

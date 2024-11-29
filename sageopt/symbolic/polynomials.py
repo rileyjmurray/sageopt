@@ -20,7 +20,7 @@ from sageopt.symbolic.signomials import Signomial
 import warnings
 
 
-__NUMERIC_TYPES__ = (int, float, np.int_, np.float_)
+__NUMERIC_TYPES__ =  (int, float, np.int32, np.int64, np.float32, np.float64, np.longdouble)
 
 
 def standard_poly_monomials(n):
@@ -354,7 +354,7 @@ class Polynomial(Signomial):
             func_xis = [xi for xi in x.flat if isinstance(xi, Signomial)]
             ns = np.array([xi.n for xi in func_xis])
             if ns.size == 0:
-                x = x.astype(np.float)
+                x = x.astype(float)
             elif np.any(ns != ns[0]):
                 msg = 'The input vector cannot contain functions over different variables.'
                 raise ValueError(msg)
@@ -622,7 +622,7 @@ class PolyDomain(object):
         prob = cl.Problem(cl.MIN, cl.Expression([0]), cons)
         prob.solve(verbose=False, solver='ECOS')
         if not prob.value < 1e-7:
-            if prob.value is np.NaN:  # pragma: no cover
+            if prob.value is np.nan:  # pragma: no cover
                 msg = """
                 PolyDomain constraints could not be verified as feasible.
                 Proceed with caution!

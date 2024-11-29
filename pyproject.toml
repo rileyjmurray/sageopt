@@ -1,0 +1,58 @@
+[tool.ruff]
+select = [
+    "E",
+    "F",
+    "I",
+    "NPY201",
+    "W605",  # Check for invalid escape sequences in docstrings (errors in py >= 3.11)
+]
+
+# The minimum Python version that should be supported
+target-version = "py39"
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "sageopt/tests/"
+]
+
+[build-system]
+requires = [
+    "numpy >= 1.14",
+    "scipy >= 1.1",
+    # 68.1.0 Promoted pyproject.toml's [tool.setuptools] out of beta.
+    "setuptools >= 68.1.0",
+    "wheel"
+]
+
+[project]
+name = "sageopt"
+description = "Signomial and polynomial optimization via SAGE relaxations."
+dependencies = [
+    "ecos >= 2",
+    "numpy >= 1.14",
+    "scipy >= 1.1",
+    "pytest"
+]
+version = "0.6.0"
+requires-python = ">=3.9"
+urls = {Homepage = "https://rileyjmurray.github.io/sageopt/"}
+license = {text = "Apache License, Version 2.0"}
+authors = [{name = "Riley Murray", email = "rjmurray201693@gmail.com"}]
+
+
+[project.optional-dependencies]
+MOSEK = ["mosek"]
+CVXPY = ["cvxpy"]
+doc = [
+       "sphinx",
+       "sphinx.ext.autodoc",
+       "sphinx.ext.napoleon"
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[tool.setuptools]
+include-package-data = false

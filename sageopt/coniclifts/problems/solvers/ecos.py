@@ -107,7 +107,7 @@ class ECOS(Solver):
         these is a string (coniclifts.solved, coniclifts.inaccurate, or coniclifts.failed).
         The second of these is a dictionary from coniclifts Variable names to numpy arrays
         containing the values of those Variables at the returned solution. The last of
-        these is either a real number, or +/-np.Inf, or np.NaN.
+        these is either a real number, or +/-np.inf, or np.nan.
 
         Notes: solver_output is described in
             https://github.com/embotech/ecos-python#calling-ecos-from-python
@@ -125,11 +125,11 @@ class ECOS(Solver):
             elif solver_status == 1:
                 # primal infeasible
                 problem_status = CL_CONSTANTS.solved
-                problem_value = np.Inf
+                problem_value = np.inf
             elif solver_status == 2:
                 # dual infeasible (primal unbounded)
                 problem_status = CL_CONSTANTS.solved
-                problem_value = -np.Inf
+                problem_value = -np.inf
             elif solver_status == 10:  # pragma: no cover
                 # primal near-optimal
                 problem_status = CL_CONSTANTS.inaccurate
@@ -138,11 +138,11 @@ class ECOS(Solver):
             elif solver_status == 11:  # pragma: no cover
                 # primal likely infeasible
                 problem_status = CL_CONSTANTS.inaccurate
-                problem_value = np.Inf
+                problem_value = np.inf
             else:  # pragma: no cover
                 # dual likely infeasible (primal likely unbounded)
                 problem_status = CL_CONSTANTS.inaccurate
-                problem_value = -np.Inf
+                problem_value = -np.inf
         else:
             # solver failed, do not record solution
             #    -1	Maximum number of iterations reached	ECOS_MAXIT
@@ -152,7 +152,7 @@ class ECOS(Solver):
             #    -7	Unknown problem in solver	ECOS_FATAL
             problem_status = CL_CONSTANTS.failed
             variable_values = dict()
-            problem_value = np.NaN
+            problem_value = np.nan
         return problem_status, variable_values, problem_value
 
     @staticmethod
