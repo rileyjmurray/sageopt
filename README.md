@@ -48,7 +48,7 @@ To install sageopt from source, do the following:
 0. Download this repository. If needed, change your directory so that you are in the same directory as
    sageopt's ``setup.py`` file.
 1. Activate the Python virtual environment of your choice.
-2. Run ``python setup.py install`` to install sageopt to your current Python environment.
+2. Run ``pip install .`` to install sageopt to your current Python environment.
 3. Run ``python -c "import sageopt; print(sageopt.__version__)"`` to verify that sageopt installed correctly.
 4. Run ``pip install pytest``  (or ``conda install pytest``) in preparation for running unittests.
 5. Run ``pytest sageopt/tests``.
