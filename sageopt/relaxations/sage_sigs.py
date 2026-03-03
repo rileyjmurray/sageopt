@@ -85,7 +85,7 @@ def sig_relaxation(f, X=None, form='dual', **kwargs):
     return prob
 
 
-def sig_dual(f, ell=0, X=None, modulator_support=None):
+def sig_dual(f, ell=0, X=None, modulator_support=None, num_threads:int=0):
     f = f.without_zeros()
     # Signomial definitions (for the objective).
     lagrangian = f - cl.Variable(name='gamma')
@@ -107,7 +107,7 @@ def sig_dual(f, ell=0, X=None, modulator_support=None):
     obj_vec = sym_corr.relative_coeff_vector(f_mod, lagrangian.alpha)
     obj = obj_vec.T @ v
     # Create coniclifts Problem
-    prob = cl.Problem(cl.MIN, obj, constraints)
+    prob = cl.Problem(cl.MIN, obj, constraints, num_threads=num_threads)
     prob.metadata = metadata
     if AUTO_CLEAR_INDICES:  # pragma:no cover
         cl.clear_variable_indices()
@@ -133,7 +133,7 @@ def sig_primal(f, ell=0, X=None, modulator_support=None):
     return prob
 
 
-def sage_feasibility(f, X=None, additional_cons=None):
+def sage_feasibility(f, X=None, additional_cons=None, num_threads:int=0):
     """
     Constructs a coniclifts maximization Problem which is feasible if and only if
     ``f`` admits an X-SAGE decomposition (:math:`X=R^{\\texttt{f.n}}` by default).
@@ -159,13 +159,13 @@ def sage_feasibility(f, X=None, additional_cons=None):
     constraints = [con]
     if additional_cons is not None:
         constraints += additional_cons
-    prob = cl.Problem(cl.MAX, cl.Expression([0]), constraints)
+    prob = cl.Problem(cl.MAX, cl.Expression([0]), constraints, num_threads=num_threads)
     if AUTO_CLEAR_INDICES:  # pragma:no cover
         cl.clear_variable_indices()
     return prob
 
 
-def sage_multiplier_search(f, level=1, X=None):
+def sage_multiplier_search(f, level=1, X=None, num_threads:int=0):
     """
     Constructs a coniclifts maximization Problem which is feasible if ``f`` can be certified as nonnegative
     over ``X``, by using an appropriate X-SAGE modulating function.
@@ -207,7 +207,7 @@ def sage_multiplier_search(f, level=1, X=None):
     con2 = primal_sage_cone(sig_under_test, name=str(sig_under_test), X=X)
     constraints.append(con1)
     constraints.append(con2)
-    prob = cl.Problem(cl.MAX, cl.Expression([0]), constraints)
+    prob = cl.Problem(cl.MAX, cl.Expression([0]), constraints, num_threads=num_threads)
     if AUTO_CLEAR_INDICES:  # pragma:no cover
         cl.clear_variable_indices()
     return prob
